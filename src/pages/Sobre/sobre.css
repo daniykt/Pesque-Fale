@@ -1,0 +1,172 @@
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+.sobre-nos {
+    padding: 50px 20px;
+    text-align: center;
+    
+}
+
+.sobre-nos h1 {
+    font-size: 2.5em;
+    margin-bottom: 40px;
+}
+
+.container {
+    display: grid;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    padding: 30px 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.card img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+    border: 5px solid #f0f2f5;
+}
+
+.card h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #111;
+}
+
+.card .profissao {
+    font-size: 1em;
+    font-weight: bold;
+    color: #0073e6;
+    margin-bottom: 15px;
+}
+
+.card .descricao {
+    font-size: 0.95em;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Ícones */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+.card .social {
+    margin-top: 10px;
+}
+
+.card .social i {
+    margin: 0 8px;
+    font-size: 1.4em;
+    color: #333;
+    transition: color 0.3s;
+}
+
+.card .social i:hover {
+    color: #0073e6;
+}
+.container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* sempre 3 colunas */
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+       /* Estilos da barra de contribuição */
+        .contribuicao {
+            margin-top: 15px;
+        }
+
+        .contribuicao-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .barra-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .barra-progresso {
+            background: linear-gradient(90deg, #0073e6, #0056b3);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .porcentagem-texto {
+            color: #0073e6;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sobre-nos {
+                margin-top: 70px;
+            }
+        }
+
+
+/* Tema escuro */
+body.dark-mode {
+    color: #000000;
+}
+
+body.dark-mode .card {
+    background-color: #1e1e1e;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+}
+
+
+body.dark-mode .descricao {
+    color: #ffffff;
+}
+
+body.dark-mode .card h2 {
+    color: #ffffff;
+}
+
+body.dark-mode .location-card {
+    background-color: #1e1e1e;
+    color: #fff;
+}
+
+body.dark-mode .contribuicao-label {
+    color: #ffffff;
+}
+
+body.dark-mode .social i {
+    color: #ffffff;
+}
