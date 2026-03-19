@@ -1,0 +1,599 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Anton+SC&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+
+html {
+    overflow-y: scroll;
+}
+
+* {
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+header {
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo img {
+    height: 100px;
+    width: auto;
+    transition: 0.3s;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
+}
+
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+    gap: 5px;
+}
+
+.nav-toggle span {
+    height: 3px;
+    width: 25px;
+    background: white;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.navigation a {
+    text-decoration: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.login-btn {
+    padding: 12px 25px;
+    background: white;
+    color: #062A6C;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Anton SC', sans-serif;
+    font-size: 1.1rem;
+}
+
+.material-symbols-outlined {
+    font-size: 1.5rem !important;
+}
+
+.navigation a:hover,
+.navigation a.active {
+    background: white;
+    color: #062A6C;
+    transform: scale(1.05);
+}
+
+.login-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 992px) {
+    .nav-toggle {
+        display: flex;
+    }
+
+    .navigation {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #062A6C;
+        flex-direction: column;
+        align-items: center;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out;
+    }
+
+    .navigation.open {
+        max-height: 500px;
+    }
+
+    .navigation a {
+        padding: 15px;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.theme-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.5rem;
+    padding: 10px;
+    transition: transform 0.2s;
+}
+
+.theme-btn:hover {
+    transform: scale(1.1);
+}
+
+.overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    backdrop-filter: blur(6px);
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.notificacao-expandida {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: relative;
+    animation: fadeIn 0.3s ease;
+}
+
+.fechar-expandida {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.notification-icon {
+    position: relative;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.new-notification {
+    animation: pulse 1.5s infinite;
+}
+
+body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+
+.column {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+}
+
+    footer {
+      background: linear-gradient(135deg, #000);
+      color: #e2e8f0;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    footer .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+    }
+
+    footer h3 {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      color: #f8fafc;
+    }
+
+    footer a {
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      margin: 0.3rem 0;
+      transition: 0.3s;
+    }
+
+    footer a:hover {
+      color: #38bdf8;
+    }
+
+    footer .copyright {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #fff;
+      padding-top: 1rem;
+    }
+
+.container {
+    flex: 1;
+}
+
+
+/* ================= Tema Escuro ================= */
+body.dark-mode {
+  background: #121212;
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-card,
+body.dark-mode .widget,
+body.dark-mode .btn-new-post,
+body.dark-mode .tips-card {
+  background-color: #1e1e1e;
+  border-color: #333;
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-text,
+body.dark-mode .event-desc,
+body.dark-mode .event-title,
+body.dark-mode .place-info h4 {
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-meta,
+body.dark-mode .event-date,
+body.dark-mode .place-info p,
+body.dark-mode .weather-item {
+  color: #b0b0b0;
+}
+
+body.dark-mode .comment-content {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-comments {
+  background-color: #1a1a1a;
+}
+
+body.dark-mode .action-btn:hover,
+body.dark-mode .post-menu:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .comment-input input {
+  background-color: #2a2a2a;
+  color: #f1f1f1;
+  border-color: #444;
+}
+
+body.dark-mode .event-item:hover,
+body.dark-mode .place-item:hover {
+  background-color: #2a2a2a;
+}
+
+body.dark-mode .widget-title {
+  background: #2a2a2a;
+  color: #90caf9;
+}
+
+body.dark-mode .fishing-conditions {
+  background: #1a3d1a;
+  border-color: #2e5d2e;
+}
+
+body.dark-mode .condition-good {
+  color: #66bb6a;
+}
+
+body.dark-mode .action-btn {
+  color: #ffffff;
+}
+
+body.dark-mode .action-btn:hover {
+  color: #062A6c;
+}
+
+body.dark-mode .post-author {
+  color: #ffffff;
+}
+
+body.dark-mode .comment-content strong {
+  color: #ffffff;
+}
+
+body.dark-mode .comment-content p {
+  color: #ffffff;
+}
+
+body.dark-mode .weather-main h4 {
+  color: #ffffff;
+}
+
+body.dark-mode .weather-main p {
+  color: #ffffff;
+}
+
+body.dark-mode .post-stats {
+  color: #ffffff;
+}
+
+body.dark-mode .post-stats {
+    color: #ffffff;
+}
+
+/* ========= NOVOS ESTILOS PARA MODO ESCURO ========= */
+body.dark-mode .search-container,
+body.dark-mode .no-results {
+    background-color: #1e1e1e;
+    border-color: #333;
+}
+
+body.dark-mode h2,
+body.dark-mode .filter-group label,
+body.dark-mode .location-name {
+    color: #90caf9;
+}
+
+body.dark-mode #search-button {
+    background-color: #555;
+    color: #fff;
+}
+
+body.dark-mode #search-button:hover {
+    background-color: #062A6C;
+}
+
+body.dark-mode select,
+body.dark-mode #search-input {
+    background-color: #2c2c2c;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+body.dark-mode .location-card {
+    background-color: #1e1e1e;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+body.dark-mode .location-description {
+    color: #b0b0b0;
+}
+
+body.dark-mode .tag {
+    background-color: #333;
+    color: #90caf9;
+}
+
+
+/* ======== DARK MODE PARA LOCAIS AVALIADOS ========= */
+body.dark-mode h1,
+body.dark-mode .categoria-titulo {
+  color: #90caf9;
+}
+
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+}
+
+body.dark-mode .stars {
+  color: gold;
+}
+
+body.dark-mode .categoria-titulo {
+  border-left: 5px solid gold;
+}
+
+/* ======== DARK MODE PARA NOTIFICAÇÕES ========= */
+body.dark-mode .notificacao {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  color: #f1f1f1;
+}
+
+body.dark-mode .botoes button {
+  background-color: #062A6C;
+  color: #ffffff;
+}
+
+body.dark-mode .botoes button:hover {
+  background-color: #90caf9;
+  color: #062A6C;
+}
+
+body.dark-mode .data {
+  background-color: #062A6C;
+  color: #ffffff;
+}
+
+body.dark-mode .close {
+  color: #ffffff;
+}
+
+body.dark-mode .comentario {
+  color: #f1f1f1;
+}
+
+/* Corrigindo cores dos ícones ativos no modo escuro */
+body.dark-mode .like-btn.active {
+  color: #4caf50; /* Verde para curtir ativo */
+}
+
+body.dark-mode .dislike-btn.active {
+  color: #f44336; /* Vermelho para não curtir ativo */
+}
+
+body.dark-mode .favorite-btn.active {
+  color: #ffd700; /* Amarelo para favorito ativo */
+}
+
+/* Melhorar visibilidade da notificação lida no modo escuro */
+body.dark-mode .notificacao.lida {
+  background-color: #2a2a2a;
+  border-left: 4px solid #062A6C;
+  opacity: 0.8;
+}
+
+/* Estilizar o botão "Lida" quando ativo no modo escuro */
+body.dark-mode .botoes button[onclick*="marcarComoLida"] {
+  background-color: #1e3b61 !important;
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+/* Efeito hover no botão "Lida" no modo escuro */
+body.dark-mode .botoes button[onclick*="marcarComoLida"]:hover {
+  background-color: #2a5298 !important;
+}
+
+/* ======== DARK MODE PARA COMENTÁRIOS E PERFIL ========= */
+body.dark-mode .nome-usuario,
+body.dark-mode .btn-interacao {
+    color: #ffffff !important;
+}
+
+body.dark-mode .data-publicacao {
+    color: #ffffff !important;
+}
+
+body.dark-mode .interacoes {
+    border-color: #ffffff !important;
+}
+
+/* Dark Mode para Perfil */
+body.dark-mode .perfil {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+body.dark-mode .publicacao-horizontal {
+  background-color: #2a2a2a;
+  box-shadow: 0 3px 10px rgba(6, 42, 108, 0.3);
+}
+
+body.dark-mode .username {
+  color: #ffffff;
+}
+
+body.dark-mode .comentario {
+  color: #f1f1f1 !important;
+}
+
+body.dark-mode .stat-box {
+  background: #ffffff;
+  color: #f1f1f1;
+  border: 1px solid #333;
+}
+
+body.dark-mode .data-publicacao {
+  color: #b0b0b0;
+}
+
+
+/* ======== NAV ACTIVE FIX (adicionar ao global.css) ======== */
+/* Estilos para a sidebar */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  background: #062A6C;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.nav-item:hover, 
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-left-color: white;
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-text {
+  margin-left: 12px;
+  font-size: 14px;
+}
+
+.badge {
+  background: #ff4757;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: auto;
+}
