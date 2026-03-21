@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import Layout from "../../components/sidebar/layout";
 import "./locaisAvaliados.css";
 
 const LocaisAvaliados = () => {
@@ -74,55 +75,35 @@ const LocaisAvaliados = () => {
     },
   ]);
 
-  // Função para renderizar as estrelas
   const renderStars = (rating) => {
     return "★".repeat(rating) + "☆".repeat(5 - rating);
   };
 
   return (
-    <div className="column">
-      <nav className="sidebar">
-        <div className="sidebar-header">
-          <img
-            src="/assets/logo/logo.jpg"
-            alt="Pesque & Fale"
-            className="logo"
-            width="100"
-          />
-        </div>
-      </nav>
+    <Layout>
+      <h1>⭐ Locais + Bem Avaliados</h1>
 
-      {/* Conteúdo principal */}
-      <div className="main-content">
-        <h1>⭐ Locais + Bem Avaliados</h1>
-
-        {categorias.map((categoria, index) => (
-          <section key={index} className="categoria">
-            <h2 className="categoria-titulo">{categoria.titulo}</h2>
-            <div className="grid-container">
-              {categoria.locais.map((local) => (
-                <div key={local.id} className="card">
-                  <img
-                    src={local.imagem}
-                    alt={local.nome}
-                    className="card-img"
-                  />
-                  <div className="card-content">
-                    <h3>{local.nome}</h3>
-                    <p className="stars">{renderStars(local.estrelas)}</p>
-                    <p>{local.descricao}</p>
-                    <p>
-                      <strong>Localização:</strong> {local.localizacao}
-                    </p>
-                  </div>
+      {categorias.map((categoria, index) => (
+        <section key={index} className="categoria">
+          <h2 className="categoria-titulo">{categoria.titulo}</h2>
+          <div className="grid-container">
+            {categoria.locais.map((local) => (
+              <div key={local.id} className="card">
+                <img src={local.imagem} alt={local.nome} className="card-img" />
+                <div className="card-content">
+                  <h3>{local.nome}</h3>
+                  <p className="stars">{renderStars(local.estrelas)}</p>
+                  <p>{local.descricao}</p>
+                  <p>
+                    <strong>Localização:</strong> {local.localizacao}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
 
-      {/* Rodapé */}
       <footer>
         <div className="footer-container">
           <div>
@@ -150,7 +131,7 @@ const LocaisAvaliados = () => {
           &copy; Pesque & Fale 2025 - Todos os direitos reservados.
         </p>
       </footer>
-    </div>
+    </Layout>
   );
 };
 

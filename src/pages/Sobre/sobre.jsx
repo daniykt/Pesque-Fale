@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './sobre.css';
-
+import Layout from '../../components/sidebar/layout';
 
 const SobreNos = () => {
 
@@ -51,57 +51,50 @@ const SobreNos = () => {
   ];
 
   return (
-    <div className="column">
-      {/* Sidebar (pode ser um componente separado) */}
-      <nav className="sidebar">
-        <div className="sidebar-header">
-          <img src="/assets/logo/logo.jpg" alt="Pesque & Fale" className="logo" width="100" />
-        </div>
-
-      </nav>
-
-      {/* Conteúdo principal */}
-      <section className="sobre-nos">
-        <h1>Nossa Equipe</h1>
-        <div className="container">
-          {membros.map(membro => (
-            <div key={membro.id} className="card">
-              <img src={membro.foto} alt={`Foto de ${membro.nome}`} />
-              <h2>{membro.nome}</h2>
-              <p className="profissao">{membro.profissao}</p>
-              <p className="descricao">{membro.descricao}</p>
-              <div className="social">
-                <i className="fab fa-linkedin"></i>
-                <i className="fab fa-github"></i>
+    // 2. Envolva tudo com o <Layout>
+    <Layout>
+      <div className="sobre-corpo">
+        <section className="sobre-nos">
+          <h1>Nossa Equipe</h1>
+          <div className="container">
+            {membros.map(membro => (
+              <div key={membro.id} className="card">
+                <img src={membro.foto} alt={`Foto de ${membro.nome}`} />
+                <h2>{membro.nome}</h2>
+                <p className="profissao">{membro.profissao}</p>
+                <p className="descricao">{membro.descricao}</p>
+                <div className="social">
+                  <i className="fab fa-linkedin"></i>
+                  <i className="fab fa-github"></i>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {/* Rodapé */}
-      <footer>
-        <div className="footer-container">
-          <div>
-            <h3>Sobre Nós</h3>
-            <p>Grupo de estudantes dedicados ao desenvolvimento de iniciativas voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.</p>
+        <footer>
+          <div className="footer-container">
+            <div>
+              <h3>Sobre Nós</h3>
+              <p>Grupo de estudantes dedicados ao desenvolvimento de iniciativas voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.</p>
+            </div>
+            <div>
+              <h3>Links Úteis</h3>
+              <Link to="/">Página Inicial</Link>
+              <Link to="/pesquisar">Pesquisa de Locais</Link>
+              <Link to="/locaisavaliados">Melhores locais</Link>
+              <Link to="/notificacoes">Notificações</Link>
+              <Link to="/perfil">Perfil</Link>
+            </div>
+            <div>
+              <h3>Contato</h3>
+              <p>Email: pesquefale@gmail.com</p>
+            </div>
           </div>
-          <div>
-            <h3>Links Úteis</h3>
-            <Link to="/">Página Inicial</Link>
-            <Link to="/pesquisar">Pesquisa de Locais</Link>
-            <Link to="/locaisavaliados">Melhores locais</Link>
-            <Link to="/notificacoes">Notificações</Link>
-            <Link to="/perfil">Perfil</Link>
-          </div>
-          <div>
-            <h3>Contato</h3>
-            <p>Email: pesquefale@gmail.com</p>
-          </div>
-        </div>
-        <p className="copyright">&copy; Pesque & Fale 2025 - Todos os direitos reservados.</p>
-      </footer>
-    </div>
+          <p className="copyright">&copy; Pesque & Fale 2025 - Todos os direitos reservados.</p>
+        </footer>
+      </div>
+    </Layout>
   );
 };
 
