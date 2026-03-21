@@ -1,106 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Layout from "../../components/sidebar/layout";
 import "./notificacao.css";
 
 export default function Notificacao() {
+  const [notificacoes, setNotificacoes] = useState([]);
 
-  // Estado inicial com suporte a curtidas e favoritos
-  const [notificacoes, setNotificacoes] = useState([
-    {
-      id: 1,
-      data: "05/05/2025 10:35",
-      usuario: "Reginaldosilva",
-      texto:
-        "Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza!",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-    {
-      id: 2,
-      data: "14/09/2025 12:00",
-      usuario: "Carlos_ferreira",
-      texto:
-        "Você pode me informar se aí é permitido usar molinete profissional?",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-    {
-      id: 3,
-      data: "20/02/2025 15:30",
-      usuario: "Sistema",
-      texto: "Pedro e João começaram a seguir você",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-    {
-      id: 4,
-      data: "01/06/2025 20:30",
-      usuario: "Sistema",
-      texto: "Maria e Lucas curtiram seu post.",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-    {
-      id: 5,
-      data: "24/11/2025 19:30",
-      usuario: "Sistema",
-      texto: "Seu post Dicas de pesca para iniciantes atingiu 100 curtidas!",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-    {
-      id: 6,
-      data: "10/10/2025 22:00",
-      usuario: "Marinasantos",
-      texto: "Adorei as fotos do seu último passeio!",
-      lida: false,
-      curtida: null,
-      favorito: false,
-    },
-  ]);
+  useEffect(() => {
+    const stored = localStorage.getItem("notificacoes");
+    if (stored) {
+      setNotificacoes(JSON.parse(stored));
+    } else {
+      const dadosIniciais = [
+        {
+          id: 1,
+          data: "05/05/2025 10:35",
+          usuario: "Reginaldosilva",
+          texto: "Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza!",
+          lida: false,
+          curtida: null,
+          favorito: false,
+        },
+        // ... demais notificações iniciais (mantenha as que você já tem)
+      ];
+      setNotificacoes(dadosIniciais);
+    }
+  }, []);
 
-  //  FUNÇÕES
+  useEffect(() => {
+    if (notificacoes.length > 0) {
+      localStorage.setItem("notificacoes", JSON.stringify(notificacoes));
+    }
+    const naoLidas = notificacoes.filter((n) => !n.lida).length;
+    localStorage.setItem("contadorNotificacoes", naoLidas);
+    window.dispatchEvent(new CustomEvent("notificacoesAtualizadas", { detail: naoLidas }));
+  }, [notificacoes]);
 
   const toggleCurtir = (id) => {
-    setNotificacoes(
-      notificacoes.map((n) =>
-        n.id === id
-          ? { ...n, curtida: n.curtida === "like" ? null : "like" }
-          : n,
-      ),
+    setNotificacoes((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, curtida: n.curtida === "like" ? null : "like" } : n
+      )
     );
   };
 
   const toggleDescurtir = (id) => {
-    setNotificacoes(
-      notificacoes.map((n) =>
-        n.id === id
-          ? { ...n, curtida: n.curtida === "dislike" ? null : "dislike" }
-          : n,
-      ),
+    setNotificacoes((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, curtida: n.curtida === "dislike" ? null : "dislike" } : n
+      )
     );
   };
 
   const toggleFavorito = (id) => {
-    setNotificacoes(
-      notificacoes.map((n) =>
-        n.id === id ? { ...n, favorito: !n.favorito } : n,
-      ),
+    setNotificacoes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, favorito: !n.favorito } : n))
     );
   };
 
   const excluir = (id) => {
-    setNotificacoes(notificacoes.filter((n) => n.id !== id));
+    setNotificacoes((prev) => prev.filter((n) => n.id !== id));
   };
 
   const marcarComoLida = (id) => {
-    setNotificacoes(
-      notificacoes.map((n) => (n.id === id ? { ...n, lida: !n.lida } : n)),
+    setNotificacoes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
     );
   };
 
@@ -120,140 +84,90 @@ export default function Notificacao() {
   };
 
   return (
-    <div className="layout-container">
-      {/* Sidebar simulada */}
-      <nav className="sidebar">
-        <div className="sidebar-header">
-          <img
-            src=".assets/logo/logo.jpg"
-            alt="Pesque & Fale"
-            className="logo"
-            width="100"
-          />
-        </div>
-      </nav>
-
-      <div className="column">
-        <div className="main-content">
-          <div className="container-notificacoes">
-            {notificacoes.map((n) => (
-              <div
-                key={n.id}
-                className={`notificacao ${n.lida ? "lida-estilo" : ""}`}
+    <Layout>
+      {/* Conteúdo principal - será expandido pelo flex */}
+      <div className="container-notificacoes" style={{ paddingTop: "20px" }}>
+        {notificacoes.map((n) => (
+          <div key={n.id} className={`notificacao ${n.lida ? "lida" : ""}`}>
+            <div className="meta">
+              <span className="data">{n.data}</span>
+              <button className="close" onClick={() => excluir(n.id)}>
+                &times;
+              </button>
+            </div>
+            <p className="comentario">
+              <strong>{n.usuario}:</strong> {n.texto}
+            </p>
+            <div className="botoes">
+              <button
+                onClick={() => marcarComoLida(n.id)}
+                style={estiloBotaoBase}
+                disabled={n.lida}
               >
-                <div className="meta">
-                  <span className="data">{n.data}</span>
-                  <button className="close" onClick={() => excluir(n.id)}>
-                    &times;
-                  </button>
-                </div>
+                <i className="fas fa-check"></i> {n.lida ? "Lida" : "Marcar como lida"}
+              </button>
+              <button
+                onClick={() => toggleCurtir(n.id)}
+                style={{
+                  ...estiloBotaoBase,
+                  backgroundColor: n.curtida === "like" ? "#28a745" : "#082a66",
+                }}
+              >
+                <i className={n.curtida === "like" ? "fas fa-thumbs-up" : "far fa-thumbs-up"}></i> Curtir
+              </button>
+              <button
+                onClick={() => toggleDescurtir(n.id)}
+                style={{
+                  ...estiloBotaoBase,
+                  backgroundColor: n.curtida === "dislike" ? "#bb1b2bff" : "#082a66",
+                }}
+              >
+                <i className={n.curtida === "dislike" ? "fas fa-thumbs-down" : "far fa-thumbs-down"}></i> Não Curtir
+              </button>
+              <button
+                onClick={() => toggleFavorito(n.id)}
+                style={{
+                  ...estiloBotaoBase,
+                  backgroundColor: n.favorito ? "#ffc107" : "#082a66",
+                }}
+              >
+                <i className={n.favorito ? "fas fa-star" : "far fa-star"}></i> Favorito
+              </button>
+            </div>
+          </div>
+        ))}
+        {notificacoes.length === 0 && (
+          <p style={{ textAlign: "center", marginTop: "20px" }}>
+            Nenhuma notificação por enquanto!
+          </p>
+        )}
+      </div>
 
-                <p className="comentario">
-                  <strong>{n.usuario}:</strong> {n.texto}
-                </p>
-
-                <div
-                  className="botoes"
-                  style={{ display: "flex", gap: "10px", marginTop: "15px" }}
-                >
-                  {/* Botão Marcar como lida */}
-                  <button
-                    onClick={() => marcarComoLida(n.id)}
-                    style={estiloBotaoBase}
-                  >
-                    <i className="fas fa-check"></i>{" "}
-                    {n.lida ? "Lida" : "Marcar como lida"}
-                  </button>
-
-                  {/* Botão Curtir - Muda para verde se ativo */}
-                  <button
-                    onClick={() => toggleCurtir(n.id)}
-                    style={{
-                      ...estiloBotaoBase,
-                      backgroundColor:
-                        n.curtida === "like" ? "#28a745" : "#082a66",
-                    }}
-                  >
-                    <i
-                      className={
-                        n.curtida === "like"
-                          ? "fas fa-thumbs-up"
-                          : "far fa-thumbs-up"
-                      }
-                    ></i>{" "}
-                    Curtir
-                  </button>
-
-                  {/* Botão Não Curtir - Muda para vermelho se ativo */}
-                  <button
-                    onClick={() => toggleDescurtir(n.id)}
-                    style={{
-                      ...estiloBotaoBase,
-                      backgroundColor:
-                        n.curtida === "dislike" ? "#bb1b2bff" : "#082a66",
-                    }}
-                  >
-                    <i
-                      className={
-                        n.curtida === "dislike"
-                          ? "fas fa-thumbs-down"
-                          : "far fa-thumbs-down"
-                      }
-                    ></i>{" "}
-                    Não Curtir
-                  </button>
-
-                  {/* Botão Favorito - Muda para amarelo se ativo */}
-                  <button
-                    onClick={() => toggleFavorito(n.id)}
-                    style={{
-                      ...estiloBotaoBase,
-                      backgroundColor: n.favorito ? "#ffc107" : "#082a66",
-                    }}
-                  >
-                    <i
-                      className={n.favorito ? "fas fa-star" : "far fa-star"}
-                    ></i>{" "}
-                    Favorito
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {notificacoes.length === 0 && (
-              <p style={{ textAlign: "center", marginTop: "20px" }}>
-                Nenhuma notificação por enquanto!
-              </p>
-            )}
+      {/* Footer – agora é irmão direto do conteúdo */}
+      <footer>
+        <div className="footer-container">
+          <div>
+            <h3>Sobre Nós</h3>
+            <p>
+              Grupo de estudantes dedicados ao desenvolvimento de iniciativas
+              voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.
+            </p>
+          </div>
+          <div>
+            <h3>Links Úteis</h3>
+            <Link to="/">Página Inicial</Link>
+            <Link to="/pesquisar">Pesquisa de Locais</Link>
+            <Link to="/locaisavaliados">Locais Avaliados</Link>
+            <Link to="/sobre">Sobre nós</Link>
+            <Link to="/perfil">Perfil</Link>
+          </div>
+          <div>
+            <h3>Contato</h3>
+            <p>Email: pesquefale@gmail.com</p>
           </div>
         </div>
-
-        {/* Rodapé */}
-        <footer>
-          <div className="footer-container">
-            <div>
-              <h3>Sobre Nós</h3>
-              <p>Grupo de estudantes dedicados ao desenvolvimento de iniciativas voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.
-              </p>
-            </div>
-            <div>
-              <h3>Links Úteis</h3>
-              <Link to="/">Página Inicial</Link>
-              <Link to="/pesquisar">Pesquisa de Locais</Link>
-              <Link to="/locaisavaliados">Locais Avaliados</Link>
-              <Link to="/sobre">Sobre nós</Link>
-              <Link to="/perfil">Perfil</Link>
-            </div>
-            <div>
-              <h3>Contato</h3>
-              <p>Email: pesquefale@gmail.com</p>
-            </div>
-          </div>
-          <p className="copyright">
-            &copy; Pesque & Fale 2025 - Todos os direitos reservados.
-          </p>
-        </footer>
-      </div>
-    </div>
+        <p className="copyright">&copy; Pesque & Fale 2025 - Todos os direitos reservados.</p>
+      </footer>
+    </Layout>
   );
 }
