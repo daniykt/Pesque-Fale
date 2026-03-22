@@ -254,34 +254,5 @@ body {
     }
 }
 
-/* ==================== TEMA ESCURO ==================== */
-body.dark-mode .notificacao {
-    background-color: #1e293b;
-    border-color: #334155;
-}
 
-    body.dark-mode .notificacao p {
-        color: #e2e8f0;
-    }
-
-    body.dark-mode .notificacao.lida {
-        background-color: #64748b;
-    }
-
-body.dark-mode .data {
-    background-color: #334155;
-    color: #e2e8f0;
-}
-
-body.dark-mode .notificacao .meta {
-    color: #94a3b8;
-}
-
-body.dark-mode .close {
-    color: #e2e8f0;
-}
-
-    body.dark-mode .close:hover {
-        color: #cbd5e1;
-    }
 

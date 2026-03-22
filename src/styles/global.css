@@ -274,12 +274,70 @@ body {
 }
 
 
-/* ================= Tema Escuro ================= */
+/* ================= TEMA ESCURO ================= */
 body.dark-mode {
   background: #121212;
   color: #f1f1f1;
 }
 
+/* Sidebar (sidebar.css) */
+body.dark-mode .sidebar {
+  background: var(--gray-900, #0f172a);
+  border-right-color: var(--gray-700, #334155);
+}
+
+body.dark-mode .nav-item {
+  color: var(--gray-300, #cbd5e1);
+}
+
+body.dark-mode .nav-item:hover {
+  background: var(--gray-800, #1e293b);
+  color: var(--white, #ffffff);
+}
+
+body.dark-mode .sidebar-footer {
+  border-top-color: var(--gray-700, #334155);
+}
+
+body.dark-mode .sidebar-header {
+  border-bottom-color: var(--gray-700, #334155);
+}
+
+body.dark-mode .theme-btn {
+  color: var(--gray-300, #cbd5e1);
+}
+
+body.dark-mode .theme-btn:hover {
+  background: var(--gray-800, #1e293b);
+  color: var(--white, #ffffff);
+}
+
+/* Mobile sidebar */
+@media (max-width: 900px) {
+  body.dark-mode .sidebar {
+    border-bottom-color: var(--gray-700, #334155);
+  }
+  
+  body.dark-mode .nav-menu {
+    background: var(--gray-900, #0f172a);
+  }
+  
+  body.dark-mode .mobile-menu-btn span {
+    background: var(--gray-300, #cbd5e1);
+  }
+  
+  body.dark-mode .theme-btn {
+    background: var(--gray-800, #1e293b);
+    border-color: var(--gray-700, #334155);
+  }
+  
+  body.dark-mode .theme-btn:hover {
+    background: var(--primary, #062A6c);
+    border-color: var(--primary, #062A6c);
+  }
+}
+
+/* Cards e widgets gerais */
 body.dark-mode .post-card,
 body.dark-mode .widget,
 body.dark-mode .btn-new-post,
@@ -375,11 +433,7 @@ body.dark-mode .post-stats {
   color: #ffffff;
 }
 
-body.dark-mode .post-stats {
-    color: #ffffff;
-}
-
-/* ========= NOVOS ESTILOS PARA MODO ESCURO ========= */
+/* Pesquisa / Locais */
 body.dark-mode .search-container,
 body.dark-mode .no-results {
     background-color: #1e1e1e;
@@ -423,8 +477,7 @@ body.dark-mode .tag {
     color: #90caf9;
 }
 
-
-/* ======== DARK MODE PARA LOCAIS AVALIADOS ========= */
+/* Locais avaliados */
 body.dark-mode h1,
 body.dark-mode .categoria-titulo {
   color: #90caf9;
@@ -445,7 +498,7 @@ body.dark-mode .categoria-titulo {
   border-left: 5px solid gold;
 }
 
-/* ======== DARK MODE PARA NOTIFICAÇÕES ========= */
+/* Notificações */
 body.dark-mode .notificacao {
   background-color: #1e1e1e;
   border: 1px solid #333;
@@ -475,53 +528,36 @@ body.dark-mode .comentario {
   color: #f1f1f1;
 }
 
-/* Corrigindo cores dos ícones ativos no modo escuro */
+/* Ícones ativos */
 body.dark-mode .like-btn.active {
-  color: #4caf50; /* Verde para curtir ativo */
+  color: #4caf50;
 }
 
 body.dark-mode .dislike-btn.active {
-  color: #f44336; /* Vermelho para não curtir ativo */
+  color: #f44336;
 }
 
 body.dark-mode .favorite-btn.active {
-  color: #ffd700; /* Amarelo para favorito ativo */
+  color: #ffd700;
 }
 
-/* Melhorar visibilidade da notificação lida no modo escuro */
 body.dark-mode .notificacao.lida {
   background-color: #2a2a2a;
   border-left: 4px solid #062A6C;
   opacity: 0.8;
 }
 
-/* Estilizar o botão "Lida" quando ativo no modo escuro */
 body.dark-mode .botoes button[onclick*="marcarComoLida"] {
   background-color: #1e3b61 !important;
   color: #ffffff !important;
   font-weight: bold;
 }
 
-/* Efeito hover no botão "Lida" no modo escuro */
 body.dark-mode .botoes button[onclick*="marcarComoLida"]:hover {
   background-color: #2a5298 !important;
 }
 
-/* ======== DARK MODE PARA COMENTÁRIOS E PERFIL ========= */
-body.dark-mode .nome-usuario,
-body.dark-mode .btn-interacao {
-    color: #ffffff !important;
-}
-
-body.dark-mode .data-publicacao {
-    color: #ffffff !important;
-}
-
-body.dark-mode .interacoes {
-    border-color: #ffffff !important;
-}
-
-/* Dark Mode para Perfil */
+/* Perfil */
 body.dark-mode .perfil {
   background-color: #1e1e1e;
   color: #ffffff;
@@ -536,6 +572,19 @@ body.dark-mode .username {
   color: #ffffff;
 }
 
+body.dark-mode .nome-usuario,
+body.dark-mode .btn-interacao {
+  color: #ffffff !important;
+}
+
+body.dark-mode .data-publicacao {
+  color: #ffffff !important;
+}
+
+body.dark-mode .interacoes {
+  border-color: #ffffff !important;
+}
+
 body.dark-mode .comentario {
   color: #f1f1f1 !important;
 }
@@ -546,8 +595,31 @@ body.dark-mode .stat-box {
   border: 1px solid #333;
 }
 
-body.dark-mode .data-publicacao {
-  color: #b0b0b0;
+/* Sobre nós */
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .descricao {
+  color: #ffffff;
+}
+
+body.dark-mode .card h2 {
+  color: #ffffff;
+}
+
+body.dark-mode .contribuicao-label {
+  color: #ffffff;
+}
+
+body.dark-mode .social i {
+  color: #ffffff;
+}
+
+/* Ajuste do container principal no modo escuro */
+body.dark-mode .main-layout-content {
+  background-color: #121212;
 }
 
 

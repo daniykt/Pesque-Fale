@@ -139,34 +139,3 @@ body {
         }
 
 
-/* Tema escuro */
-body.dark-mode {
-    color: #000000;
-}
-
-body.dark-mode .card {
-    background-color: #1e1e1e;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-}
-
-
-body.dark-mode .descricao {
-    color: #ffffff;
-}
-
-body.dark-mode .card h2 {
-    color: #ffffff;
-}
-
-body.dark-mode .location-card {
-    background-color: #1e1e1e;
-    color: #fff;
-}
-
-body.dark-mode .contribuicao-label {
-    color: #ffffff;
-}
-
-body.dark-mode .social i {
-    color: #ffffff;
-}
