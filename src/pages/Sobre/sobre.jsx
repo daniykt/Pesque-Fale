@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import './sobre.css';
 import Layout from '../../components/sidebar/layout';
 
+import fotoDanilo from '../../assets/image/sobrenos/fotodanilo.jpg';
+import fotoHenrique from '../../assets/image/sobrenos/fotohenrique.jpg';
+import fotoVinicius from '../../assets/image/sobrenos/fotovinicius.jpg';
+import fotoLucas from '../../assets/image/sobrenos/fotolucas.jpg';
+import fotoJoao from '../../assets/image/sobrenos/fotojoao.jpg';
+import fotoRebeca from '../../assets/image/sobrenos/fotorebeca.jpg';
+
 const SobreNos = () => {
 
   const membros = [
@@ -11,47 +18,46 @@ const SobreNos = () => {
       nome: 'Danilo Silva',
       profissao: 'Desenvolvedor Full-Stack em Formação',
       descricao: 'Estou cursando Desenvolvimento de Software Multiplataforma na FATEC. Sou Full-Stack em formação (Dart, JavaScript, React e C#). Combino design centrado no usuário com habilidade para organizar, planejar e coordenar projetos em equipe.',
-      foto: '/assets/sobrenos/fotodanilo.jpg',      
+      foto: fotoDanilo, // 2. Chame a variável importada aqui, sem aspas
     },
     {
       id: 2,
       nome: 'Henrique Tavares',
       profissao: 'Desenvolvedor Front-End | Co-Fundador',
       descricao: 'Tenho 19 anos e sou desenvolvedor front-end, iniciando no back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.',
-      foto: '/assets/sobrenos/fotohenrique.jpg',      
+      foto: fotoHenrique,      
     },
     {
       id: 3,
       nome: 'Vinícius Bovo',
       profissao: 'Desenvolvedor Front-End | Co-Fundador',
       descricao: 'Tenho 18 anos, sou desenvolvedor front-end e cofundador do Pesque & Fale. Criei a plataforma para incentivar a pesca em Matão-SP, organizando informações e promovendo inovação na área socioeconômica do lazer local.',
-      foto: '/assets/sobrenos/fotovinicius.jpg',      
+      foto: fotoVinicius,      
     },
     {
       id: 4,
       nome: 'Lucas Catto',
       profissao: 'Desenvolvedor Front-End | Co-Fundador',
       descricao: 'Tenho 18 anos e sou desenvolvedor front-end. Sou cofundador do Pesque & Fale, um projeto que inova no mundo da pesca em Matão. Busco unir criatividade e tecnologia para gerar impacto positivo na comunidade.',
-      foto: '/assets/sobrenos/fotolucas.jpg',     
+      foto: fotoLucas,     
     },
     {
       id: 5,
       nome: 'João Pedro Ferreira',
       profissao: 'Desenvolvedor Front-End | Co-Fundador',
       descricao: 'Tenho 18 anos e atuo como desenvolvedor front-end, sempre buscando criar experiências digitais funcionais e atrativas. Sou um dos idealizadores do projeto Pesque & Fale, trazendo inovação ao universo da pesca em Matão.',
-      foto: '/assets/sobrenos/fotojoao.jpg',
+      foto: fotoJoao,
     },
     {
       id: 6,
       nome: 'Rebeca Scutare',
       profissao: 'Estudante de Desenvolvimento de Software',
       descricao: 'Tenho 18 anos e estudo na Fatec Matão. Sou aluna do curso de Desenvolvimento de Software Multiplataforma e atualmente estou no segundo semestre.',
-      foto: '/assets/sobrenos/fotorebeca.jpg',
+      foto: fotoRebeca,
     }
   ];
 
   return (
-    // 2. Envolva tudo com o <Layout>
     <Layout>
       <div className="sobre-corpo">
         <section className="sobre-nos">

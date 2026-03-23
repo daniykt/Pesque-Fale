@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 import Layout from "../../components/sidebar/layout";
 import "./pesquisa.css";
 
+import imgValeSereno from "../../assets/image/pesquisa/represavalesereno.jpg";
+import imgLagoFendas from "../../assets/image/pesquisa/lagodasfendas.jpg";
+import imgJacarupema from "../../assets/image/pesquisa/represajacarupema.jpg";
+import imgRioAraguaia from "../../assets/image/pesquisa/rioaraguaia.jpg";
+import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";
+import imgLagoAzul from "../../assets/image/pesquisa/lagoazulserra.jpg";
+import imgRioParana from "../../assets/image/pesquisa/rio-parana.jpg";
+import imgAguasClaras from "../../assets/image/pesquisa/pesqueiroaguasclaras.jpg";
+
+
 const locaisExemplo = [
   {
     id: 1,
@@ -15,7 +25,7 @@ const locaisExemplo = [
     peixes: ["tucunaré", "pintado", "dourado"],
     tags: ["Boas estradas e trilhas"],
     avaliacao: 4.7,
-    imagem: ".pesqueefale3semestre/assets/pesquisa/represavalesereno.jpg",
+    imagem: imgValeSereno,
   },
   {
     id: 2,
@@ -28,7 +38,7 @@ const locaisExemplo = [
     peixes: ["pacu", "piapara", "tilápia"],
     tags: [],
     avaliacao: 4.9,
-    imagem: ".jpg",
+    imagem: imgLagoFendas,
   },
   {
     id: 3,
@@ -41,7 +51,7 @@ const locaisExemplo = [
     peixes: ["corvina", "tucunaré", "traíra"],
     tags: [],
     avaliacao: 4.5,
-    imagem: "url_para_imagem_jacarupema.jpg",
+    imagem: imgJacarupema,
   },
   {
     id: 4,
@@ -54,7 +64,7 @@ const locaisExemplo = [
     peixes: ["pintado", "pirarara", "pacu"],
     tags: ["Pesca embarcada", "Praias naturais"],
     avaliacao: 4.8,
-    imagem: "url_para_imagem_araguaia.jpg",
+    imagem: imgRioAraguaia,
   },
   {
     id: 5,
@@ -67,7 +77,7 @@ const locaisExemplo = [
     peixes: ["tambaqui", "tilápia", "pacu"],
     tags: ["Infraestrutura completa", "Familiar"],
     avaliacao: 4.6,
-    imagem: "url_para_imagem_recanto.jpg",
+    imagem: imgRecantoVerde,
   },
   {
     id: 6,
@@ -80,7 +90,7 @@ const locaisExemplo = [
     peixes: ["tilápia", "carpa", "traíra"],
     tags: ["Águas cristalinas", "Ambiente tranquilo"],
     avaliacao: 4.4,
-    imagem: "url_para_imagem_lago_azul.jpg",
+    imagem: imgLagoAzul,
   },
   {
     id: 7,
@@ -93,7 +103,7 @@ const locaisExemplo = [
     peixes: ["dourado", "surubim", "piapara"],
     tags: ["Pesca esportiva", "Região turística"],
     avaliacao: 4.8,
-    imagem: "url_para_imagem_rio_parana.jpg",
+    imagem: imgRioParana,
   },
   {
     id: 8,
@@ -106,7 +116,7 @@ const locaisExemplo = [
     peixes: ["tilápia", "pacu", "tambaqui"],
     tags: ["Fácil acesso", "Ideal para iniciantes"],
     avaliacao: 4.7,
-    imagem: "url_para_imagem_aguas_claras.jpg",
+    imagem: imgAguasClaras,
   },
 ];
 
