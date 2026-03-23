@@ -40,6 +40,8 @@
   transition: margin-left 0.3s ease;
 }
 
+
+
 /* Ajuste para o body quando a sidebar estiver presente */
 body {
   margin: 0;
@@ -49,14 +51,24 @@ body {
 .sidebar-header {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .sidebar-header .logo {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.sidebar-header .logo img {
   width: 110px;
-  height: 120px;
-  margin-bottom: 1rem;
   object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
 }
 
 .site-title {
@@ -172,22 +184,26 @@ body {
     overflow: visible;
   }
 
-  /* Header com logo e botão hambúrguer */
   .sidebar-header {
+    flex: 1;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
     padding: 0;
     border: none;
     text-align: left;
   }
 
   .sidebar-header .logo {
-    width: 45px;
+    display: flex;
+    justify-content: flex-start;
+    width: auto;
+  }
+
+  .sidebar-header .logo img {
     height: 45px;
-    margin: 0;
+    margin-bottom: 0;
     border-radius: 8px;
   }
 
@@ -276,7 +292,8 @@ body {
         transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
         z-index: 999;
         justify-content: flex-start; /* Alterado para começar do topo */
-        overflow: scroll;
+        overflow: hidden;
+        padding: 1rem 1.5rem 5rem 1.5rem;
     }
 
   /* Menu visível quando aberto */
@@ -286,17 +303,39 @@ body {
     visibility: visible;
   }
 
-  /* Itens do menu centralizados e em coluna */
+  /* Garante que o <ul> dentro da sidebar não seja escondido pelo index.css */
+  .nav-links {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: static !important;
+    top: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Zera margin/padding dos <li> - eram eles causando o scroll */
+  .nav-links li {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+  }
+
+  /* Itens do menu */
   .nav-item {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
-    max-width: none;
-    padding: 1.2rem;
-    margin: 0.5rem 0;
-    font-size: 1.1rem;
-    text-align: center;
+    box-sizing: border-box;
+    padding: 0.85rem 1rem;
+    margin: 0 !important;
+    font-size: 1rem;
+    text-align: left;
+    border-radius: 8px;
   }
 
   .nav-item:hover {
@@ -314,13 +353,17 @@ body {
 
   /* Footer do menu (botão de tema) no final - MOBILE FIX */
     .sidebar-footer {
-        position: static; /* Remove posicionamento fixo */
         display: none;
-        padding: 1rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem 2rem;
         border-top: 1px solid var(--gray-200);
-        margin-top: auto; /* Empurra para o final do container flex */
+        background: var(--white);
         width: 100%;
         box-sizing: border-box;
+        z-index: 1000;
     }
 
   .sidebar.open .sidebar-footer {
@@ -386,6 +429,33 @@ body {
   }
 }
 
+
+/* Telas muito pequenas - evita scroll no menu */
+@media (max-width: 375px) {
+  .nav-menu {
+    padding: 0.25rem 1rem 5rem 1rem !important;
+  }
+
+  .nav-links li {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .nav-item {
+    padding: 0.55rem 0.75rem !important;
+    margin: 0 !important;
+  }
+
+  .nav-item .material-symbols-outlined {
+    font-size: 1.25rem !important;
+    margin-right: 0.75rem !important;
+  }
+
+  .nav-text {
+    font-size: 0.9rem !important;
+  }
+}
+
 /* Esconder botão mobile no desktop */
 @media (min-width: 900px) {
   .mobile-menu-btn {
@@ -414,6 +484,8 @@ body.dark-mode .nav-item:hover {
 
 body.dark-mode .sidebar-footer {
   border-top-color: var(--gray-700);
+    background: var(--gray-900);
+
 }
 
 body.dark-mode .sidebar-header {
@@ -483,5 +555,3 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb {
 body.dark-mode .sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--gray-500);
 }
-
-

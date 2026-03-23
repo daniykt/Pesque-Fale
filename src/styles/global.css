@@ -25,13 +25,17 @@ header {
 
 .logo img {
     height: 100px;
-    width: auto;
     transition: 0.3s;
+    width: 110px;
+    margin-bottom: 1rem;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .logo img:hover {
     transform: scale(1.05);
 }
+
 
 .nav-toggle {
     display: none;

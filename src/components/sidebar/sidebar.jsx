@@ -3,6 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './sidebar.css';
 
+import logo from '../../assets/image/logo/logo.jpg'; 
+
+
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -53,9 +56,9 @@ export default function Sidebar() {
     <>
       <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          {/* Logo */}
+          {/* Logo corrigida: usando a variável importada */}
           <div className="logo">
-             <img src="/assets/logo/logo.jpg" alt="Pesque & Fale" style={{ width: '50px', borderRadius: '50%' }} />
+             <img src={logo} alt="Pesque & Fale"/>
           </div>
 
           {/* Botão hambúrguer para Mobile */}
