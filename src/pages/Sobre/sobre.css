@@ -132,6 +132,10 @@ body {
             .container {
                 grid-template-columns: 1fr;
             }
+
+            .sobre-nos {
+                margin-top: 70px;
+            }
         }
 
 

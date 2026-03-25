@@ -7,73 +7,24 @@ export default function Notificacao() {
   const [notificacoes, setNotificacoes] = useState([]);
 
   useEffect(() => {
-    localStorage.removeItem("notificacoes");
-    localStorage.removeItem("contadorNotificacoes");
-
-    const dadosIniciais = [
-      {
-        id: 1,
-        data: "05/05/2025 10:35",
-        usuario: "Reginaldosilva",
-        texto: "Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza!",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 2,
-        data: "05/05/2025 11:10",
-        usuario: "JoaoPescador",
-        texto: "A pescaria de sábado foi ótima, peguei um dourado enorme no laguna!",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 3,
-        data: "06/05/2025 09:15",
-        usuario: "MariaClara",
-        texto: "Gostei muito da estrutura do local, banheiros limpos e atendimento nota 10.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 4,
-        data: "06/05/2025 14:22",
-        usuario: "PedroSantos",
-        texto: "O acesso é um pouco difícil se chover, mas o peixe compensa a viagem.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 5,
-        data: "07/05/2025 08:45",
-        usuario: "AnaBeatriz",
-        texto: "Preços justos pelo passeio e aluguel de barco. Recomendo para famílias.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 6,
-        data: "07/05/2025 16:00",
-        usuario: "LucasAndrade",
-        texto: "Voltarei com a família no próximo feriado. Ambiente muito tranquilo e seguro.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-    ];
-    
-    setNotificacoes(dadosIniciais);
-    localStorage.setItem("notificacoes", JSON.stringify(dadosIniciais));
-    
-    // Atualiza o contador no Sidebar imediatamente
-    localStorage.setItem("contadorNotificacoes", dadosIniciais.length);
-    window.dispatchEvent(new CustomEvent("notificacoesAtualizadas", { detail: dadosIniciais.length }));
-
+    const stored = localStorage.getItem("notificacoes");
+    if (stored) {
+      setNotificacoes(JSON.parse(stored));
+    } else {
+      const dadosIniciais = [
+        {
+          id: 1,
+          data: "05/05/2025 10:35",
+          usuario: "Reginaldosilva",
+          texto: "Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza!",
+          lida: false,
+          curtida: null,
+          favorito: false,
+        },
+        // ... demais notificações iniciais (mantenha as que você já tem)
+      ];
+      setNotificacoes(dadosIniciais);
+    }
   }, []);
 
   useEffect(() => {

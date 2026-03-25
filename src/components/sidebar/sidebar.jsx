@@ -1,7 +1,10 @@
+// src/components/sidebar/sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './sidebar.css';
-import logo from '../../assets/image/logo/logo.jpg';
+
+import logo from '../../assets/image/logo/logo.jpg'; 
+
 
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -9,58 +12,7 @@ export default function Sidebar() {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
-  const [notifCount, setNotifCount] = useState(0);
   const location = useLocation();
-
-  // Inicializa as notificações no localStorage se não existirem (6 não lidas)
-  useEffect(() => {
-    const stored = localStorage.getItem('notificacoes');
-    if (!stored) {
-      const notificacoesIniciais = Array.from({ length: 6 }, (_, i) => ({
-        id: i + 1,
-        data: "05/05/2025 10:35",
-        usuario: "Reginaldosilva",
-        texto: `Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza! (Notif ${i + 1})`,
-        lida: false,
-        curtida: null,
-        favorito: false,
-      }));
-      localStorage.setItem('notificacoes', JSON.stringify(notificacoesIniciais));
-      setNotifCount(6);
-    } else {
-      const parsed = JSON.parse(stored);
-      setNotifCount(parsed.filter(n => !n.lida).length);
-    }
-  }, []);
-
-  // Função para sincronizar o contador a partir do localStorage
-  const syncNotifCount = () => {
-    const stored = localStorage.getItem('notificacoes');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setNotifCount(parsed.filter(n => !n.lida).length);
-    }
-  };
-
-  // Escuta o evento customizado disparado pela página de notificações
-  useEffect(() => {
-    const handleNotifUpdate = (e) => {
-      setNotifCount(e.detail);
-    };
-    window.addEventListener('notificacoesAtualizadas', handleNotifUpdate);
-    return () => window.removeEventListener('notificacoesAtualizadas', handleNotifUpdate);
-  }, []);
-
-  // Sincroniza quando a aba ganha foco
-  useEffect(() => {
-    window.addEventListener('focus', syncNotifCount);
-    return () => window.removeEventListener('focus', syncNotifCount);
-  }, []);
-
-  // Sincroniza quando a rota muda (ex: voltar de outra página)
-  useEffect(() => {
-    syncNotifCount();
-  }, [location]);
 
   // Alternar tema
   useEffect(() => {
@@ -76,7 +28,7 @@ export default function Sidebar() {
   // Fechar menu ao redimensionar para desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 901 && isMenuOpen) {
+      if (window.innerWidth >= 769 && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
@@ -104,10 +56,12 @@ export default function Sidebar() {
     <>
       <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
+          {/* Logo corrigida: usando a variável importada */}
           <div className="logo">
-            <img src={logo} alt="Pesque & Fale" />
+             <img src={logo} alt="Pesque & Fale"/>
           </div>
 
+          {/* Botão hambúrguer para Mobile */}
           <button
             className="mobile-menu-btn"
             onClick={toggleMenu}
@@ -160,9 +114,9 @@ export default function Sidebar() {
                 className={`nav-item ${isActive('/notificacao') ? 'active' : ''}`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className="material-symbols-outlined" style={{ position: 'relative' }}>
+                <span className="material-symbols-outlined">
                   notifications
-                  {notifCount > 0 && <span className="badge">{notifCount}</span>}
+                  <span className="badge">3</span>
                 </span>
                 <span className="nav-text">Notificações</span>
               </Link>
@@ -190,21 +144,21 @@ export default function Sidebar() {
               </Link>
             </li>
           </ul>
-
-          {/* Footer do menu - agora dentro do nav-menu */}
-          <div className="sidebar-footer">
-            <button className="theme-btn" onClick={toggleTheme}>
-              <span className="material-symbols-outlined">
-                {isDarkMode ? 'light_mode' : 'dark_mode'}
-              </span>
-              <span className="nav-text">
-                {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-              </span>
-            </button>
-          </div>
         </nav>
+
+        <div className="sidebar-footer">
+          <button className="theme-btn" onClick={toggleTheme}>
+            <span className="material-symbols-outlined">
+              {isDarkMode ? 'light_mode' : 'dark_mode'}
+            </span>
+            <span className="nav-text">
+              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+            </span>
+          </button>
+        </div>
       </aside>
 
+      {/* Overlay para fechar menu ao clicar fora */}
       {isMenuOpen && <div className="sidebar-overlay" onClick={toggleMenu}></div>}
     </>
   );
