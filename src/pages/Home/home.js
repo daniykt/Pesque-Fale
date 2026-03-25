@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from '../../components/sidebar/layout';
-
+import "./home.css";
+import "./App.css";
 
 // import imgLagoAzul from "../../assets/image/pesquisa/lagoazulserra.jpg";
 import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";

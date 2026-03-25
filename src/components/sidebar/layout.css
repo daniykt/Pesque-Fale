@@ -1,30 +1,23 @@
 /* layout.css */
+:root {
+  --sidebar-width: 280px;
+  --header-height: 70px;
+}
+
+/* Conteúdo principal – desktop */
 .main-layout-content {
-  margin-left: 280px; /* largura da sidebar */
+  margin-left: var(--sidebar-width);  /* espaço para a sidebar fixa */
   min-height: 100vh;
   background-color: #f7f7f7;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
-  /* Garante que o conteúdo não tente "encolher" horizontalmente */
-  align-items: stretch; 
+  transition: margin-left 0.3s ease;
 }
 
-/* Força todos os elementos filhos (h1, section, div) a ocuparem a largura total */
-/* Isso impede que o flexbox quebre o grid das outras páginas */
-.main-layout-content > * {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Empurra o footer para o final da página quando o conteúdo é curto */
-.main-layout-content > footer {
-  margin-top: auto;
-}
-
-/* Responsividade para Mobile */
+/* Responsivo – mobile */
 @media (max-width: 900px) {
   .main-layout-content {
-    margin-left: 0;
+    margin-left: 0;            /* remove o espaço lateral */
+    margin-top: var(--header-height); /* empurra o conteúdo para baixo do header fixo */
+    padding: 1rem;
   }
 }

@@ -131,7 +131,6 @@ body {
        e garantimos que o padding ignore margens colapsadas.
     */
     .container-notificacoes {
-        padding-top: 110px !important; 
         padding-left: 10px;
         padding-right: 10px;
     }
@@ -158,10 +157,6 @@ body {
 
 /* Ajuste para telas muito pequenas */
 @media (max-width: 480px) {
-    .container-notificacoes {
-        padding-top: 120px !important; /* Espaço extra para o menu hamburger */
-    }
-    
     .comentario {
         word-break: break-word;
     }
@@ -178,21 +173,4 @@ body {
     max-width: 900px;
     margin: 0 auto;
     box-sizing: border-box;
-}
-
-/* Ajuste específico para quando o menu hamburguer aparece */
-@media (max-width: 900px) {
-    .container-notificacoes {
-        /* 70px do header + 20px de respiro = 90px */
-        padding-top: 90px !important; 
-    }
-}
-
-.active-green { background-color: #28a745 !important; }
-.active-red { background-color: #dc3545 !important; }
-.active-gold { background-color: #ffc107 !important; color: #000 !important; }
-
-.notificacao.lida {
-    background-color: #f0f0f0;
-    opacity: 0.7;
 }

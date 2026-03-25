@@ -1,8 +1,6 @@
-// src/components/sidebar/sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './sidebar.css';
-
 import logo from '../../assets/image/logo/logo.jpg';
 
 export default function Sidebar() {
@@ -78,7 +76,7 @@ export default function Sidebar() {
   // Fechar menu ao redimensionar para desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 769 && isMenuOpen) {
+      if (window.innerWidth >= 901 && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
@@ -192,18 +190,19 @@ export default function Sidebar() {
               </Link>
             </li>
           </ul>
-        </nav>
 
-        <div className="sidebar-footer">
-          <button className="theme-btn" onClick={toggleTheme}>
-            <span className="material-symbols-outlined">
-              {isDarkMode ? 'light_mode' : 'dark_mode'}
-            </span>
-            <span className="nav-text">
-              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-            </span>
-          </button>
-        </div>
+          {/* Footer do menu - agora dentro do nav-menu */}
+          <div className="sidebar-footer">
+            <button className="theme-btn" onClick={toggleTheme}>
+              <span className="material-symbols-outlined">
+                {isDarkMode ? 'light_mode' : 'dark_mode'}
+              </span>
+              <span className="nav-text">
+                {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+              </span>
+            </button>
+          </div>
+        </nav>
       </aside>
 
       {isMenuOpen && <div className="sidebar-overlay" onClick={toggleMenu}></div>}
