@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./home.css";
+import Layout from "../../components/sidebar/layout";
 
 import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";
 import imgEvento1 from "../../assets/image/eventos/evento1.jpg";
@@ -195,11 +196,8 @@ const Home = () => {
   };
 
   return (
-    <>
-      <div className="home">
-        <aside className="_Sidebar">Conteúdo da barra lateral esquerda</aside>
-
-        <div className="column">
+    <Layout>
+      <div className="column">
           <main className="main-content">
             <header className="content-header-home">
               <h1>Bem-vindo ao Pesque & Fale</h1>
@@ -489,9 +487,8 @@ const Home = () => {
               &copy; Pesque & Fale 2025 - Todos os direitos reservados.
             </p>
           </footer>
-        </div>
       </div>
-    </>
+    </Layout>
   );
 };
 
