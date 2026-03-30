@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/index.css";
+import "../../styles/base.css";
 import "../../styles/global.css";
 import "./login.css";
 import "./toast.css";
