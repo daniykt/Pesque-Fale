@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
-/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap'); */
 
 /* ================= VARIÁVEIS E RESET ================= */
 * {
@@ -16,10 +15,10 @@
   --primary: #0096c7;
   --primary-dark: #0077b6;
   
-  /* Variáveis do Designer (homeAntigo) */
+  /* Variáveis do Designer */
   --sidebar-width: 280px;
   --header-height: 70px;
-  --primary-theme: #062A6c; /* Azul escuro do Header/Sidebar */
+  --primary-theme: #062A6c;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
   --gray-300: #cbd5e1;
@@ -43,33 +42,42 @@ body {
   line-height: 1.5;
   background: #f5f5f5;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   display: flex;
   margin: 0;
 }
 
 /* ================= LAYOUT PRINCIPAL ================= */
 
-/* Container geral */
 .column {
   width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* CORREÇÃO: Permite que a coluna encolha em telas pequenas */
+  min-width: 0; 
 }
 
 .container {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Conteúdo Principal (ao lado da sidebar) */
+/* Conteúdo Principal */
 .main-content {
   flex: 1;
   min-height: 100vh;
   padding: 2rem;
-  transition: margin-left 0.3s ease;
+  /* CORREÇÃO: Margin para não sobrepôr a sidebar fixa no desktop */
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  transition: margin-left 0.3s ease, width 0.3s ease;
   display: flex;
   flex-direction: column;
+  /* CORREÇÃO: Previne que o conteúdo estoure a largura */
+  min-width: 0; 
+  overflow-x: hidden;
 }
 
 .content-header-home {
@@ -95,13 +103,14 @@ body {
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
+  /* CORREÇÃO CRÍTICA: Permite que os filhos (feed) encolham */
+  min-width: 0;
 }
 
-/* ================= SIDEBAR (Design homeAntigo) ================= */
-/* Nota: Se você usa o componente <Layout>, estas classes estilizam o que ele renderiza */
+/* ================= SIDEBAR ================= */
 
 .sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   width: var(--sidebar-width);
@@ -114,6 +123,7 @@ body {
   flex-direction: column;
   overflow-y: auto;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 .sidebar-header {
@@ -219,6 +229,8 @@ body {
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
+  /* CORREÇÃO: Garante que o feed não force a largura da tela */
+  min-width: 0; 
 }
 
 /* Botão Nova Publicação */
@@ -255,6 +267,7 @@ body {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0; /* Impede imagem de encolher */
 }
 
 .btn-new-post input {
@@ -264,6 +277,7 @@ body {
   flex: 1;
   color: #333;
   cursor: pointer;
+  min-width: 0; /* Permite input encolher */
 }
 
 .btn-new-post input:focus {
@@ -280,6 +294,7 @@ body {
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .post-btn:hover {
@@ -297,6 +312,7 @@ body {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%; /* Garante largura total */
 }
 
 .post-card:hover {
@@ -324,6 +340,7 @@ body {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-width: 0; /* Permite texto quebrar */
 }
 
 .post-author {
@@ -337,6 +354,9 @@ body {
   margin: 0;
   font-size: 12px;
   color: #8e8e8e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .post-menu {
@@ -347,15 +367,17 @@ body {
   padding: 0;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .post-content {
   padding: 0 12px 12px 12px;
   font-size: 14px;
   line-height: 1.5;
+  word-break: break-word; /* Corrige texto longo */
 }
 
-/* Imagem do Post (Corrigido para JSX) */
+/* Imagem do Post */
 .post-main-image-container {
   width: 100%;
   background: #f0f0f0;
@@ -441,6 +463,7 @@ body {
   border-radius: 50%;
   object-fit: cover;
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .comment-content-bubble {
@@ -451,6 +474,7 @@ body {
   font-size: 14px;
   max-width: calc(100% - 42px);
   flex-grow: 1;
+  word-break: break-word;
 }
 
 .comment-author-name {
@@ -476,6 +500,7 @@ body {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .comment-input input {
@@ -485,7 +510,7 @@ body {
   border-radius: 20px;
   outline: none;
   font-size: 0.9rem;
-  min-width: 0;
+  min-width: 100px; /* Garante tamanho minimo */
 }
 
 .comment-btn {
@@ -501,6 +526,7 @@ body {
   justify-content: center;
   height: 32px;
   width: 32px;
+  flex-shrink: 0;
 }
 
 .comment-btn:hover {
@@ -516,6 +542,8 @@ body {
   position: sticky;
   top: 1rem;
   height: fit-content;
+  /* CORREÇÃO: Permite encolher */
+  min-width: 0;
 }
 
 .widget {
@@ -563,10 +591,10 @@ body {
 .place-item { display: flex; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #eee; transition: background-color 0.3s; }
 .place-item:hover { background-color: #f8f9fa; }
 .place-item:last-child { border-bottom: none; }
-.place-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
-.place-info { flex: 1; }
+.place-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.place-info { flex: 1; min-width: 0; }
 .place-info h4 { margin: 0 0 0.25rem 0; font-size: 1rem; color: #333; }
-.place-info p { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--dark-gray); }
+.place-info p { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--dark-gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .place-rating { display: flex; gap: 0.5rem; align-items: center; }
 .place-rating span:first-child { font-weight: 600; color: #ffa500; }
 .place-rating span:last-child { font-size: 0.8rem; color: var(--dark-gray); }
@@ -617,6 +645,10 @@ footer {
   padding: 2rem 1rem;
   text-align: center;
   margin-top: auto;
+  /* CORREÇÃO: Acompanha a sidebar no desktop */
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 footer .footer-container {
@@ -636,15 +668,24 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
 /* ================= RESPONSIVIDADE ================= */
 
 @media (max-width: 1024px) {
-  .content-layout { grid-template-columns: 1fr; }
-  .right-sidebar { position: static; max-width: 100%; width: 100%; margin-top: 1rem; }
+  .content-layout { 
+    grid-template-columns: 1fr; 
+  }
+  .right-sidebar { 
+    position: static; 
+    max-width: 100%; 
+    width: 100%; 
+    margin-top: 1rem; 
+  }
 }
 
 @media (max-width: 900px) {
   /* Sidebar vira Header fixo no mobile */
   .sidebar {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 0; 
+    left: 0; 
+    right: 0;
     width: 100%;
     height: var(--header-height);
     flex-direction: row;
@@ -653,6 +694,7 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
     padding: 0 1rem;
     overflow: visible;
     z-index: 1001;
+    transform: none; /* Reseta transform */
   }
 
   .sidebar-header {
@@ -671,7 +713,10 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
 
   .nav-menu {
     position: fixed;
-    top: var(--header-height); left: 0; right: 0; bottom: 0;
+    top: var(--header-height); 
+    left: 0; 
+    right: 0; 
+    bottom: 0;
     width: 100%;
     background: var(--white);
     transform: translateX(-100%);
@@ -683,7 +728,6 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
     z-index: 1000;
   }
 
-  /* Classe para abrir o menu via JS */
   .sidebar.open .nav-menu {
     transform: translateX(0);
     visibility: visible;
@@ -701,16 +745,84 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
   .sidebar-footer { display: none; }
   .sidebar.open .sidebar-footer { display: flex; flex-direction: column; margin-top: auto; }
 
-  /* Ajuste do conteúdo principal no mobile */
+  /* CORREÇÃO: Ajuste do conteúdo principal no mobile */
   .main-content {
-    margin-top: calc(var(--header-height) + 1rem); /* Espaço para o header fixo */
+    margin-left: 0 !important; /* Remove margem da sidebar */
+    width: 100% !important; /* Largura total */
+    margin-top: calc(var(--header-height) + 1rem); /* Espaço para header fixo */
     padding: 1rem;
+  }
+
+  /* CORREÇÃO: Footer no mobile */
+  footer {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }
 
 @media (max-width: 768px) {
-  .content-layout { padding: 0; }
-  .btn-new-post { flex-direction: column; align-items: start; }
+  .content-layout { 
+    padding: 0; 
+  }
+  
+  .btn-new-post { 
+    flex-direction: column; 
+    align-items: flex-start; 
+  }
+  
+  .post-header {
+    padding: 10px;
+  }
+  
+  .post-content {
+    padding: 0 10px 10px 10px;
+  }
+  
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .comment-content-bubble {
+    max-width: calc(100% - 35px);
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0.75rem;
+  }
+  
+  .content-header-home h1 {
+    font-size: 1.5rem;
+  }
+  
+  .content-header-home p {
+    font-size: 1rem;
+  }
+  
+  .post-author-img {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .post-author {
+    font-size: 13px;
+  }
+  
+  .post-meta {
+    font-size: 11px;
+  }
+  
+  .widget-title {
+    font-size: 1rem;
+    padding: 1rem;
+  }
+  
+  footer .footer-container {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ================= MODO ESCURO ================= */
@@ -721,11 +833,27 @@ body.dark-mode {
 }
 
 /* Sidebar Dark Mode */
-body.dark-mode .sidebar { background: var(--gray-900); border-color: var(--gray-700); }
-body.dark-mode .nav-item { color: var(--gray-300); }
-body.dark-mode .nav-item:hover { background: var(--gray-800); color: var(--white); }
-body.dark-mode .sidebar-header { border-color: var(--gray-700); }
-body.dark-mode .theme-btn { color: var(--gray-300); }
+body.dark-mode .sidebar { 
+  background: var(--gray-900); 
+  border-color: var(--gray-700); 
+}
+
+body.dark-mode .nav-item { 
+  color: var(--gray-300); 
+}
+
+body.dark-mode .nav-item:hover { 
+  background: var(--gray-800); 
+  color: var(--white); 
+}
+
+body.dark-mode .sidebar-header { 
+  border-color: var(--gray-700); 
+}
+
+body.dark-mode .theme-btn { 
+  color: var(--gray-300); 
+}
 
 /* Cards e Conteúdo Dark Mode */
 body.dark-mode .post-card,
