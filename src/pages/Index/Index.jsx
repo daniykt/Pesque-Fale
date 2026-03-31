@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./index.css"; 
 
@@ -68,7 +68,40 @@ const teamMembers = [
   
 ];
 
+const faqItems = [
+  {
+    pergunta: "O que é o Pesque & Fale?",
+    resposta: "O Pesque & Fale é uma plataforma que conecta pescadores, permitindo compartilhar experiências, descobrir novos locais de pesca e avaliar rios e lagos da região."
+  },
+  {
+    pergunta: "A plataforma é gratuita?",
+    resposta: "Sim! O cadastro e o uso de todas as funcionalidades da plataforma são completamente gratuitos."
+  },
+  {
+    pergunta: "Como posso cadastrar um local de pesca?",
+    resposta: "Após fazer login na plataforma, basta acessar a seção de locais e clicar em 'Cadastrar Local'. Preencha as informações como nome, endereço e características do local."
+  },
+  {
+    pergunta: "Posso avaliar locais sem me cadastrar?",
+    resposta: "Não. Para deixar avaliações e comentários, é necessário estar logado na plataforma. O cadastro é rápido e gratuito."
+  },
+  {
+    pergunta: "O Pesque & Fale atende apenas a região de Matão-SP?",
+    resposta: "Atualmente o foco principal é Matão-SP, mas a plataforma está em constante expansão e logo atenderá outras regiões."
+  },
+  {
+    pergunta: "Como funciona o sistema de avaliações?",
+    resposta: "Após visitar um local cadastrado, você pode atribuir uma nota de 1 a 5 estrelas e deixar um comentário detalhado sobre sua experiência, ajudando outros pescadores."
+  }
+];
+
 const Index = () =>  {
+  const [faqAberto, setFaqAberto] = useState(null);
+
+  const toggleFaq = (index) => {
+    setFaqAberto(faqAberto === index ? null : index);
+  };
+
   return (
     <>
         <head>
@@ -168,7 +201,6 @@ const Index = () =>  {
         <div className="team-container">
           <div className="team-title-area">
             <h2>NOSSA EQUIPE</h2>
-            {/* <p>Conheça quem faz o Pesque & Fale acontecer</p> */}
           </div>
 
           <div className="team-grid-layout">
@@ -193,7 +225,7 @@ const Index = () =>  {
         </div>
       </section>
 
-      {/* CTA */}
+            {/* CTA */}
             <section className="cta-section" id="contact">
                 <div className="container-i">
                     <h2>Pronto para começar sua jornada?</h2>
@@ -204,6 +236,46 @@ const Index = () =>  {
                     </Link>
                 </div>
             </section>
+
+      {/* FAQ */}
+      <section className="section-faq" id="faq">
+        <div className="container-i">
+          <div className="faq-title-area">
+            <h2>Perguntas Frequentes</h2>
+            <p>Tire suas dúvidas sobre o Pesque & Fale</p>
+          </div>
+
+          <div className="faq-list">
+            {faqItems.map((item, index) => (
+              <div key={index} className={`faq-item ${faqAberto === index ? "faq-item-open" : ""}`}>
+                <button className="faq-question" onClick={() => toggleFaq(index)}>
+                  <span>{item.pergunta}</span>
+                  <i className={`fas fa-chevron-down faq-icon ${faqAberto === index ? "faq-icon-rotated" : ""}`}></i>
+                </button>
+                <div className="faq-answer">
+                  <p>{item.resposta}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contato */}
+      <section className="section-contato" id="contato">
+        <div className="container-i">
+          <div className="contato-content">
+            <div className="contato-texto">
+              <h2>Entre em Contato</h2>
+              <p>Tem alguma dúvida, sugestão ou gostaria de parcerias? Fale conosco pelo e-mail abaixo.</p>
+            </div>
+            <a href="mailto:pesquefale@gmail.com" className="contato-email">
+              <i className="fas fa-envelope"></i>
+              <span>pesquefale@gmail.com</span>
+            </a>
+          </div>
+        </div>
+      </section>
     </>
   );
 };
