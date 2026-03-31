@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import "./index.css"; 
+import "./index.css";
 
 import imgFamilia from "../../assets/image/index/tio.gif"
 import imgLogo1 from "../../assets/image/login/logo1.png"
@@ -21,7 +21,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-
   {
     nome: "Henrique Tavares",
     role: "Desenvolvedor Full-Stack em Formação",
@@ -30,7 +29,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-
   {
     nome: "Vinicius Bovo",
     role: "Desenvolvedor Full-Stack em Formação",
@@ -39,7 +37,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-
   {
     nome: "Lucas Catto",
     role: "Desenvolvedor Full-Stack em Formação",
@@ -48,7 +45,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-
   {
     nome: "João Pedro",
     role: "Desenvolvedor Full-Stack em Formação",
@@ -57,7 +53,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-
   {
     nome: "Rebeca Scutare",
     role: "Desenvolvedor Full-Stack em Formação",
@@ -66,7 +61,6 @@ const teamMembers = [
     linkedin: "#",
     github: "#"
   },
-  
 ];
 
 const faqItems = [
@@ -96,84 +90,106 @@ const faqItems = [
   }
 ];
 
-const Index = () =>  {
+const Index = () => {
   const [faqAberto, setFaqAberto] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleFaq = (index) => {
     setFaqAberto(faqAberto === index ? null : index);
   };
 
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen(!menuOpen);
+  };
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
+  // Fechar menu ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && !e.target.closest('#navbar')) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [menuOpen]);
+
+  // Fechar menu ao redimensionar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <>
-      {/* Navigation */}
+      {/* NAVBAR */}
       <nav id="navbar">
         <div className="nav-container">
           <div className="logo-index">
-            <img src={imgLogo1} alt="Logo PESQUE & FALE" />
-            <img src={imgLogo2} alt="Logo PESQUE & FALE 2" />
+            <img src={imgLogo1} alt="Logo 1" />
+            <img src={imgLogo2} alt="Logo 2" />
           </div>
-          <ul className="nav-links" id="navLinks">
-            <li><a href="#home">Início</a></li>
-            <li><a href="#features">Recursos</a></li>
-            <li><a href="#about">Sobre</a></li>
-            <li><a href="#team">Equipe</a></li>
-            <li><a href="#contact">Contato</a></li>
+          
+          <ul id="navLinks" className={menuOpen ? 'active' : ''}>
+            <li><a href="#home" onClick={closeMenu}>Início</a></li>
+            <li><a href="#features" onClick={closeMenu}>Recursos</a></li>
+            <li><a href="#about" onClick={closeMenu}>Sobre</a></li>
+            <li><a href="#team" onClick={closeMenu}>Equipe</a></li>
+            <li><a href="#contact" onClick={closeMenu}>Contato</a></li>
           </ul>
-          <div className="menu-toggle" id="menuToggle">
+          
+          <button id="menuToggle" className={menuOpen ? 'active' : ''} onClick={toggleMenu}>
             <span></span>
             <span></span>
             <span></span>
-          </div>
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* HERO */}
       <section className="hero" id="home">
         <div className="hero-content">
           <div className="hero-text">
-            <h1>Conecte-se com <span>Pescadores</span> Descubra os Melhores{" "}<span>Locais</span></h1>
+            <h1>Conecte-se com <span>Pescadores</span> Descubra os Melhores <span>Locais</span></h1>
             <p>A plataforma perfeita para compartilhar experiências, fazer amizades e encontrar os melhores rios e lagos para sua pescaria.</p>
-
             <div className="cta-buttons">
-              <Link to="/login" className="btn btn-primary">
-                Começar Agora
-              </Link>
-
+              <Link to="/login" className="btn btn-primary">Começar Agora</Link>
               <a href="#features" className="btn btn-secondary">Saiba Mais</a>
             </div>
           </div>
-
           <div className="hero-visual">
-            <img
-              src={imgFamilia}
-              alt="Familia"
-              className='hero-image'
-            />
+            <img src={imgFamilia} alt="Familia pescando" className="hero-image" />
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* FEATURES */}
       <section className="features" id="features">
         <div className="container-i">
           <div className="section-header">
             <h2>Nossos Recursos</h2>
             <p>Tudo que você precisa para ter a melhor experiência de pesca</p>
           </div>
-
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">🎣</div>
               <h3>Conecte-se</h3>
-              <p>Conheça novos pescadores, compartilhe experiências e construauma comunidade apaixonada pela pesca.</p>
+              <p>Conheça novos pescadores, compartilhe experiências e construa uma comunidade apaixonada pela pesca.</p>
             </div>
-
             <div className="feature-card">
               <div className="feature-icon">📍</div>
               <h3>Descubra Locais</h3>
-              <p>Encontre os melhores rios e lagos com avaliações e recomendaçõesde pescadores experientes.</p>
+              <p>Encontre os melhores rios e lagos com avaliações e recomendações de pescadores experientes.</p>
             </div>
-
             <div className="feature-card">
               <div className="feature-icon">⭐</div>
               <h3>Avaliações</h3>
@@ -183,28 +199,25 @@ const Index = () =>  {
         </div>
       </section>
 
+      {/* ABOUT */}
       <section className="about" id="about">
         <div className="container-i">
           <div className="about-content">
             <div className="about-text">
               <h2>Sobre o <span>PESQUE & FALE</span></h2>
-
               <p>Nossa plataforma nasceu da necessidade de conectar pescadores e facilitar a descoberta de locais agradáveis e acessíveis para a pesca.</p>
               <p>Funcionamos como uma rede social especializada, onde pescadores podem trocar informações, experiências e feedback sobre os melhores ambientes para pescar.</p>
               <p>Promovemos a pesca sustentável, impulsionando a economia local e proporcionando momentos de lazer e trabalho em harmonia com a natureza.</p>
             </div>
-
             <div className="stats">
               <div className="stat">
                 <div className="stat-number">500+</div>
                 <div className="stat-label">Locais Cadastrados</div>
               </div>
-
               <div className="stat">
                 <div className="stat-number">1000+</div>
                 <div className="stat-label">Pescadores Ativos</div>
               </div>
-
               <div className="stat">
                 <div className="stat-number">5000+</div>
                 <div className="stat-label">Avaliações</div>
@@ -212,16 +225,14 @@ const Index = () =>  {
             </div>
           </div>
         </div>
-
       </section>
 
-      {/* Time */}
+      {/* TEAM */}
       <section className="section-team" id="team">
         <div className="team-container">
           <div className="team-title-area">
             <h2>NOSSA EQUIPE</h2>
           </div>
-
           <div className="team-grid-layout">
             {teamMembers.map((membro, index) => (
               <div key={index} className="member-card">
@@ -229,7 +240,6 @@ const Index = () =>  {
                 <h3 className="member-name">{membro.nome}</h3>
                 <span className="member-role">{membro.role}</span>
                 <p className="member-bio">{membro.bio}</p>
-                
                 <div className="member-social-links">
                   <a href={membro.linkedin} target="_blank" rel="noopener noreferrer">
                     <i className="fab fa-linkedin"></i>
@@ -249,10 +259,7 @@ const Index = () =>  {
         <div className="container-i">
           <h2>Pronto para começar sua jornada?</h2>
           <p>Junte-se à comunidade PESQUE & FALE hoje mesmo</p>
-
-          <Link to="/login" className="btn btn-outline-primary">
-            Cadastre-se Gratuitamente
-          </Link>
+          <Link to="/login" className="btn btn-outline-primary">Cadastre-se Gratuitamente</Link>
         </div>
       </section>
 
@@ -263,7 +270,6 @@ const Index = () =>  {
             <h2>Perguntas Frequentes</h2>
             <p>Tire suas dúvidas sobre o Pesque & Fale</p>
           </div>
-
           <div className="faq-list">
             {faqItems.map((item, index) => (
               <div key={index} className={`faq-item ${faqAberto === index ? "faq-item-open" : ""}`}>
@@ -280,7 +286,7 @@ const Index = () =>  {
         </div>
       </section>
 
-      {/* Contato */}
+      {/* CONTATO */}
       <section className="section-contato" id="contato">
         <div className="container-i">
           <div className="contato-content">
