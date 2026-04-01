@@ -8,14 +8,11 @@
 }
 
 :root {
-  /* Cores Gerais */
   --white: #fff;
   --gray: #ccc;
   --dark-gray: #555;
   --primary: #0096c7;
   --primary-dark: #0077b6;
-  
-  /* Variáveis do Designer */
   --sidebar-width: 280px;
   --header-height: 70px;
   --primary-theme: #062A6c;
@@ -36,26 +33,20 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
-  font-family: 'Poppins', "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  line-height: 1.5;
-  background: #f5f5f5;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  margin: 0;
-}
-
 /* ================= LAYOUT PRINCIPAL ================= */
+
+/* CORREÇÃO: Só aplica flex se tiver sidebar */
+body.home-with-sidebar {
+  display: flex;
+  flex-direction: row;
+}
 
 .column {
   width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  /* CORREÇÃO: Permite que a coluna encolha em telas pequenas */
-  min-width: 0; 
+  min-width: 0;
 }
 
 .container {
@@ -64,20 +55,23 @@ body {
   flex-direction: column;
 }
 
-/* Conteúdo Principal */
+/* CORREÇÃO: Só aplica margem se tiver sidebar */
+body.home-with-sidebar .main-content {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+}
+
+/* Conteúdo Principal - BASE */
 .main-content {
   flex: 1;
   min-height: 100vh;
   padding: 2rem;
-  /* CORREÇÃO: Margin para não sobrepôr a sidebar fixa no desktop */
-  margin-left: var(--sidebar-width);
-  width: calc(100% - var(--sidebar-width));
   transition: margin-left 0.3s ease, width 0.3s ease;
   display: flex;
   flex-direction: column;
-  /* CORREÇÃO: Previne que o conteúdo estoure a largura */
-  min-width: 0; 
+  min-width: 0;
   overflow-x: hidden;
+  /* REMOVIDO: margin-left e width daqui para evitar conflito */
 }
 
 .content-header-home {
@@ -103,7 +97,6 @@ body {
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
   margin-bottom: 3rem;
-  /* CORREÇÃO CRÍTICA: Permite que os filhos (feed) encolham */
   min-width: 0;
 }
 
@@ -229,11 +222,9 @@ body {
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
-  /* CORREÇÃO: Garante que o feed não force a largura da tela */
-  min-width: 0; 
+  min-width: 0;
 }
 
-/* Botão Nova Publicação */
 .new-post-section {
   display: flex;
   justify-content: center;
@@ -267,7 +258,7 @@ body {
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0; /* Impede imagem de encolher */
+  flex-shrink: 0;
 }
 
 .btn-new-post input {
@@ -277,7 +268,7 @@ body {
   flex: 1;
   color: #333;
   cursor: pointer;
-  min-width: 0; /* Permite input encolher */
+  min-width: 0;
 }
 
 .btn-new-post input:focus {
@@ -302,7 +293,6 @@ body {
   transform: scale(1.1);
 }
 
-/* Card do Post */
 .post-card {
   background: #fff;
   border-radius: 8px;
@@ -312,7 +302,7 @@ body {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  width: 100%; /* Garante largura total */
+  width: 100%;
 }
 
 .post-card:hover {
@@ -320,7 +310,6 @@ body {
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
 }
 
-/* Header do Post */
 .post-header {
   display: flex;
   align-items: center;
@@ -340,7 +329,7 @@ body {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  min-width: 0; /* Permite texto quebrar */
+  min-width: 0;
 }
 
 .post-author {
@@ -374,10 +363,9 @@ body {
   padding: 0 12px 12px 12px;
   font-size: 14px;
   line-height: 1.5;
-  word-break: break-word; /* Corrige texto longo */
+  word-break: break-word;
 }
 
-/* Imagem do Post */
 .post-main-image-container {
   width: 100%;
   background: #f0f0f0;
@@ -391,7 +379,6 @@ body {
   max-height: 600px;
 }
 
-/* Interações */
 .post-interact-bar {
   border-top: 1px solid #efefef;
   display: flex;
@@ -438,7 +425,6 @@ body {
   font-size: 20px;
 }
 
-/* Comentários */
 .post-comments-area {
   background-color: #fafafa;
   border-top: 1px solid #efefef;
@@ -484,7 +470,6 @@ body {
   display: block;
 }
 
-/* Input de Comentário */
 .comment-input {
   display: flex;
   flex-wrap: wrap;
@@ -510,7 +495,7 @@ body {
   border-radius: 20px;
   outline: none;
   font-size: 0.9rem;
-  min-width: 100px; /* Garante tamanho minimo */
+  min-width: 100px;
 }
 
 .comment-btn {
@@ -542,7 +527,6 @@ body {
   position: sticky;
   top: 1rem;
   height: fit-content;
-  /* CORREÇÃO: Permite encolher */
   min-width: 0;
 }
 
@@ -587,7 +571,6 @@ body {
 .event-btn { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.3s; font-weight: 500; }
 .event-btn:hover { background: var(--primary-dark); }
 
-/* Locais Populares */
 .place-item { display: flex; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #eee; transition: background-color 0.3s; }
 .place-item:hover { background-color: #f8f9fa; }
 .place-item:last-child { border-bottom: none; }
@@ -599,7 +582,6 @@ body {
 .place-rating span:first-child { font-weight: 600; color: #ffa500; }
 .place-rating span:last-child { font-size: 0.8rem; color: var(--dark-gray); }
 
-/* Clima */
 .weather-info { padding: 1.5rem; }
 .weather-main { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .weather-icon { font-size: 2rem; }
@@ -610,7 +592,6 @@ body {
 .fishing-conditions { text-align: center; padding: 0.75rem; background: #e8f5e8; border-radius: 8px; border: 1px solid #c3e6c3; }
 .condition-good { color: #2e7d2e; font-weight: 600; font-size: 0.9rem; }
 
-/* Card de Dicas */
 .tips-card {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
@@ -637,7 +618,7 @@ body {
   opacity: 0.95;
 }
 
-/* ================= FOOTER ================= */
+/* ================= FOOTER - CORRIGIDO ================= */
 
 footer {
   background: linear-gradient(135deg, #000);
@@ -645,10 +626,15 @@ footer {
   padding: 2rem 1rem;
   text-align: center;
   margin-top: auto;
-  /* CORREÇÃO: Acompanha a sidebar no desktop */
+  /* CORREÇÃO: Sem margem por padrão */
+  width: 100%;
+  margin-left: 0;
+}
+
+/* CORREÇÃO: Só aplica margem se tiver sidebar */
+body.home-with-sidebar footer {
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
-  transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 footer .footer-container {
@@ -680,7 +666,6 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
 }
 
 @media (max-width: 900px) {
-  /* Sidebar vira Header fixo no mobile */
   .sidebar {
     position: fixed;
     top: 0; 
@@ -694,7 +679,7 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
     padding: 0 1rem;
     overflow: visible;
     z-index: 1001;
-    transform: none; /* Reseta transform */
+    transform: none;
   }
 
   .sidebar-header {
@@ -745,15 +730,14 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
   .sidebar-footer { display: none; }
   .sidebar.open .sidebar-footer { display: flex; flex-direction: column; margin-top: auto; }
 
-  /* CORREÇÃO: Ajuste do conteúdo principal no mobile */
+  /* CORREÇÃO: Reset no mobile */
   .main-content {
-    margin-left: 0 !important; /* Remove margem da sidebar */
-    width: 100% !important; /* Largura total */
-    margin-top: calc(var(--header-height) + 1rem); /* Espaço para header fixo */
+    margin-left: 0 !important;
+    width: 100% !important;
+    margin-top: calc(var(--header-height) + 1rem);
     padding: 1rem;
   }
 
-  /* CORREÇÃO: Footer no mobile */
   footer {
     margin-left: 0 !important;
     width: 100% !important;
@@ -770,13 +754,8 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
     align-items: flex-start; 
   }
   
-  .post-header {
-    padding: 10px;
-  }
-  
-  .post-content {
-    padding: 0 10px 10px 10px;
-  }
+  .post-header { padding: 10px; }
+  .post-content { padding: 0 10px 10px 10px; }
   
   .action-btn {
     padding: 8px 12px;
@@ -790,39 +769,14 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
 }
 
 @media (max-width: 480px) {
-  .main-content {
-    padding: 0.75rem;
-  }
-  
-  .content-header-home h1 {
-    font-size: 1.5rem;
-  }
-  
-  .content-header-home p {
-    font-size: 1rem;
-  }
-  
-  .post-author-img {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .post-author {
-    font-size: 13px;
-  }
-  
-  .post-meta {
-    font-size: 11px;
-  }
-  
-  .widget-title {
-    font-size: 1rem;
-    padding: 1rem;
-  }
-  
-  footer .footer-container {
-    grid-template-columns: 1fr;
-  }
+  .main-content { padding: 0.75rem; }
+  .content-header-home h1 { font-size: 1.5rem; }
+  .content-header-home p { font-size: 1rem; }
+  .post-author-img { width: 36px; height: 36px; }
+  .post-author { font-size: 13px; }
+  .post-meta { font-size: 11px; }
+  .widget-title { font-size: 1rem; padding: 1rem; }
+  footer .footer-container { grid-template-columns: 1fr; }
 }
 
 /* ================= MODO ESCURO ================= */
@@ -832,30 +786,12 @@ body.dark-mode {
   color: #f1f1f1;
 }
 
-/* Sidebar Dark Mode */
-body.dark-mode .sidebar { 
-  background: var(--gray-900); 
-  border-color: var(--gray-700); 
-}
+body.dark-mode .sidebar { background: var(--gray-900); border-color: var(--gray-700); }
+body.dark-mode .nav-item { color: var(--gray-300); }
+body.dark-mode .nav-item:hover { background: var(--gray-800); color: var(--white); }
+body.dark-mode .sidebar-header { border-color: var(--gray-700); }
+body.dark-mode .theme-btn { color: var(--gray-300); }
 
-body.dark-mode .nav-item { 
-  color: var(--gray-300); 
-}
-
-body.dark-mode .nav-item:hover { 
-  background: var(--gray-800); 
-  color: var(--white); 
-}
-
-body.dark-mode .sidebar-header { 
-  border-color: var(--gray-700); 
-}
-
-body.dark-mode .theme-btn { 
-  color: var(--gray-300); 
-}
-
-/* Cards e Conteúdo Dark Mode */
 body.dark-mode .post-card,
 body.dark-mode .widget,
 body.dark-mode .btn-new-post {
@@ -867,19 +803,15 @@ body.dark-mode .btn-new-post {
 body.dark-mode .post-author { color: #ffffff; }
 body.dark-mode .post-menu { color: #ffffff; }
 body.dark-mode .post-meta { color: #b0b0b0; }
-
 body.dark-mode .action-btn { color: #ffffff; }
 body.dark-mode .action-btn .material-symbols-outlined { color: #ffffff; }
 body.dark-mode .action-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
-
 body.dark-mode .post-comments-area { background-color: #1a1a1a; border-color: #333; }
 body.dark-mode .comment-content-bubble { background-color: #2a2a2a; border-color: #444; color: #f1f1f1; }
 body.dark-mode .comment-input { border-color: #444; }
 body.dark-mode .comment-input input { background-color: #2a2a2a; color: #fff; border-color: #444; }
-
 body.dark-mode .widget-title { background: #2a2a2a; color: #90caf9; border-color: #90caf9; }
 body.dark-mode .event-item:hover, body.dark-mode .place-item:hover { background-color: #2a2a2a; }
 body.dark-mode .event-title, body.dark-mode .place-info h4 { color: #f1f1f1; }
 body.dark-mode .weather-main h4 { color: #f1f1f1; }
-
 body.dark-mode .tips-card { background: linear-gradient(135deg, #1e3b61, #0077b6); }
