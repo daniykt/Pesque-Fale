@@ -730,14 +730,6 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
   .sidebar-footer { display: none; }
   .sidebar.open .sidebar-footer { display: flex; flex-direction: column; margin-top: auto; }
 
-  /* CORREÇÃO: Reset no mobile */
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    margin-top: calc(var(--header-height) + 1rem);
-    padding: 1rem;
-  }
-
   footer {
     margin-left: 0 !important;
     width: 100% !important;
