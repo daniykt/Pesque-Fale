@@ -440,6 +440,7 @@ body.home-with-sidebar .main-content {
 .comment-item {
   display: flex;
   align-items: flex-start;
+  margin: 15px
 }
 
 .comment-avatar-img {
