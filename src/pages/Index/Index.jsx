@@ -129,6 +129,19 @@ const Index = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+    const handleScrollTo = (e, targetId) => {
+    e.preventDefault();
+    const el = document.getElementById(targetId);
+    if (el) {
+      const offset = document.getElementById('navbar').offsetHeight;
+      window.scrollTo({
+        top: el.offsetTop - offset,
+        behavior: 'smooth'
+      });
+    }
+    closeMenu();
+  };
+
   return (
     <>
       {/* NAVBAR */}
@@ -140,11 +153,11 @@ const Index = () => {
           </div>
           
           <ul id="navLinks" className={menuOpen ? 'active' : ''}>
-            <li><a href="#home" onClick={closeMenu}>Início</a></li>
-            <li><a href="#features" onClick={closeMenu}>Recursos</a></li>
-            <li><a href="#about" onClick={closeMenu}>Sobre</a></li>
-            <li><a href="#team" onClick={closeMenu}>Equipe</a></li>
-            <li><a href="#contact" onClick={closeMenu}>Contato</a></li>
+            <li><a href="#home" onClick={(e) => handleScrollTo(e, 'home')}>Início</a></li>
+            <li><a href="#features" onClick={(e) => handleScrollTo(e, 'features')}>Recursos</a></li>
+            <li><a href="#about" onClick={(e) => handleScrollTo(e, 'about')}>Sobre</a></li>
+            <li><a href="#team" onClick={(e) => handleScrollTo(e, 'team')}>Equipe</a></li>
+            <li><a href="#faq" onClick={(e) => handleScrollTo(e, 'faq')}>Dúvidas</a></li>
           </ul>
           
           <button id="menuToggle" className={menuOpen ? 'active' : ''} onClick={toggleMenu}>
