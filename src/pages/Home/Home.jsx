@@ -319,7 +319,7 @@ const Home = () => {
 
                       <div className="comment-input">
                         <img
-                          src={imgRecantoPescador}
+                          src={imgLucas}
                           alt="Você"
                           className="comment-avatar"
                         />
