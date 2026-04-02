@@ -88,7 +88,6 @@ body.home-with-sidebar .main-content {
 
 .content-header-home p {
   font-size: 1.1rem;
-  color: var(--dark-gray);
 }
 
 /* Layout Grid (Feed + Sidebar Direita) */
@@ -807,3 +806,13 @@ body.dark-mode .event-item:hover, body.dark-mode .place-item:hover { background-
 body.dark-mode .event-title, body.dark-mode .place-info h4 { color: #f1f1f1; }
 body.dark-mode .weather-main h4 { color: #f1f1f1; }
 body.dark-mode .tips-card { background: linear-gradient(135deg, #1e3b61, #0077b6); }
+body.dark-mode .btn-new-post input {
+  color: #ffffff;
+}
+body.dark-mode .post-btn {
+  color: #cbd5e1;
+}
+
+body.dark-mode .comment-author-name {
+  color: #ffffff;
+}
