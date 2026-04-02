@@ -22,7 +22,7 @@ function AppRoutes() {
 
         <Route path="/perfil" element={<Perfil />} />
 
-        <Route path="/pesquisa" element={<Pesquisa />} />
+        <Route path="/pesquisar" element={<Pesquisa />} />
 
         <Route path="/notificacao" element={<Notificacao />} />
 

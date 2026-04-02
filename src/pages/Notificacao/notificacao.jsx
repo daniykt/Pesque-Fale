@@ -204,11 +204,17 @@ export default function Notificacao() {
           </div>
           <div>
             <h3>Links Úteis</h3>
-            <Link to="/">Página Inicial</Link>
-            <Link to="/pesquisar">Pesquisa de Locais</Link>
-            <Link to="/locaisavaliados">Locais Avaliados</Link>
-            <Link to="/sobre">Sobre nós</Link>
-            <Link to="/perfil">Perfil</Link>
+                <a href="/home">Página Inicial</a>
+                <br />
+                <a href="/pesquisar">Pesquisa de Locais</a>
+                <br />
+                <a href="/locais">Melhores Locais</a>
+                <br />
+                <a href="/notificacao">Notificações</a>
+                <br />
+                <a href="/sobre">Sobre Nós</a>
+                <br />
+                <a href="/perfil">Perfil</a>
           </div>
           <div>
             <h3>Contato</h3>
