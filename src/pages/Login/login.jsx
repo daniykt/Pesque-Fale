@@ -4,36 +4,39 @@ import "../../styles/global.css";
 import "./login.css";
 import "./toast.css";
 
-import { loginWithEmail, registerWithEmail } from "../../auth";
+import { loginWithEmail, registerWithEmail, logout } from "../../auth";
+import { useNavigate } from "react-router-dom";
 
 // IMAGENS
 import logo1 from "../../assets/image/login/logo1.png";
 import logo2 from "../../assets/image/login/logo2.png";
 import flat from "../../assets/image/login/flat.png";
 
-export default function Login({ successMessage, errorMessage }) {
+export default function Login() {
+  const navigate = useNavigate();
+
   const [isRegisterActive, setIsRegisterActive] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [showToast, setShowToast] = useState(!!(successMessage || errorMessage));
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
-  // 🔥 STATES FIREBASE
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+
   const [registerData, setRegisterData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
   });
 
-  // 🎨 HOVER BOTÕES
   const [hoverLogin, setHoverLogin] = useState(false);
   const [hoverRegister, setHoverRegister] = useState(false);
 
   useEffect(() => {
     if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 10000);
+      const timer = setTimeout(() => setShowToast(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [showToast]);
@@ -41,11 +44,18 @@ export default function Login({ successMessage, errorMessage }) {
   // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
       await loginWithEmail(loginData.email, loginData.password);
+
+      setToastMessage("Login realizado com sucesso!");
       setShowToast(true);
+
+      navigate("/home");
     } catch (error) {
       console.error(error);
+      setToastMessage("Erro ao fazer login");
+      setShowToast(true);
     }
   };
 
@@ -54,7 +64,8 @@ export default function Login({ successMessage, errorMessage }) {
     e.preventDefault();
 
     if (registerData.password !== registerData.confirmPassword) {
-      alert("As senhas não coincidem");
+      setToastMessage("As senhas não coincidem");
+      setShowToast(true);
       return;
     }
 
@@ -63,14 +74,27 @@ export default function Login({ successMessage, errorMessage }) {
         registerData.email,
         registerData.password
       );
+
+      // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
+      await logout();
+
+      setToastMessage("Cadastro realizado com sucesso!");
       setShowToast(true);
+
+      // 🔥 VOLTA PRA TELA DE LOGIN
+      setIsRegisterActive(false);
+
     } catch (error) {
       console.error(error);
+      setToastMessage("Erro ao cadastrar");
+      setShowToast(true);
     }
   };
 
   return (
     <div className="login-page-container">
+
+      {/* TOAST */}
       {showToast && (
         <div className="site-toast show">
           <div className="toast-content">
@@ -78,7 +102,7 @@ export default function Login({ successMessage, errorMessage }) {
               check_circle
             </span>
             <div className="toast-message">
-              Operação realizada com sucesso
+              {toastMessage}
             </div>
           </div>
           <button className="toast-close-btn" onClick={() => setShowToast(false)}>
@@ -88,6 +112,7 @@ export default function Login({ successMessage, errorMessage }) {
       )}
 
       <div className={`wrapper ${isRegisterActive ? "active" : ""}`}>
+
         <aside className="side-image">
           <img src={flat} alt="Imagem lateral profissional" />
         </aside>
@@ -151,12 +176,8 @@ export default function Login({ successMessage, errorMessage }) {
                   color: hoverLogin ? "#fff" : "#062A6C",
                   fontSize: "1rem",
                   fontWeight: "600",
-                  letterSpacing: "1px",
                   cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: hoverLogin
-                    ? "0 5px 15px rgba(6,42,108,0.2)"
-                    : "none"
+                  transition: "0.3s"
                 }}
               >
                 ENTRAR
@@ -238,12 +259,8 @@ export default function Login({ successMessage, errorMessage }) {
                   color: hoverRegister ? "#fff" : "#062A6C",
                   fontSize: "1rem",
                   fontWeight: "600",
-                  letterSpacing: "1px",
                   cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  boxShadow: hoverRegister
-                    ? "0 5px 15px rgba(6,42,108,0.2)"
-                    : "none"
+                  transition: "0.3s"
                 }}
               >
                 CADASTRAR
