@@ -4,44 +4,106 @@ import "../../styles/global.css";
 import "./login.css";
 import "./toast.css";
 
+import { loginWithEmail, registerWithEmail, logout } from "../../auth";
+import { useNavigate } from "react-router-dom";
+
 // IMAGENS
 import logo1 from "../../assets/image/login/logo1.png";
 import logo2 from "../../assets/image/login/logo2.png";
 import flat from "../../assets/image/login/flat.png";
 
-export default function Login({ successMessage, errorMessage }) {
-  // Estados para controlar o comportamento (Substitui o vanilla JS)
+export default function Login() {
+  const navigate = useNavigate();
+
   const [isRegisterActive, setIsRegisterActive] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  // Controle do Toast
-  const [showToast, setShowToast] = useState(!!(successMessage || errorMessage));
 
-  // Esconder Toast automaticamente após 10s
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+
+  const [registerData, setRegisterData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [hoverLogin, setHoverLogin] = useState(false);
+  const [hoverRegister, setHoverRegister] = useState(false);
+
   useEffect(() => {
     if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 10000);
+      const timer = setTimeout(() => setShowToast(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [showToast]);
 
+  // 🔐 LOGIN
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      await loginWithEmail(loginData.email, loginData.password);
+
+      setToastMessage("Login realizado com sucesso!");
+      setShowToast(true);
+
+      navigate("/home");
+    } catch (error) {
+      console.error(error);
+      setToastMessage("Erro ao fazer login");
+      setShowToast(true);
+    }
+  };
+
+  // 🆕 CADASTRO
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    if (registerData.password !== registerData.confirmPassword) {
+      setToastMessage("As senhas não coincidem");
+      setShowToast(true);
+      return;
+    }
+
+    try {
+      await registerWithEmail(
+        registerData.email,
+        registerData.password
+      );
+
+      // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
+      await logout();
+
+      setToastMessage("Cadastro realizado com sucesso!");
+      setShowToast(true);
+
+      // 🔥 VOLTA PRA TELA DE LOGIN
+      setIsRegisterActive(false);
+
+    } catch (error) {
+      console.error(error);
+      setToastMessage("Erro ao cadastrar");
+      setShowToast(true);
+    }
+  };
+
   return (
-    // Substituímos o body.login-page por uma div encapsuladora para evitar o Flash/Quebra no reload
     <div className="login-page-container">
-      
+
       {/* TOAST */}
       {showToast && (
-        <div 
-          className={`site-toast show ${successMessage ? 'success' : 'error'}`} 
-          role={successMessage ? 'status' : 'alert'}
-        >
+        <div className="site-toast show">
           <div className="toast-content">
             <span className="material-symbols-outlined toast-icon">
-              {successMessage ? 'check_circle' : 'error'}
+              check_circle
             </span>
-            <div className="toast-message">{successMessage || errorMessage}</div>
+            <div className="toast-message">
+              {toastMessage}
+            </div>
           </div>
           <button className="toast-close-btn" onClick={() => setShowToast(false)}>
             <span className="material-symbols-outlined">close</span>
@@ -49,81 +111,91 @@ export default function Login({ successMessage, errorMessage }) {
         </div>
       )}
 
-      {/* WRAPPER (Adiciona a classe 'active' dinamicamente se isRegisterActive for true) */}
       <div className={`wrapper ${isRegisterActive ? "active" : ""}`}>
-        
-        {/* LADO ESQUERDO */}
+
         <aside className="side-image">
           <img src={flat} alt="Imagem lateral profissional" />
         </aside>
 
-        {/* FORMULÁRIOS */}
         <div className="auth-area">
-          
+
           {/* LOGIN */}
-          <div className={`form-box login ${isRegisterActive ? "hidden" : "visible"}`} aria-hidden={isRegisterActive}>
+          <div className={`form-box login ${isRegisterActive ? "hidden" : "visible"}`}>
             <div className="logo">
               <img src={logo1} alt="Logo" />
               <img src={logo2} alt="Logo" />
             </div>
 
-            <h2>ENTRA</h2>
+            <h2>ENTRAR</h2>
 
-            <form>
+            <form onSubmit={handleLogin}>
               <div className="input-box">
                 <span className="material-symbols-outlined icon">alternate_email</span>
-                <input type="email" required placeholder=" " name="email" />
+                <input
+                  type="email"
+                  required
+                  placeholder=" "
+                  value={loginData.email}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, email: e.target.value })
+                  }
+                />
                 <label>Email</label>
-                <span className="input-hint">exemplo@gmail.com</span>
               </div>
 
               <div className="input-box">
                 <span className="material-symbols-outlined icon">password</span>
-                <input 
-                  type={showLoginPassword ? "text" : "password"} 
-                  required 
-                  placeholder=" " 
-                  name="password" 
+                <input
+                  type={showLoginPassword ? "text" : "password"}
+                  required
+                  placeholder=" "
+                  value={loginData.password}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, password: e.target.value })
+                  }
                 />
                 <label>Senha</label>
-                <span className="input-hint">Entre 6 a 10 caracteres pelo menos</span>
-                <span 
+                <span
                   className="material-symbols-outlined toggle-password"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  style={{ pointerEvents: 'auto' }}
                 >
                   {showLoginPassword ? "visibility_off" : "visibility"}
                 </span>
               </div>
 
-              <div className="remember-forgot">
-                <label>
-                  <input type="checkbox" name="rememberMe" />
-                  Lembre-se de mim
-                </label>
-                <a href="#!">Esqueceu sua senha?</a>
-              </div>
-
-              <button type="submit" className="btn">ENTRA</button>
+              <button
+                type="submit"
+                onMouseEnter={() => setHoverLogin(true)}
+                onMouseLeave={() => setHoverLogin(false)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "2px solid #062A6C",
+                  background: hoverLogin ? "#062A6C" : "transparent",
+                  color: hoverLogin ? "#fff" : "#062A6C",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "0.3s"
+                }}
+              >
+                ENTRAR
+              </button>
 
               <div className="login-register">
                 <p>
-                  Não tem conta aqui?
-                  <button 
-                    type="button" 
-                    className="register-link" 
-                    style={{background: 'none', border: 'none', color: '#062A6C', fontWeight: 'bold', cursor: 'pointer', fontSize: '1em'}}
-                    onClick={() => setIsRegisterActive(true)}
-                  >
-                    Cadastre-se aqui
+                  Não tem conta?
+                  <button type="button" onClick={() => setIsRegisterActive(true)}>
+                    Cadastre-se
                   </button>
                 </p>
               </div>
             </form>
           </div>
 
-          {/* CADASTRO */}
-          <div className={`form-box register ${isRegisterActive ? "visible" : "hidden"}`} aria-hidden={!isRegisterActive}>
+          {/* REGISTER */}
+          <div className={`form-box register ${isRegisterActive ? "visible" : "hidden"}`}>
             <div className="logo">
               <img src={logo1} alt="Logo" />
               <img src={logo2} alt="Logo" />
@@ -131,83 +203,80 @@ export default function Login({ successMessage, errorMessage }) {
 
             <h2>CADASTRO</h2>
 
-            <form>
+            <form onSubmit={handleRegister}>
               <div className="input-box">
-                <span className="material-symbols-outlined icon">person</span>
-                <input type="text" required placeholder=" " name="nome" />
-                <label>Nome de Usuário</label>
-                <span className="input-hint">Sem espaços ou caracteres especiais</span>
-              </div>
-
-              <div className="input-box">
-                <span className="material-symbols-outlined icon">alternate_email</span>
-                <input type="email" required placeholder=" " name="email" />
+                <input
+                  type="email"
+                  required
+                  placeholder=" "
+                  value={registerData.email}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, email: e.target.value })
+                  }
+                />
                 <label>Email</label>
-                <span className="input-hint">exemplo@gmail.com</span>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">password</span>
-                <input 
-                  type={showRegisterPassword ? "text" : "password"} 
-                  required 
-                  placeholder=" " 
-                  name="senha" 
+                <input
+                  type={showRegisterPassword ? "text" : "password"}
+                  required
+                  placeholder=" "
+                  value={registerData.password}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, password: e.target.value })
+                  }
                 />
                 <label>Senha</label>
-                <span className="input-hint">Entre 6 a 10 caracteres</span>
-                <span 
-                  className="material-symbols-outlined toggle-password"
-                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  {showRegisterPassword ? "visibility_off" : "visibility"}
-                </span>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">password</span>
-                <input 
-                  type={showConfirmPassword ? "text" : "password"} 
-                  required 
-                  placeholder=" " 
-                  name="confirmar_senha" 
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  placeholder=" "
+                  value={registerData.confirmPassword}
+                  onChange={(e) =>
+                    setRegisterData({
+                      ...registerData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                 />
                 <label>Confirmar Senha</label>
-                <span className="input-hint">Digite a senha novamente</span>
-                <span 
-                  className="material-symbols-outlined toggle-password"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  {showConfirmPassword ? "visibility_off" : "visibility"}
-                </span>
               </div>
 
-              <div className="remember-forgot">
-                <label>
-                  <input type="checkbox" name="acceptTerms" required />
-                  Eu aceito os termos &amp; condições.
-                </label>
-              </div>
-
-              <button type="submit" className="btn">Cadastrar-se</button>
+              <button
+                type="submit"
+                onMouseEnter={() => setHoverRegister(true)}
+                onMouseLeave={() => setHoverRegister(false)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "2px solid #062A6C",
+                  background: hoverRegister ? "#062A6C" : "transparent",
+                  color: hoverRegister ? "#fff" : "#062A6C",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "0.3s"
+                }}
+              >
+                CADASTRAR
+              </button>
 
               <div className="login-register">
                 <p>
-                  Já tem conta aqui?
-                  <button 
-                    type="button" 
-                    className="login-link" 
-                    style={{background: 'none', border: 'none', color: '#062A6C', fontWeight: 'bold', cursor: 'pointer', fontSize: '1em'}}
-                    onClick={() => setIsRegisterActive(false)}
-                  >
-                    Entra
+                  Já tem conta?
+                  <button type="button" onClick={() => setIsRegisterActive(false)}>
+                    Entrar
                   </button>
                 </p>
               </div>
             </form>
           </div>
+
         </div>
       </div>
     </div>
