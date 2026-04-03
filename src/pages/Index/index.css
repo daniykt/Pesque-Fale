@@ -696,9 +696,19 @@ ul {
         align-items: center;
     }
     
+/* DEPOIS (Corrigido - Isolado apenas para a Home) */
+    /* Aplica limite de largura SOMENTE nos botões da página inicial (Hero/CTA) */
+    .hero .btn,
+    .cta-section .btn,
+    .about .btn {
+        width: 100%;
+        max-width: 280px !important;
+    }
+
+    /* Garante que botões fora dessas áreas (como o Login) fiquem 100% livres */
     .btn {
         width: 100%;
-        max-width: 280px;
+        /* Removido o max-width: 280px daqui */
     }
     
     /* FEATURES MOBILE */
