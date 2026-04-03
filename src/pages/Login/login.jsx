@@ -4,7 +4,7 @@ import "../../styles/global.css";
 import "./login.css";
 import "./toast.css";
 
-import { loginWithEmail, registerWithEmail, logout } from "../../auth";
+import { loginWithEmail, registerWithEmail, logout, updateUserName } from "../../auth";
 import { useNavigate } from "react-router-dom";
 
 // IMAGENS
@@ -25,7 +25,9 @@ export default function Login() {
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
 
+  // 🔥 AGORA COM NOME
   const [registerData, setRegisterData] = useState({
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -75,13 +77,15 @@ export default function Login() {
         registerData.password
       );
 
+      // 🔥 SALVA NOME NO FIREBASE AUTH
+      await updateUserName(registerData.name);
+
       // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
       await logout();
 
       setToastMessage("Cadastro realizado com sucesso!");
       setShowToast(true);
 
-      // 🔥 VOLTA PRA TELA DE LOGIN
       setIsRegisterActive(false);
 
     } catch (error) {
@@ -163,25 +167,7 @@ export default function Login() {
                 </span>
               </div>
 
-              <button
-                type="submit"
-                onMouseEnter={() => setHoverLogin(true)}
-                onMouseLeave={() => setHoverLogin(false)}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  border: "2px solid #062A6C",
-                  background: hoverLogin ? "#062A6C" : "transparent",
-                  color: hoverLogin ? "#fff" : "#062A6C",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "0.3s"
-                }}
-              >
-                ENTRAR
-              </button>
+              <button type="submit">ENTRAR</button>
 
               <div className="login-register">
                 <p>
@@ -204,6 +190,21 @@ export default function Login() {
             <h2>CADASTRO</h2>
 
             <form onSubmit={handleRegister}>
+
+              {/* 🔥 CAMPO NOME */}
+              <div className="input-box">
+                <input
+                  type="text"
+                  required
+                  placeholder=" "
+                  value={registerData.name}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, name: e.target.value })
+                  }
+                />
+                <label>Nome</label>
+              </div>
+
               <div className="input-box">
                 <input
                   type="email"
@@ -246,25 +247,7 @@ export default function Login() {
                 <label>Confirmar Senha</label>
               </div>
 
-              <button
-                type="submit"
-                onMouseEnter={() => setHoverRegister(true)}
-                onMouseLeave={() => setHoverRegister(false)}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  border: "2px solid #062A6C",
-                  background: hoverRegister ? "#062A6C" : "transparent",
-                  color: hoverRegister ? "#fff" : "#062A6C",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "0.3s"
-                }}
-              >
-                CADASTRAR
-              </button>
+              <button type="submit">CADASTRAR</button>
 
               <div className="login-register">
                 <p>

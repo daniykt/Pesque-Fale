@@ -1,10 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from "../../components/sidebar/layout"; // Importa o Layout padronizado
+import Layout from "../../components/sidebar/layout";
 import "./perfil.css";
 import "../../styles/global.css";
 
+// 🔥 IMPORT DO AUTH
+import { observeAuthState } from "../../auth";
+
 export default function Perfil() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = observeAuthState((currentUser) => {
+      setUser(currentUser);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const handlePublicar = () => {
     console.log("Abrir modal ou página de publicação");
   };
@@ -12,7 +25,7 @@ export default function Perfil() {
   const postsData = [
     {
       id: 1,
-      imagem: "https://preview.redd.it/pesquei-meu-primeiro-peixe-hoje-v0-ztfepe85lp951.jpg?auto=webp&s=d3ea57b13b5b798c86a77e3ee7dac80320db1df1",
+      imagem: "https://preview.redd.it/pesquei-meu-primeiro-peixe-hoje-v0-ztfepe85lp951.jpg",
       data: "12/04/2025 às 18:30",
       comentario: "Que dia incrível de pesca!",
       local: "São Paulo, Brasil",
@@ -22,7 +35,7 @@ export default function Perfil() {
     },
     {
       id: 2,
-      imagem: "https://preview.redd.it/took-some-pics-of-my-fish-v0-bnt9ipm8w3cf1.jpg?width=1080&crop=smart&auto=webp&s=b9d00498506254486c3726c99795c29610dc129c",
+      imagem: "https://preview.redd.it/took-some-pics-of-my-fish-v0-bnt9ipm8w3cf1.jpg",
       data: "12/04/2025 às 14:30",
       comentario: "Lugar top pra pescar com os amigos!",
       local: "Rio de Janeiro, Brasil",
@@ -34,11 +47,10 @@ export default function Perfil() {
 
   return (
     <Layout>
-      {/* Conteúdo principal do perfil */}
       <div className="container2">
         <div className="perfil">
           <img
-            src="https://preview.redd.it/on9y92ssh1mb1.jpg?auto=webp&s=a881b5e709139d5b233b52418169faab7d3c355b"
+            src="https://preview.redd.it/on9y92ssh1mb1.jpg"
             alt="Foto de Perfil"
             className="foto-perfil"
           />
@@ -58,8 +70,11 @@ export default function Perfil() {
             </div>
           </div>
 
+          {/* 🔥 NOME DINÂMICO */}
           <div className="username-container">
-            <h2 className="username">PesqueFale_Oficial</h2>
+            <h2 className="username">
+              {user?.displayName || user?.email || "Usuário"}
+            </h2>
           </div>
 
           <div className="bio">
@@ -98,7 +113,6 @@ export default function Perfil() {
         </div>
       </div>
 
-      {/* Rodapé (footer) – agora dentro do Layout, respeitando a margem da sidebar */}
       <footer>
         <div className="footer-container">
           <div className="footer-info">
@@ -111,17 +125,17 @@ export default function Perfil() {
 
           <div className="footer-links">
             <h3>Links Úteis</h3>
-                <a href="/home">Página Inicial</a>
-                <br />
-                <a href="/pesquisar">Pesquisa de Locais</a>
-                <br />
-                <a href="/locais">Melhores Locais</a>
-                <br />
-                <a href="/notificacao">Notificações</a>
-                <br />
-                <a href="/sobre">Sobre Nós</a>
-                <br />
-                <a href="/perfil">Perfil</a>
+            <a href="/home">Página Inicial</a>
+            <br />
+            <a href="/pesquisar">Pesquisa de Locais</a>
+            <br />
+            <a href="/locais">Melhores Locais</a>
+            <br />
+            <a href="/notificacao">Notificações</a>
+            <br />
+            <a href="/sobre">Sobre Nós</a>
+            <br />
+            <a href="/perfil">Perfil</a>
           </div>
 
           <div className="footer-contact">
