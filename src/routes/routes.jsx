@@ -56,7 +56,7 @@ function AppRoutes() {
         />
 
         <Route
-          path="/pesquisa"
+          path="/pesquisar"
           element={
             <ProtectedRoute user={user}>
               <Pesquisa />
