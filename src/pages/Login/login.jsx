@@ -31,8 +31,6 @@ export default function Login() {
     confirmPassword: "",
   });
 
-  const [hoverLogin, setHoverLogin] = useState(false);
-  const [hoverRegister, setHoverRegister] = useState(false);
 
   useEffect(() => {
     if (showToast) {
@@ -165,20 +163,7 @@ export default function Login() {
 
               <button
                 type="submit"
-                onMouseEnter={() => setHoverLogin(true)}
-                onMouseLeave={() => setHoverLogin(false)}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  border: "2px solid #062A6C",
-                  background: hoverLogin ? "#062A6C" : "transparent",
-                  color: hoverLogin ? "#fff" : "#062A6C",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "0.3s"
-                }}
+                className="btn"
               >
                 ENTRAR
               </button>
@@ -186,7 +171,7 @@ export default function Login() {
               <div className="login-register">
                 <p>
                   Não tem conta?
-                  <button type="button" onClick={() => setIsRegisterActive(true)}>
+                  <button type="button" className="register-link" onClick={() => setIsRegisterActive(true)}>
                     Cadastre-se
                   </button>
                 </p>
@@ -248,20 +233,7 @@ export default function Login() {
 
               <button
                 type="submit"
-                onMouseEnter={() => setHoverRegister(true)}
-                onMouseLeave={() => setHoverRegister(false)}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  border: "2px solid #062A6C",
-                  background: hoverRegister ? "#062A6C" : "transparent",
-                  color: hoverRegister ? "#fff" : "#062A6C",
-                  fontSize: "1rem",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  transition: "0.3s"
-                }}
+                className="btn"
               >
                 CADASTRAR
               </button>
@@ -269,7 +241,7 @@ export default function Login() {
               <div className="login-register">
                 <p>
                   Já tem conta?
-                  <button type="button" onClick={() => setIsRegisterActive(false)}>
+                  <button type="button" className="login-link" onClick={() => setIsRegisterActive(false)}>
                     Entrar
                   </button>
                 </p>
