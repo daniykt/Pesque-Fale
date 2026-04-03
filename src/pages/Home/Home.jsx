@@ -119,7 +119,7 @@ const Home = () => {
                 {
                   autor: "Você",
                   texto: texto.trim(), // ✅ TRIM PARA EVITAR ESPAÇOS
-                  imagem: imgLucas,
+                  imagem: imgHomemPeixe,
                 },
               ],
             }
@@ -319,7 +319,7 @@ const Home = () => {
 
                       <div className="comment-input">
                         <img
-                          src={imgRecantoPescador}
+                          src={imgHomemPeixe}
                           alt="Você"
                           className="comment-avatar"
                         />
@@ -470,11 +470,11 @@ const Home = () => {
                 <br />
                 <a href="/pesquisar">Pesquisa de Locais</a>
                 <br />
-                <a href="/melhoreslocais">Melhores Locais</a>
+                <a href="/locais">Melhores Locais</a>
                 <br />
                 <a href="/notificacao">Notificações</a>
                 <br />
-                <a href="/sobrenos">Sobre Nós</a>
+                <a href="/sobre">Sobre Nós</a>
                 <br />
                 <a href="/perfil">Perfil</a>
               </div>

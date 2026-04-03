@@ -16,22 +16,22 @@ const teamMembers = [
   {
     nome: "Danilo Silva",
     role: "Desenvolvedor Full-Stack em Formação",
-    bio: "Estou cursando Desenvolvimento de Software Multiplataforma na FATEC. Sou Full-Stack em formação (Dart, JavaScript, React e C#).",
+    bio: "Estou cursando Desenvolvimento de Software Multiplataforma na FATEC. Sou Full-Stack em formação (Dart, JavaScript, React e C#). Combino design centrado no usuário com habilidade para organizar, planejar e coordenar projetos em equipe.",
     foto: imgFotoDanilo,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "Henrique Tavares",
-    role: "Desenvolvedor Full-Stack em Formação",
-    bio: "Tenho 19 anos e sou desenvolvedor back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.",
+    role: "Desenvolvedor Front-End | Co-Fundador",
+    bio: "Tenho 19 anos e sou desenvolvedor front-end, iniciando no back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.",
     foto: imgFotoHenrique,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "Vinicius Bovo",
-    role: "Desenvolvedor Full-Stack em Formação",
+    role: "Desenvolvedor Front-End | Co-Fundador",
     bio: "Tenho 18 anos, sou desenvolvedor front-end e cofundador do Pesque & Fale. Criei a plataforma para incentivar a pesca em Matão-SP, organizando informações e promovendo inovação na área socioeconômica do lazer local.",
     foto: imgFotoVinicius,
     linkedin: "#",
@@ -39,15 +39,15 @@ const teamMembers = [
   },
   {
     nome: "Lucas Catto",
-    role: "Desenvolvedor Full-Stack em Formação",
-    bio: "Tenho 18 anos e sou desenvolvedor back-end. Sou cofundador do Pesque & Fale, um projeto que inova no mundo da pesca em Matão. Busco unir criatividade e tecnologia para gerar impacto positivo na comunidade.",
+    role: "Desenvolvedor Front-End | Co-Fundador",
+    bio: "Tenho 18 anos e sou desenvolvedor front-end. Sou cofundador do Pesque & Fale, um projeto que inova no mundo da pesca em Matão. Busco unir criatividade e tecnologia para gerar impacto positivo na comunidade.",
     foto: imgFotoLucas,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "João Pedro",
-    role: "Desenvolvedor Full-Stack em Formação",
+    role: "Desenvolvedor Front-End | Co-Fundador",
     bio: "Tenho 18 anos e atuo como desenvolvedor front-end, sempre buscando criar experiências digitais funcionais e atrativas. Sou um dos idealizadores do projeto Pesque & Fale, trazendo inovação ao universo da pesca em Matão.",
     foto: imgFotoJoao,
     linkedin: "#",
@@ -55,8 +55,8 @@ const teamMembers = [
   },
   {
     nome: "Rebeca Scutare",
-    role: "Desenvolvedor Full-Stack em Formação",
-    bio: "Tenho 18 anos e estudo na Fatec Matão. Sou aluna do curso de Desenvolvimento de Software Multiplataforma e atualmente estou no terceiro semestre.",
+    role: "Estudante de Desenvolvimento de Software",
+    bio: "Tenho 18 anos e estudo na Fatec Matão. Sou aluna do curso de Desenvolvimento de Software Multiplataforma e atualmente estou no segundo semestre.",
     foto: imgFotoRebeca,
     linkedin: "#",
     github: "#"
@@ -129,6 +129,19 @@ const Index = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+    const handleScrollTo = (e, targetId) => {
+    e.preventDefault();
+    const el = document.getElementById(targetId);
+    if (el) {
+      const offset = document.getElementById('navbar').offsetHeight;
+      window.scrollTo({
+        top: el.offsetTop - offset,
+        behavior: 'smooth'
+      });
+    }
+    closeMenu();
+  };
+
   return (
     <>
       {/* NAVBAR */}
@@ -140,11 +153,11 @@ const Index = () => {
           </div>
           
           <ul id="navLinks" className={menuOpen ? 'active' : ''}>
-            <li><a href="#home" onClick={closeMenu}>Início</a></li>
-            <li><a href="#features" onClick={closeMenu}>Recursos</a></li>
-            <li><a href="#about" onClick={closeMenu}>Sobre</a></li>
-            <li><a href="#team" onClick={closeMenu}>Equipe</a></li>
-            <li><a href="#contact" onClick={closeMenu}>Contato</a></li>
+            <li><a href="#home" onClick={(e) => handleScrollTo(e, 'home')}>Início</a></li>
+            <li><a href="#features" onClick={(e) => handleScrollTo(e, 'features')}>Recursos</a></li>
+            <li><a href="#about" onClick={(e) => handleScrollTo(e, 'about')}>Sobre</a></li>
+            <li><a href="#team" onClick={(e) => handleScrollTo(e, 'team')}>Equipe</a></li>
+            <li><a href="#faq" onClick={(e) => handleScrollTo(e, 'faq')}>Dúvidas</a></li>
           </ul>
           
           <button id="menuToggle" className={menuOpen ? 'active' : ''} onClick={toggleMenu}>

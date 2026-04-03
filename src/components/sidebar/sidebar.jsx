@@ -136,8 +136,8 @@ export default function Sidebar() {
 
             <li>
               <Link
-                to="/pesquisa"
-                className={`nav-item ${isActive('/pesquisa') ? 'active' : ''}`}
+                to="/pesquisar"
+                className={`nav-item ${isActive('/pesquisar') ? 'active' : ''}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 <span className="material-symbols-outlined">search</span>
