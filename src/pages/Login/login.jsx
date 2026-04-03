@@ -19,17 +19,17 @@ export default function Login({ successMessage, errorMessage }) {
 
   const [showToast, setShowToast] = useState(!!(successMessage || errorMessage));
 
-  // 🔥 ESTADOS FIREBASE
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
-
+  // 🔥 STATES FIREBASE
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  // 🎨 HOVER BOTÕES
+  const [hoverLogin, setHoverLogin] = useState(false);
+  const [hoverRegister, setHoverRegister] = useState(false);
 
   useEffect(() => {
     if (showToast) {
@@ -41,7 +41,6 @@ export default function Login({ successMessage, errorMessage }) {
   // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       await loginWithEmail(loginData.email, loginData.password);
       setShowToast(true);
@@ -72,9 +71,8 @@ export default function Login({ successMessage, errorMessage }) {
 
   return (
     <div className="login-page-container">
-      
       {showToast && (
-        <div className={`site-toast show`}>
+        <div className="site-toast show">
           <div className="toast-content">
             <span className="material-symbols-outlined toast-icon">
               check_circle
@@ -90,13 +88,12 @@ export default function Login({ successMessage, errorMessage }) {
       )}
 
       <div className={`wrapper ${isRegisterActive ? "active" : ""}`}>
-        
         <aside className="side-image">
           <img src={flat} alt="Imagem lateral profissional" />
         </aside>
 
         <div className="auth-area">
-          
+
           {/* LOGIN */}
           <div className={`form-box login ${isRegisterActive ? "hidden" : "visible"}`}>
             <div className="logo">
@@ -104,7 +101,7 @@ export default function Login({ successMessage, errorMessage }) {
               <img src={logo2} alt="Logo" />
             </div>
 
-            <h2>ENTRA</h2>
+            <h2>ENTRAR</h2>
 
             <form onSubmit={handleLogin}>
               <div className="input-box">
@@ -113,7 +110,6 @@ export default function Login({ successMessage, errorMessage }) {
                   type="email"
                   required
                   placeholder=" "
-                  name="email"
                   value={loginData.email}
                   onChange={(e) =>
                     setLoginData({ ...loginData, email: e.target.value })
@@ -128,7 +124,6 @@ export default function Login({ successMessage, errorMessage }) {
                   type={showLoginPassword ? "text" : "password"}
                   required
                   placeholder=" "
-                  name="password"
                   value={loginData.password}
                   onChange={(e) =>
                     setLoginData({ ...loginData, password: e.target.value })
@@ -143,7 +138,29 @@ export default function Login({ successMessage, errorMessage }) {
                 </span>
               </div>
 
-              <button type="submit" className="btn">ENTRA</button>
+              <button
+                type="submit"
+                onMouseEnter={() => setHoverLogin(true)}
+                onMouseLeave={() => setHoverLogin(false)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "2px solid #062A6C",
+                  background: hoverLogin ? "#062A6C" : "transparent",
+                  color: hoverLogin ? "#fff" : "#062A6C",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: hoverLogin
+                    ? "0 5px 15px rgba(6,42,108,0.2)"
+                    : "none"
+                }}
+              >
+                ENTRAR
+              </button>
 
               <div className="login-register">
                 <p>
@@ -208,7 +225,29 @@ export default function Login({ successMessage, errorMessage }) {
                 <label>Confirmar Senha</label>
               </div>
 
-              <button type="submit" className="btn">Cadastrar</button>
+              <button
+                type="submit"
+                onMouseEnter={() => setHoverRegister(true)}
+                onMouseLeave={() => setHoverRegister(false)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "2px solid #062A6C",
+                  background: hoverRegister ? "#062A6C" : "transparent",
+                  color: hoverRegister ? "#fff" : "#062A6C",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: hoverRegister
+                    ? "0 5px 15px rgba(6,42,108,0.2)"
+                    : "none"
+                }}
+              >
+                CADASTRAR
+              </button>
 
               <div className="login-register">
                 <p>
