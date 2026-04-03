@@ -384,6 +384,16 @@
     .input-box {
         margin: 22px 0 10px;
     }
+
+        .form-box.login .btn,
+    .form-box.register .btn {
+        width: 100% !important;
+        display: block !important;
+        float: none !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        text-align: center !important;
+    }
 }
 
 /* ================================================
