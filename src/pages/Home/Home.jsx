@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./home.css";
 import Layout from "../../components/sidebar/layout";
 
@@ -14,13 +14,22 @@ import imgHenrique from "../../assets/image/sobrenos/fotohenrique.jpg";
 import imgLucas from "../../assets/image/sobrenos/fotolucas.jpg";
 import imgDanilo from "../../assets/image/sobrenos/fotodanilo.jpg";
 
+const TOAST_ICONS = {
+  success: "check_circle",
+  error: "error",
+  info: "info",
+};
+
 const Home = () => {
+  const location = useLocation();
+
   const [darkMode, setDarkMode] = useState(false);
   const [postsState, setPostsState] = useState([
     {
       autor: "Henrique",
       localizacao: "Matão - SP • Lago Azul • 06/05/2025",
-      texto: "Meu amigo pescou hoje! Que experiência incrível no Lago Azul. O tucunaré estava atacando muito bem hoje de manhã. 🎣",
+      texto:
+        "Meu amigo pescou hoje! Que experiência incrível no Lago Azul. O tucunaré estava atacando muito bem hoje de manhã. 🎣",
       imagemPerfil: imgHenrique,
       imagemPost: imgHomemPeixe,
       curtidas: 24,
@@ -41,7 +50,8 @@ const Home = () => {
     {
       autor: "Lucas",
       localizacao: "Matão - SP • Recanto do Pescador • 06/05/2025",
-      texto: "Olha o peixe que o pai pegou! Dourado de 3kg no Recanto do Pescador. A isca artificial funcionou perfeitamente! 🐟",
+      texto:
+        "Olha o peixe que o pai pegou! Dourado de 3kg no Recanto do Pescador. A isca artificial funcionou perfeitamente! 🐟",
       imagemPerfil: imgLucas,
       imagemPost: imgRecantoVerde,
       curtidas: 18,
@@ -56,6 +66,33 @@ const Home = () => {
     },
   ]);
   const [comentariosInput, setComentariosInput] = useState({});
+
+  // 🔔 TOAST
+  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+
+  const showToast = (message, type = "info") =>
+    setToast({ visible: true, message, type });
+
+  const hideToast = () => setToast((t) => ({ ...t, visible: false }));
+
+  // ✅ Mensagem diferenciada: novo usuário ou retorno
+  useEffect(() => {
+    if (location.state?.loginSuccess) {
+      const isNewUser = location.state?.isNewUser;
+      const message = isNewUser
+        ? "Bem-vindo ao Pesque & Fale! Sua conta foi criada com sucesso. 🎣"
+        : "Bem-vindo de volta! Boas pescarias por aqui. 🎣";
+      showToast(message, "success");
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(hideToast, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
 
   // Dark mode
   useEffect(() => {
@@ -93,18 +130,14 @@ const Home = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ CORRIGIDO: Função curtirPost
   const curtirPost = (index) => {
     setPostsState((prevPosts) =>
       prevPosts.map((post, i) =>
-        i === index
-          ? { ...post, curtidas: post.curtidas + 1 }
-          : post
+        i === index ? { ...post, curtidas: post.curtidas + 1 } : post
       )
     );
   };
 
-  // ✅ CORRIGIDO: Função adicionarComentario
   const adicionarComentario = (index, texto) => {
     if (!texto || !texto.trim()) return;
 
@@ -113,12 +146,12 @@ const Home = () => {
         i === index
           ? {
               ...post,
-              comentarios: post.comentarios + 1, // ✅ ATUALIZA O CONTADOR
+              comentarios: post.comentarios + 1,
               listaComentarios: [
                 ...post.listaComentarios,
                 {
                   autor: "Você",
-                  texto: texto.trim(), // ✅ TRIM PARA EVITAR ESPAÇOS
+                  texto: texto.trim(),
                   imagem: imgHomemPeixe,
                 },
               ],
@@ -127,17 +160,11 @@ const Home = () => {
       )
     );
 
-    setComentariosInput((prev) => ({
-      ...prev,
-      [index]: "",
-    }));
+    setComentariosInput((prev) => ({ ...prev, [index]: "" }));
   };
 
   const handleInputComentario = (index, valor) => {
-    setComentariosInput((prev) => ({
-      ...prev,
-      [index]: valor,
-    }));
+    setComentariosInput((prev) => ({ ...prev, [index]: valor }));
   };
 
   const eventos = [
@@ -197,296 +224,296 @@ const Home = () => {
 
   return (
     <Layout>
-      <div className="column">
-          <main className="main-content">
-            <header className="content-header-home">
-              <h1>Bem-vindo ao Pesque & Fale</h1>
-              <p>
-                Compartilhe suas experiências de pesca e descubra novos locais
-              </p>
-            </header>
 
-            <section className="new-post-section">
-              <div className="btn-new-post" onClick={clicarNovaPublicacao}>
-                <img
-                  src={imgHomemPeixe}
-                  alt="Homem Peixe"
-                  className="post-author-img"
-                />
-                <input
-                  type="text"
-                  placeholder="O que você deseja publicar hoje?"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button className="post-btn" title="Adicionar Mídia">
-                  <span className="material-symbols-outlined">
-                    add_photo_alternate
-                  </span>
-                </button>
+      {/* 🔔 TOAST */}
+      {toast.visible && (
+        <div className={`site-toast show ${toast.type}`}>
+          <div className="toast-content">
+            <span className="material-symbols-outlined toast-icon">
+              {TOAST_ICONS[toast.type]}
+            </span>
+            <div className="toast-message">{toast.message}</div>
+          </div>
+          <button className="toast-close-btn" onClick={hideToast}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
+
+      <div className="column">
+        <main className="main-content">
+          <header className="content-header-home">
+            <h1>Bem-vindo ao Pesque & Fale</h1>
+            <p>Compartilhe suas experiências de pesca e descubra novos locais</p>
+          </header>
+
+          <section className="new-post-section">
+            <div className="btn-new-post" onClick={clicarNovaPublicacao}>
+              <img
+                src={imgHomemPeixe}
+                alt="Homem Peixe"
+                className="post-author-img"
+              />
+              <input
+                type="text"
+                placeholder="O que você deseja publicar hoje?"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button className="post-btn" title="Adicionar Mídia">
+                <span className="material-symbols-outlined">
+                  add_photo_alternate
+                </span>
+              </button>
+            </div>
+          </section>
+
+          <div className="content-layout">
+            <section className="feed">
+              {postsState.map((post, index) => (
+                <div key={index} className="post-card" onClick={clicarPerfil}>
+                  <div className="post-header">
+                    <img
+                      src={post.imagemPerfil}
+                      alt={post.autor}
+                      className="post-author-img"
+                    />
+                    <div className="post-author-info">
+                      <h3 className="post-author">{post.autor}</h3>
+                      <p className="post-meta">{post.localizacao}</p>
+                    </div>
+                    <button className="post-menu" aria-label="Mais Opções">
+                      <span className="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </div>
+
+                  <div className="post-content">
+                    <p>{post.texto}</p>
+                  </div>
+
+                  <div className="post-main-image-container">
+                    <img
+                      src={post.imagemPost}
+                      alt="Publicação de Pesca"
+                      className="post-main-image"
+                    />
+                  </div>
+
+                  <div className="post-interact-bar"></div>
+
+                  <div className="post-stats-row">
+                    <span>{post.curtidas} curtidas</span>
+                    <span>{post.comentarios} comentários</span>
+                  </div>
+
+                  <div className="post-actions-row">
+                    <button
+                      className="action-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        curtirPost(index);
+                      }}
+                    >
+                      <span className="material-symbols-outlined">favorite</span>
+                      Curtir
+                    </button>
+
+                    <button
+                      className="action-btn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="material-symbols-outlined">chat_bubble</span>
+                      Comentar
+                    </button>
+
+                    <button
+                      className="action-btn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span className="material-symbols-outlined">share</span>
+                      Compartilhar
+                    </button>
+                  </div>
+
+                  <div className="post-comments-area">
+                    <div className="comment-list"></div>
+                    {post.listaComentarios.map((comentario, cIndex) => (
+                      <div key={cIndex} className="comment-item">
+                        <img
+                          src={comentario.imagem}
+                          alt={comentario.autor}
+                          className="comment-avatar-img"
+                        />
+                        <div className="comment-content-bubble">
+                          <span className="comment-author-name">
+                            {comentario.autor}
+                          </span>
+                          <p>{comentario.texto}</p>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="comment-input">
+                      <img
+                        src={imgHomemPeixe}
+                        alt="Você"
+                        className="comment-avatar"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Escreva um comentário..."
+                        value={comentariosInput[index] || ""}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          handleInputComentario(index, e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            adicionarComentario(index, e.target.value);
+                          }
+                        }}
+                      />
+                      <button
+                        className="comment-btn"
+                        aria-label="Enviar Comentário"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          adicionarComentario(index, comentariosInput[index]);
+                        }}
+                      >
+                        <span className="material-symbols-outlined">send</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="tips-card">
+                <div className="tips-header">
+                  <span className="material-symbols-outlined">lightbulb</span>
+                  <h3>Dica do Dia</h3>
+                </div>
+                <p>
+                  Para pescar tucunaré, use iscas artificiais como jigs e spinners.
+                  O melhor horário é no início da manhã ou final da tarde.
+                </p>
               </div>
             </section>
 
-            <div className="content-layout">
-              <section className="feed">
-                {postsState.map((post, index) => (
-                  <div key={index} className="post-card" onClick={clicarPerfil}>
-                    <div className="post-header">
-                      <img
-                        src={post.imagemPerfil}
-                        alt={post.autor}
-                        className="post-author-img"
-                      />
-                      <div className="post-author-info">
-                        <h3 className="post-author">{post.autor}</h3>
-                        <p className="post-meta">{post.localizacao}</p>
-                      </div>
-                      <button className="post-menu" aria-label="Mais Opções">
-                        <span className="material-symbols-outlined">
-                          more_vert
-                        </span>
-                      </button>
+            <aside className="right-sidebar">
+              <div className="widget events-widget">
+                <h3 className="widget-title">
+                  <span className="material-symbols-outlined">event</span>
+                  Próximos Eventos
+                </h3>
+                {eventos.map((evento, indice) => (
+                  <div key={indice} className="event-item">
+                    <div className="event-image">
+                      <img src={evento.imagem} alt={evento.titulo} />
                     </div>
-
-                    <div className="post-content">
-                      <p>{post.texto}</p>
+                    <div className="event-info">
+                      <h4 className="event-title">{evento.titulo}</h4>
+                      <p className="event-date">{evento.data}</p>
+                      <p className="event-location">{evento.local}</p>
+                      <p className="event-desc">{evento.descricao}</p>
+                      <button className="event-btn">Participar</button>
                     </div>
+                  </div>
+                ))}
+              </div>
 
-                    <div className="post-main-image-container">
-                      <img
-                        src={post.imagemPost}
-                        alt="Publicação de Pesca"
-                        className="post-main-image"
-                      />
-                    </div>
-
-                    <div className="post-interact-bar"></div>
-                    {/* ✅ AGORA MOSTRA OS NÚMEROS CORRETOS */}
-                    <div className="post-stats-row">
-                      <span>{post.curtidas} curtidas</span>
-                      <span>{post.comentarios} comentários</span>
-                    </div>
-
-                    <div className="post-actions-row">
-                      <button
-                        className="action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          curtirPost(index);
-                        }}
-                      >
-                        <span className="material-symbols-outlined">
-                          favorite
-                        </span>
-                        Curtir
-                      </button>
-
-                      <button
-                        className="action-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span className="material-symbols-outlined">
-                          chat_bubble
-                        </span>
-                        Comentar
-                      </button>
-
-                      <button
-                        className="action-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span className="material-symbols-outlined">share</span>
-                        Compartilhar
-                      </button>
-                    </div>
-
-                    <div className="post-comments-area">
-                      <div className="comment-list"></div>
-                      {post.listaComentarios.map((comentario, cIndex) => (
-                        <div key={cIndex} className="comment-item">
-                          <img
-                            src={comentario.imagem}
-                            alt={comentario.autor}
-                            className="comment-avatar-img"
-                          />
-                          <div className="comment-content-bubble">
-                            <span className="comment-author-name">
-                              {comentario.autor}
-                            </span>
-                            <p>{comentario.texto}</p>
-                          </div>
-                        </div>
-                      ))}
-
-                      <div className="comment-input">
-                        <img
-                          src={imgHomemPeixe}
-                          alt="Você"
-                          className="comment-avatar"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Escreva um comentário..."
-                          value={comentariosInput[index] || ""}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleInputComentario(index, e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              adicionarComentario(index, e.target.value);
-                            }
-                          }}
-                        />
-                        <button
-                          className="comment-btn"
-                          aria-label="Enviar Comentário"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            adicionarComentario(index, comentariosInput[index]);
-                          }}
-                        >
-                          <span className="material-symbols-outlined">send</span>
-                        </button>
+              <div className="widget popular-places">
+                <h3 className="widget-title">
+                  <span className="material-symbols-outlined">trending_up</span>
+                  Locais em Alta
+                </h3>
+                {locais.map((local, indice) => (
+                  <div key={indice} className="place-item">
+                    <img src={local.imagem} alt={local.nome} />
+                    <div className="place-info">
+                      <h4>{local.nome}</h4>
+                      <p>{local.cidade}</p>
+                      <div className="place-rating">
+                        <span>⭐ {local.avaliacao}</span>
+                        <span>{local.avaliacoes} avaliações</span>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
 
-                <div className="tips-card">
-                  <div className="tips-header">
-                    <span className="material-symbols-outlined">lightbulb</span>
-                    <h3>Dica do Dia</h3>
-                  </div>
-                  <p>
-                    Para pescar tucunaré, use iscas artificiais como jigs e
-                    spinners. O melhor horário é no início da manhã ou final da
-                    tarde.
-                  </p>
-                </div>
-              </section>
-
-              <aside className="right-sidebar">
-                <div className="widget events-widget">
-                  <h3 className="widget-title">
-                    <span className="material-symbols-outlined">event</span>
-                    Próximos Eventos
-                  </h3>
-                  {eventos.map((evento, indice) => (
-                    <div key={indice} className="event-item">
-                      <div className="event-image">
-                        <img src={evento.imagem} alt={evento.titulo} />
-                      </div>
-                      <div className="event-info">
-                        <h4 className="event-title">{evento.titulo}</h4>
-                        <p className="event-date">{evento.data}</p>
-                        <p className="event-location">{evento.local}</p>
-                        <p className="event-desc">{evento.descricao}</p>
-                        <button className="event-btn">Participar</button>
-                      </div>
+              <div className="widget weather-widget">
+                <h3 className="widget-title">
+                  <span className="material-symbols-outlined">wb_sunny</span>
+                  Condições para Pesca
+                </h3>
+                <div className="weather-info">
+                  <div className="weather-main">
+                    <span className="weather-icon">☀️</span>
+                    <div>
+                      <h4>28°C</h4>
+                      <p>Ensolarado</p>
                     </div>
-                  ))}
-                </div>
-
-                <div className="widget popular-places">
-                  <h3 className="widget-title">
-                    <span className="material-symbols-outlined">
-                      trending_up
+                  </div>
+                  <div className="weather-details">
+                    <div className="weather-item">
+                      <span className="material-symbols-outlined">air</span>
+                      <span>Vento: 12 km/h</span>
+                    </div>
+                    <div className="weather-item">
+                      <span className="material-symbols-outlined">water_drop</span>
+                      <span>Umidade: 65%</span>
+                    </div>
+                    <div className="weather-item">
+                      <span className="material-symbols-outlined">visibility</span>
+                      <span>Visibilidade: Boa</span>
+                    </div>
+                  </div>
+                  <div className="fishing-conditions">
+                    <span className="condition-good">
+                      🎣 Condições Excelentes para Pesca
                     </span>
-                    Locais em Alta
-                  </h3>
-                  {locais.map((local, indice) => (
-                    <div key={indice} className="place-item">
-                      <img src={local.imagem} alt={local.nome} />
-                      <div className="place-info">
-                        <h4>{local.nome}</h4>
-                        <p>{local.cidade}</p>
-                        <div className="place-rating">
-                          <span>⭐ {local.avaliacao}</span>
-                          <span>{local.avaliacoes} avaliações</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="widget weather-widget">
-                  <h3 className="widget-title">
-                    <span className="material-symbols-outlined">wb_sunny</span>
-                    Condições para Pesca
-                  </h3>
-                  <div className="weather-info">
-                    <div className="weather-main">
-                      <span className="weather-icon">☀️</span>
-                      <div>
-                        <h4>28°C</h4>
-                        <p>Ensolarado</p>
-                      </div>
-                    </div>
-                    <div className="weather-details">
-                      <div className="weather-item">
-                        <span className="material-symbols-outlined">air</span>
-                        <span>Vento: 12 km/h</span>
-                      </div>
-                      <div className="weather-item">
-                        <span className="material-symbols-outlined">
-                          water_drop
-                        </span>
-                        <span>Umidade: 65%</span>
-                      </div>
-                      <div className="weather-item">
-                        <span className="material-symbols-outlined">
-                          visibility
-                        </span>
-                        <span>Visibilidade: Boa</span>
-                      </div>
-                    </div>
-                    <div className="fishing-conditions">
-                      <span className="condition-good">
-                        🎣 Condições Excelentes para Pesca
-                      </span>
-                    </div>
                   </div>
                 </div>
-              </aside>
-            </div>
-          </main>
+              </div>
+            </aside>
+          </div>
+        </main>
 
-          <footer>
-            <div className="footer-container">
-              <div>
-                <h3>Sobre Nós</h3>
-                <p>
-                  Grupo de estudantes dedicados ao desenvolvimento de
-                  iniciativas voltadas à melhoria do trabalho socioeconômico em
-                  Matão-SP e região.
-                </p>
-              </div>
-              <div>
-                <h3>Links Úteis</h3>
-                <a href="/home">Página Inicial</a>
-                <br />
-                <a href="/pesquisar">Pesquisa de Locais</a>
-                <br />
-                <a href="/locais">Melhores Locais</a>
-                <br />
-                <a href="/notificacao">Notificações</a>
-                <br />
-                <a href="/sobre">Sobre Nós</a>
-                <br />
-                <a href="/perfil">Perfil</a>
-              </div>
-              <div>
-                <h3>Contato</h3>
-                <p>E-mail: pesquefale@gmail.com</p>
-              </div>
+        <footer>
+          <div className="footer-container">
+            <div>
+              <h3>Sobre Nós</h3>
+              <p>
+                Grupo de estudantes dedicados ao desenvolvimento de iniciativas
+                voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.
+              </p>
             </div>
-            <p className="copyright">
-              &copy; Pesque & Fale 2025 - Todos os direitos reservados.
-            </p>
-          </footer>
+            <div>
+              <h3>Links Úteis</h3>
+              <a href="/home">Página Inicial</a>
+              <br />
+              <a href="/pesquisar">Pesquisa de Locais</a>
+              <br />
+              <a href="/locais">Melhores Locais</a>
+              <br />
+              <a href="/notificacao">Notificações</a>
+              <br />
+              <a href="/sobre">Sobre Nós</a>
+              <br />
+              <a href="/perfil">Perfil</a>
+            </div>
+            <div>
+              <h3>Contato</h3>
+              <p>E-mail: pesquefale@gmail.com</p>
+            </div>
+          </div>
+          <p className="copyright">
+            &copy; Pesque &amp; Fale 2025 - Todos os direitos reservados.
+          </p>
+        </footer>
       </div>
     </Layout>
   );

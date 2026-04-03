@@ -6,6 +6,7 @@ import "./login.css";
 import { loginWithEmail, registerWithEmail, logout } from "../../auth";
 import { useNavigate } from "react-router-dom";
 
+// IMAGENS
 import logo1 from "../../assets/image/login/logo1.png";
 import logo2 from "../../assets/image/login/logo2.png";
 import flat from "../../assets/image/login/flat.png";
@@ -17,6 +18,9 @@ export default function Login() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // 🆕 Marca se o usuário acabou de se cadastrar
+  const [justRegistered, setJustRegistered] = useState(false);
 
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
@@ -33,6 +37,12 @@ export default function Login() {
 
   const hideToast = () => setToast((t) => ({ ...t, visible: false }));
 
+  const TOAST_ICONS = {
+    success: "check_circle",
+    error: "error",
+    info: "info",
+  };
+
   useEffect(() => {
     if (toast.visible) {
       const timer = setTimeout(hideToast, 4000);
@@ -40,19 +50,13 @@ export default function Login() {
     }
   }, [toast.visible]);
 
-  const TOAST_ICONS = {
-    success: "check_circle",
-    error: "error",
-    info: "info",
-  };
-
   // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       await loginWithEmail(loginData.email, loginData.password);
-      showToast("Login realizado com sucesso!", "success");
-      navigate("/home");
+      // Passa se é novo usuário ou retorno — a Home decide a mensagem
+      navigate("/home", { state: { loginSuccess: true, isNewUser: justRegistered } });
     } catch (error) {
       console.error(error);
       showToast("E-mail ou senha incorretos. Tente novamente.", "error");
@@ -75,8 +79,14 @@ export default function Login() {
 
     try {
       await registerWithEmail(registerData.email, registerData.password);
+
+      // Logout para não entrar automaticamente
       await logout();
+
       showToast("Conta criada com sucesso! Faça login para continuar.", "success");
+
+      // Marca que veio do cadastro e volta para o login
+      setJustRegistered(true);
       setIsRegisterActive(false);
     } catch (error) {
       console.error(error);
@@ -120,7 +130,9 @@ export default function Login() {
               <img src={logo1} alt="Logo" />
               <img src={logo2} alt="Logo" />
             </div>
+
             <h2>ENTRAR</h2>
+
             <form onSubmit={handleLogin}>
               <div className="input-box">
                 <span className="material-symbols-outlined icon">alternate_email</span>
@@ -129,10 +141,13 @@ export default function Login() {
                   required
                   placeholder=" "
                   value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, email: e.target.value })
+                  }
                 />
                 <label>Email</label>
               </div>
+
               <div className="input-box">
                 <span className="material-symbols-outlined icon">password</span>
                 <input
@@ -140,7 +155,9 @@ export default function Login() {
                   required
                   placeholder=" "
                   value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, password: e.target.value })
+                  }
                 />
                 <label>Senha</label>
                 <span
@@ -150,11 +167,22 @@ export default function Login() {
                   {showLoginPassword ? "visibility_off" : "visibility"}
                 </span>
               </div>
-              <button type="submit" className="btn">ENTRAR</button>
+
+              <button type="submit" className="btn">
+                ENTRAR
+              </button>
+
               <div className="login-register">
                 <p>
                   Não tem conta?
-                  <button type="button" className="register-link" onClick={() => setIsRegisterActive(true)}>
+                  <button
+                    type="button"
+                    className="register-link"
+                    onClick={() => {
+                      setJustRegistered(false);
+                      setIsRegisterActive(true);
+                    }}
+                  >
                     Cadastre-se
                   </button>
                 </p>
@@ -162,31 +190,40 @@ export default function Login() {
             </form>
           </div>
 
-          {/* REGISTER */}
+          {/* CADASTRO */}
           <div className={`form-box register ${isRegisterActive ? "visible" : "hidden"}`}>
             <div className="logo">
               <img src={logo1} alt="Logo" />
               <img src={logo2} alt="Logo" />
             </div>
+
             <h2>CADASTRO</h2>
+
             <form onSubmit={handleRegister}>
               <div className="input-box">
+                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
                   placeholder=" "
                   value={registerData.email}
-                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, email: e.target.value })
+                  }
                 />
                 <label>Email</label>
               </div>
+
               <div className="input-box">
+                <span className="material-symbols-outlined icon">password</span>
                 <input
                   type={showRegisterPassword ? "text" : "password"}
                   required
                   placeholder=" "
                   value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, password: e.target.value })
+                  }
                 />
                 <label>Senha</label>
                 <span
@@ -196,13 +233,20 @@ export default function Login() {
                   {showRegisterPassword ? "visibility_off" : "visibility"}
                 </span>
               </div>
+
               <div className="input-box">
+                <span className="material-symbols-outlined icon">lock</span>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   required
                   placeholder=" "
                   value={registerData.confirmPassword}
-                  onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                  onChange={(e) =>
+                    setRegisterData({
+                      ...registerData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                 />
                 <label>Confirmar Senha</label>
                 <span
@@ -212,11 +256,19 @@ export default function Login() {
                   {showConfirmPassword ? "visibility_off" : "visibility"}
                 </span>
               </div>
-              <button type="submit" className="btn">CADASTRAR</button>
+
+              <button type="submit" className="btn">
+                CADASTRAR
+              </button>
+
               <div className="login-register">
                 <p>
                   Já tem conta?
-                  <button type="button" className="login-link" onClick={() => setIsRegisterActive(false)}>
+                  <button
+                    type="button"
+                    className="login-link"
+                    onClick={() => setIsRegisterActive(false)}
+                  >
                     Entrar
                   </button>
                 </p>
