@@ -4,7 +4,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" />
-  <img src="https://img.shields.io/badge/React-frontend-blue" />
+<img src="https://img.shields.io/badge/frontend-Em%20progresso-orange" />
+<img src="https://img.shields.io/badge/backend-completo-success" />
   <img src="https://img.shields.io/badge/responsive-yes-green" />
   <img src="https://img.shields.io/badge/licença-acadêmica-lightgrey" />
 </p>
@@ -68,13 +69,14 @@ Criar uma plataforma onde usuários possam:
 ## 🖥️ Tecnologias
 
 <p>
-  <img src="https://skillicons.dev/icons?i=react,js,html,css" />
+  <img src="https://skillicons.dev/icons?i=react,js,html,css,firebase" />
 </p>
 
 * React
 * JavaScript
 * HTML5
 * CSS3
+* Firebase (Authentication e banco de dados)
 
 ---
 
@@ -133,8 +135,9 @@ src/
 
 ```diff
 + Front-end estruturado em React
-+ Login/Cadastro em desenvolvimento(back)
-- Funcionalidades completas em desenvolvimento
++ Back-end implementado
++ Sistema de autenticação funcional
+- Ajustes e melhorias em andamento
 ```
 
 ---
