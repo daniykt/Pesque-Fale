@@ -24,7 +24,7 @@ const SobreNos = () => {
       id: 2,
       nome: 'Henrique Tavares',
       profissao: 'Desenvolvedor Full-Stack em Formação com foco em back-end | Líder de Equipe',
-      descricao: 'Sou desenvolvedor Full-Stack em formação, com foco em back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.',
+      descricao: 'Sou desenvolvedor Full-Stack em formação, com foco em back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa. Sou responsável por implementar diferentes funcionalidades no site como login/cadastro e edição de perfil, além de organizar o banco de dados e garantir a segurança dos dados dos usuários.',
       foto: fotoHenrique,      
     },
     {

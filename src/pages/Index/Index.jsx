@@ -24,7 +24,7 @@ const teamMembers = [
   {
     nome: "Henrique Tavares",
     role: "Desenvolvedor Full-Stack em Formação com foco em back-end | Líder de Equipe",
-    bio: "Sou desenvolvedor Full-Stack em formação, com foco em back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.",
+    bio: "Sou desenvolvedor Full-Stack em formação, com foco em back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa. Sou responsável por implementar diferentes funcionalidades no site como login/cadastro e edição de perfil, além de organizar o banco de dados e garantir a segurança dos dados dos usuários.",
     foto: imgFotoHenrique,
     linkedin: "#",
     github: "#"
