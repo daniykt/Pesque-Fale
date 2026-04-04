@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import "../../styles/base.css";
 import "../../styles/global.css";
 import "./login.css";
-import "./toast.css";
 
 import { loginWithEmail, registerWithEmail, logout, updateUserName } from "../../auth";
 import { useNavigate } from "react-router-dom";
@@ -20,10 +19,10 @@ export default function Login() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  // 🆕 Marca se o usuário acabou de se cadastrar
+  const [justRegistered, setJustRegistered] = useState(false);
 
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
   // 🔥 AGORA COM NOME
   const [registerData, setRegisterData] = useState({
@@ -33,31 +32,35 @@ export default function Login() {
     confirmPassword: "",
   });
 
-  const [hoverLogin, setHoverLogin] = useState(false);
-  const [hoverRegister, setHoverRegister] = useState(false);
+  const showToast = (message, type = "info") => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => setToast((t) => ({ ...t, visible: false }));
+
+  const TOAST_ICONS = {
+    success: "check_circle",
+    error: "error",
+    info: "info",
+  };
 
   useEffect(() => {
-    if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 4000);
+    if (toast.visible) {
+      const timer = setTimeout(hideToast, 4000);
       return () => clearTimeout(timer);
     }
-  }, [showToast]);
+  }, [toast.visible]);
 
   // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       await loginWithEmail(loginData.email, loginData.password);
-
-      setToastMessage("Login realizado com sucesso!");
-      setShowToast(true);
-
-      navigate("/home");
+      // Passa se é novo usuário ou retorno — a Home decide a mensagem
+      navigate("/home", { state: { loginSuccess: true, isNewUser: justRegistered } });
     } catch (error) {
       console.error(error);
-      setToastMessage("Erro ao fazer login");
-      setShowToast(true);
+      showToast("E-mail ou senha incorretos. Tente novamente.", "error");
     }
   };
 
@@ -66,16 +69,17 @@ export default function Login() {
     e.preventDefault();
 
     if (registerData.password !== registerData.confirmPassword) {
-      setToastMessage("As senhas não coincidem");
-      setShowToast(true);
+      showToast("As senhas não coincidem. Verifique e tente novamente.", "error");
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      showToast("A senha deve ter pelo menos 6 caracteres.", "error");
       return;
     }
 
     try {
-      await registerWithEmail(
-        registerData.email,
-        registerData.password
-      );
+      await registerWithEmail(registerData.email, registerData.password);
 
       // 🔥 SALVA NOME NO FIREBASE AUTH
       await updateUserName(registerData.name);
@@ -83,15 +87,16 @@ export default function Login() {
       // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
       await logout();
 
-      setToastMessage("Cadastro realizado com sucesso!");
-      setShowToast(true);
+      showToast("Conta criada com sucesso! Faça login para continuar.", "success");
 
       setIsRegisterActive(false);
-
     } catch (error) {
       console.error(error);
-      setToastMessage("Erro ao cadastrar");
-      setShowToast(true);
+      const msg =
+        error?.code === "auth/email-already-in-use"
+          ? "Este e-mail já está cadastrado."
+          : "Não foi possível criar a conta. Tente novamente.";
+      showToast(msg, "error");
     }
   };
 
@@ -99,17 +104,15 @@ export default function Login() {
     <div className="login-page-container">
 
       {/* TOAST */}
-      {showToast && (
-        <div className="site-toast show">
+      {toast.visible && (
+        <div className={`site-toast show ${toast.type}`}>
           <div className="toast-content">
             <span className="material-symbols-outlined toast-icon">
-              check_circle
+              {TOAST_ICONS[toast.type]}
             </span>
-            <div className="toast-message">
-              {toastMessage}
-            </div>
+            <div className="toast-message">{toast.message}</div>
           </div>
-          <button className="toast-close-btn" onClick={() => setShowToast(false)}>
+          <button className="toast-close-btn" onClick={hideToast}>
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -172,7 +175,14 @@ export default function Login() {
               <div className="login-register">
                 <p>
                   Não tem conta?
-                  <button type="button" onClick={() => setIsRegisterActive(true)}>
+                  <button
+                    type="button"
+                    className="register-link"
+                    onClick={() => {
+                      setJustRegistered(false);
+                      setIsRegisterActive(true);
+                    }}
+                  >
                     Cadastre-se
                   </button>
                 </p>
@@ -180,7 +190,7 @@ export default function Login() {
             </form>
           </div>
 
-          {/* REGISTER */}
+          {/* CADASTRO */}
           <div className={`form-box register ${isRegisterActive ? "visible" : "hidden"}`}>
             <div className="logo">
               <img src={logo1} alt="Logo" />
@@ -206,6 +216,7 @@ export default function Login() {
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
@@ -219,6 +230,7 @@ export default function Login() {
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">password</span>
                 <input
                   type={showRegisterPassword ? "text" : "password"}
                   required
@@ -229,9 +241,16 @@ export default function Login() {
                   }
                 />
                 <label>Senha</label>
+                <span
+                  className="material-symbols-outlined toggle-password"
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                >
+                  {showRegisterPassword ? "visibility_off" : "visibility"}
+                </span>
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">lock</span>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   required
@@ -245,6 +264,12 @@ export default function Login() {
                   }
                 />
                 <label>Confirmar Senha</label>
+                <span
+                  className="material-symbols-outlined toggle-password"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? "visibility_off" : "visibility"}
+                </span>
               </div>
 
               <button type="submit">CADASTRAR</button>
@@ -252,7 +277,11 @@ export default function Login() {
               <div className="login-register">
                 <p>
                   Já tem conta?
-                  <button type="button" onClick={() => setIsRegisterActive(false)}>
+                  <button
+                    type="button"
+                    className="login-link"
+                    onClick={() => setIsRegisterActive(false)}
+                  >
                     Entrar
                   </button>
                 </p>

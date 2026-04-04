@@ -154,8 +154,11 @@ cd pesque-e-fale
 # Instale as dependências
 npm install
 
+# Instale o Firebase
+npm install firebase
+
 # Rode o projeto
-npm run dev
+npm start
 ```
 
 ---
