@@ -3,7 +3,7 @@ import "../../styles/base.css";
 import "../../styles/global.css";
 import "./login.css";
 
-import { loginWithEmail, registerWithEmail, logout } from "../../auth";
+import { loginWithEmail, registerWithEmail, logout, updateUserName } from "../../auth";
 import { useNavigate } from "react-router-dom";
 
 // IMAGENS
@@ -24,8 +24,9 @@ export default function Login() {
 
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  // 🔥 AGORA COM NOME
   const [registerData, setRegisterData] = useState({
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -80,13 +81,14 @@ export default function Login() {
     try {
       await registerWithEmail(registerData.email, registerData.password);
 
-      // Logout para não entrar automaticamente
+      // 🔥 SALVA NOME NO FIREBASE AUTH
+      await updateUserName(registerData.name);
+
+      // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
       await logout();
 
       showToast("Conta criada com sucesso! Faça login para continuar.", "success");
 
-      // Marca que veio do cadastro e volta para o login
-      setJustRegistered(true);
       setIsRegisterActive(false);
     } catch (error) {
       console.error(error);
@@ -168,9 +170,7 @@ export default function Login() {
                 </span>
               </div>
 
-              <button type="submit" className="btn">
-                ENTRAR
-              </button>
+              <button type="submit">ENTRAR</button>
 
               <div className="login-register">
                 <p>
@@ -200,6 +200,21 @@ export default function Login() {
             <h2>CADASTRO</h2>
 
             <form onSubmit={handleRegister}>
+
+              {/* 🔥 CAMPO NOME */}
+              <div className="input-box">
+                <input
+                  type="text"
+                  required
+                  placeholder=" "
+                  value={registerData.name}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, name: e.target.value })
+                  }
+                />
+                <label>Nome</label>
+              </div>
+
               <div className="input-box">
                 <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
@@ -257,9 +272,7 @@ export default function Login() {
                 </span>
               </div>
 
-              <button type="submit" className="btn">
-                CADASTRAR
-              </button>
+              <button type="submit">CADASTRAR</button>
 
               <div className="login-register">
                 <p>

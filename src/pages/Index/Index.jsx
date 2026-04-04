@@ -23,40 +23,40 @@ const teamMembers = [
   },
   {
     nome: "Henrique Tavares",
-    role: "Desenvolvedor Front-End | Co-Fundador",
-    bio: "Tenho 19 anos e sou desenvolvedor front-end, iniciando no back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa.",
+    role: "Desenvolvedor Full-Stack em Formação com foco em back-end | Líder de Equipe",
+    bio: "Sou desenvolvedor Full-Stack em formação, com foco em back-end. No Pesque & Fale organizo os papéis da equipe e oriento meus parceiros, valorizando o trabalho em equipe e o impacto positivo da iniciativa. Sou responsável por implementar diferentes funcionalidades no site como login/cadastro e edição de perfil, além de organizar o banco de dados e garantir a segurança dos dados dos usuários.",
     foto: imgFotoHenrique,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "Vinicius Bovo",
-    role: "Desenvolvedor Front-End | Co-Fundador",
-    bio: "Tenho 18 anos, sou desenvolvedor front-end e cofundador do Pesque & Fale. Criei a plataforma para incentivar a pesca em Matão-SP, organizando informações e promovendo inovação na área socioeconômica do lazer local.",
+    role: "Desenvolvedor Full-Stack em Formação com foco em front-end | Co-Fundador",
+    bio: "Sou desenvolvedor Full-Stack em formação, com foco em front-end e cofundador do Pesque & Fale. Criei a plataforma para incentivar a pesca em Matão-SP, organizando informações e promovendo inovação na área socioeconômica do lazer local.",
     foto: imgFotoVinicius,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "Lucas Catto",
-    role: "Desenvolvedor Front-End | Co-Fundador",
-    bio: "Tenho 18 anos e sou desenvolvedor front-end. Sou cofundador do Pesque & Fale, um projeto que inova no mundo da pesca em Matão. Busco unir criatividade e tecnologia para gerar impacto positivo na comunidade.",
+    role: "Desenvolvedor Full-Stack em Formação com foco em back-end | Co-Fundador",
+    bio: "Sou desenvolvedor Full-Stack em formação com foco em back-end. Sou cofundador do Pesque & Fale, um projeto que inova no mundo da pesca em Matão. Busco unir criatividade e tecnologia para gerar impacto positivo na comunidade.",
     foto: imgFotoLucas,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "João Pedro",
-    role: "Desenvolvedor Front-End | Co-Fundador",
-    bio: "Tenho 18 anos e atuo como desenvolvedor front-end, sempre buscando criar experiências digitais funcionais e atrativas. Sou um dos idealizadores do projeto Pesque & Fale, trazendo inovação ao universo da pesca em Matão.",
+    role: "Desenvolvedor Full-Stack em Formação com foco em front-end | Co-Fundador",
+    bio: "Atuo como desenvolvedor Full-Stack em formação com foco em front-end. Sou um dos idealizadores do projeto Pesque & Fale, trazendo inovação ao universo da pesca em Matão.",
     foto: imgFotoJoao,
     linkedin: "#",
     github: "#"
   },
   {
     nome: "Rebeca Scutare",
-    role: "Estudante de Desenvolvimento de Software",
-    bio: "Tenho 18 anos e estudo na Fatec Matão. Sou aluna do curso de Desenvolvimento de Software Multiplataforma e atualmente estou no segundo semestre.",
+    role: "Gestora de Projetos em Formação | Co-Fundadora",
+    bio: "Atuo como gestora do projeto Pesque & Fale. Sou responsável por planejar e documentar o projeto. Meu objetivo é contribuir para o sucesso do projeto e garantir sua implementação eficiente.",
     foto: imgFotoRebeca,
     linkedin: "#",
     github: "#"
