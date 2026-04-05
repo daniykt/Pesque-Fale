@@ -316,4 +316,4 @@ export default function Perfil() {
       </footer>
     </Layout>
   );
-}
+} 
