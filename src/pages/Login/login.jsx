@@ -24,6 +24,12 @@ export default function Login() {
 
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
+  // 🔐 LOGIN DATA
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: "",
+  });
+
   // 🔥 AGORA COM NOME
   const [registerData, setRegisterData] = useState({
     name: "",
