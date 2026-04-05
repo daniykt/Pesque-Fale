@@ -19,18 +19,15 @@ export default function Login() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // 🆕 Marca se o usuário acabou de se cadastrar
   const [justRegistered, setJustRegistered] = useState(false);
 
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
-  // 🔐 LOGIN DATA
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
 
-  // 🔥 AGORA COM NOME
   const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
@@ -44,12 +41,6 @@ export default function Login() {
 
   const hideToast = () => setToast((t) => ({ ...t, visible: false }));
 
-  const TOAST_ICONS = {
-    success: "check_circle",
-    error: "error",
-    info: "info",
-  };
-
   useEffect(() => {
     if (toast.visible) {
       const timer = setTimeout(hideToast, 4000);
@@ -57,77 +48,56 @@ export default function Login() {
     }
   }, [toast.visible]);
 
-  // 🔐 LOGIN
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       await loginWithEmail(loginData.email, loginData.password);
-      // Passa se é novo usuário ou retorno — a Home decide a mensagem
       navigate("/home", { state: { loginSuccess: true, isNewUser: justRegistered } });
     } catch (error) {
-      console.error(error);
-      showToast("E-mail ou senha incorretos. Tente novamente.", "error");
+      showToast("E-mail ou senha incorretos.", "error");
     }
   };
 
-  // 🆕 CADASTRO
   const handleRegister = async (e) => {
     e.preventDefault();
 
     if (registerData.password !== registerData.confirmPassword) {
-      showToast("As senhas não coincidem. Verifique e tente novamente.", "error");
-      return;
+      return showToast("As senhas não coincidem.", "error");
     }
 
     if (registerData.password.length < 6) {
-      showToast("A senha deve ter pelo menos 6 caracteres.", "error");
-      return;
+      return showToast("A senha deve ter pelo menos 6 caracteres.", "error");
     }
 
     try {
       await registerWithEmail(registerData.email, registerData.password);
-
-      // 🔥 SALVA NOME NO FIREBASE AUTH
       await updateUserName(registerData.name);
-
-      // 🔥 LOGOUT PRA NÃO ENTRAR AUTOMATICAMENTE
       await logout();
 
-      showToast("Conta criada com sucesso! Faça login para continuar.", "success");
-
+      showToast("Conta criada com sucesso!", "success");
       setIsRegisterActive(false);
+      setJustRegistered(true);
     } catch (error) {
-      console.error(error);
-      const msg =
-        error?.code === "auth/email-already-in-use"
-          ? "Este e-mail já está cadastrado."
-          : "Não foi possível criar a conta. Tente novamente.";
-      showToast(msg, "error");
+      showToast("Erro ao criar conta.", "error");
     }
   };
 
   return (
     <div className="login-page-container">
 
-      {/* TOAST */}
       {toast.visible && (
         <div className={`site-toast show ${toast.type}`}>
           <div className="toast-content">
-            <span className="material-symbols-outlined toast-icon">
-              {TOAST_ICONS[toast.type]}
-            </span>
             <div className="toast-message">{toast.message}</div>
           </div>
-          <button className="toast-close-btn" onClick={hideToast}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <button className="toast-close-btn" onClick={hideToast}>X</button>
         </div>
       )}
 
       <div className={`wrapper ${isRegisterActive ? "active" : ""}`}>
 
         <aside className="side-image">
-          <img src={flat} alt="Imagem lateral profissional" />
+          <img src={flat} alt="Imagem lateral" />
         </aside>
 
         <div className="auth-area">
@@ -135,48 +105,37 @@ export default function Login() {
           {/* LOGIN */}
           <div className={`form-box login ${isRegisterActive ? "hidden" : "visible"}`}>
             <div className="logo">
-              <img src={logo1} alt="Logo" />
-              <img src={logo2} alt="Logo" />
+              <img src={logo1} alt="" />
+              <img src={logo2} alt="" />
             </div>
 
             <h2>ENTRAR</h2>
 
             <form onSubmit={handleLogin}>
               <div className="input-box">
-                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
                   placeholder=" "
                   value={loginData.email}
-                  onChange={(e) =>
-                    setLoginData({ ...loginData, email: e.target.value })
-                  }
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                 />
                 <label>Email</label>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">password</span>
                 <input
                   type={showLoginPassword ? "text" : "password"}
                   required
                   placeholder=" "
                   value={loginData.password}
-                  onChange={(e) =>
-                    setLoginData({ ...loginData, password: e.target.value })
-                  }
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                 />
                 <label>Senha</label>
-                <span
-                  className="material-symbols-outlined toggle-password"
-                  onClick={() => setShowLoginPassword(!showLoginPassword)}
-                >
-                  {showLoginPassword ? "visibility_off" : "visibility"}
-                </span>
               </div>
 
-              <button type="submit">ENTRAR</button>
+              {/* 🔥 BOTÃO CORRIGIDO */}
+              <button type="submit" className="btn">ENTRAR</button>
 
               <div className="login-register">
                 <p>
@@ -184,10 +143,7 @@ export default function Login() {
                   <button
                     type="button"
                     className="register-link"
-                    onClick={() => {
-                      setJustRegistered(false);
-                      setIsRegisterActive(true);
-                    }}
+                    onClick={() => setIsRegisterActive(true)}
                   >
                     Cadastre-se
                   </button>
@@ -199,86 +155,61 @@ export default function Login() {
           {/* CADASTRO */}
           <div className={`form-box register ${isRegisterActive ? "visible" : "hidden"}`}>
             <div className="logo">
-              <img src={logo1} alt="Logo" />
-              <img src={logo2} alt="Logo" />
+              <img src={logo1} alt="" />
+              <img src={logo2} alt="" />
             </div>
 
             <h2>CADASTRO</h2>
 
             <form onSubmit={handleRegister}>
-
-              {/* 🔥 CAMPO NOME */}
               <div className="input-box">
                 <input
                   type="text"
                   required
                   placeholder=" "
                   value={registerData.name}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, name: e.target.value })
-                  }
+                  onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                 />
                 <label>Nome</label>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
                   placeholder=" "
                   value={registerData.email}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, email: e.target.value })
-                  }
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                 />
                 <label>Email</label>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">password</span>
                 <input
-                  type={showRegisterPassword ? "text" : "password"}
+                  type="password"
                   required
                   placeholder=" "
                   value={registerData.password}
-                  onChange={(e) =>
-                    setRegisterData({ ...registerData, password: e.target.value })
-                  }
+                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                 />
                 <label>Senha</label>
-                <span
-                  className="material-symbols-outlined toggle-password"
-                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                >
-                  {showRegisterPassword ? "visibility_off" : "visibility"}
-                </span>
               </div>
 
               <div className="input-box">
-                <span className="material-symbols-outlined icon">lock</span>
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
+                  type="password"
                   required
                   placeholder=" "
                   value={registerData.confirmPassword}
                   onChange={(e) =>
-                    setRegisterData({
-                      ...registerData,
-                      confirmPassword: e.target.value,
-                    })
+                    setRegisterData({ ...registerData, confirmPassword: e.target.value })
                   }
                 />
                 <label>Confirmar Senha</label>
-                <span
-                  className="material-symbols-outlined toggle-password"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? "visibility_off" : "visibility"}
-                </span>
               </div>
 
-              <button type="submit">CADASTRAR</button>
+              {/* 🔥 BOTÃO CORRIGIDO */}
+              <button type="submit" className="btn">CADASTRAR</button>
 
               <div className="login-register">
                 <p>
