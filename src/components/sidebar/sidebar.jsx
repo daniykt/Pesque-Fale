@@ -1,7 +1,9 @@
 // src/components/sidebar/sidebar.jsx
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './sidebar.css';
+
+import { getAuth, signOut } from 'firebase/auth';
 
 import logo from '../../assets/image/logo/logo.jpg';
 
@@ -14,7 +16,21 @@ export default function Sidebar() {
   const [notifCount, setNotifCount] = useState(0);
   const location = useLocation();
 
-  // Inicializa as notificações no localStorage se não existirem (6 não lidas)
+  const navigate = useNavigate();
+  const auth = getAuth();
+
+  // 🔴 LOGOUT
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.clear();
+      navigate("/");
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+  };
+
+  // Inicializa notificações
   useEffect(() => {
     const stored = localStorage.getItem('notificacoes');
     if (!stored) {
@@ -35,7 +51,6 @@ export default function Sidebar() {
     }
   }, []);
 
-  // Função para sincronizar o contador a partir do localStorage
   const syncNotifCount = () => {
     const stored = localStorage.getItem('notificacoes');
     if (stored) {
@@ -44,7 +59,6 @@ export default function Sidebar() {
     }
   };
 
-  // Escuta o evento customizado disparado pela página de notificações
   useEffect(() => {
     const handleNotifUpdate = (e) => {
       setNotifCount(e.detail);
@@ -53,18 +67,15 @@ export default function Sidebar() {
     return () => window.removeEventListener('notificacoesAtualizadas', handleNotifUpdate);
   }, []);
 
-  // Sincroniza quando a aba ganha foco
   useEffect(() => {
     window.addEventListener('focus', syncNotifCount);
     return () => window.removeEventListener('focus', syncNotifCount);
   }, []);
 
-  // Sincroniza quando a rota muda (ex: voltar de outra página)
   useEffect(() => {
     syncNotifCount();
   }, [location]);
 
-  // Alternar tema
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add('dark-mode');
@@ -75,7 +86,6 @@ export default function Sidebar() {
     }
   }, [isDarkMode]);
 
-  // Fechar menu ao redimensionar para desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 769 && isMenuOpen) {
@@ -86,7 +96,6 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, [isMenuOpen]);
 
-  // Bloquear scroll quando menu aberto
   useEffect(() => {
     if (isMenuOpen) {
       document.body.classList.add('no-scroll');
@@ -96,7 +105,6 @@ export default function Sidebar() {
     return () => document.body.classList.remove('no-scroll');
   }, [isMenuOpen]);
 
-  // Marcar link ativo com base na rota atual
   const isActive = (path) => location.pathname === path;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -191,6 +199,18 @@ export default function Sidebar() {
                 <span className="nav-text">Perfil</span>
               </Link>
             </li>
+
+            {/* 🔴 BOTÃO SAIR */}
+            <li>
+              <button
+                className="nav-item logout-btn"
+                onClick={handleLogout}
+              >
+                <span className="material-symbols-outlined">logout</span>
+                <span className="nav-text">Sair</span>
+              </button>
+            </li>
+
           </ul>
         </nav>
 
