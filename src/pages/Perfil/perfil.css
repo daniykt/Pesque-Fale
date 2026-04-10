@@ -1,10 +1,8 @@
 /* =========================================
    VARIÁVEIS DE TEMA
    ========================================= */
+*, *::before, *::after { box-sizing: border-box; }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
 :root {
   --cor-primaria: #007bff;
   --cor-primaria-hover: #0056b3;
@@ -40,7 +38,7 @@ h1 {
 .container2 {
   display: flex;
   justify-content: center;
-  align-items: center;
+  padding: 0 clamp(8px, 3vw, 20px);
 }
 
 .perfil {
@@ -48,53 +46,52 @@ h1 {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  width: 92%;
+  width: 100%;
   max-width: 800px;
   margin: 70px auto 20px;
-  padding: 40px;
+  padding: clamp(20px, 5vw, 40px);
   background-color: var(--cor-fundo);
   border-radius: 15px;
   box-shadow: var(--sombra-padrao);
 }
 
 /* =========================================
-   CABEÇALHO DO PERFIL
+   FOTO DE PERFIL — fluída, sem saltos
    ========================================= */
 .foto-perfil {
-  display: block;
-  width: 150px;
-  height: 150px;
+  /* Escala suavemente de 90px (tela ~320px) até 150px (tela ≥600px) */
+  width: clamp(90px, 22vw, 150px);
+  height: clamp(90px, 22vw, 150px);
   margin: 0 auto 20px;
   border: 3px solid var(--cor-primaria);
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.usuario-data {
-  display: flex;
-  flex-direction: column;
-}
-
-.nome-usuario {
-  font-weight: bold;
-  color: var(--cor-secundaria);
-}
+/* =========================================
+   NOME / USERNAME
+   ========================================= */
+.usuario-data { display: flex; flex-direction: column; }
+.nome-usuario { font-weight: bold; color: var(--cor-secundaria); }
 
 .username-container {
   margin: -10px 0 15px;
   text-align: center;
+  width: 100%;
 }
 
 .username {
   display: inline-block;
   position: relative;
-  margin: 0 auto 15px;
   padding: 0 10px;
   color: var(--cor-texto);
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 3.5vw, 1.4rem);
   font-weight: 600;
   letter-spacing: 0.5px;
-  text-align: center;
+  word-break: break-word;
+  max-width: 100%;
   transition: all var(--transicao);
 }
 
@@ -111,14 +108,8 @@ h1 {
   transition: transform var(--transicao);
 }
 
-.username:hover {
-  color: var(--cor-primaria);
-  transform: scale(1.05);
-}
-
-.username:hover::after {
-  transform: scaleX(1);
-}
+.username:hover { color: var(--cor-primaria); transform: scale(1.05); }
+.username:hover::after { transform: scaleX(1); }
 
 /* =========================================
    ESTATÍSTICAS E BIO
@@ -129,11 +120,13 @@ h1 {
   flex-wrap: wrap;
   gap: 1rem;
   margin: 20px 0;
+  width: 100%;
 }
 
 .stat-box {
-  min-width: 100px;
-  padding: 10px 20px;
+  flex: 1 1 80px;
+  max-width: 160px;
+  padding: 10px 16px;
   text-align: center;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -143,48 +136,29 @@ h1 {
   transition: transform 0.2s ease;
 }
 
-.stat-box:hover {
-  transform: translateY(-2px);
-}
-
-.stat-box .number {
-  display: block;
-  color: #000;
-  font-size: 1.4rem;
-  font-weight: bold;
-}
-
-.stat-box .label {
-  color: var(--cor-secundaria);
-  font-size: 0.9rem;
-}
+.stat-box:hover { transform: translateY(-2px); }
+.stat-box .number { display: block; color: #000; font-size: 1.4rem; font-weight: bold; }
+.stat-box .label { color: var(--cor-secundaria); font-size: 0.9rem; }
 
 .numeros {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 30px;
   margin-bottom: 20px;
 }
-
-.numeros div {
-  text-align: center;
-}
-
-.numeros strong {
-  font-size: 1.2em;
-}
+.numeros div { text-align: center; }
+.numeros strong { font-size: 1.2em; }
 
 .bio {
   margin-bottom: 20px;
   padding: 15px;
   border-radius: 8px;
+  width: 100%;
+  word-break: break-word;
+  cursor: pointer;
 }
-
-.bio strong {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 1.1em;
-}
+.bio strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
 
 /* =========================================
    BOTÕES E AÇÕES
@@ -194,6 +168,7 @@ h1 {
   flex-direction: column;
   gap: 10px;
   margin-bottom: 30px;
+  width: 100%;
 }
 
 .btn-publicar,
@@ -212,43 +187,15 @@ h1 {
   transition: all var(--transicao);
 }
 
-.btn-publicar {
-  margin-bottom: 30px;
-  background-color: var(--cor-primaria);
-  color: var(--cor-fundo);
-}
+.btn-publicar { margin-bottom: 30px; background-color: var(--cor-primaria); color: var(--cor-fundo); }
+.btn-publicar:hover { background-color: var(--cor-primaria-hover); }
+.btn-seguir { background-color: #f0f2f5; color: #050505; }
+.btn-seguir:hover { background-color: #e4e6e9; }
+.btn-seguir.seguindo { background-color: #dbe7f2; color: #1877f2; }
 
-.btn-publicar:hover {
-  background-color: var(--cor-primaria-hover);
-}
-
-.btn-seguir {
-  background-color: #f0f2f5;
-  color: #050505;
-}
-
-.btn-seguir:hover {
-  background-color: #e4e6e9;
-}
-
-.btn-seguir.seguindo {
-  background-color: #dbe7f2;
-  color: #1877f2;
-}
-
-.material-symbols-outlined {
-  font-size: 20px;
-  vertical-align: middle;
-}
-
-.btn-seguir.seguindo .material-symbols-outlined {
-  content: "person_remove";
-}
-
+.material-symbols-outlined { font-size: 20px; vertical-align: middle; }
 .btn-seguir:hover .material-symbols-outlined,
-.btn-publicar:hover .material-symbols-outlined {
-  transform: scale(1.1);
-}
+.btn-publicar:hover .material-symbols-outlined { transform: scale(1.1); }
 
 /* =========================================
    PUBLICAÇÕES E FEED
@@ -258,11 +205,13 @@ h1 {
   flex-direction: column;
   gap: 20px;
   padding: 0 20px;
+  width: 100%;
 }
 
 .cabecalho-publicacao {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -286,16 +235,19 @@ h1 {
   overflow: hidden;
   transition: transform var(--transicao);
 }
+.publicacao-horizontal:hover { transform: scale(1.01); }
 
-.publicacao-horizontal:hover {
-  transform: scale(1.01);
-}
-
+/*
+  A CHAVE: aspect-ratio + width fluída com clamp.
+  A imagem escala proporcionalmente de forma contínua — zero salto.
+  Sem height fixo = sem quebra visual ao redimensionar.
+*/
 .foto-horizontal {
   flex-shrink: 0;
-  width: 300px;
-  height: 250px;
+  width: clamp(140px, 35%, 300px);
+  aspect-ratio: 4 / 3;
   object-fit: cover;
+  display: block;
 }
 
 .info-direita {
@@ -306,30 +258,26 @@ h1 {
   gap: 10px;
   padding: 20px;
   text-align: left;
+  min-width: 0;
 }
 
-.conteudo {
-  padding: 15px;
-}
+.conteudo { padding: 15px; }
 
 .local {
   padding-left: 8px;
   color: var(--cor-primaria-hover);
-  font-size: 18px;
+  font-size: clamp(14px, 2.5vw, 18px);
   font-weight: 700;
   border-left: 4px solid var(--cor-primaria);
+  word-break: break-word;
 }
 
-.avaliacao {
-  margin-bottom: 6px;
-  color: #f39c12;
-  font-size: 16px;
-}
+.avaliacao { margin-bottom: 6px; color: #f39c12; font-size: 16px; }
 
 .interacoes {
   display: flex;
-  justify-content: flex-start;
-  gap: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
   padding: 10px 20px 15px;
 }
 
@@ -341,17 +289,14 @@ h1 {
   background: none;
   border: none;
   cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
   transition: var(--transicao);
 }
+.btn-interacao:hover { color: var(--cor-primaria); transform: scale(1.05); }
+.publicacao-horizontal .btn-interacao:hover { transform: scale(1.1); }
 
-.btn-interacao:hover {
-  color: var(--cor-primaria);
-  transform: scale(1.05);
-}
-
-.publicacao-horizontal .btn-interacao:hover {
-  transform: scale(1.1);
-}
+.lista-comentarios { padding: 0 20px 10px; word-break: break-word; }
 
 /* =========================================
    FOOTER
@@ -373,15 +318,8 @@ footer {
   margin: 0 auto;
 }
 
-.footer-container > div {
-  flex: 1;
-  min-width: 200px;
-}
-
-.footer-container div:nth-child(2) {
-  display: flex;
-  flex-direction: column;
-}
+.footer-container > div { flex: 1; min-width: 200px; }
+.footer-container div:nth-child(2) { display: flex; flex-direction: column; }
 
 .footer-container h3 {
   display: inline-block;
@@ -392,61 +330,37 @@ footer {
   border-bottom: 2px solid var(--cor-primaria);
 }
 
-.footer-container p {
-  color: var(--cor-fundo);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
+.footer-container p { color: var(--cor-fundo); font-size: 0.9rem; line-height: 1.6; }
+.footer-container a { margin-bottom: 8px; color: var(--cor-primaria); font-size: 0.9rem; text-decoration: none; transition: color 0.2s; }
+.footer-container a:hover { color: var(--cor-secundaria); text-decoration: underline; }
 
-.footer-container a {
-  margin-bottom: 8px;
-  color: var(--cor-primaria);
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.footer-container a:hover {
-  color: var(--cor-secundaria);
-  text-decoration: underline;
-}
-
-.copyright {
-  margin-top: 30px;
-  padding-top: 20px;
-  color: var(--cor-fundo);
-  font-size: 1rem;
-  text-align: center;
-}
+.copyright { margin-top: 30px; padding-top: 20px; color: var(--cor-fundo); font-size: 1rem; text-align: center; }
 
 /* =========================================
-   MEDIA QUERIES (RESPONSIVO)
+   MEDIA QUERIES — só 2 breakpoints necessários
    ========================================= */
-@media (max-width: 700px) {
-  .publicacao-horizontal {
-    flex-direction: column;
-    align-items: center;
-  }
 
+/* Card de post vira coluna em telas pequenas */
+@media (max-width: 620px) {
+  .publicacao-horizontal { flex-direction: column; }
+
+  /* aspect-ratio mantém proporção automaticamente — zero salto */
   .foto-horizontal {
-    width: 350px;
-    height: 260px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
   }
 
-  .info-direita {
-    align-items: center;
-    padding: 15px;
-    text-align: center;
-  }
+  .info-direita { padding: 14px 16px; }
+  .interacoes { padding: 8px 0 12px; }
 }
 
+/* Footer empilhado */
 @media (max-width: 600px) {
   .footer-container {
     flex-direction: column;
+    gap: 20px;
     text-align: center;
   }
-
-  .footer-container h3 {
-    margin-top: 20px;
-  }
+  .footer-container > div { min-width: unset; }
+  .footer-container div:nth-child(2) { align-items: center; }
 }
