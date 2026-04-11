@@ -741,11 +741,6 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
     padding: 0; 
   }
   
-  .btn-new-post { 
-    flex-direction: column; 
-    align-items: flex-start; 
-  }
-  
   .post-header { padding: 10px; }
   .post-content { padding: 0 10px 10px 10px; }
   
@@ -757,6 +752,38 @@ footer .copyright { margin-top: 2rem; font-size: 0.9rem; color: #fff; padding-to
   .comment-content-bubble {
     max-width: calc(100% - 35px);
     padding: 8px 12px;
+  }
+}
+
+@media (max-width: 393px) {
+  /* Input desce embaixo do avatar e mostra a frase toda */
+  .btn-new-post {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-new-post input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Botões horizontais, só ícones */
+  .post-actions-row {
+    padding: 6px 0;
+  }
+
+  .post-actions-row .action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 4px;
+    gap: 0;
+    font-size: 0;
+    min-width: 0;
+  }
+
+  .post-actions-row .action-btn .material-symbols-outlined {
+    font-size: 22px;
+    flex-shrink: 0;
   }
 }
 
