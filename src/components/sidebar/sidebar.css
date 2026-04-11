@@ -167,6 +167,85 @@ body {
   font-size: 1.25rem;
 }
 
+/* ========== LOGOUT BUTTON - REDESENHADO ========== */
+.nav-item.logout-btn {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 0rem);
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: 1.5px solid #fecaca;
+  color: #b91c1c;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  margin: 0 0 0.5rem 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  gap: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fundo deslizante no hover */
+.nav-item.logout-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: calc(var(--border-radius) - 1px);
+}
+
+.nav-item.logout-btn:hover::before {
+  opacity: 1;
+}
+
+.nav-item.logout-btn:hover {
+  border-color: #f87171;
+  color: #991b1b;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.15);
+}
+
+.nav-item.logout-btn .material-symbols-outlined {
+  margin-right: 1rem;
+  font-size: 1.25rem;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item.logout-btn:hover .material-symbols-outlined {
+  transform: translateX(3px);
+}
+
+.nav-item.logout-btn .nav-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Dark mode - logout button */
+body.dark-mode .nav-item.logout-btn {
+  color: #fca5a5;
+  background: transparent;
+}
+
+body.dark-mode .nav-item.logout-btn::before {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.4), rgba(153, 27, 27, 0.3));
+}
+
+body.dark-mode .nav-item.logout-btn:hover {
+  border-color: #ef4444;
+  color: #fecaca;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+/* ========== FIM LOGOUT BUTTON ========== */
+
 /* ========== RESPONSIVIDADE - MOBILE ========== */
 @media (max-width: 900px) {
 
@@ -397,6 +476,16 @@ body {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
+  }
+
+  /* Logout mobile - mantém estilo mas adaptado */
+  .nav-item.logout-btn {
+    margin: 0 !important;
+    transform: none;
+  }
+
+  .nav-item.logout-btn:hover {
+    transform: scale(1.05);
   }
 
   /* Overlay para fechar menu */

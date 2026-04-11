@@ -199,22 +199,16 @@ export default function Sidebar() {
                 <span className="nav-text">Perfil</span>
               </Link>
             </li>
-
-            {/* 🔴 BOTÃO SAIR */}
-            <li>
-              <button
-                className="nav-item logout-btn"
-                onClick={handleLogout}
-              >
-                <span className="material-symbols-outlined">logout</span>
-                <span className="nav-text">Sair</span>
-              </button>
-            </li>
-
           </ul>
         </nav>
 
         <div className="sidebar-footer">
+              <button
+                className="nav-item logout-btn"
+                onClick={handleLogout}>
+                <span className="material-symbols-outlined">logout</span>
+                <span className="nav-text">Sair</span>
+              </button>
           <button className="theme-btn" onClick={toggleTheme}>
             <span className="material-symbols-outlined">
               {isDarkMode ? 'light_mode' : 'dark_mode'}
