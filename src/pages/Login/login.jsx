@@ -114,6 +114,7 @@ export default function Login() {
 
             <form onSubmit={handleLogin}>
               <div className="input-box">
+                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
@@ -125,6 +126,7 @@ export default function Login() {
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">password</span>
                 <input
                   type={showLoginPassword ? "text" : "password"}
                   required
@@ -133,9 +135,14 @@ export default function Login() {
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                 />
                 <label>Senha</label>
+                <span
+                  className="material-symbols-outlined toggle-password"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                >
+                  {showLoginPassword ? "visibility_off" : "visibility"}
+                </span>
               </div>
 
-              {/* 🔥 BOTÃO CORRIGIDO */}
               <button type="submit" className="btn">ENTRAR</button>
 
               <div className="login-register">
@@ -176,6 +183,7 @@ export default function Login() {
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">alternate_email</span>
                 <input
                   type="email"
                   required
@@ -187,19 +195,27 @@ export default function Login() {
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">password</span>
                 <input
-                  type="password"
+                  type={showRegisterPassword ? "text" : "password"}
                   required
                   placeholder=" "
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                 />
                 <label>Senha</label>
+                <span
+                  className="material-symbols-outlined toggle-password"
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                >
+                  {showRegisterPassword ? "visibility_off" : "visibility"}
+                </span>
               </div>
 
               <div className="input-box">
+                <span className="material-symbols-outlined icon">password</span>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   required
                   placeholder=" "
                   value={registerData.confirmPassword}
@@ -208,9 +224,14 @@ export default function Login() {
                   }
                 />
                 <label>Confirmar Senha</label>
+                <span
+                  className="material-symbols-outlined toggle-password"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? "visibility_off" : "visibility"}
+                </span>
               </div>
 
-              {/* 🔥 BOTÃO CORRIGIDO */}
               <button type="submit" className="btn">CADASTRAR</button>
 
               <div className="login-register">
