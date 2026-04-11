@@ -75,6 +75,7 @@ export default function Login() {
       await logout();
 
       showToast("Conta criada com sucesso!", "success");
+      showToast("Conta criada com sucesso! Faça login para continuar.", "success");
       setIsRegisterActive(false);
       setJustRegistered(true);
     } catch (error) {
@@ -163,6 +164,7 @@ export default function Login() {
 
             <form onSubmit={handleRegister}>
               <div className="input-box">
+                <span className="material-symbols-outlined icon">person</span>
                 <input
                   type="text"
                   required

@@ -3,9 +3,10 @@
 # 🎣 Pesque & Fale
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" />
-<img src="https://img.shields.io/badge/frontend-Em%20progresso-orange" />
-<img src="https://img.shields.io/badge/backend-completo-success" />
+<img src="https://img.shields.io/badge/status-polimento-blue" />
+  <img src="https://img.shields.io/badge/frontend-completo-success" />
+  <img src="https://img.shields.io/badge/backend-completo-success" />
+  <img src="https://img.shields.io/badge/melhorias-opcionais-blue" />
   <img src="https://img.shields.io/badge/responsive-yes-green" />
   <img src="https://img.shields.io/badge/licença-acadêmica-lightgrey" />
 </p>
