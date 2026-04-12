@@ -30,7 +30,6 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      localStorage.clear();
       sessionStorage.setItem('mensagemLogin', 'Você saiu da conta com sucesso.');
       navigate("/");
     } catch (error) {
