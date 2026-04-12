@@ -7,6 +7,9 @@ import { getAuth, signOut } from 'firebase/auth';
 
 import logo from '../../assets/image/logo/logo.jpg';
 
+// 👇 Importa o componente de confirmação
+import Confirmacao from '../confirmacao/confirmacao';
+
 export default function Sidebar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -14,12 +17,16 @@ export default function Sidebar() {
     return saved === 'dark';
   });
   const [notifCount, setNotifCount] = useState(0);
+
+  // 👇 Controla se o card de confirmação está aberto ou não
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+
   const location = useLocation();
 
   const navigate = useNavigate();
   const auth = getAuth();
 
-  // 🔴 LOGOUT
+  // 🔴 LOGOUT — agora só é chamado ao confirmar
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -203,12 +210,18 @@ export default function Sidebar() {
         </nav>
 
         <div className="sidebar-footer">
-              <button
-                className="nav-item logout-btn"
-                onClick={handleLogout}>
-                <span className="material-symbols-outlined">logout</span>
-                <span className="nav-text">Sair</span>
-              </button>
+          {/* 👇 Botão agora abre o card de confirmação */}
+          <button
+            className="nav-item logout-btn"
+            onClick={() => {
+              setIsMenuOpen(false);      // Fecha o menu mobile se estiver aberto
+              setMostrarConfirmacao(true); // Abre o card de confirmação
+            }}
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span className="nav-text">Sair</span>
+          </button>
+
           <button className="theme-btn" onClick={toggleTheme}>
             <span className="material-symbols-outlined">
               {isDarkMode ? 'light_mode' : 'dark_mode'}
@@ -221,6 +234,13 @@ export default function Sidebar() {
       </aside>
 
       {isMenuOpen && <div className="sidebar-overlay" onClick={toggleMenu}></div>}
+
+      {/* 👇 Card de confirmação — aparece por cima de tudo */}
+      <Confirmacao
+        aberto={mostrarConfirmacao}
+        onConfirmar={handleLogout}
+        onCancelar={() => setMostrarConfirmacao(false)}
+      />
     </>
   );
 }
