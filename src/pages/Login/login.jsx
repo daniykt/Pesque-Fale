@@ -48,6 +48,14 @@ export default function Login() {
     }
   }, [toast.visible]);
 
+useEffect(() => {
+  const msg = sessionStorage.getItem('mensagemLogin');
+  if (msg) {
+    showToast(msg, 'success');
+    sessionStorage.removeItem('mensagemLogin'); 
+  }
+}, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
