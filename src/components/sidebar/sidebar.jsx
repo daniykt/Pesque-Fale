@@ -31,6 +31,7 @@ export default function Sidebar() {
     try {
       await signOut(auth);
       localStorage.clear();
+      sessionStorage.setItem('mensagemLogin', 'Você saiu da conta com sucesso.');
       navigate("/");
     } catch (error) {
       console.error("Erro ao sair:", error);
