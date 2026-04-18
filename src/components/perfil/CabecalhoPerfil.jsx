@@ -1,16 +1,12 @@
 import React, { useRef } from "react";
+import "./Cabecalhoperfil.css";
 
 export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChange, banner, usuario, bio }) {
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
-  const handleFotoClick = () => {
-    fileInputFotoRef.current.click();
-  };
-
-  const handleBannerClick = () => {
-    fileInputBannerRef.current.click();
-  };
+  const handleFotoClick = () => fileInputFotoRef.current.click();
+  const handleBannerClick = () => fileInputBannerRef.current.click();
 
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
@@ -36,11 +32,34 @@ export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChan
           backgroundImage: banner ? `url(${banner})` : undefined,
         }}
       >
-        {!banner && <span className="banner-icone material-symbols-outlined">add_photo_alternate</span>}
+        {!banner && (
+          <span className="banner-icone material-symbols-outlined">
+            add_photo_alternate
+          </span>
+        )}
         <div className="banner-overlay">
           <span className="material-symbols-outlined">photo_camera</span>
           <p>Trocar capa</p>
         </div>
+      </div>
+
+      {/* LINHA ABAIXO DO BANNER: foto à esquerda */}
+      <div className="cabecalho-inferior">
+
+        {/* FOTO DE PERFIL */}
+        <div className="foto-perfil-wrapper">
+          <img
+            src={fotoPerfil}
+            alt="Foto de Perfil"
+            className="foto-perfil"
+            onClick={handleFotoClick}
+            title="Clique para trocar a foto"
+          />
+          <div className="foto-perfil-overlay" onClick={handleFotoClick}>
+            <span className="material-symbols-outlined">photo_camera</span>
+          </div>
+        </div>
+
       </div>
 
       {/* INPUT BANNER */}
@@ -51,20 +70,6 @@ export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChan
         style={{ display: "none" }}
         onChange={handleBannerChange}
       />
-
-      {/* FOTO DE PERFIL — sobreposta ao banner */}
-      <div className="foto-perfil-wrapper">
-        <img
-          src={fotoPerfil}
-          alt="Foto de Perfil"
-          className="foto-perfil"
-          onClick={handleFotoClick}
-          title="Clique para trocar a foto"
-        />
-        <div className="foto-perfil-overlay" onClick={handleFotoClick}>
-          <span className="material-symbols-outlined">photo_camera</span>
-        </div>
-      </div>
 
       {/* INPUT FOTO */}
       <input
