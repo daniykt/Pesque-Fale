@@ -18,6 +18,10 @@ export default function Perfil() {
     "https://preview.redd.it/on9y92ssh1mb1.jpg"
   );
 
+  const [banner, setBanner] = useState(
+    localStorage.getItem("banner") || null
+  );
+
   const [bio, setBio] = useState(
     localStorage.getItem("bio") || "Quem não gosta de pesca?"
   );
@@ -50,6 +54,16 @@ export default function Perfil() {
     reader.onload = () => {
       setFotoPerfil(reader.result);
       localStorage.setItem("fotoPerfil", reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Troca banner
+  const handleBannerChange = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBanner(reader.result);
+      localStorage.setItem("banner", reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -125,6 +139,8 @@ export default function Perfil() {
           <CabecalhoPerfil
             fotoPerfil={fotoPerfil}
             onFotoChange={handleFotoChange}
+            banner={banner}
+            onBannerChange={handleBannerChange}
             usuario={user}
             bio={bio}
           />

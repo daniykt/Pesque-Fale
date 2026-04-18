@@ -1,0 +1,131 @@
+/* =========================================
+   BANNER
+   ========================================= */
+.banner-perfil {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #062A6C 0%, #0a3d8f 60%, #1a5276 100%);
+  background-size: cover;
+  background-position: center;
+  border-radius: 15px 15px 0 0;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-icone {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 48px;
+}
+
+/* Overlay aparece só no hover */
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.banner-overlay span { font-size: 28px; }
+.banner-overlay p { margin: 0; font-size: 0.9rem; font-weight: 600; }
+
+.banner-perfil:hover .banner-overlay { opacity: 1; }
+
+/* =========================================
+   FOTO DE PERFIL — sobreposta ao banner
+   ========================================= */
+.foto-perfil-wrapper {
+  position: relative;
+  width: clamp(90px, 22vw, 130px);
+  height: clamp(90px, 22vw, 130px);
+  margin-top: calc(clamp(90px, 22vw, 130px) / -2);
+  margin-left: 32px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.foto-perfil {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: block;
+}
+
+/* Overlay da foto aparece no hover */
+.foto-perfil-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.foto-perfil-overlay span { color: #fff; font-size: 24px; }
+.foto-perfil-wrapper:hover .foto-perfil-overlay { opacity: 1; }
+
+/* =========================================
+   DADOS DO USUÁRIO
+   ========================================= */
+.cabecalho-perfil {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  border-radius: 15px;
+  overflow: visible;
+}
+
+.usuario-data {
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.username {
+  margin: 0;
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--cor-secundaria);
+}
+
+.bio-texto {
+  margin: 0;
+  color: var(--cor-texto-claro);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+@media (max-width: 600px) {
+  .banner-perfil { height: 140px; }
+
+  .foto-perfil-wrapper {
+    margin-left: 16px;
+  }
+
+  .usuario-data { padding: 0 16px; }
+}
