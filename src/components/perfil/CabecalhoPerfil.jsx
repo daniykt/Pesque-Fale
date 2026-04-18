@@ -1,7 +1,15 @@
 import React, { useRef } from "react";
 import "./Cabecalhoperfil.css";
 
-export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChange, banner, usuario, bio }) {
+export default function CabecalhoPerfil({
+  fotoPerfil,
+  onFotoChange,
+  onBannerChange,
+  banner,
+  usuario,
+  bio,
+  localizacao,
+}) {
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
@@ -43,10 +51,8 @@ export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChan
         </div>
       </div>
 
-      {/* LINHA ABAIXO DO BANNER: foto à esquerda */}
+      {/* LINHA ABAIXO DO BANNER */}
       <div className="cabecalho-inferior">
-
-        {/* FOTO DE PERFIL */}
         <div className="foto-perfil-wrapper">
           <img
             src={fotoPerfil}
@@ -59,33 +65,41 @@ export default function CabecalhoPerfil({ fotoPerfil, onFotoChange, onBannerChan
             <span className="material-symbols-outlined">photo_camera</span>
           </div>
         </div>
-
       </div>
 
-      {/* INPUT BANNER */}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputBannerRef}
-        style={{ display: "none" }}
-        onChange={handleBannerChange}
-      />
+      {/* INPUTS HIDDEN */}
+      <input type="file" accept="image/*" ref={fileInputBannerRef} style={{ display: "none" }} onChange={handleBannerChange} />
+      <input type="file" accept="image/*" ref={fileInputFotoRef} style={{ display: "none" }} onChange={handleFotoChange} />
 
-      {/* INPUT FOTO */}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputFotoRef}
-        style={{ display: "none" }}
-        onChange={handleFotoChange}
-      />
-
-      {/* DADOS DO USUÁRIO */}
+      {/* INFORMAÇÕES DO USUÁRIO */}
       <div className="usuario-data">
-        <h2 className="username">
-          {usuario?.displayName || usuario?.email || "Usuário"}
+
+        {/* Nome */}
+        <h2 className="usuario-nome">
+          {usuario?.displayName || "Usuário"}
         </h2>
-        <p className="bio-texto">{bio}</p>
+
+        {/* Email */}
+        {usuario?.email && (
+          <div className="usuario-info-linha">
+            <span className="material-symbols-outlined usuario-icone">mail</span>
+            <span className="usuario-info-texto">{usuario.email}</span>
+          </div>
+        )}
+
+        {/* Localização */}
+        {localizacao && (
+          <div className="usuario-info-linha">
+            <span className="material-symbols-outlined usuario-icone">location_on</span>
+            <span className="usuario-info-texto">{localizacao}</span>
+          </div>
+        )}
+
+        {/* Bio */}
+        {bio && (
+          <p className="usuario-bio">{bio}</p>
+        )}
+
       </div>
 
     </div>

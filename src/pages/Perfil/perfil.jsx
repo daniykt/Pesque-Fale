@@ -26,6 +26,10 @@ export default function Perfil() {
     localStorage.getItem("bio") || "Quem não gosta de pesca?"
   );
 
+  const [localizacao, setLocalizacao] = useState(
+    localStorage.getItem("localizacao") || ""
+  );
+
   const [posts, setPosts] = useState(() => {
     const dados = JSON.parse(localStorage.getItem("posts")) || [];
     return dados.map((post) => ({
@@ -48,7 +52,6 @@ export default function Perfil() {
     localStorage.setItem("posts", JSON.stringify(novosPosts));
   };
 
-  // Troca foto de perfil
   const handleFotoChange = (file) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -58,7 +61,6 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // Troca banner
   const handleBannerChange = (file) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -68,10 +70,7 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // Publicar post
-  const handlePublicar = () => {
-    postInputRef.current.click();
-  };
+  const handlePublicar = () => postInputRef.current.click();
 
   const handlePostChange = (e) => {
     const file = e.target.files[0];
@@ -98,21 +97,19 @@ export default function Perfil() {
   };
 
   const handleCurtir = (id) => {
-    const novosPosts = posts.map((post) =>
+    salvarPosts(posts.map((post) =>
       post.id === id ? { ...post, curtidas: post.curtidas + 1 } : post
-    );
-    salvarPosts(novosPosts);
+    ));
   };
 
   const handleComentar = (id) => {
     const texto = prompt("Digite seu comentário:");
     if (!texto) return;
-    const novosPosts = posts.map((post) =>
+    salvarPosts(posts.map((post) =>
       post.id === id
         ? { ...post, comentarios: [...post.comentarios, texto] }
         : post
-    );
-    salvarPosts(novosPosts);
+    ));
   };
 
   const handleShare = async () => {
@@ -126,8 +123,7 @@ export default function Perfil() {
   };
 
   const handleDeletar = (id) => {
-    const confirmar = window.confirm("Tem certeza que deseja excluir este post?");
-    if (!confirmar) return;
+    if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
     salvarPosts(posts.filter((post) => post.id !== id));
   };
 
@@ -143,6 +139,7 @@ export default function Perfil() {
             onBannerChange={handleBannerChange}
             usuario={user}
             bio={bio}
+            localizacao={localizacao}
           />
 
           <EstatisticasPerfil totalPosts={posts.length} />
