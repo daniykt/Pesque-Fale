@@ -7,11 +7,13 @@ import {
   CabecalhoPerfil,
   EstatisticasPerfil,
   AcoesPerfil,
+  AbasPerfil,
   GaleriaPerfil,
 } from "../../components/perfil";
 
 export default function Perfil() {
   const [user, setUser] = useState(null);
+  const [abaSelecionada, setAbaSelecionada] = useState("Galeria");
 
   const [fotoPerfil, setFotoPerfil] = useState(
     localStorage.getItem("fotoPerfil") ||
@@ -45,6 +47,14 @@ export default function Perfil() {
       setUser(currentUser);
     });
     return unsubscribe;
+  }, []);
+
+  // Recarrega dados do localStorage ao voltar da tela de editar
+  useEffect(() => {
+    setBio(localStorage.getItem("bio") || "Quem não gosta de pesca?");
+    setLocalizacao(localStorage.getItem("localizacao") || "");
+    setFotoPerfil(localStorage.getItem("fotoPerfil") || "https://preview.redd.it/on9y92ssh1mb1.jpg");
+    setBanner(localStorage.getItem("banner") || null);
   }, []);
 
   const salvarPosts = (novosPosts) => {
@@ -154,13 +164,36 @@ export default function Perfil() {
             onChange={handlePostChange}
           />
 
-          <GaleriaPerfil
-            posts={posts}
-            onCurtir={handleCurtir}
-            onComentar={handleComentar}
-            onShare={handleShare}
-            onDeletar={handleDeletar}
+          {/* ABAS */}
+          <AbasPerfil
+            abaSelecionada={abaSelecionada}
+            onTrocarAba={setAbaSelecionada}
           />
+
+          {/* CONTEÚDO DAS ABAS */}
+          {abaSelecionada === "Galeria" && (
+            <GaleriaPerfil
+              posts={posts}
+              onCurtir={handleCurtir}
+              onComentar={handleComentar}
+              onShare={handleShare}
+              onDeletar={handleDeletar}
+            />
+          )}
+
+          {abaSelecionada === "Equipamentos" && (
+            <div className="aba-em-breve">
+              <span className="material-symbols-outlined">phishing</span>
+              <p>Equipamentos em breve!</p>
+            </div>
+          )}
+
+          {abaSelecionada === "Locais Salvos" && (
+            <div className="aba-em-breve">
+              <span className="material-symbols-outlined">bookmark</span>
+              <p>Locais Salvos em breve!</p>
+            </div>
+          )}
 
         </div>
       </div>

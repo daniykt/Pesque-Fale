@@ -364,3 +364,31 @@ footer {
   .footer-container > div { min-width: unset; }
   .footer-container div:nth-child(2) { align-items: center; }
 }
+
+/* Adicione isso no final do seu perfil.css */
+
+/* =========================================
+   ABA EM BREVE
+   ========================================= */
+.aba-em-breve {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: var(--cor-texto-claro);
+  text-align: center;
+}
+
+.aba-em-breve .material-symbols-outlined {
+  font-size: 48px;
+  color: #c0c0c0;
+}
+
+.aba-em-breve p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cor-texto-claro);
+}
