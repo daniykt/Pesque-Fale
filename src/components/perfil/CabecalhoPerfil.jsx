@@ -95,13 +95,15 @@ export default function CabecalhoPerfil({
           </div>
         )}
 
-        {/* Bio */}
-        {bio && (
-          <p className="usuario-bio">{bio}</p>
-        )}
+        {/* Bio — caixa destacada, só leitura */}
+        <div className="usuario-bio-box">
+          <span className="material-symbols-outlined bio-icone">format_quote</span>
+          <p className="usuario-bio">
+            {bio || "Nenhuma bio adicionada ainda."}
+          </p>
+        </div>
 
       </div>
-
     </div>
   );
 }
