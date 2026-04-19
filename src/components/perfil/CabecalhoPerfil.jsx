@@ -112,6 +112,17 @@ export default function CabecalhoPerfil({
         )}
 
       </div>
+      {/* Botões para mobile — aparecem abaixo da bio */}
+<div className="cabecalho-botoes-mobile">
+  <button className="btn-cabecalho btn-editar" onClick={() => window.location.href = "/perfil/editar"}>
+    <span className="material-symbols-outlined">edit</span>
+    Editar Perfil
+  </button>
+  <button className="btn-cabecalho btn-publicar" onClick={onPublicar}>
+    <span className="material-symbols-outlined">add</span>
+    Nova Publicação
+  </button>
+</div>
 
     </div>
   );
