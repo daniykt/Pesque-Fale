@@ -6,7 +6,6 @@ import { observeAuthState } from "../../auth";
 import {
   CabecalhoPerfil,
   EstatisticasPerfil,
-  AcoesPerfil,
   AbasPerfil,
   GaleriaPerfil,
 } from "../../components/perfil";
@@ -19,18 +18,9 @@ export default function Perfil() {
     localStorage.getItem("fotoPerfil") ||
     "https://preview.redd.it/on9y92ssh1mb1.jpg"
   );
-
-  const [banner, setBanner] = useState(
-    localStorage.getItem("banner") || null
-  );
-
-  const [bio, setBio] = useState(
-    localStorage.getItem("bio") || "Quem não gosta de pesca?"
-  );
-
-  const [localizacao, setLocalizacao] = useState(
-    localStorage.getItem("localizacao") || ""
-  );
+  const [banner, setBanner] = useState(localStorage.getItem("banner") || null);
+  const [bio, setBio] = useState(localStorage.getItem("bio") || "");
+  const [localizacao, setLocalizacao] = useState(localStorage.getItem("localizacao") || "");
 
   const [posts, setPosts] = useState(() => {
     const dados = JSON.parse(localStorage.getItem("posts")) || [];
@@ -43,15 +33,12 @@ export default function Perfil() {
   const postInputRef = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = observeAuthState((currentUser) => {
-      setUser(currentUser);
-    });
+    const unsubscribe = observeAuthState((currentUser) => setUser(currentUser));
     return unsubscribe;
   }, []);
 
-  // Recarrega dados do localStorage ao voltar da tela de editar
   useEffect(() => {
-    setBio(localStorage.getItem("bio") || "Quem não gosta de pesca?");
+    setBio(localStorage.getItem("bio") || "");
     setLocalizacao(localStorage.getItem("localizacao") || "");
     setFotoPerfil(localStorage.getItem("fotoPerfil") || "https://preview.redd.it/on9y92ssh1mb1.jpg");
     setBanner(localStorage.getItem("banner") || null);
@@ -85,10 +72,8 @@ export default function Perfil() {
   const handlePostChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const comentario = prompt("Digite uma descrição para o post:");
     const local = prompt("Digite o local:");
-
     const reader = new FileReader();
     reader.onload = () => {
       const novoPost = {
@@ -116,9 +101,7 @@ export default function Perfil() {
     const texto = prompt("Digite seu comentário:");
     if (!texto) return;
     salvarPosts(posts.map((post) =>
-      post.id === id
-        ? { ...post, comentarios: [...post.comentarios, texto] }
-        : post
+      post.id === id ? { ...post, comentarios: [...post.comentarios, texto] } : post
     ));
   };
 
@@ -142,19 +125,19 @@ export default function Perfil() {
       <div className="container2">
         <div className="perfil">
 
+          {/* CABEÇALHO com botões integrados */}
           <CabecalhoPerfil
             fotoPerfil={fotoPerfil}
             onFotoChange={handleFotoChange}
             banner={banner}
             onBannerChange={handleBannerChange}
+            onPublicar={handlePublicar}
             usuario={user}
             bio={bio}
             localizacao={localizacao}
           />
 
           <EstatisticasPerfil totalPosts={posts.length} />
-
-          <AcoesPerfil onPublicar={handlePublicar} />
 
           <input
             type="file"
@@ -164,13 +147,11 @@ export default function Perfil() {
             onChange={handlePostChange}
           />
 
-          {/* ABAS */}
           <AbasPerfil
             abaSelecionada={abaSelecionada}
             onTrocarAba={setAbaSelecionada}
           />
 
-          {/* CONTEÚDO DAS ABAS */}
           {abaSelecionada === "Galeria" && (
             <GaleriaPerfil
               posts={posts}
@@ -202,10 +183,7 @@ export default function Perfil() {
         <div className="footer-container">
           <div className="footer-info">
             <h3>Sobre Nós</h3>
-            <p>
-              Grupo de estudantes dedicados ao desenvolvimento de iniciativas
-              voltadas à melhoria do trabalho socioeconômico em Matão-SP.
-            </p>
+            <p>Grupo de estudantes dedicados ao desenvolvimento de iniciativas voltadas à melhoria do trabalho socioeconômico em Matão-SP.</p>
           </div>
           <div className="footer-links">
             <h3>Links Úteis</h3>

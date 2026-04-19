@@ -5,6 +5,7 @@ export default function CabecalhoPerfil({
   fotoPerfil,
   onFotoChange,
   onBannerChange,
+  onPublicar,
   banner,
   usuario,
   bio,
@@ -36,9 +37,7 @@ export default function CabecalhoPerfil({
         className="banner-perfil"
         onClick={handleBannerClick}
         title="Clique para trocar a capa"
-        style={{
-          backgroundImage: banner ? `url(${banner})` : undefined,
-        }}
+        style={{ backgroundImage: banner ? `url(${banner})` : undefined }}
       >
         {!banner && (
           <span className="banner-icone material-symbols-outlined">
@@ -51,8 +50,10 @@ export default function CabecalhoPerfil({
         </div>
       </div>
 
-      {/* LINHA ABAIXO DO BANNER */}
+      {/* LINHA ABAIXO DO BANNER: foto esquerda + botões direita */}
       <div className="cabecalho-inferior">
+
+        {/* FOTO DE PERFIL */}
         <div className="foto-perfil-wrapper">
           <img
             src={fotoPerfil}
@@ -65,6 +66,19 @@ export default function CabecalhoPerfil({
             <span className="material-symbols-outlined">photo_camera</span>
           </div>
         </div>
+
+        {/* BOTÕES — canto direito, mesma linha da foto */}
+        <div className="cabecalho-botoes">
+          <button className="btn-cabecalho btn-editar" onClick={() => window.location.href = "/perfil/editar"}>
+            <span className="material-symbols-outlined">edit</span>
+            Editar Perfil
+          </button>
+          <button className="btn-cabecalho btn-publicar" onClick={onPublicar}>
+            <span className="material-symbols-outlined">add</span>
+            Nova Publicação
+          </button>
+        </div>
+
       </div>
 
       {/* INPUTS HIDDEN */}
@@ -74,12 +88,10 @@ export default function CabecalhoPerfil({
       {/* INFORMAÇÕES DO USUÁRIO */}
       <div className="usuario-data">
 
-        {/* Nome */}
         <h2 className="usuario-nome">
-          {usuario?.displayName || "Usuário"}
+          {usuario?.displayName || localStorage.getItem("nome") || "Usuário"}
         </h2>
 
-        {/* Email */}
         {usuario?.email && (
           <div className="usuario-info-linha">
             <span className="material-symbols-outlined usuario-icone">mail</span>
@@ -87,7 +99,6 @@ export default function CabecalhoPerfil({
           </div>
         )}
 
-        {/* Localização */}
         {localizacao && (
           <div className="usuario-info-linha">
             <span className="material-symbols-outlined usuario-icone">location_on</span>
@@ -95,15 +106,13 @@ export default function CabecalhoPerfil({
           </div>
         )}
 
-        {/* Bio — caixa destacada, só leitura */}
-        <div className="usuario-bio-box">
-          <span className="material-symbols-outlined bio-icone">format_quote</span>
-          <p className="usuario-bio">
-            {bio || "Nenhuma bio adicionada ainda."}
-          </p>
-        </div>
+        {/* BIO — estilo Instagram, simples */}
+        {bio && (
+          <p className="usuario-bio">{bio}</p>
+        )}
 
       </div>
+
     </div>
   );
 }
