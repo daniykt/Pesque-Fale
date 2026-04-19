@@ -216,7 +216,6 @@
 .usuario-bio {
   margin: 6px 0 0;
   font-size: 0.95rem;
-  color: var(--cor-texto);
   line-height: 1.5;
   max-width: 600px;
 }
