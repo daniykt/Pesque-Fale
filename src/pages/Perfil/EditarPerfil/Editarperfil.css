@@ -311,3 +311,50 @@
   .editar-banner-preview { height: 130px; }
   .editar-perfil-card { padding: 20px 16px; }
 }
+
+/* Adicione isso no EditarPerfil.css
+   dentro da seção de INPUTS E TEXTAREA */
+
+/* Input com erro — borda vermelha */
+.editar-input-erro {
+  border-color: #e74c3c !important;
+  background-color: #fff8f8;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12);
+}
+
+/* Mensagem de erro visual */
+.editar-erro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #fff0f0;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  color: #c0392b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: erroAppear 0.2s ease;
+}
+
+.editar-erro .material-symbols-outlined {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+@keyframes erroAppear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode do erro */
+body.dark-mode .editar-input-erro {
+  background-color: #2a1a1a;
+  border-color: #e74c3c !important;
+}
+
+body.dark-mode .editar-erro {
+  background-color: #3a1a1a;
+  border-color: #7a3030;
+  color: #f08080;
+}

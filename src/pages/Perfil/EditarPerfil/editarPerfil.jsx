@@ -6,24 +6,15 @@ import "./Editarperfil.css";
 export default function EditarPerfil() {
   const navigate = useNavigate();
 
-  const [nome, setNome] = useState(
-    localStorage.getItem("nome") || ""
-  );
-  const [bio, setBio] = useState(
-    localStorage.getItem("bio") || ""
-  );
-  const [localizacao, setLocalizacao] = useState(
-    localStorage.getItem("localizacao") || ""
-  );
-  const [fotoPerfil, setFotoPerfil] = useState(
-    localStorage.getItem("fotoPerfil") || ""
-  );
-  const [banner, setBanner] = useState(
-    localStorage.getItem("banner") || ""
-  );
+  const [nome, setNome] = useState(localStorage.getItem("nome") || "");
+  const [bio, setBio] = useState(localStorage.getItem("bio") || "");
+  const [localizacao, setLocalizacao] = useState(localStorage.getItem("localizacao") || "");
+  const [fotoPerfil, setFotoPerfil] = useState(localStorage.getItem("fotoPerfil") || "");
+  const [banner, setBanner] = useState(localStorage.getItem("banner") || "");
 
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
+  const [erro, setErro] = useState(""); // ← mensagem de erro visual
 
   const fotoInputRef = useRef(null);
   const bannerInputRef = useRef(null);
@@ -45,14 +36,17 @@ export default function EditarPerfil() {
   };
 
   const handleSalvar = () => {
+    // Limpa erro anterior
+    setErro("");
+
+    // Validação visual — sem alert()
     if (!nome.trim()) {
-      alert("O nome não pode ficar vazio.");
+      setErro("O nome não pode ficar vazio. Por favor, preencha seu nome.");
       return;
     }
 
     setSalvando(true);
 
-    // Simula um pequeno delay para o usuário perceber que salvou
     setTimeout(() => {
       localStorage.setItem("nome", nome);
       localStorage.setItem("bio", bio);
@@ -73,7 +67,7 @@ export default function EditarPerfil() {
     <Layout>
       <div className="editar-perfil-container">
 
-        {/* CABEÇALHO DA TELA */}
+        {/* CABEÇALHO */}
         <div className="editar-perfil-header">
           <button className="btn-voltar" onClick={() => navigate("/perfil")}>
             <span className="material-symbols-outlined">arrow_back</span>
@@ -90,9 +84,7 @@ export default function EditarPerfil() {
             <div
               className="editar-banner-preview"
               onClick={() => bannerInputRef.current.click()}
-              style={{
-                backgroundImage: banner ? `url(${banner})` : undefined,
-              }}
+              style={{ backgroundImage: banner ? `url(${banner})` : undefined }}
             >
               {!banner && (
                 <div className="editar-banner-vazio">
@@ -105,13 +97,7 @@ export default function EditarPerfil() {
                 <p>Trocar capa</p>
               </div>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              ref={bannerInputRef}
-              style={{ display: "none" }}
-              onChange={handleBannerChange}
-            />
+            <input type="file" accept="image/*" ref={bannerInputRef} style={{ display: "none" }} onChange={handleBannerChange} />
           </div>
 
           {/* SEÇÃO — FOTO DE PERFIL */}
@@ -129,13 +115,7 @@ export default function EditarPerfil() {
                 <span className="material-symbols-outlined">photo_camera</span>
               </div>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fotoInputRef}
-              style={{ display: "none" }}
-              onChange={handleFotoChange}
-            />
+            <input type="file" accept="image/*" ref={fotoInputRef} style={{ display: "none" }} onChange={handleFotoChange} />
             <p className="editar-dica">Clique na foto para trocar</p>
           </div>
 
@@ -147,20 +127,29 @@ export default function EditarPerfil() {
             <input
               id="campo-nome"
               type="text"
-              className="editar-input"
+              className={`editar-input ${erro ? "editar-input-erro" : ""}`}
               placeholder="Seu nome completo"
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              onChange={(e) => {
+                setNome(e.target.value);
+                if (erro) setErro(""); // limpa o erro ao começar a digitar
+              }}
               maxLength={60}
             />
             <p className="editar-contador">{nome.length}/60</p>
+
+            {/* MENSAGEM DE ERRO VISUAL */}
+            {erro && (
+              <div className="editar-erro">
+                <span className="material-symbols-outlined">error</span>
+                {erro}
+              </div>
+            )}
           </div>
 
           {/* SEÇÃO — LOCALIZAÇÃO */}
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-localizacao">
-              Localização
-            </label>
+            <label className="editar-label" htmlFor="campo-localizacao">Localização</label>
             <div className="editar-input-icone">
               <span className="material-symbols-outlined editar-input-icone-symbol">location_on</span>
               <input
@@ -177,9 +166,7 @@ export default function EditarPerfil() {
 
           {/* SEÇÃO — BIO */}
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-bio">
-              Bio
-            </label>
+            <label className="editar-label" htmlFor="campo-bio">Bio</label>
             <textarea
               id="campo-bio"
               className="editar-textarea"
