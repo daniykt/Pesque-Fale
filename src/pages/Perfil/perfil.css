@@ -49,70 +49,15 @@ h1 {
   width: 100%;
   max-width: 800px;
   margin: 70px auto 20px;
-  padding: clamp(20px, 5vw, 40px);
+  padding: 0 0 clamp(20px, 5vw, 40px);
   background-color: var(--cor-fundo);
   border-radius: 15px;
   box-shadow: var(--sombra-padrao);
+  overflow: hidden;
 }
 
 /* =========================================
-   FOTO DE PERFIL — fluída, sem saltos
-   ========================================= */
-.foto-perfil {
-  /* Escala suavemente de 90px (tela ~320px) até 150px (tela ≥600px) */
-  width: clamp(90px, 22vw, 150px);
-  height: clamp(90px, 22vw, 150px);
-  margin: 0 auto 20px;
-  border: 3px solid var(--cor-primaria);
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-/* =========================================
-   NOME / USERNAME
-   ========================================= */
-.usuario-data { display: flex; flex-direction: column; }
-.nome-usuario { font-weight: bold; color: var(--cor-secundaria); }
-
-.username-container {
-  margin: -10px 0 15px;
-  text-align: center;
-  width: 100%;
-}
-
-.username {
-  display: inline-block;
-  position: relative;
-  padding: 0 10px;
-  color: var(--cor-texto);
-  font-size: clamp(1rem, 3.5vw, 1.4rem);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  word-break: break-word;
-  max-width: 100%;
-  transition: all var(--transicao);
-}
-
-.username::after {
-  content: "";
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--cor-primaria);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform var(--transicao);
-}
-
-.username:hover { color: var(--cor-primaria); transform: scale(1.05); }
-.username:hover::after { transform: scaleX(1); }
-
-/* =========================================
-   ESTATÍSTICAS E BIO
+   ESTATÍSTICAS
    ========================================= */
 .profile-stats {
   display: flex;
@@ -121,6 +66,7 @@ h1 {
   gap: 1rem;
   margin: 20px 0;
   width: 100%;
+  padding: 0 24px;
 }
 
 .stat-box {
@@ -129,10 +75,9 @@ h1 {
   padding: 10px 16px;
   text-align: center;
   background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(6, 42, 108, 0.15);
   border-radius: 12px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease;
 }
 
@@ -140,147 +85,248 @@ h1 {
 .stat-box .number { display: block; color: #000; font-size: 1.4rem; font-weight: bold; }
 .stat-box .label { color: var(--cor-secundaria); font-size: 0.9rem; }
 
-.numeros {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 30px;
-  margin-bottom: 20px;
-}
-.numeros div { text-align: center; }
-.numeros strong { font-size: 1.2em; }
-
-.bio {
-  margin-bottom: 20px;
-  padding: 15px;
-  border-radius: 8px;
-  width: 100%;
-  word-break: break-word;
-  cursor: pointer;
-}
-.bio strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
-
 /* =========================================
    BOTÕES E AÇÕES
    ========================================= */
-.botoes-acao {
+.botoes-acao,
+.acoes-perfil {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 30px;
+  flex-direction: row;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 0 24px;
   width: 100%;
 }
 
 .btn-publicar,
-.btn-seguir {
+.btn-acao {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
-  padding: 10px 20px;
-  font-size: 1em;
-  font-weight: bold;
+  flex: 1;
+  padding: 11px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all var(--transicao);
 }
 
-.btn-publicar { margin-bottom: 30px; background-color: var(--cor-primaria); color: var(--cor-fundo); }
-.btn-publicar:hover { background-color: var(--cor-primaria-hover); }
-.btn-seguir { background-color: #f0f2f5; color: #050505; }
-.btn-seguir:hover { background-color: #e4e6e9; }
-.btn-seguir.seguindo { background-color: #dbe7f2; color: #1877f2; }
+.btn-publicar,
+.btn-acao.btn-publicar {
+  background-color: var(--cor-primaria);
+  color: var(--cor-fundo);
+}
+
+.btn-publicar:hover,
+.btn-acao.btn-publicar:hover {
+  background-color: var(--cor-primaria-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.35);
+}
+
+.btn-acao.btn-editar {
+  background-color: #fff;
+  color: var(--cor-secundaria);
+  border: 2px solid var(--cor-secundaria);
+}
+
+.btn-acao.btn-editar:hover {
+  background-color: var(--cor-secundaria);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 42, 108, 0.25);
+}
 
 .material-symbols-outlined { font-size: 20px; vertical-align: middle; }
-.btn-seguir:hover .material-symbols-outlined,
-.btn-publicar:hover .material-symbols-outlined { transform: scale(1.1); }
 
 /* =========================================
-   PUBLICAÇÕES E FEED
+   ABAS DO PERFIL
    ========================================= */
-.publicacoes {
+.abas-perfil {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 0 20px;
+  flex-direction: row;
+  width: 100%;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 16px;
+}
+
+.aba-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cor-texto-claro);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+}
+
+.aba-btn:hover { color: var(--cor-secundaria); }
+
+.aba-ativa {
+  color: var(--cor-secundaria);
+  border-bottom: 3px solid var(--cor-primaria);
+}
+
+/* =========================================
+   GRID DE GALERIA 3x3
+   ========================================= */
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
   width: 100%;
 }
 
-.cabecalho-publicacao {
+.galeria-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.galeria-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.galeria-item:hover .galeria-foto { transform: scale(1.05); }
+
+.galeria-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.data-publicacao {
-  margin-bottom: 5px;
-  color: var(--cor-texto-claro);
-  font-size: 0.85rem;
-  font-style: italic;
+.galeria-item:hover .galeria-overlay { opacity: 1; }
+
+.galeria-overlay-info {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
-.publicacao-horizontal {
+/* =========================================
+   GALERIA VAZIA
+   ========================================= */
+.galeria-vazia {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--cor-texto-claro);
+  text-align: center;
   width: 100%;
-  max-width: 800px;
-  margin-bottom: 25px;
-  background-color: var(--cor-fundo);
-  border-radius: 12px;
-  box-shadow: var(--sombra-forte);
-  overflow: hidden;
-  transition: transform var(--transicao);
 }
-.publicacao-horizontal:hover { transform: scale(1.01); }
 
-/*
-  A CHAVE: aspect-ratio + width fluída com clamp.
-  A imagem escala proporcionalmente de forma contínua — zero salto.
-  Sem height fixo = sem quebra visual ao redimensionar.
-*/
-.foto-horizontal {
-  flex-shrink: 0;
-  width: clamp(140px, 35%, 300px);
-  aspect-ratio: 4 / 3;
+.galeria-vazia-icone { font-size: 48px; color: #c0c0c0; }
+.galeria-vazia p { margin: 0; font-size: 1rem; font-weight: 600; color: var(--cor-texto); }
+.galeria-vazia span { font-size: 0.85rem; }
+
+/* =========================================
+   MODAL DO POST
+   ========================================= */
+.galeria-modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.galeria-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.galeria-modal-fechar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+.galeria-modal-fechar:hover { background: rgba(0, 0, 0, 0.75); }
+
+.galeria-modal-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
+  border-radius: 16px 16px 0 0;
   display: block;
 }
 
-.info-direita {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  gap: 10px;
+.galeria-modal-info {
   padding: 20px;
-  text-align: left;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.conteudo { padding: 15px; }
+.galeria-modal-data { margin: 0; font-size: 0.8rem; color: var(--cor-texto-claro); font-style: italic; }
+.galeria-modal-local { margin: 0; font-size: 1rem; font-weight: 700; color: var(--cor-secundaria); border-left: 4px solid var(--cor-primaria); padding-left: 10px; }
+.galeria-modal-comentario { margin: 0; font-size: 0.95rem; color: var(--cor-texto); line-height: 1.5; }
+.galeria-modal-avaliacao { margin: 0; color: #f39c12; font-size: 1rem; }
 
-.local {
-  padding-left: 8px;
-  color: var(--cor-primaria-hover);
-  font-size: clamp(14px, 2.5vw, 18px);
-  font-weight: 700;
-  border-left: 4px solid var(--cor-primaria);
-  word-break: break-word;
-}
-
-.avaliacao { margin-bottom: 6px; color: #f39c12; font-size: 16px; }
-
-.interacoes {
+.galeria-modal-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 10px 20px 15px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
 }
 
+.galeria-modal-comentarios {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.galeria-modal-comentarios p { margin: 0; font-size: 0.9rem; color: var(--cor-texto); }
+
+/* =========================================
+   BOTÕES DE INTERAÇÃO
+   ========================================= */
 .btn-interacao {
   display: flex;
   align-items: center;
@@ -292,11 +338,30 @@ h1 {
   font-size: 0.9rem;
   white-space: nowrap;
   transition: var(--transicao);
+  padding: 4px 8px;
+  border-radius: 6px;
 }
-.btn-interacao:hover { color: var(--cor-primaria); transform: scale(1.05); }
-.publicacao-horizontal .btn-interacao:hover { transform: scale(1.1); }
 
-.lista-comentarios { padding: 0 20px 10px; word-break: break-word; }
+.btn-interacao:hover { color: var(--cor-primaria); transform: scale(1.05); }
+.btn-deletar:hover { color: #e74c3c; }
+
+/* =========================================
+   ABA EM BREVE
+   ========================================= */
+.aba-em-breve {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: var(--cor-texto-claro);
+  text-align: center;
+  width: 100%;
+}
+
+.aba-em-breve .material-symbols-outlined { font-size: 48px; color: #c0c0c0; }
+.aba-em-breve p { margin: 0; font-size: 1rem; font-weight: 600; color: var(--cor-texto-claro); }
 
 /* =========================================
    FOOTER
@@ -333,25 +398,82 @@ footer {
 .footer-container p { color: var(--cor-fundo); font-size: 0.9rem; line-height: 1.6; }
 .footer-container a { margin-bottom: 8px; color: var(--cor-primaria); font-size: 0.9rem; text-decoration: none; transition: color 0.2s; }
 .footer-container a:hover { color: var(--cor-secundaria); text-decoration: underline; }
-
 .copyright { margin-top: 30px; padding-top: 20px; color: var(--cor-fundo); font-size: 1rem; text-align: center; }
 
 /* =========================================
-   MEDIA QUERIES — só 2 breakpoints necessários
+   MEDIA QUERIES
    ========================================= */
 
-/* Card de post vira coluna em telas pequenas */
-@media (max-width: 620px) {
-  .publicacao-horizontal { flex-direction: column; }
-
-  /* aspect-ratio mantém proporção automaticamente — zero salto */
-  .foto-horizontal {
-    width: 100%;
-    aspect-ratio: 16 / 9;
+/* Tablet — 768px */
+@media (max-width: 768px) {
+  .perfil {
+    margin: 50px auto 20px;
   }
 
-  .info-direita { padding: 14px 16px; }
-  .interacoes { padding: 8px 0 12px; }
+  .profile-stats {
+    padding: 0 16px;
+  }
+
+  .botoes-acao,
+  .acoes-perfil {
+    padding: 0 16px;
+  }
+
+  .galeria-grid {
+    gap: 3px;
+  }
+}
+
+/* Mobile — 480px */
+@media (max-width: 480px) {
+  .perfil {
+    margin: 40px auto 20px;
+    border-radius: 10px;
+  }
+
+  /* Botões empilham no mobile */
+  .botoes-acao,
+  .acoes-perfil {
+    flex-direction: column;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .btn-acao,
+  .btn-publicar {
+    width: 100%;
+  }
+
+  /* Stats menores */
+  .stat-box {
+    padding: 8px 10px;
+  }
+
+  .stat-box .number { font-size: 1.2rem; }
+  .stat-box .label { font-size: 0.8rem; }
+
+  /* Grid menor no mobile */
+  .galeria-grid { gap: 2px; }
+
+  /* Modal ocupa tela toda no mobile */
+  .galeria-modal {
+    border-radius: 12px;
+    max-height: 95vh;
+  }
+
+  /* Abas com fonte menor */
+  .aba-btn {
+    font-size: 0.82rem;
+    padding: 10px 4px;
+  }
+}
+
+/* Mobile pequeno — 360px */
+@media (max-width: 360px) {
+  .stat-box { max-width: 100%; flex: 1 1 100%; }
+
+  .galeria-modal-acoes { gap: 6px; }
+  .btn-interacao { font-size: 0.8rem; }
 }
 
 /* Footer empilhado */
@@ -363,32 +485,4 @@ footer {
   }
   .footer-container > div { min-width: unset; }
   .footer-container div:nth-child(2) { align-items: center; }
-}
-
-/* Adicione isso no final do seu perfil.css */
-
-/* =========================================
-   ABA EM BREVE
-   ========================================= */
-.aba-em-breve {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 48px 20px;
-  color: var(--cor-texto-claro);
-  text-align: center;
-}
-
-.aba-em-breve .material-symbols-outlined {
-  font-size: 48px;
-  color: #c0c0c0;
-}
-
-.aba-em-breve p {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--cor-texto-claro);
 }
