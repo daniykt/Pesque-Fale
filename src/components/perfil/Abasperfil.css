@@ -24,10 +24,10 @@
 }
 
 .aba-btn:hover {
-  color: var(--cor-secundaria);
+  color: var(--cor-primaria);
 }
 
 .aba-ativa {
-  color: var(--cor-secundaria);
+  color: var(--cor-primaria);
   border-bottom: 3px solid #007bff;
 }
