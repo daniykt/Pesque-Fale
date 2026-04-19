@@ -107,17 +107,16 @@
 }
 
 /* =========================================
-   INFORMAÇÕES DO USUÁRIO — hierarquia clara
+   INFORMAÇÕES DO USUÁRIO
    ========================================= */
 .usuario-data {
-  padding: 14px 0 0 32px;
+  padding: 14px 24px 0 32px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   width: 100%;
 }
 
-/* Nome — destaque máximo */
 .usuario-nome {
   margin: 0;
   font-size: clamp(1.2rem, 3vw, 1.5rem);
@@ -126,7 +125,6 @@
   line-height: 1.2;
 }
 
-/* Linha de ícone + texto (email, localização) */
 .usuario-info-linha {
   display: flex;
   align-items: center;
@@ -145,13 +143,35 @@
   word-break: break-word;
 }
 
-/* Bio — levemente maior que email/localização */
+/* =========================================
+   BIO — caixa destacada, só leitura
+   ========================================= */
+.usuario-bio-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  background-color: #f0f4ff;
+  border-left: 4px solid #007bff;
+  border-radius: 8px;
+  max-width: 520px;
+  width: 100%;
+}
+
+.bio-icone {
+  font-size: 20px;
+  color: #007bff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .usuario-bio {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 0.95rem;
   color: var(--cor-texto);
   line-height: 1.6;
-  max-width: 520px;
+  font-style: italic;
 }
 
 /* =========================================
@@ -167,7 +187,7 @@
     margin-top: -40px;
   }
 
-  .usuario-data { padding: 10px 0 0 16px; }
+  .usuario-data { padding: 10px 16px 0 16px; }
   .cabecalho-inferior { padding: 0 12px 0 0; }
-  .usuario-bio { max-width: 100%; }
+  .usuario-bio-box { max-width: 100%; }
 }
