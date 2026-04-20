@@ -3,8 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../../../components/sidebar/layout";
 import "./Editarperfil.css";
 
+import { db } from "../../../firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { observeAuthState } from "../../../auth";
+
 export default function EditarPerfil() {
   const navigate = useNavigate();
+
+  const [user, setUser] = useState(null);
 
   const [nome, setNome] = useState(localStorage.getItem("nome") || "");
   const [bio, setBio] = useState(localStorage.getItem("bio") || "");
@@ -14,10 +20,16 @@ export default function EditarPerfil() {
 
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
-  const [erro, setErro] = useState(""); // ← mensagem de erro visual
+  const [erro, setErro] = useState("");
 
   const fotoInputRef = useRef(null);
   const bannerInputRef = useRef(null);
+
+  // 🔐 pega usuário logado
+  React.useEffect(() => {
+    const unsubscribe = observeAuthState((currentUser) => setUser(currentUser));
+    return unsubscribe;
+  }, []);
 
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
@@ -35,19 +47,32 @@ export default function EditarPerfil() {
     reader.readAsDataURL(file);
   };
 
-  const handleSalvar = () => {
-    // Limpa erro anterior
+  const handleSalvar = async () => {
     setErro("");
 
-    // Validação visual — sem alert()
     if (!nome.trim()) {
       setErro("O nome não pode ficar vazio. Por favor, preencha seu nome.");
       return;
     }
 
+    if (!user) {
+      setErro("Usuário não autenticado.");
+      return;
+    }
+
     setSalvando(true);
 
-    setTimeout(() => {
+    try {
+      // 🔥 SALVA NO FIRESTORE
+      await setDoc(doc(db, "usuarios", user.uid), {
+        nome,
+        bio,
+        localizacao,
+        fotoPerfil,
+        banner,
+      });
+
+      // 💾 mantém localStorage (compatibilidade com resto do app)
       localStorage.setItem("nome", nome);
       localStorage.setItem("bio", bio);
       localStorage.setItem("localizacao", localizacao);
@@ -60,14 +85,18 @@ export default function EditarPerfil() {
       setTimeout(() => {
         navigate("/perfil");
       }, 1000);
-    }, 800);
+
+    } catch (error) {
+      console.error(error);
+      setErro("Erro ao salvar no servidor. Tente novamente.");
+      setSalvando(false);
+    }
   };
 
   return (
     <Layout>
       <div className="editar-perfil-container">
 
-        {/* CABEÇALHO */}
         <div className="editar-perfil-header">
           <button className="btn-voltar" onClick={() => navigate("/perfil")}>
             <span className="material-symbols-outlined">arrow_back</span>
@@ -78,7 +107,6 @@ export default function EditarPerfil() {
 
         <div className="editar-perfil-card">
 
-          {/* SEÇÃO — FOTO DE CAPA */}
           <div className="editar-secao">
             <label className="editar-label">Foto de Capa</label>
             <div
@@ -100,7 +128,6 @@ export default function EditarPerfil() {
             <input type="file" accept="image/*" ref={bannerInputRef} style={{ display: "none" }} onChange={handleBannerChange} />
           </div>
 
-          {/* SEÇÃO — FOTO DE PERFIL */}
           <div className="editar-secao editar-secao-foto">
             <label className="editar-label">Foto de Perfil</label>
             <div className="editar-foto-wrapper" onClick={() => fotoInputRef.current.click()}>
@@ -119,7 +146,6 @@ export default function EditarPerfil() {
             <p className="editar-dica">Clique na foto para trocar</p>
           </div>
 
-          {/* SEÇÃO — NOME */}
           <div className="editar-secao">
             <label className="editar-label" htmlFor="campo-nome">
               Nome completo <span className="editar-obrigatorio">*</span>
@@ -132,13 +158,12 @@ export default function EditarPerfil() {
               value={nome}
               onChange={(e) => {
                 setNome(e.target.value);
-                if (erro) setErro(""); // limpa o erro ao começar a digitar
+                if (erro) setErro("");
               }}
               maxLength={60}
             />
             <p className="editar-contador">{nome.length}/60</p>
 
-            {/* MENSAGEM DE ERRO VISUAL */}
             {erro && (
               <div className="editar-erro">
                 <span className="material-symbols-outlined">error</span>
@@ -147,7 +172,6 @@ export default function EditarPerfil() {
             )}
           </div>
 
-          {/* SEÇÃO — LOCALIZAÇÃO */}
           <div className="editar-secao">
             <label className="editar-label" htmlFor="campo-localizacao">Localização</label>
             <div className="editar-input-icone">
@@ -164,7 +188,6 @@ export default function EditarPerfil() {
             </div>
           </div>
 
-          {/* SEÇÃO — BIO */}
           <div className="editar-secao">
             <label className="editar-label" htmlFor="campo-bio">Bio</label>
             <textarea
@@ -179,7 +202,6 @@ export default function EditarPerfil() {
             <p className="editar-contador">{bio.length}/150</p>
           </div>
 
-          {/* BOTÃO SALVAR */}
           <button
             className={`btn-salvar ${salvando ? "btn-salvando" : ""} ${salvo ? "btn-salvo" : ""}`}
             onClick={handleSalvar}
