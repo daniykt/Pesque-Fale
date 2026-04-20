@@ -34,7 +34,6 @@ function AppRoutes() {
       <Routes>
 
         <Route path="/" element={<Index />} />
-
         <Route path="/login" element={<Login />} />
 
         {/* 🔒 ROTAS PROTEGIDAS */}
@@ -47,6 +46,17 @@ function AppRoutes() {
           }
         />
 
+        {/* 🔥 PERFIL DINÂMICO */}
+        <Route
+          path="/perfil/:id"
+          element={
+            <ProtectedRoute user={user}>
+              <Perfil />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 👤 SEU PERFIL (opcional manter) */}
         <Route
           path="/perfil"
           element={
