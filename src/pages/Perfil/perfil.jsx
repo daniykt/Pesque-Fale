@@ -3,6 +3,10 @@ import Layout from "../../components/sidebar/layout";
 import "./perfil.css";
 import "../../styles/global.css";
 import { observeAuthState } from "../../auth";
+
+import { db } from "../../firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+
 import {
   CabecalhoPerfil,
   EstatisticasPerfil,
@@ -15,55 +19,74 @@ export default function Perfil() {
   const [abaSelecionada, setAbaSelecionada] = useState("Galeria");
 
   const [fotoPerfil, setFotoPerfil] = useState(
-    localStorage.getItem("fotoPerfil") ||
     "https://preview.redd.it/on9y92ssh1mb1.jpg"
   );
-  const [banner, setBanner] = useState(localStorage.getItem("banner") || null);
-  const [bio, setBio] = useState(localStorage.getItem("bio") || "");
-  const [localizacao, setLocalizacao] = useState(localStorage.getItem("localizacao") || "");
+  const [banner, setBanner] = useState(null);
+  const [bio, setBio] = useState("");
+  const [localizacao, setLocalizacao] = useState("");
 
-  const [posts, setPosts] = useState(() => {
-    const dados = JSON.parse(localStorage.getItem("posts")) || [];
-    return dados.map((post) => ({
-      ...post,
-      comentarios: Array.isArray(post.comentarios) ? post.comentarios : [],
-    }));
-  });
+  const [posts, setPosts] = useState([]);
 
   const postInputRef = useRef(null);
 
+  // 🔐 pega usuário
   useEffect(() => {
     const unsubscribe = observeAuthState((currentUser) => setUser(currentUser));
     return unsubscribe;
   }, []);
 
+  // 🔥 BUSCA DADOS DO FIRESTORE
   useEffect(() => {
-    setBio(localStorage.getItem("bio") || "");
-    setLocalizacao(localStorage.getItem("localizacao") || "");
-    setFotoPerfil(localStorage.getItem("fotoPerfil") || "https://preview.redd.it/on9y92ssh1mb1.jpg");
-    setBanner(localStorage.getItem("banner") || null);
-  }, []);
+    if (!user) return;
 
-  const salvarPosts = (novosPosts) => {
+    const carregarDados = async () => {
+      try {
+        const docRef = doc(db, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+
+          setBio(data.bio || "");
+          setLocalizacao(data.localizacao || "");
+          setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
+          setBanner(data.banner || null);
+          setPosts(data.posts || []);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+      }
+    };
+
+    carregarDados();
+  }, [user]);
+
+  // 💾 SALVA POSTS NO FIRESTORE
+  const salvarPosts = async (novosPosts) => {
     setPosts(novosPosts);
-    localStorage.setItem("posts", JSON.stringify(novosPosts));
+
+    if (!user) return;
+
+    try {
+      const docRef = doc(db, "usuarios", user.uid);
+
+      await updateDoc(docRef, {
+        posts: novosPosts,
+      });
+    } catch (error) {
+      console.error("Erro ao salvar posts:", error);
+    }
   };
 
   const handleFotoChange = (file) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      setFotoPerfil(reader.result);
-      localStorage.setItem("fotoPerfil", reader.result);
-    };
+    reader.onload = () => setFotoPerfil(reader.result);
     reader.readAsDataURL(file);
   };
 
   const handleBannerChange = (file) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      setBanner(reader.result);
-      localStorage.setItem("banner", reader.result);
-    };
+    reader.onload = () => setBanner(reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -72,8 +95,10 @@ export default function Perfil() {
   const handlePostChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const comentario = prompt("Digite uma descrição para o post:");
     const local = prompt("Digite o local:");
+
     const reader = new FileReader();
     reader.onload = () => {
       const novoPost = {
@@ -86,23 +111,32 @@ export default function Perfil() {
         curtidas: 0,
         comentarios: [],
       };
+
       salvarPosts([novoPost, ...posts]);
     };
+
     reader.readAsDataURL(file);
   };
 
   const handleCurtir = (id) => {
-    salvarPosts(posts.map((post) =>
-      post.id === id ? { ...post, curtidas: post.curtidas + 1 } : post
-    ));
+    salvarPosts(
+      posts.map((post) =>
+        post.id === id ? { ...post, curtidas: post.curtidas + 1 } : post
+      )
+    );
   };
 
   const handleComentar = (id) => {
     const texto = prompt("Digite seu comentário:");
     if (!texto) return;
-    salvarPosts(posts.map((post) =>
-      post.id === id ? { ...post, comentarios: [...post.comentarios, texto] } : post
-    ));
+
+    salvarPosts(
+      posts.map((post) =>
+        post.id === id
+          ? { ...post, comentarios: [...post.comentarios, texto] }
+          : post
+      )
+    );
   };
 
   const handleShare = async () => {
@@ -125,7 +159,6 @@ export default function Perfil() {
       <div className="container2">
         <div className="perfil">
 
-          {/* CABEÇALHO com botões integrados */}
           <CabecalhoPerfil
             fotoPerfil={fotoPerfil}
             onFotoChange={handleFotoChange}
@@ -179,7 +212,7 @@ export default function Perfil() {
         </div>
       </div>
 
-      <footer>
+        <footer>
         <div className="footer-container">
           <div className="footer-info">
             <h3>Sobre Nós</h3>
@@ -201,6 +234,7 @@ export default function Perfil() {
         </div>
         <p className="copyright">&copy; Pesque & Fale 2025</p>
       </footer>
+      
     </Layout>
   );
 }
