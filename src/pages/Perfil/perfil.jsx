@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./perfil.css";
 import "../../styles/global.css";
@@ -15,12 +16,14 @@ import {
 } from "../../components/perfil";
 
 export default function Perfil() {
+  const { id } = useParams(); // 🔥 pega ID da URL
+
   const [user, setUser] = useState(null);
+  const [usuarioPerfil, setUsuarioPerfil] = useState(null); // 🔥 perfil sendo exibido
+
   const [abaSelecionada, setAbaSelecionada] = useState("Galeria");
 
-  const [fotoPerfil, setFotoPerfil] = useState(
-    "https://preview.redd.it/on9y92ssh1mb1.jpg"
-  );
+  const [fotoPerfil, setFotoPerfil] = useState("https://preview.redd.it/on9y92ssh1mb1.jpg");
   const [banner, setBanner] = useState(null);
   const [bio, setBio] = useState("");
   const [localizacao, setLocalizacao] = useState("");
@@ -29,29 +32,36 @@ export default function Perfil() {
 
   const postInputRef = useRef(null);
 
-  // 🔐 pega usuário
+  // 🔐 usuário logado
   useEffect(() => {
     const unsubscribe = observeAuthState((currentUser) => setUser(currentUser));
     return unsubscribe;
   }, []);
 
-  // 🔥 BUSCA DADOS DO FIRESTORE
+  // 🔥 BUSCA PERFIL (PRINCIPAL)
   useEffect(() => {
-    if (!user) return;
-
     const carregarDados = async () => {
       try {
-        const docRef = doc(db, "usuarios", user.uid);
+        // 🔥 define qual ID usar
+        const userId = id ? id : user?.uid;
+
+        if (!userId) return;
+
+        const docRef = doc(db, "usuarios", userId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();
+
+          setUsuarioPerfil({ id: docSnap.id, ...data });
 
           setBio(data.bio || "");
           setLocalizacao(data.localizacao || "");
           setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
           setBanner(data.banner || null);
           setPosts(data.posts || []);
+        } else {
+          console.log("Usuário não encontrado");
         }
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
@@ -59,13 +69,16 @@ export default function Perfil() {
     };
 
     carregarDados();
-  }, [user]);
+  }, [user, id]);
 
-  // 💾 SALVA POSTS NO FIRESTORE
+  // 🔒 só pode editar se for seu perfil
+  const isOwnProfile = !id || id === user?.uid;
+
+  // 💾 salvar posts (só se for seu perfil)
   const salvarPosts = async (novosPosts) => {
-    setPosts(novosPosts);
+    if (!isOwnProfile) return;
 
-    if (!user) return;
+    setPosts(novosPosts);
 
     try {
       const docRef = doc(db, "usuarios", user.uid);
@@ -79,20 +92,29 @@ export default function Perfil() {
   };
 
   const handleFotoChange = (file) => {
+    if (!isOwnProfile) return;
+
     const reader = new FileReader();
     reader.onload = () => setFotoPerfil(reader.result);
     reader.readAsDataURL(file);
   };
 
   const handleBannerChange = (file) => {
+    if (!isOwnProfile) return;
+
     const reader = new FileReader();
     reader.onload = () => setBanner(reader.result);
     reader.readAsDataURL(file);
   };
 
-  const handlePublicar = () => postInputRef.current.click();
+  const handlePublicar = () => {
+    if (!isOwnProfile) return;
+    postInputRef.current.click();
+  };
 
   const handlePostChange = (e) => {
+    if (!isOwnProfile) return;
+
     const file = e.target.files[0];
     if (!file) return;
 
@@ -118,21 +140,21 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  const handleCurtir = (id) => {
+  const handleCurtir = (idPost) => {
     salvarPosts(
       posts.map((post) =>
-        post.id === id ? { ...post, curtidas: post.curtidas + 1 } : post
+        post.id === idPost ? { ...post, curtidas: post.curtidas + 1 } : post
       )
     );
   };
 
-  const handleComentar = (id) => {
+  const handleComentar = (idPost) => {
     const texto = prompt("Digite seu comentário:");
     if (!texto) return;
 
     salvarPosts(
       posts.map((post) =>
-        post.id === id
+        post.id === idPost
           ? { ...post, comentarios: [...post.comentarios, texto] }
           : post
       )
@@ -142,16 +164,18 @@ export default function Perfil() {
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      await navigator.share({ title: "Pesque & Fale", text: "Olha meu perfil!", url });
+      await navigator.share({ title: "Pesque & Fale", text: "Olha esse perfil!", url });
     } else {
       navigator.clipboard.writeText(url);
       alert("Link copiado!");
     }
   };
 
-  const handleDeletar = (id) => {
+  const handleDeletar = (idPost) => {
+    if (!isOwnProfile) return;
+
     if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
-    salvarPosts(posts.filter((post) => post.id !== id));
+    salvarPosts(posts.filter((post) => post.id !== idPost));
   };
 
   return (
@@ -165,9 +189,10 @@ export default function Perfil() {
             banner={banner}
             onBannerChange={handleBannerChange}
             onPublicar={handlePublicar}
-            usuario={user}
+            usuario={usuarioPerfil}
             bio={bio}
             localizacao={localizacao}
+            isOwnProfile={isOwnProfile} // 🔥 novo
           />
 
           <EstatisticasPerfil totalPosts={posts.length} />
@@ -192,19 +217,18 @@ export default function Perfil() {
               onComentar={handleComentar}
               onShare={handleShare}
               onDeletar={handleDeletar}
+              isOwnProfile={isOwnProfile} // 🔥 novo
             />
           )}
 
           {abaSelecionada === "Equipamentos" && (
             <div className="aba-em-breve">
-              <span className="material-symbols-outlined">phishing</span>
               <p>Equipamentos em breve!</p>
             </div>
           )}
 
           {abaSelecionada === "Locais Salvos" && (
             <div className="aba-em-breve">
-              <span className="material-symbols-outlined">bookmark</span>
               <p>Locais Salvos em breve!</p>
             </div>
           )}
@@ -212,7 +236,7 @@ export default function Perfil() {
         </div>
       </div>
 
-        <footer>
+       <footer>
         <div className="footer-container">
           <div className="footer-info">
             <h3>Sobre Nós</h3>
