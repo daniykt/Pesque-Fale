@@ -1,0 +1,226 @@
+/* =========================================
+   GRID 3x3
+   ========================================= */
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 100%;
+}
+
+.galeria-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.galeria-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.galeria-item:hover .galeria-foto {
+  transform: scale(1.05);
+}
+
+/* Overlay com curtidas e comentários no hover */
+.galeria-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.galeria-item:hover .galeria-overlay {
+  opacity: 1;
+}
+
+.galeria-overlay-info {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* =========================================
+   GALERIA VAZIA
+   ========================================= */
+.galeria-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--cor-texto-claro);
+  text-align: center;
+}
+
+.galeria-vazia-icone {
+  font-size: 48px;
+  color: #c0c0c0;
+}
+
+.galeria-vazia p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+}
+
+.galeria-vazia span {
+  font-size: 0.85rem;
+}
+
+/* =========================================
+   MODAL DO POST
+   ========================================= */
+.galeria-modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.galeria-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.galeria-modal-fechar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: #fff;
+  transition: background 0.2s ease;
+}
+
+.galeria-modal-fechar:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.galeria-modal-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px 16px 0 0;
+  display: block;
+}
+
+.galeria-modal-info {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.galeria-modal-data {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--cor-texto-claro);
+  font-style: italic;
+}
+
+.galeria-modal-local {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cor-secundaria);
+  border-left: 4px solid #007bff;
+  padding-left: 10px;
+}
+
+.galeria-modal-comentario {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  line-height: 1.5;
+}
+
+.galeria-modal-avaliacao {
+  margin: 0;
+  color: #f39c12;
+  font-size: 1rem;
+}
+
+.galeria-modal-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-interacao {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #000;
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.btn-interacao:hover {
+  color: #007bff;
+  transform: scale(1.05);
+}
+
+.btn-deletar:hover {
+  color: #e74c3c;
+}
+
+.galeria-modal-comentarios {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.galeria-modal-comentarios p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+@media (max-width: 480px) {
+  .galeria-grid { gap: 2px; }
+  .galeria-modal { border-radius: 12px; }
+}

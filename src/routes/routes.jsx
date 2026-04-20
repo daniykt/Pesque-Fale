@@ -8,6 +8,7 @@ import Index from "../pages/Index/Index";
 import Login from "../pages/Login/login";
 import Home from "../pages/Home/Home";
 import Perfil from "../pages/Perfil/perfil";
+import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
 import Pesquisa from "../pages/Pesquisa/pesquisa";
 import Notificacao from "../pages/Notificacao/notificacao";
 import LocaisAvaliados from "../pages/locaisAvaliados/locaisAvaliados";
@@ -51,6 +52,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute user={user}>
               <Perfil />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/perfil/editar"
+          element={
+            <ProtectedRoute user={user}>
+              <EditarPerfil />
             </ProtectedRoute>
           }
         />
