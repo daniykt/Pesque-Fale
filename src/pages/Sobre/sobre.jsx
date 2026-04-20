@@ -62,7 +62,7 @@ const SobreNos = () => {
       <div className="sobre-corpo">
         <section className="sobre-nos">
           <h1>Nossa Equipe</h1>
-          <div className="container">
+          <div className="container-sobre">
             {membros.map(membro => (
               <div key={membro.id} className="card">
                 <img src={membro.foto} alt={`Foto de ${membro.nome}`} />
