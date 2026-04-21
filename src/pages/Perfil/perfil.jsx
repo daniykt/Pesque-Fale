@@ -19,7 +19,7 @@ export default function Perfil() {
   const { id } = useParams(); // 🔥 pega ID da URL
 
   const [user, setUser] = useState(null);
-  const [usuarioPerfil, setUsuarioPerfil] = useState(null); // 🔥 perfil sendo exibido
+  const [usuarioPerfil, setUsuarioPerfil] = useState(null);
 
   const [abaSelecionada, setAbaSelecionada] = useState("Galeria");
 
@@ -38,30 +38,48 @@ export default function Perfil() {
     return unsubscribe;
   }, []);
 
-  // 🔥 BUSCA PERFIL (PRINCIPAL)
+  // 🔥 BUSCA PERFIL (CORRIGIDO)
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        // 🔥 define qual ID usar
-        const userId = id ? id : user?.uid;
+        // 👉 Se existe ID na URL → SEMPRE usa ele
+        if (id) {
+          const docRef = doc(db, "usuarios", id);
+          const docSnap = await getDoc(docRef);
 
-        if (!userId) return;
+          if (docSnap.exists()) {
+            const data = docSnap.data();
 
-        const docRef = doc(db, "usuarios", userId);
-        const docSnap = await getDoc(docRef);
+            setUsuarioPerfil({ id: docSnap.id, ...data });
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+            setBio(data.bio || "");
+            setLocalizacao(data.localizacao || "");
+            setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
+            setBanner(data.banner || null);
+            setPosts(data.posts || []);
+          } else {
+            console.log("Usuário não encontrado");
+          }
 
-          setUsuarioPerfil({ id: docSnap.id, ...data });
+          return; // 🚨 impede sobrescrever com usuário logado
+        }
 
-          setBio(data.bio || "");
-          setLocalizacao(data.localizacao || "");
-          setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
-          setBanner(data.banner || null);
-          setPosts(data.posts || []);
-        } else {
-          console.log("Usuário não encontrado");
+        // 👉 Se NÃO tem ID → usa usuário logado
+        if (user) {
+          const docRef = doc(db, "usuarios", user.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+
+            setUsuarioPerfil({ id: docSnap.id, ...data });
+
+            setBio(data.bio || "");
+            setLocalizacao(data.localizacao || "");
+            setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
+            setBanner(data.banner || null);
+            setPosts(data.posts || []);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
@@ -69,7 +87,7 @@ export default function Perfil() {
     };
 
     carregarDados();
-  }, [user, id]);
+  }, [id, user]);
 
   // 🔒 só pode editar se for seu perfil
   const isOwnProfile = !id || id === user?.uid;
@@ -192,7 +210,7 @@ export default function Perfil() {
             usuario={usuarioPerfil}
             bio={bio}
             localizacao={localizacao}
-            isOwnProfile={isOwnProfile} // 🔥 novo
+            isOwnProfile={isOwnProfile}
           />
 
           <EstatisticasPerfil totalPosts={posts.length} />
@@ -217,7 +235,7 @@ export default function Perfil() {
               onComentar={handleComentar}
               onShare={handleShare}
               onDeletar={handleDeletar}
-              isOwnProfile={isOwnProfile} // 🔥 novo
+              isOwnProfile={isOwnProfile}
             />
           )}
 
@@ -236,7 +254,7 @@ export default function Perfil() {
         </div>
       </div>
 
-       <footer>
+      <footer>
         <div className="footer-container">
           <div className="footer-info">
             <h3>Sobre Nós</h3>
@@ -258,7 +276,7 @@ export default function Perfil() {
         </div>
         <p className="copyright">&copy; Pesque & Fale 2025</p>
       </footer>
-      
+
     </Layout>
   );
 }
