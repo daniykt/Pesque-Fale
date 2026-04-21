@@ -1,291 +1,369 @@
-import React, { useState } from "react";
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./pesquisa.css";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
-import imgValeSereno from "../../assets/image/pesquisa/represavalesereno.jpg";
-import imgLagoFendas from "../../assets/image/pesquisa/lagodasfendas.jpg";
-import imgJacarupema from "../../assets/image/pesquisa/represajacarupema.jpg";
-import imgRioAraguaia from "../../assets/image/pesquisa/rioaraguaia.jpg";
-import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";
-import imgLagoAzul from "../../assets/image/pesquisa/lagoazulserra.jpg";
-import imgRioParana from "../../assets/image/pesquisa/rio-parana.jpg";
-import imgAguasClaras from "../../assets/image/pesquisa/pesqueiroaguasclaras.jpg";
+/* ===== COMPONENTES REUTILIZÁVEIS ===== */
 
+// Abas (Usuários / Locais)
+const Tabs = ({ activeTab, onTabChange }) => {
+  return (
+    <div className="tabs-container">
+      <button
+        className={`tab ${activeTab === "users" ? "active" : ""}`}
+        onClick={() => onTabChange("users")}
+      >
+        <i className="fas fa-users"></i> Usuários
+      </button>
+      <button
+        className={`tab ${activeTab === "locations" ? "active" : ""}`}
+        onClick={() => onTabChange("locations")}
+      >
+        <i className="fas fa-map-marker-alt"></i> Locais
+      </button>
+    </div>
+  );
+};
 
-const locaisExemplo = [
-  {
-    id: 1,
-    nome: "Represa do Vale Sereno",
-    localizacao: "Barra do Garças, MT",
-    melhorEpoca: "Maio a Setembro",
-    tipo: "Represa",
-    descricao:
-      "Um dos melhores locais para pesca de tucunaré e pintado. Águas claras e correntes moderadas.",
-    peixes: ["tucunaré", "pintado", "dourado"],
-    tags: ["Boas estradas e trilhas"],
-    avaliacao: 4.7,
-    imagem: imgValeSereno,
-  },
-  {
-    id: 2,
-    nome: "Lago das Fendas",
-    localizacao: "Manaus, AM",
-    melhorEpoca: "Ano todo",
-    tipo: "Lago",
-    descricao:
-      "Lago particular com ótima estrutura para pesca esportiva, especialmente de pacu e piapara.",
-    peixes: ["pacu", "piapara", "tilápia"],
-    tags: [],
-    avaliacao: 4.9,
-    imagem: imgLagoFendas,
-  },
-  {
-    id: 3,
-    nome: "Represa Jacarupema",
-    localizacao: "Capitólio, MG",
-    melhorEpoca: "Outubro a Março",
-    tipo: "Represa",
-    descricao:
-      "Grande represa conhecida por suas corvinas e tucunarés de bom porte. Área com vários pontos de pesca.",
-    peixes: ["corvina", "tucunaré", "traíra"],
-    tags: [],
-    avaliacao: 4.5,
-    imagem: imgJacarupema,
-  },
-  {
-    id: 4,
-    nome: "Rio Araguaia - Trecho Sul",
-    localizacao: "Luís Alves, GO",
-    melhorEpoca: "Junho a Outubro",
-    tipo: "Rio",
-    descricao:
-      "Trecho famoso pela pesca de grandes peixes como pintado e pirarara, com belas praias naturais.",
-    peixes: ["pintado", "pirarara", "pacu"],
-    tags: ["Pesca embarcada", "Praias naturais"],
-    avaliacao: 4.8,
-    imagem: imgRioAraguaia,
-  },
-  {
-    id: 5,
-    nome: "Pesqueiro Recanto Verde",
-    localizacao: "Campinas, SP",
-    melhorEpoca: "Ano todo",
-    tipo: "Pesqueiro",
-    descricao:
-      "Pesqueiro com excelente infraestrutura, ideal para pesca esportiva de tambaqui e tilápia.",
-    peixes: ["tambaqui", "tilápia", "pacu"],
-    tags: ["Infraestrutura completa", "Familiar"],
-    avaliacao: 4.6,
-    imagem: imgRecantoVerde,
-  },
-  {
-    id: 6,
-    nome: "Lagoa Azul da Serra",
-    localizacao: "Domingos Martins, ES",
-    melhorEpoca: "Abril a Agosto",
-    tipo: "Lagoa",
-    descricao:
-      "Lago de águas cristalinas em região serrana, ótimo para pesca tranquila e contato com a natureza.",
-    peixes: ["tilápia", "carpa", "traíra"],
-    tags: ["Águas cristalinas", "Ambiente tranquilo"],
-    avaliacao: 4.4,
-    imagem: imgLagoAzul,
-  },
-  {
-    id: 7,
-    nome: "Rio Paraná",
-    localizacao: "Foz do Iguaçu, PR",
-    melhorEpoca: "Agosto a Novembro",
-    tipo: "Rio",
-    descricao:
-      "Local icônico para pesca esportiva, com grande variedade de espécies e ótima estrutura turística na região.",
-    peixes: ["dourado", "surubim", "piapara"],
-    tags: ["Pesca esportiva", "Região turística"],
-    avaliacao: 4.8,
-    imagem: imgRioParana,
-  },
-  {
-    id: 8,
-    nome: "Pesqueiro Águas Claras",
-    localizacao: "Sorocaba, SP",
-    melhorEpoca: "Ano todo",
-    tipo: "Pesqueiro",
-    descricao:
-      "Pesqueiro muito bem avaliado, ideal para iniciantes e famílias, com grande quantidade de peixes e fácil acesso.",
-    peixes: ["tilápia", "pacu", "tambaqui"],
-    tags: ["Fácil acesso", "Ideal para iniciantes"],
-    avaliacao: 4.7,
-    imagem: imgAguasClaras,
-  },
-];
+// Barra de busca
+const SearchBar = ({ placeholder, value, onChange }) => {
+  return (
+    <div className="search-bar-wrapper">
+      <i className="fas fa-search search-icon"></i>
+      <input
+        type="text"
+        className="search-input"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+};
 
+// Card de Usuário
+const UserCard = ({ user, onClick }) => {
+  const [imgError, setImgError] = useState(false);
+  const nomeExibicao = user.nome || user.username || "Pescador";
+
+  // Iniciais para o avatar placeholder (ex: "João Pedro" → "JP")
+  const iniciais = nomeExibicao
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+
+  const temFoto = user.foto && !imgError;
+
+  return (
+    <div className="user-card" onClick={onClick}>
+      {/* Avatar com fallback de iniciais — sem via.placeholder.com */}
+      {temFoto ? (
+        <img
+          src={user.foto}
+          alt={nomeExibicao}
+          className="user-avatar"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="user-avatar-placeholder">{iniciais}</div>
+      )}
+
+      <div className="user-info">
+        {/* Nome + verificado */}
+        <h4 className="user-name">
+          {nomeExibicao}
+          {user.verificado && (
+            <span className="user-verified" title="Verificado">
+              <i className="fas fa-check-circle"></i>
+            </span>
+          )}
+        </h4>
+
+        <span className="user-username">@{user.username || "usuario"}</span>
+
+        {/* Cidade */}
+        {user.cidade && (
+          <div className="user-cidade">
+            <i className="fas fa-map-marker-alt"></i>
+            {user.cidade}
+          </div>
+        )}
+
+        {/* Bio */}
+        {user.bio && <p className="user-bio">{user.bio}</p>}
+
+        {/* Badges: capturas + especialidades */}
+        {(user.capturas || user.especialidades?.length > 0) && (
+          <div className="user-badges">
+            {user.capturas && (
+              <span className="user-badge-pill capturas">
+                <i className="fas fa-fish"></i> {user.capturas} capturas
+              </span>
+            )}
+            {user.especialidades?.slice(0, 2).map((esp, idx) => (
+              <span key={idx} className="user-badge-pill">
+                {esp}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button className="user-action-btn">Ver perfil</button>
+    </div>
+  );
+};
+
+// Card de Local
+const LocationCard = ({ local }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const ratingValue = Number(local.avaliacao) || 0;
+  const safeRating  = Math.min(5, Math.max(0, ratingValue));
+  const fullStars   = Math.floor(safeRating);
+  const emptyStars  = 5 - fullStars;
+
+  const temImagem = local.imagem && !imgError;
+
+  return (
+    <div className="location-card-new">
+      {/* Imagem ou placeholder próprio — sem via.placeholder.com */}
+      {temImagem ? (
+        <img
+          src={local.imagem}
+          alt={local.nome}
+          className="location-card-image"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div
+          className="location-card-image"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(6,42,108,0.07)",
+            fontSize: "2.5rem",
+          }}
+        >
+          🎣
+        </div>
+      )}
+
+      <div className="location-card-content">
+        {/* Badge do tipo */}
+        {local.tipo && (
+          <span className="location-tipo-badge">{local.tipo}</span>
+        )}
+
+        <h4 className="location-card-name">{local.nome}</h4>
+
+        {/* Estrelas + contagem */}
+        <div className="location-card-rating">
+          <span className="stars">
+            {"★".repeat(fullStars)}
+            {"☆".repeat(emptyStars)}
+          </span>
+          <span className="rating-value">{safeRating.toFixed(1)}</span>
+          <span className="reviews-count">
+            ({local.avaliacoes || 0} avaliações)
+          </span>
+        </div>
+
+        {/* Descrição curta */}
+        {local.descricao && (
+          <p className="location-card-desc">{local.descricao}</p>
+        )}
+
+        {/* Endereço */}
+        <div className="location-card-address">
+          <i className="fas fa-map-pin"></i> {local.localizacao}
+        </div>
+
+        {/* Tags */}
+        {local.tags?.length > 0 && (
+          <div className="location-tags">
+            {local.tags.slice(0, 4).map((tag, idx) => (
+              <span key={idx} className="location-tag">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ===== COMPONENTE PRINCIPAL ===== */
 export default function Pesquisar() {
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
-  const [fishType, setFishType] = useState("");
-  const [locationType, setLocationType] = useState("");
-  const [rating, setRating] = useState("0");
-  const [results, setResults] = useState(locaisExemplo);
 
-  const handleSearch = () => {
-    console.log("Buscando com filtros:", {
-      searchTerm,
-      fishType,
-      locationType,
-      rating,
-    });
+  const [locais, setLocais] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const locaisFiltrados = locaisExemplo.filter((local) => {
-      const matchesSearch =
-        searchTerm === "" ||
-        local.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        local.localizacao.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtros de locais
+  const [filtroTipo, setFiltroTipo] = useState("todos");
+  const [filtroAvaliacao, setFiltroAvaliacao] = useState("todas");
 
-      const matchesFish =
-        fishType === "" || local.peixes.includes(fishType.toLowerCase());
+  // 🔥 Buscar dados do Firestore
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const locaisSnap = await getDocs(collection(db, "locais"));
+        const usuariosSnap = await getDocs(collection(db, "usuarios"));
 
-      const matchesLocation =
-        locationType === "" ||
-        local.tipo.toLowerCase() === locationType.toLowerCase();
+        const locaisData = locaisSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      const matchesRating = local.avaliacao >= parseFloat(rating);
+        const usuariosData = usuariosSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      return matchesSearch && matchesFish && matchesLocation && matchesRating;
-    });
+        setLocais(locaisData);
+        setUsuarios(usuariosData);
+      } catch (error) {
+        console.error("Erro ao buscar dados:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setResults(locaisFiltrados);
+    fetchData();
+  }, []);
+
+  // 🔎 Filtragem baseada no termo de busca
+  const filterData = () => {
+    const termo = searchTerm.toLowerCase();
+
+    if (activeTab === "users") {
+      if (!termo) return usuarios;
+      return usuarios.filter(
+        (user) =>
+          user.username?.toLowerCase().includes(termo) ||
+          user.nome?.toLowerCase().includes(termo) ||
+          user.bio?.toLowerCase().includes(termo)
+      );
+    } else {
+      return locais.filter((local) => {
+        const matchTermo =
+          !termo ||
+          local.nome?.toLowerCase().includes(termo) ||
+          local.localizacao?.toLowerCase().includes(termo);
+
+        const matchTipo =
+          filtroTipo === "todos" || local.tipo === filtroTipo;
+
+        const avNum = Number(local.avaliacao ?? 0);
+        const matchAvaliacao =
+          filtroAvaliacao === "todas" ||
+          (filtroAvaliacao === "4+" && avNum >= 4) ||
+          (filtroAvaliacao === "3+" && avNum >= 3) ||
+          (filtroAvaliacao === "2+" && avNum >= 2);
+
+        return matchTermo && matchTipo && matchAvaliacao;
+      });
+    }
   };
+
+  const filteredResults = filterData();
+
+  // Placeholder dinâmico conforme aba ativa
+  const searchPlaceholder =
+    activeTab === "users"
+      ? "Buscar pescadores..."
+      : "Buscar rios, lagos...";
 
   return (
     <Layout>
       <main className="search-container">
-        <h2>PESQUISAR LOCAIS DE PESCA</h2>
 
-        {/* Barra de Pesquisa */}
-        <div className="search-box">
-          <input
-            type="text"
-            id="search-input"
-            placeholder="Digite o nome de um local, cidade ou tipo de peixe..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button id="search-button" onClick={handleSearch}>
-            <i className="fas fa-search"></i> Pesquisar
-          </button>
-        </div>
+        <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Filtros */}
-        <div className="filters">
-          <div className="filter-group">
-            <label htmlFor="fish-type">Tipo de Peixe</label>
-            <select
-              id="fish-type"
-              value={fishType}
-              onChange={(e) => setFishType(e.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="tucunaré">Tucunaré</option>
-              <option value="dourado">Dourado</option>
-              <option value="pintado">Pintado</option>
-              <option value="pacu">Pacu</option>
-              <option value="corvina">Corvina</option>
-              <option value="tilápia">Tilápia</option>
-              <option value="carpa">Carpa</option>
-              <option value="traíra">Traíra</option>
-              <option value="surubim">Surubim</option>
-              <option value="tambaqui">Tambaqui</option>
-            </select>
+        <SearchBar
+          placeholder={searchPlaceholder}
+          value={searchTerm}
+          onChange={setSearchTerm}
+        />
+
+        {/* Filtros — visíveis só na aba de Locais */}
+        {activeTab === "locations" && (
+          <div className="filtros-locais">
+            <div className="filtro-group">
+              <label htmlFor="filtro-tipo">Tipo</label>
+              <select
+                id="filtro-tipo"
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+              >
+                <option value="todos">Todos</option>
+                <option value="rio">Rio</option>
+                <option value="represa">Represa</option>
+                <option value="pesqueiro">Pesqueiro</option>
+                <option value="lago">Lago</option>
+              </select>
+            </div>
+
+            <div className="filtro-group">
+              <label htmlFor="filtro-avaliacao">Avaliação mínima</label>
+              <select
+                id="filtro-avaliacao"
+                value={filtroAvaliacao}
+                onChange={(e) => setFiltroAvaliacao(e.target.value)}
+              >
+                <option value="todas">Todas</option>
+                <option value="4+">4+ estrelas</option>
+                <option value="3+">3+ estrelas</option>
+                <option value="2+">2+ estrelas</option>
+              </select>
+            </div>
           </div>
-
-          <div className="filter-group">
-            <label htmlFor="location-type">Tipo de Local</label>
-            <select
-              id="location-type"
-              value={locationType}
-              onChange={(e) => setLocationType(e.target.value)}
-            >
-              <option value="">Todos</option>
-              <option value="rio">Rio</option>
-              <option value="lago">Lago</option>
-              <option value="represa">Represa</option>
-              <option value="pesqueiro">Pesqueiro</option>
-              <option value="lagoa">Lagoa</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="rating">Avaliação Mínima</label>
-            <select
-              id="rating"
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-            >
-              <option value="0">Qualquer</option>
-              <option value="3">3+ estrelas</option>
-              <option value="4">4+ estrelas</option>
-              <option value="4.5">4.5+ estrelas</option>
-            </select>
-          </div>
-        </div>
+        )}
 
         {/* Resultados */}
-        <div className="results-container" id="results-container">
-          {results.length > 0 ? (
-            results.map((local) => (
-              <div key={local.id} className="location-card">
-                <img
-                  src={local.imagem}
-                  alt={local.nome}
-                  className="location-image"
-                />
-                <div className="location-info">
-                  <h3 className="location-name">{local.nome}</h3>
-                  <p>
-                    <i className="fas fa-map-marker-alt"></i>{" "}
-                    {local.localizacao}
-                  </p>
-                  <p>
-                    <i className="far fa-calendar-alt"></i> Melhor época:{" "}
-                    {local.melhorEpoca}
-                  </p>
-                  <p>
-                    <i className="fas fa-water"></i> {local.tipo}
-                  </p>
-                  <p className="location-description">{local.descricao}</p>
-
-                  <div className="fish-tags">
-                    {local.peixes.map((peixe) => (
-                      <span key={peixe} className="tag">
-                        <i className="fas fa-fish"></i> {peixe}
-                      </span>
-                    ))}
-                  </div>
-
-                  {local.tags.length > 0 && (
-                    <div className="other-tags">
-                      {local.tags.map((tag) => (
-                        <span key={tag} className="tag">
-                          <i className="fas fa-check"></i> {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="location-ratings">
-                    <i className="fas fa-star text-warning"></i>{" "}
-                    {local.avaliacao.toFixed(1)}/5
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="no-results">
-              <i className="fas fa-fish" style={{ fontSize: "2em", marginBottom: "15px" }}></i>
+        <div className="results-section">
+          {loading ? (
+            <div className="loading-state">
+              <i className="fas fa-spinner fa-pulse"></i>
+              <p>Carregando...</p>
+            </div>
+          ) : filteredResults.length === 0 ? (
+            <div className="empty-state">
+              <i
+                className={`fas ${
+                  activeTab === "users" ? "fa-user-friends" : "fa-map-marked-alt"
+                }`}
+              ></i>
               <p>
-                Nenhum local de pesca encontrado com os filtros selecionados.
-                Tente ajustar sua pesquisa.
+                {activeTab === "users"
+                  ? "Nenhum pescador encontrado 🐟"
+                  : "Nenhum local encontrado 📍"}
               </p>
+            </div>
+          ) : (
+            <div className="results-grid">
+              {activeTab === "users"
+                ? filteredResults.map((user) => (
+                    <UserCard
+                      key={user.id}
+                      user={user}
+                      onClick={() => navigate(`/perfil/${user.id}`)}
+                    />
+                  ))
+                : filteredResults.map((local) => (
+                    <LocationCard key={local.id} local={local} />
+                  ))}
             </div>
           )}
         </div>
@@ -304,17 +382,17 @@ export default function Pesquisar() {
 
           <div className="footer-links">
             <h3>Links Úteis</h3>
-                <a href="/home">Página Inicial</a>
-                <br />
-                <a href="/pesquisar">Pesquisa de Locais</a>
-                <br />
-                <a href="/locais">Melhores Locais</a>
-                <br />
-                <a href="/notificacao">Notificações</a>
-                <br />
-                <a href="/sobre">Sobre Nós</a>
-                <br />
-                <a href="/perfil">Perfil</a>
+            <a href="/home">Página Inicial</a>
+            <br />
+            <a href="/pesquisar">Pesquisa de Locais</a>
+            <br />
+            <a href="/locais">Melhores Locais</a>
+            <br />
+            <a href="/notificacao">Notificações</a>
+            <br />
+            <a href="/sobre">Sobre Nós</a>
+            <br />
+            <a href="/perfil">Perfil</a>
           </div>
 
           <div className="footer-contact">
