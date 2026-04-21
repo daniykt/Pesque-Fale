@@ -50,7 +50,7 @@ export default function CabecalhoPerfil({
         </div>
       </div>
 
-      {/* LINHA ABAIXO DO BANNER: foto esquerda + botões direita */}
+      {/* LINHA ABAIXO DO BANNER */}
       <div className="cabecalho-inferior">
 
         {/* FOTO DE PERFIL */}
@@ -67,7 +67,7 @@ export default function CabecalhoPerfil({
           </div>
         </div>
 
-        {/* BOTÕES — canto direito, mesma linha da foto */}
+        {/* BOTÕES */}
         <div className="cabecalho-botoes">
           <button className="btn-cabecalho btn-editar" onClick={() => window.location.href = "/perfil/editar"}>
             <span className="material-symbols-outlined">edit</span>
@@ -82,14 +82,27 @@ export default function CabecalhoPerfil({
       </div>
 
       {/* INPUTS HIDDEN */}
-      <input type="file" accept="image/*" ref={fileInputBannerRef} style={{ display: "none" }} onChange={handleBannerChange} />
-      <input type="file" accept="image/*" ref={fileInputFotoRef} style={{ display: "none" }} onChange={handleFotoChange} />
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputBannerRef}
+        style={{ display: "none" }}
+        onChange={handleBannerChange}
+      />
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputFotoRef}
+        style={{ display: "none" }}
+        onChange={handleFotoChange}
+      />
 
       {/* INFORMAÇÕES DO USUÁRIO */}
       <div className="usuario-data">
 
+        {/* ✅ CORREÇÃO AQUI */}
         <h2 className="usuario-nome">
-          {usuario?.displayName || localStorage.getItem("nome") || "Usuário"}
+          {usuario?.nome || "Usuário"}
         </h2>
 
         {usuario?.email && (
@@ -106,23 +119,23 @@ export default function CabecalhoPerfil({
           </div>
         )}
 
-        {/* BIO — estilo Instagram, simples */}
         {bio && (
           <p className="usuario-bio">{bio}</p>
         )}
 
       </div>
-      {/* Botões para mobile — aparecem abaixo da bio */}
-<div className="cabecalho-botoes-mobile">
-  <button className="btn-cabecalho btn-editar" onClick={() => window.location.href = "/perfil/editar"}>
-    <span className="material-symbols-outlined">edit</span>
-    Editar Perfil
-  </button>
-  <button className="btn-cabecalho btn-publicar" onClick={onPublicar}>
-    <span className="material-symbols-outlined">add</span>
-    Nova Publicação
-  </button>
-</div>
+
+      {/* BOTÕES MOBILE */}
+      <div className="cabecalho-botoes-mobile">
+        <button className="btn-cabecalho btn-editar" onClick={() => window.location.href = "/perfil/editar"}>
+          <span className="material-symbols-outlined">edit</span>
+          Editar Perfil
+        </button>
+        <button className="btn-cabecalho btn-publicar" onClick={onPublicar}>
+          <span className="material-symbols-outlined">add</span>
+          Nova Publicação
+        </button>
+      </div>
 
     </div>
   );
