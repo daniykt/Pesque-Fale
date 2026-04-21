@@ -25,11 +25,6 @@ h1 {
     margin-bottom: 30px;
 }
 
-h2 {
-    color: #062A6C;
-    margin-bottom: 20px;
-}
-
 /* ===== ABAS ===== */
 .tabs-container {
     display: flex;
@@ -351,9 +346,6 @@ footer {
 }
 
 @media (max-width: 480px) {
-    h2 {
-        font-size: 1.5rem;
-    }
 
     .tabs-container {
         justify-content: center;
