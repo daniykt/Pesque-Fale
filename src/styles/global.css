@@ -697,3 +697,227 @@ body.dark-mode .editar-erro {
   border-color: #7a3030;
   color: #f08080;
 }
+
+/* ===== TEMA ESCURO - PÁGINA DE PESQUISA ===== */
+body.dark-mode .search-container {
+  background-color: #1e1e1e;
+  box-shadow: 0 20px 10px rgba(0, 0, 0, 0.3);
+  border-color: #333;
+}
+
+body.dark-mode h2 {
+  color: #90caf9;
+}
+
+/* Abas */
+body.dark-mode .tabs-container {
+  border-bottom-color: #444;
+}
+
+body.dark-mode .tab {
+  color: #ccc;
+}
+
+body.dark-mode .tab:hover {
+  color: #90caf9;
+  background-color: #2a2a2a;
+}
+
+body.dark-mode .tab.active {
+  color: #90caf9;
+  border-bottom-color: #90caf9;
+}
+
+body.dark-mode .tab.active::after {
+  background-color: #90caf9;
+}
+
+/* Barra de busca */
+body.dark-mode .search-bar-wrapper .search-icon {
+  color: #aaa;
+}
+
+body.dark-mode .search-input {
+  background-color: #2c2c2c;
+  border-color: #555;
+  color: #f1f1f1;
+}
+
+body.dark-mode .search-input:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.1);
+  background-color: #1a1a1a;
+}
+
+body.dark-mode .search-input::placeholder {
+  color: #999;
+}
+
+/* Grid de resultados e cards */
+body.dark-mode .results-grid {
+  /* sem alterações necessárias */
+}
+
+body.dark-mode .user-card {
+  background-color: #1e1e1e;
+  border-color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .user-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border-color: #555;
+}
+
+body.dark-mode .user-avatar {
+  border-color: #90caf9;
+}
+
+body.dark-mode .user-name {
+  color: #90caf9;
+}
+
+body.dark-mode .user-username {
+  color: #bbb;
+}
+
+body.dark-mode .user-bio {
+  color: #ccc;
+}
+
+body.dark-mode .user-action-btn {
+  background-color: #062A6C;
+  color: white;
+}
+
+body.dark-mode .user-action-btn:hover {
+  background-color: #1a4a9a;
+}
+
+body.dark-mode .user-cidade {
+  color: #aaa;
+}
+
+body.dark-mode .user-cidade i {
+  color: #90caf9;
+}
+
+body.dark-mode .user-badges .user-badge-pill {
+  background-color: #2a3a5c;
+  color: #90caf9;
+}
+
+body.dark-mode .user-badge-pill.capturas {
+  background-color: #1e3a2e;
+  color: #81c784;
+}
+
+body.dark-mode .user-verified {
+  color: #90caf9;
+}
+
+body.dark-mode .user-avatar-placeholder {
+  background-color: rgba(144, 202, 249, 0.1);
+  border-color: #90caf9;
+  color: #90caf9;
+}
+
+/* Card de local */
+body.dark-mode .location-card-new {
+  background-color: #1e1e1e;
+  border-color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .location-card-new:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .location-card-image {
+  /* sem alterações */
+}
+
+body.dark-mode .location-card-content {
+  /* sem alterações */
+}
+
+body.dark-mode .location-card-name {
+  color: #90caf9;
+}
+
+body.dark-mode .stars {
+  color: #f5b342; /* mantém cor das estrelas */
+}
+
+body.dark-mode .rating-value {
+  color: #f1f1f1;
+}
+
+body.dark-mode .reviews-count {
+  color: #aaa;
+}
+
+body.dark-mode .location-card-address {
+  color: #ccc;
+}
+
+body.dark-mode .location-card-address i {
+  color: #90caf9;
+}
+
+body.dark-mode .location-tipo-badge {
+  background-color: rgba(144, 202, 249, 0.15);
+  color: #90caf9;
+}
+
+body.dark-mode .location-card-desc {
+  color: #ccc;
+}
+
+body.dark-mode .location-tags {
+  border-top-color: #444;
+}
+
+body.dark-mode .location-tag {
+  background-color: #2a3a5c;
+  color: #90caf9;
+}
+
+/* Estado vazio */
+body.dark-mode .empty-state {
+  background-color: #1e1e1e;
+  color: #ccc;
+}
+
+body.dark-mode .empty-state i {
+  color: #90caf9;
+  opacity: 0.8;
+}
+
+/* Loading state */
+body.dark-mode .loading-state {
+  color: #ccc;
+}
+
+/* Filtros de locais */
+body.dark-mode .filtro-group label {
+  color: #90caf9;
+}
+
+body.dark-mode .filtro-group select {
+  background-color: #2c2c2c;
+  border-color: #555;
+  color: #f1f1f1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2390caf9' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+}
+
+body.dark-mode .filtro-group select:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.1);
+  background-color: #1a1a1a;
+}
+
+body.dark-mode .filtro-group option {
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+}
