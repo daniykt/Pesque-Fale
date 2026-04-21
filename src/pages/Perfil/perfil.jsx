@@ -16,7 +16,7 @@ import {
 } from "../../components/perfil";
 
 export default function Perfil() {
-  const { id } = useParams(); // 🔥 pega ID da URL
+  const { id } = useParams();
 
   const [user, setUser] = useState(null);
   const [usuarioPerfil, setUsuarioPerfil] = useState(null);
@@ -38,11 +38,10 @@ export default function Perfil() {
     return unsubscribe;
   }, []);
 
-  // 🔥 BUSCA PERFIL (CORRIGIDO)
+  // 🔥 CARREGAR PERFIL
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        // 👉 Se existe ID na URL → SEMPRE usa ele
         if (id) {
           const docRef = doc(db, "usuarios", id);
           const docSnap = await getDoc(docRef);
@@ -51,20 +50,16 @@ export default function Perfil() {
             const data = docSnap.data();
 
             setUsuarioPerfil({ id: docSnap.id, ...data });
-
             setBio(data.bio || "");
             setLocalizacao(data.localizacao || "");
             setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
             setBanner(data.banner || null);
             setPosts(data.posts || []);
-          } else {
-            console.log("Usuário não encontrado");
           }
 
-          return; // 🚨 impede sobrescrever com usuário logado
+          return;
         }
 
-        // 👉 Se NÃO tem ID → usa usuário logado
         if (user) {
           const docRef = doc(db, "usuarios", user.uid);
           const docSnap = await getDoc(docRef);
@@ -73,7 +68,6 @@ export default function Perfil() {
             const data = docSnap.data();
 
             setUsuarioPerfil({ id: docSnap.id, ...data });
-
             setBio(data.bio || "");
             setLocalizacao(data.localizacao || "");
             setFotoPerfil(data.fotoPerfil || "https://preview.redd.it/on9y92ssh1mb1.jpg");
@@ -92,14 +86,14 @@ export default function Perfil() {
   // 🔒 só pode editar se for seu perfil
   const isOwnProfile = !id || id === user?.uid;
 
-  // 💾 salvar posts (só se for seu perfil)
+  // ✅ CORRIGIDO: agora salva no perfil que está sendo visualizado
   const salvarPosts = async (novosPosts) => {
-    if (!isOwnProfile) return;
+    if (!usuarioPerfil?.id) return;
 
     setPosts(novosPosts);
 
     try {
-      const docRef = doc(db, "usuarios", user.uid);
+      const docRef = doc(db, "usuarios", usuarioPerfil.id);
 
       await updateDoc(docRef, {
         posts: novosPosts,
@@ -158,31 +152,42 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
+  // 👍 AGORA FUNCIONA EM QUALQUER PERFIL
   const handleCurtir = (idPost) => {
-    salvarPosts(
-      posts.map((post) =>
-        post.id === idPost ? { ...post, curtidas: post.curtidas + 1 } : post
-      )
+    const novosPosts = posts.map((post) =>
+      post.id === idPost
+        ? { ...post, curtidas: (post.curtidas || 0) + 1 }
+        : post
     );
+
+    salvarPosts(novosPosts);
   };
 
+  // 💬 AGORA FUNCIONA EM QUALQUER PERFIL
   const handleComentar = (idPost) => {
     const texto = prompt("Digite seu comentário:");
     if (!texto) return;
 
-    salvarPosts(
-      posts.map((post) =>
-        post.id === idPost
-          ? { ...post, comentarios: [...post.comentarios, texto] }
-          : post
-      )
+    const novosPosts = posts.map((post) =>
+      post.id === idPost
+        ? {
+            ...post,
+            comentarios: [...(post.comentarios || []), texto],
+          }
+        : post
     );
+
+    salvarPosts(novosPosts);
   };
 
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      await navigator.share({ title: "Pesque & Fale", text: "Olha esse perfil!", url });
+      await navigator.share({
+        title: "Pesque & Fale",
+        text: "Olha esse perfil!",
+        url,
+      });
     } else {
       navigator.clipboard.writeText(url);
       alert("Link copiado!");
@@ -193,6 +198,7 @@ export default function Perfil() {
     if (!isOwnProfile) return;
 
     if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
+
     salvarPosts(posts.filter((post) => post.id !== idPost));
   };
 
@@ -236,6 +242,8 @@ export default function Perfil() {
               onShare={handleShare}
               onDeletar={handleDeletar}
               isOwnProfile={isOwnProfile}
+              user={user}
+              usuarioPerfil={usuarioPerfil}
             />
           )}
 

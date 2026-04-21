@@ -1,11 +1,91 @@
 import React, { useState } from "react";
 import "./Galeriaperfil.css";
 
-export default function GaleriaPerfil({ posts, onCurtir, onComentar, onShare, onDeletar }) {
+import { db } from "../../firebase";
+import { doc, updateDoc } from "firebase/firestore";
+
+export default function GaleriaPerfil({ posts, onShare, user, usuarioPerfil }) {
   const [postSelecionado, setPostSelecionado] = useState(null);
 
   const abrirPost = (post) => setPostSelecionado(post);
   const fecharPost = () => setPostSelecionado(null);
+
+  // 👍 CURTIR (CORRIGIDO)
+  const handleCurtir = async (post) => {
+    try {
+      const novosPosts = posts.map((p) =>
+        p.id === post.id
+          ? { ...p, curtidas: (p.curtidas || 0) + 1 }
+          : p
+      );
+
+      const docRef = doc(db, "usuarios", usuarioPerfil.id);
+
+      await updateDoc(docRef, {
+        posts: novosPosts,
+      });
+
+      setPostSelecionado({
+        ...postSelecionado,
+        curtidas: (postSelecionado.curtidas || 0) + 1,
+      });
+
+    } catch (error) {
+      console.error("Erro ao curtir:", error);
+    }
+  };
+
+  // 💬 COMENTAR (CORRIGIDO)
+  const handleComentar = async (post) => {
+    const texto = prompt("Digite seu comentário:");
+    if (!texto) return;
+
+    try {
+      const novosPosts = posts.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              comentarios: [...(p.comentarios || []), texto],
+            }
+          : p
+      );
+
+      const docRef = doc(db, "usuarios", usuarioPerfil.id);
+
+      await updateDoc(docRef, {
+        posts: novosPosts,
+      });
+
+      setPostSelecionado({
+        ...postSelecionado,
+        comentarios: [...(postSelecionado.comentarios || []), texto],
+      });
+
+    } catch (error) {
+      console.error("Erro ao comentar:", error);
+    }
+  };
+
+  // 🗑️ DELETAR (SÓ DONO)
+  const handleDeletar = async (post) => {
+    if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
+
+    try {
+      const novosPosts = posts.filter((p) => p.id !== post.id);
+
+      const docRef = doc(db, "usuarios", usuarioPerfil.id);
+
+      await updateDoc(docRef, {
+        posts: novosPosts,
+      });
+
+      fecharPost();
+      window.location.reload();
+
+    } catch (error) {
+      console.error("Erro ao deletar:", error);
+    }
+  };
 
   if (posts.length === 0) {
     return (
@@ -19,7 +99,6 @@ export default function GaleriaPerfil({ posts, onCurtir, onComentar, onShare, on
 
   return (
     <>
-      {/* GRID 3x3 */}
       <div className="galeria-grid">
         {posts.map((post) => (
           <div
@@ -30,7 +109,7 @@ export default function GaleriaPerfil({ posts, onCurtir, onComentar, onShare, on
             <img src={post.imagem} alt={post.local} className="galeria-foto" />
             <div className="galeria-overlay">
               <span className="galeria-overlay-info">
-                👍 {post.curtidas}
+                👍 {post.curtidas || 0}
               </span>
               <span className="galeria-overlay-info">
                 💬 {post.comentarios?.length || 0}
@@ -40,14 +119,12 @@ export default function GaleriaPerfil({ posts, onCurtir, onComentar, onShare, on
         ))}
       </div>
 
-      {/* MODAL DO POST SELECIONADO */}
       {postSelecionado && (
         <div className="galeria-modal-fundo" onClick={fecharPost}>
           <div
             className="galeria-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Botão fechar */}
             <button className="galeria-modal-fechar" onClick={fecharPost}>
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -67,28 +144,30 @@ export default function GaleriaPerfil({ posts, onCurtir, onComentar, onShare, on
               <div className="galeria-modal-acoes">
                 <button
                   className="btn-interacao"
-                  onClick={() => onCurtir(postSelecionado.id)}
+                  onClick={() => handleCurtir(postSelecionado)}
                 >
-                  👍 {postSelecionado.curtidas}
+                  👍 {postSelecionado.curtidas || 0}
                 </button>
+
                 <button
                   className="btn-interacao"
-                  onClick={() => onComentar(postSelecionado.id)}
+                  onClick={() => handleComentar(postSelecionado)}
                 >
                   💬 {postSelecionado.comentarios?.length || 0}
                 </button>
+
                 <button className="btn-interacao" onClick={onShare}>
                   🔗 Compartilhar
                 </button>
-                <button
-                  className="btn-interacao btn-deletar"
-                  onClick={() => {
-                    onDeletar(postSelecionado.id);
-                    fecharPost();
-                  }}
-                >
-                  🗑️ Excluir
-                </button>
+
+                {user?.uid === usuarioPerfil?.id && (
+                  <button
+                    className="btn-interacao btn-deletar"
+                    onClick={() => handleDeletar(postSelecionado)}
+                  >
+                    🗑️ Excluir
+                  </button>
+                )}
               </div>
 
               {postSelecionado.comentarios?.length > 0 && (
