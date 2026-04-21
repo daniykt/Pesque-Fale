@@ -16,7 +16,7 @@ body {
     margin-bottom: 40px;
 }
 
-.container {
+.container-sobre {
     display: grid;
     gap: 30px;
     max-width: 1200px;
@@ -84,7 +84,7 @@ body {
 .card .social i:hover {
     color: #0073e6;
 }
-.container {
+.container-sobre {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* sempre 3 colunas */
     gap: 30px;
@@ -129,7 +129,7 @@ body {
         }
 
         @media (max-width: 768px) {
-            .container {
+            .container-sobre {
                 grid-template-columns: 1fr;
             }
         }
