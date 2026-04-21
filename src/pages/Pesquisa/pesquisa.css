@@ -1,3 +1,4 @@
+/* ===== ESTILOS BASE (mantidos do original) ===== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -24,275 +25,547 @@ h1 {
     margin-bottom: 30px;
 }
 
-.search-box {
-    display: flex;
+h2 {
+    color: #062A6C;
     margin-bottom: 20px;
 }
 
-#search-input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px 0 0 4px;
-    font-size: 16px;
+/* ===== ABAS ===== */
+.tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 2px;
 }
 
-#search-button {
-    padding: 12px 20px;
-    background-color: #1a6fc9;
-    color: #fff;
+.tab {
+    background: none;
     border: none;
-    border-radius: 0 4px 4px 0;
-    cursor: pointer;
+    padding: 12px 24px;
     font-size: 16px;
-    transition: background-color 0.3s;
-}
-
-#search-button:hover {
-    background-color: #0d47a1;
-}
-
-.filters {
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 20px 20px 0 0;
     display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
 }
 
-.filter-group {
-    flex: 1;
-    min-width: 200px;
+.tab i {
+    font-size: 1.1em;
 }
 
-.filter-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #0d47a1;
+.tab:hover {
+    color: #062A6C;
+    background-color: #f0f5ff;
 }
 
-.filter-group select {
+.tab.active {
+    color: #062A6C;
+    border-bottom: 3px solid #062A6C;
+    background-color: transparent;
+}
+
+/* ===== BARRA DE BUSCA ===== */
+.search-bar-wrapper {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1rem;
+}
+
+.search-input {
     width: 100%;
-    padding: 10px;
+    padding: 14px 20px 14px 45px;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 30px;
+    font-size: 16px;
+    background-color: #fafafa;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
-.results-container {
+.search-input:focus {
+    outline: none;
+    border-color: #062A6C;
+    box-shadow: 0 0 0 3px rgba(6, 42, 108, 0.1);
+    background-color: #fff;
+}
+
+/* ===== GRID DE RESULTADOS ===== */
+.results-section {
+    min-height: 300px;
+}
+
+.results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
 }
 
-.location-card {
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* ===== CARD DE USUÁRIO ===== */
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: #e0e0e0;
+}
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #062A6C;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    color: #062A6C;
+    font-weight: 600;
+}
+
+.user-username {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.user-bio {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #444;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: transform 0.3s;
 }
 
-.location-card:hover {
-    transform: translateY(-5px);
+.user-action-btn {
+    background-color: #062A6C;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
 }
 
-.location-image {
+.user-action-btn:hover {
+    background-color: #0a3a8a;
+}
+
+/* ===== CARD DE LOCAL (NOVO ESTILO) ===== */
+.location-card-new {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.location-card-new:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.location-card-image {
     width: 100%;
-    height: 200px;
+    height: 160px;
     object-fit: cover;
 }
 
-.location-info {
-    padding: 15px;
+.location-card-content {
+    padding: 16px;
 }
 
-.location-name {
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #0d47a1;
+.location-card-name {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    color: #062A6C;
+    font-weight: 600;
 }
 
-.location-details {
+.location-card-rating {
     display: flex;
-    gap: 15px;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
     flex-wrap: wrap;
 }
 
-.detail-item {
+.stars {
+    color: #f5b342;
+    letter-spacing: 2px;
+}
+
+.rating-value {
+    font-weight: 700;
+    color: #333;
+}
+
+.reviews-count {
+    color: #777;
+    font-size: 0.9rem;
+}
+
+.location-card-address {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 0.9em;
+    gap: 6px;
+    color: #555;
+    font-size: 0.95rem;
 }
 
-.detail-item i {
-    color: #1a6fc9;
+.location-card-address i {
+    color: #062A6C;
+    font-size: 0.9rem;
 }
 
-.location-description {
-    color: #666;
-    margin-bottom: 15px;
-    line-height: 1.5;
-}
-
-.location-ratings {
-    display: flex;
-    align-items: center;
-    color: #f39c12;
-    font-weight: bold;
-}
-
-.no-results {
+/* ===== ESTADO VAZIO ===== */
+.empty-state {
     text-align: center;
-    padding: 40px;
+    padding: 60px 20px;
+    background: #f9f9f9;
+    border-radius: 20px;
     color: #666;
-    font-size: 1.2em;
-    grid-column: 1 / -1;
 }
 
-.hidden {
-    display: none;
+.empty-state i {
+    font-size: 3.5rem;
+    color: #062A6C;
+    opacity: 0.6;
+    margin-bottom: 20px;
 }
 
-.tag {
+.empty-state p {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* ===== FOOTER (mantido) ===== */
+footer {
+    background-color: #062A6C;
+    color: white;
+    padding: 30px 20px;
+    margin-top: 40px;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.footer-info,
+.footer-links,
+.footer-contact {
+    flex: 1 1 250px;
+}
+
+.footer-links a {
+    color: #ccc;
+    text-decoration: none;
     display: inline-block;
-    background-color: #e3f2fd;
-    color: #1a6fc9;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8em;
-    margin-right: 5px;
-    margin-bottom: 5px;
+    margin: 5px 0;
+    transition: color 0.2s;
 }
 
-/* ============ RESPONSIVIDADE PARA MOBILE ============ */
-@media (max-width: 1200px) {
-    .search-container {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-    .container {
-        padding: 10px;
-        margin-top: 70px;
-    }
+.footer-links a:hover {
+    color: white;
 }
 
+.copyright {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
-    .container {
-        padding: 10px;
-        margin-top: 70px;
-    }
-    
     .search-container {
         padding: 15px;
-        margin-bottom: 20px;
+        margin-top: 70px;
     }
-    
-    .search-box {
-        flex-direction: column;
+
+    .tab {
+        padding: 10px 16px;
+        font-size: 14px;
     }
-    
-    #search-input {
-        border-radius: 4px;
-        margin-bottom: 10px;
-    }
-    
-    #search-button {
-        border-radius: 4px;
-        margin-top: 0;
-        width: 100%;
-    }
-    
-    .filters {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .filter-group {
-        min-width: 100%;
-    }
-    
-    .results-container {
+
+    .results-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
     }
-    
-    .location-image {
-        height: 180px;
+
+    .user-card {
+        flex-wrap: wrap;
     }
-    
-    .location-info {
-        padding: 12px;
+
+    .user-action-btn {
+        width: 100%;
+        margin-top: 10px;
     }
-    
-    .location-details {
+
+    .footer-container {
         flex-direction: column;
-        gap: 8px;
+        gap: 20px;
     }
 }
 
 @media (max-width: 480px) {
-    .search-container h2 {
-        font-size: 1.3em;
-        text-align: center;
+    h2 {
+        font-size: 1.5rem;
     }
-    
-    .location-image {
-        height: 160px;
+
+    .tabs-container {
+        justify-content: center;
     }
-    
-    .location-name {
-        font-size: 1.1em;
+
+    .tab {
+        flex: 1;
+        justify-content: center;
     }
-    
-    .no-results {
-        padding: 20px;
-        font-size: 1em;
+
+    .empty-state {
+        padding: 40px 15px;
+    }
+
+    .empty-state i {
+        font-size: 2.8rem;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
     }
 }
-.search-header {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
+
+/* ===== FILTROS DE LOCAIS ===== */
+.filtros-locais {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
-.search-input {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+.filtro-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 180px;
 }
 
-.users-section {
-  margin-bottom: 25px;
+.filtro-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #062A6C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: 0.2s;
+.filtro-group select {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    color: #333;
+    background-color: #fafafa;
+    cursor: pointer;
+    transition: border 0.2s, box-shadow 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23062A6C' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
 }
 
-.user-card:hover {
-  background: #f5f5f5;
+.filtro-group select:focus {
+    outline: none;
+    border-color: #062A6C;
+    box-shadow: 0 0 0 3px rgba(6, 42, 108, 0.1);
+    background-color: #fff;
 }
 
-.user-avatar {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
+@media (max-width: 768px) {
+    .filtros-locais {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .filtro-group {
+        min-width: 100%;
+    }
 }
 
-.locais-section h3,
-.users-section h3 {
-  margin-bottom: 10px;
+/* ===== DETALHES EXTRAS — CARD DE LOCAL ===== */
+
+/* Badge do tipo (Rio, Lago, Represa, Pesqueiro) */
+.location-tipo-badge {
+    display: inline-block;
+    background-color: rgba(6, 42, 108, 0.08);
+    color: #062A6C;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
 }
 
+/* Descrição curta do local */
+.location-card-desc {
+    margin: 8px 0 10px;
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Tags do local */
+.location-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.location-tag {
+    background-color: #f0f5ff;
+    color: #062A6C;
+    font-size: 0.75rem;
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+
+/* ===== DETALHES EXTRAS — CARD DE USUÁRIO ===== */
+
+/* Linha de cidade */
+.user-cidade {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.user-cidade i {
+    font-size: 0.75rem;
+    color: #062A6C;
+}
+
+/* Badges de capturas e especialidades */
+.user-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+}
+
+.user-badge-pill {
+    background-color: #f0f5ff;
+    color: #062A6C;
+    font-size: 0.73rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.user-badge-pill.capturas {
+    background-color: #e6f4ea;
+    color: #1a6e34;
+}
+
+/* Ícone de verificado inline */
+.user-verified {
+    display: inline-flex;
+    align-items: center;
+    color: #062A6C;
+    font-size: 0.8rem;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+/* Placeholder de avatar quando não há foto */
+.user-avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(6, 42, 108, 0.1);
+    border: 2px solid #062A6C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #062A6C;
+    flex-shrink: 0;
+}
+
+/* ===== ANIMAÇÕES ===== */
+.results-grid {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab.active {
+    position: relative;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #062A6C;
+    border-radius: 3px 3px 0 0;
+}
