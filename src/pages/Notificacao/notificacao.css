@@ -1,191 +1,129 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
     padding: 0;
-    margin: 0;
 }
 
-/* ✅ Remove conflitos de classes antigas */
-.main-container {
-    display: none !important; /* Remove se ainda existir */
-}
-
-.column {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.container-notificacoes {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 60px;
-    width: 100%;
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-    box-sizing: border-box;
-    padding: 0 15px;
-}
-
-.notificacao {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 10px;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-    .notificacao.lida {
-        background-color: #aaaaaa;
-    }
-
-.botoes {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-}
-
-    .botoes button {
-        margin-right: 10px;
-        padding: 6px 12px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        background-color: #062A6C;
-        color: rgb(255, 255, 255);
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-        .botoes button:hover {
-            background-color: #041d4d;
-        }
-
-.close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: #000000;
-    cursor: pointer;
-}
-
-    .close:hover {
-        color: #180e0e;
-    }
-
-.like-btn.active {
-    color: #3ba819;
-}
-
-.dislike-btn.active {
-    color: #f31010;
-}
-
-.favorite-btn.active {
-    color: #ffcc00;
-}
-
-.notificacao {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-    .notificacao:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .notificacao .meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.85rem;
-        color: #555;
-        margin-bottom: 8px;
-    }
-
-.data {
-    background-color: #f0f0f0;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-
-.notificacao p {
-    margin: 0;
-    font-size: 1rem;
-    color: #222;
-}
-
-/* ==================== RESPONSIVIDADE (MOBILE) ==================== */
-
-@media (max-width: 768px) {
-    /* Aqui forçamos o container a descer ainda mais se necessário 
-       e garantimos que o padding ignore margens colapsadas.
-    */
-    .container-notificacoes {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-
-    .notificacao {
-        padding: 15px;
-    }
-
-    /* Empilhamento de botões mais limpo para mobile */
-    .botoes {
-        flex-direction: column;
-    }
-
-    .botoes button {
-        width: 100%;
-        padding: 12px;
-        font-size: 1rem;
-    }
-
-    .notificacao p {
-        font-size: 0.95rem;
-    }
-}
-
-/* Ajuste para telas muito pequenas */
-@media (max-width: 480px) {
-    
-    .comentario {
-        word-break: break-word;
-    }
-}
-
-/* Adicione ou substitua no seu notificacao.css */
-
+/* ================= CONTAINER ================= */
 .container-notificacoes {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    padding: 20px; /* Padding padrão desktop */
-    width: 100%;
-    max-width: 900px;
+
+    max-width: 700px;
     margin: 0 auto;
+    padding: 20px;
     box-sizing: border-box;
 }
 
-/* Ajuste específico para quando o menu hamburguer aparece */
-@media (max-width: 900px) {
+/* ================= CARD ================= */
+.notificacao {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 15px;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.notificacao:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ================= ÍCONE ================= */
+.notificacao .icone {
+    font-size: 22px;
+}
+
+/* ================= CONTEÚDO ================= */
+.conteudo {
+    flex: 1;
+}
+
+.notificacao p {
+    margin: 0;
+    font-size: 15px;
+    color: #222;
+}
+
+/* comentário destacado */
+.texto-comentario {
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
+    color: #555;
+}
+
+/* tempo */
+.data {
+    font-size: 12px;
+    color: gray;
+    margin-top: 5px;
+}
+
+/* ================= BOTÃO EXCLUIR ================= */
+.btn-excluir {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.6;
+    transition: 0.2s;
+}
+
+.btn-excluir:hover {
+    opacity: 1;
+    color: red;
+}
+
+/* ================= NOTIFICAÇÃO LIDA ================= */
+.notificacao.lida {
+    background: #f5f5f5;
+    opacity: 0.7;
+}
+
+/* ================= VAZIO ================= */
+.vazio {
+    text-align: center;
+    color: gray;
+    margin-top: 40px;
+}
+
+/* ================= RESPONSIVO ================= */
+@media (max-width: 768px) {
+
+    .container-notificacoes {
+        padding: 15px;
+    }
+
+    .notificacao {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .notificacao p {
+        font-size: 14px;
+    }
 
 }
 
-.active-green { background-color: #28a745 !important; }
-.active-red { background-color: #dc3545 !important; }
-.active-gold { background-color: #ffc107 !important; color: #000 !important; }
+/* telas pequenas */
+@media (max-width: 480px) {
 
-.notificacao.lida {
-    background-color: #f0f0f0;
-    opacity: 0.7;
+    .notificacao {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .notificacao p {
+        font-size: 13px;
+    }
+
 }
