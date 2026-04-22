@@ -73,6 +73,45 @@ export default function Perfil() {
     });
   };
 
+  // 🖼️ ATUALIZAR FOTO DE PERFIL
+  const handleFotoChange = async (file) => {
+    if (!isOwnProfile || !usuarioPerfil?.id) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      try {
+        await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
+          fotoPerfil: base64,
+        });
+        // O estado será atualizado automaticamente via onSnapshot
+      } catch (error) {
+        console.error("Erro ao atualizar foto de perfil:", error);
+        alert("Não foi possível atualizar a foto. Tente novamente.");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 🌄 ATUALIZAR BANNER
+  const handleBannerChange = async (file) => {
+    if (!isOwnProfile || !usuarioPerfil?.id) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      try {
+        await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
+          banner: base64,
+        });
+      } catch (error) {
+        console.error("Erro ao atualizar banner:", error);
+        alert("Não foi possível atualizar a capa. Tente novamente.");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // 📸 NOVO POST
   const handlePostChange = (e) => {
     if (!isOwnProfile) return;
@@ -114,6 +153,8 @@ export default function Perfil() {
             localizacao={localizacao}
             isOwnProfile={isOwnProfile}
             onPublicar={() => postInputRef.current.click()}
+            onFotoChange={handleFotoChange}
+            onBannerChange={handleBannerChange}
           />
 
           <EstatisticasPerfil totalPosts={posts.length} />
@@ -141,7 +182,7 @@ export default function Perfil() {
 
         </div>
       </div>
-        <footer>
+      <footer>
   <div className="footer-container">
 
     <div className="footer-info">
