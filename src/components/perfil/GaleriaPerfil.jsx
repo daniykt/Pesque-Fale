@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import "./Galeriaperfil.css";
 
+import { db } from "../../firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+
 export default function GaleriaPerfil({
   posts,
   user,
@@ -12,39 +15,54 @@ export default function GaleriaPerfil({
   const abrirPost = (post) => setPostSelecionado(post);
   const fecharPost = () => setPostSelecionado(null);
 
-  // 🔥 GARANTE ARRAY
   const getCurtidasArray = (curtidas) => {
     if (Array.isArray(curtidas)) return curtidas;
     if (typeof curtidas === "number") return [];
     return [];
   };
 
-  // 👍 CURTIR
-  const handleCurtir = (post) => {
+  // 👍 CURTIR + NOTIFICAÇÃO (CORRIGIDO)
+  const handleCurtir = async (post) => {
     if (!user) return alert("Faça login");
+
+    const curtidasAntes = getCurtidasArray(post.curtidas);
+    const jaCurtiuAntes = curtidasAntes.includes(user.uid);
 
     const novosPosts = posts.map((p) => {
       if (p.id !== post.id) return p;
 
-      const curtidasArray = getCurtidasArray(p.curtidas);
-      const jaCurtiu = curtidasArray.includes(user.uid);
-
       return {
         ...p,
-        curtidas: jaCurtiu
-          ? curtidasArray.filter((id) => id !== user.uid)
-          : [...curtidasArray, user.uid],
+        curtidas: jaCurtiuAntes
+          ? curtidasAntes.filter((id) => id !== user.uid)
+          : [...curtidasAntes, user.uid],
       };
     });
 
-    salvarPosts(novosPosts);
+    await salvarPosts(novosPosts);
 
     const atualizado = novosPosts.find((p) => p.id === post.id);
     setPostSelecionado(atualizado);
+
+    // 🔥 NOTIFICAÇÃO CORRETA
+    if (!jaCurtiuAntes && user.uid !== usuarioPerfil?.id) {
+      try {
+        await addDoc(collection(db, "notificacoes"), {
+          tipo: "curtida", // ✅ CORRIGIDO AQUI
+          de: user.displayName || "Usuário",
+          para: usuarioPerfil.id,
+          postId: post.id,
+          createdAt: serverTimestamp(),
+          lida: false,
+        });
+      } catch (error) {
+        console.error("Erro ao criar notificação de curtida:", error);
+      }
+    }
   };
 
-  // 💬 COMENTAR
-  const handleComentar = (post) => {
+  // 💬 COMENTAR + NOTIFICAÇÃO
+  const handleComentar = async (post) => {
     if (!user) return alert("Faça login");
 
     const texto = prompt("Digite seu comentário:");
@@ -66,13 +84,30 @@ export default function GaleriaPerfil({
         : p
     );
 
-    salvarPosts(novosPosts);
+    await salvarPosts(novosPosts);
 
     const atualizado = novosPosts.find((p) => p.id === post.id);
     setPostSelecionado(atualizado);
+
+    // 🔥 NOTIFICAÇÃO
+    if (user.uid !== usuarioPerfil?.id) {
+      try {
+        await addDoc(collection(db, "notificacoes"), {
+          tipo: "comentario",
+          de: user.displayName || "Usuário",
+          para: usuarioPerfil.id,
+          texto: texto,
+          postId: post.id,
+          createdAt: serverTimestamp(),
+          lida: false,
+        });
+      } catch (error) {
+        console.error("Erro ao criar notificação de comentário:", error);
+      }
+    }
   };
 
-  // 🗑️ DELETAR (SÓ DONO)
+  // 🗑️ DELETAR
   const handleDeletar = (post) => {
     if (user?.uid !== usuarioPerfil?.id) return;
 
@@ -84,7 +119,7 @@ export default function GaleriaPerfil({
     fecharPost();
   };
 
-  // 🔗 COMPARTILHAR (PRA TODOS)
+  // 🔗 COMPARTILHAR
   const handleShare = async (post) => {
     const url = window.location.href;
 
@@ -100,7 +135,6 @@ export default function GaleriaPerfil({
     }
   };
 
-  // 📊 CONTADOR
   const contarCurtidas = (post) => {
     return Array.isArray(post.curtidas)
       ? post.curtidas.length
@@ -121,7 +155,6 @@ export default function GaleriaPerfil({
 
   return (
     <>
-      {/* GRID */}
       <div className="galeria-grid">
         {posts.map((post) => (
           <div
@@ -143,7 +176,6 @@ export default function GaleriaPerfil({
         ))}
       </div>
 
-      {/* MODAL */}
       {postSelecionado && (
         <div className="galeria-modal-fundo" onClick={fecharPost}>
           <div
@@ -171,7 +203,6 @@ export default function GaleriaPerfil({
                 {postSelecionado.comentario}
               </p>
 
-              {/* AÇÕES */}
               <div className="galeria-modal-acoes">
                 <button
                   className="btn-interacao"
@@ -187,7 +218,6 @@ export default function GaleriaPerfil({
                   💬 {postSelecionado.comentarios?.length || 0}
                 </button>
 
-                {/* 🔗 AGORA PRA TODOS */}
                 <button
                   className="btn-interacao"
                   onClick={() => handleShare(postSelecionado)}
@@ -195,7 +225,6 @@ export default function GaleriaPerfil({
                   🔗 Compartilhar
                 </button>
 
-                {/* 🗑️ SÓ DONO */}
                 {user?.uid === usuarioPerfil?.id && (
                   <button
                     className="btn-interacao btn-deletar"
@@ -206,7 +235,6 @@ export default function GaleriaPerfil({
                 )}
               </div>
 
-              {/* COMENTÁRIOS */}
               {postSelecionado.comentarios?.length > 0 && (
                 <div className="galeria-modal-comentarios">
                   {postSelecionado.comentarios.map((c, i) => (
