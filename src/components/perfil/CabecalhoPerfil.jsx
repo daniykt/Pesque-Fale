@@ -11,6 +11,12 @@ export default function CabecalhoPerfil({
   bio,
   localizacao,
   isOwnProfile,
+
+  // 🔥 NOVAS PROPS
+  isFollowing,
+  onSeguir,
+  onDeixarDeSeguir,
+  onMensagem,
 }) {
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
@@ -28,8 +34,6 @@ export default function CabecalhoPerfil({
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // 🔥 proteção contra undefined
     if (typeof onFotoChange === "function") {
       onFotoChange(file);
     }
@@ -38,8 +42,6 @@ export default function CabecalhoPerfil({
   const handleBannerChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // 🔥 proteção contra undefined
     if (typeof onBannerChange === "function") {
       onBannerChange(file);
     }
@@ -69,7 +71,6 @@ export default function CabecalhoPerfil({
         )}
       </div>
 
-      {/* LINHA ABAIXO DO BANNER */}
       <div className="cabecalho-inferior">
 
         {/* FOTO */}
@@ -90,25 +91,54 @@ export default function CabecalhoPerfil({
         </div>
 
         {/* BOTÕES */}
-        {isOwnProfile && (
-          <div className="cabecalho-botoes">
-            <button
-              className="btn-cabecalho btn-editar"
-              onClick={() => (window.location.href = "/perfil/editar")}
-            >
-              <span className="material-symbols-outlined">edit</span>
-              Editar Perfil
-            </button>
+        <div className="cabecalho-botoes">
+          {isOwnProfile ? (
+            <>
+              <button
+                className="btn-cabecalho btn-editar"
+                onClick={() => (window.location.href = "/perfil/editar")}
+              >
+                <span className="material-symbols-outlined">edit</span>
+                Editar Perfil
+              </button>
 
-            <button
-              className="btn-cabecalho btn-publicar"
-              onClick={onPublicar}
-            >
-              <span className="material-symbols-outlined">add</span>
-              Nova Publicação
-            </button>
-          </div>
-        )}
+              <button
+                className="btn-cabecalho btn-publicar"
+                onClick={onPublicar}
+              >
+                <span className="material-symbols-outlined">add</span>
+                Nova Publicação
+              </button>
+            </>
+          ) : (
+            <>
+              {!isFollowing ? (
+                <button
+                  className="btn-cabecalho btn-seguir"
+                  onClick={onSeguir}
+                >
+                  Seguir
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn-cabecalho"
+                    onClick={onDeixarDeSeguir}
+                  >
+                    Deixar de seguir
+                  </button>
+
+                  <button
+                    className="btn-cabecalho"
+                    onClick={onMensagem}
+                  >
+                    Mensagem
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* INPUTS */}
@@ -132,7 +162,7 @@ export default function CabecalhoPerfil({
         </>
       )}
 
-      {/* INFO USER */}
+      {/* INFO */}
       <div className="usuario-data">
         <h2 className="usuario-nome">
           {usuario?.nome || "Usuário"}
@@ -157,26 +187,43 @@ export default function CabecalhoPerfil({
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* BOTÕES MOBILE */}
-      {isOwnProfile && (
-        <div className="cabecalho-botoes-mobile">
-          <button
-            className="btn-cabecalho btn-editar"
-            onClick={() => (window.location.href = "/perfil/editar")}
-          >
-            <span className="material-symbols-outlined">edit</span>
-            Editar Perfil
-          </button>
+      {/* MOBILE */}
+      <div className="cabecalho-botoes-mobile">
+        {isOwnProfile ? (
+          <>
+            <button
+              className="btn-cabecalho btn-editar"
+              onClick={() => (window.location.href = "/perfil/editar")}
+            >
+              Editar Perfil
+            </button>
 
-          <button
-            className="btn-cabecalho btn-publicar"
-            onClick={onPublicar}
-          >
-            <span className="material-symbols-outlined">add</span>
-            Nova Publicação
-          </button>
-        </div>
-      )}
+            <button
+              className="btn-cabecalho btn-publicar"
+              onClick={onPublicar}
+            >
+              Nova Publicação
+            </button>
+          </>
+        ) : (
+          <>
+            {!isFollowing ? (
+              <button className="btn-cabecalho" onClick={onSeguir}>
+                Seguir
+              </button>
+            ) : (
+              <>
+                <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>
+                  Deixar de seguir
+                </button>
+                <button className="btn-cabecalho" onClick={onMensagem}>
+                  Mensagem
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
