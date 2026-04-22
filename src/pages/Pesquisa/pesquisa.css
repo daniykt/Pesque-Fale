@@ -318,7 +318,6 @@ footer {
 @media (max-width: 768px) {
     .search-container {
         padding: 15px;
-        margin-top: 70px;
     }
 
     .tab {
