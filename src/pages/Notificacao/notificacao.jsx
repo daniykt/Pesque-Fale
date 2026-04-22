@@ -19,11 +19,13 @@ export default function Notificacao() {
   const [user, setUser] = useState(null);
   const [notificacoes, setNotificacoes] = useState([]);
 
+  // 🔐 usuário
   useEffect(() => {
     const unsubscribe = observeAuthState(setUser);
     return unsubscribe;
   }, []);
 
+  // 🔔 buscar notificações
   useEffect(() => {
     if (!user) return;
 
@@ -44,11 +46,12 @@ export default function Notificacao() {
     return unsubscribe;
   }, [user]);
 
+  // 🗑️ excluir
   const excluirNotificacao = async (id) => {
     await deleteDoc(doc(db, "notificacoes", id));
   };
 
-  // ⏱️ tempo relativo (BONITO)
+  // ⏱️ tempo relativo
   const tempoRelativo = (timestamp) => {
     if (!timestamp) return "";
 
@@ -64,7 +67,7 @@ export default function Notificacao() {
     return data.toLocaleDateString();
   };
 
-  // 🧠 mensagens MUITO mais claras
+  // 🧠 texto
   const renderTexto = (n) => {
     switch (n.tipo) {
       case "seguindo":
@@ -89,8 +92,32 @@ export default function Notificacao() {
           </>
         );
 
+      case "mensagem":
+        return (
+          <>
+            <strong>{n.de}</strong> te enviou uma mensagem:
+            <span className="texto-comentario"> "{n.texto}"</span>
+          </>
+        );
+
       default:
         return "Nova notificação";
+    }
+  };
+
+  // 🎯 ícones corrigidos
+  const renderIcone = (tipo) => {
+    switch (tipo) {
+      case "seguindo":
+        return "👤";
+      case "curtida":
+        return "👍";
+      case "comentario":
+        return "💬";
+      case "mensagem":
+        return "📩"; // 🔥 NOVO
+      default:
+        return "🔔";
     }
   };
 
@@ -106,14 +133,12 @@ export default function Notificacao() {
           notificacoes.map((n) => (
             <div key={n.id} className="card-notificacao">
 
-              {/* Ícone */}
+              {/* 🔥 ÍCONE CORRIGIDO */}
               <div className="icone">
-                {n.tipo === "seguindo" && "👤"}
-                {n.tipo === "curtida" && "👍"}
-                {n.tipo === "comentario" && "💬"}
+                {renderIcone(n.tipo)}
               </div>
 
-              {/* Conteúdo */}
+              {/* CONTEÚDO */}
               <div className="conteudo">
                 <p className="texto">{renderTexto(n)}</p>
                 <span className="tempo">
@@ -121,7 +146,7 @@ export default function Notificacao() {
                 </span>
               </div>
 
-              {/* Excluir */}
+              {/* EXCLUIR */}
               <button
                 className="btn-excluir"
                 onClick={() => excluirNotificacao(n.id)}
@@ -134,7 +159,8 @@ export default function Notificacao() {
         )}
 
       </div>
-         <footer>
+
+          <footer>
   <div className="footer-container">
 
     <div className="footer-info">

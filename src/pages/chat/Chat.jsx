@@ -128,7 +128,7 @@ export default function Chat() {
   }, [chatId, permitido]);
 
   // =========================
-  // ✉️ ENVIAR
+  // ✉️ ENVIAR + NOTIFICAÇÃO
   // =========================
   const enviarMensagem = async () => {
     if (!texto.trim()) return;
@@ -140,6 +140,20 @@ export default function Chat() {
         nome: user.displayName || "Pescador",
         createdAt: serverTimestamp(),
       });
+
+      // 🔥 NOTIFICAÇÃO DE MENSAGEM
+      const ids = chatId.split("_");
+      const outroId = ids.find((id) => id !== user.uid);
+
+      if (outroId) {
+        await addDoc(collection(db, "notificacoes"), {
+          tipo: "mensagem",
+          de: user.displayName || "Usuário",
+          para: outroId,
+          texto: texto,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       setTexto("");
     } catch (error) {
@@ -161,6 +175,7 @@ export default function Chat() {
     return (
       <Layout>
         <div className="chat-wrapper">
+
           <h2 style={{ marginBottom: "20px" }}>💬 Conversas</h2>
 
           {conversas.length === 0 ? (
@@ -178,47 +193,51 @@ export default function Chat() {
                 }}
               >
                 <strong>{c.nome}</strong>
+
+                {/* 🔥 VOLTOU AQUI */}
                 <p style={{ opacity: 0.7 }}>
                   Toque para iniciar uma conversa
                 </p>
               </div>
             ))
           )}
+
         </div>
 
-        {/* ✅ FOOTER */}
-        <footer>
-          <div className="footer-container">
+             <footer>
+  <div className="footer-container">
 
-            <div className="footer-info">
-              <h3>Sobre Nós</h3>
-              <p>
-                Plataforma criada por estudantes com o objetivo de conectar pescadores,
-                compartilhar experiências e fortalecer a comunidade de pesca.
-              </p>
-            </div>
+    <div className="footer-info">
+      <h3>Sobre Nós</h3>
+      <p>
+        Plataforma criada por estudantes com o objetivo de conectar pescadores,
+        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
+      </p>
+    </div>
 
-            <div className="footer-links">
-              <h3>Links Úteis</h3>
-              <a href="/home">Página Inicial</a><br />
-              <a href="/pesquisar">Pesquisa de Locais</a><br />
-              <a href="/chat">Chat de Pescadores</a><br />
-              <a href="/notificacao">Notificações</a><br />
-              <a href="/sobre">Sobre Nós</a><br />
-              <a href="/perfil">Perfil</a>
-            </div>
+    <div className="footer-links">
+      <h3>Links Úteis</h3>
 
-            <div className="footer-contact">
-              <h3>Contato</h3>
-              <p>Email: <strong>pesquefale@gmail.com</strong></p>
-            </div>
+      <a href="/home">Página Inicial</a><br />
+      <a href="/pesquisar">Pesquisa de Locais</a><br />
+      <a href="/chat">Chat de Pescadores</a><br />
+      <a href="/notificacao">Notificações</a><br />
+      <a href="/sobre">Sobre Nós</a><br />
+      <a href="/perfil">Perfil</a>
 
-          </div>
+    </div>
 
-          <p className="copyright">
-            &copy; Pesque & Fale 2026
-          </p>
-        </footer>
+    <div className="footer-contact">
+      <h3>Contato</h3>
+      <p>Email: <strong>pesquefale@gmail.com</strong></p>
+    </div>
+
+  </div>
+
+  <p className="copyright">
+    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
+  </p>
+</footer>
 
       </Layout>
     );
@@ -266,38 +285,40 @@ export default function Chat() {
 
       </div>
 
-      {/* ✅ FOOTER TAMBÉM NO CHAT */}
-      <footer>
-        <div className="footer-container">
+       <footer>
+  <div className="footer-container">
 
-          <div className="footer-info">
-            <h3>Sobre Nós</h3>
-            <p>
-              Plataforma criada para conectar pescadores e compartilhar experiências.
-            </p>
-          </div>
+    <div className="footer-info">
+      <h3>Sobre Nós</h3>
+      <p>
+        Plataforma criada por estudantes com o objetivo de conectar pescadores,
+        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
+      </p>
+    </div>
 
-          <div className="footer-links">
-              <h3>Links Úteis</h3>
-              <a href="/home">Página Inicial</a><br />
-              <a href="/pesquisar">Pesquisa de Locais</a><br />
-              <a href="/chat">Chat de Pescadores</a><br />
-              <a href="/notificacao">Notificações</a><br />
-              <a href="/sobre">Sobre Nós</a><br />
-              <a href="/perfil">Perfil</a>
-            </div>
+    <div className="footer-links">
+      <h3>Links Úteis</h3>
 
-          <div className="footer-contact">
-            <h3>Contato</h3>
-            <p>Email: <strong>pesquefale@gmail.com</strong></p>
-          </div>
+      <a href="/home">Página Inicial</a><br />
+      <a href="/pesquisar">Pesquisa de Locais</a><br />
+      <a href="/chat">Chat de Pescadores</a><br />
+      <a href="/notificacao">Notificações</a><br />
+      <a href="/sobre">Sobre Nós</a><br />
+      <a href="/perfil">Perfil</a>
 
-        </div>
+    </div>
 
-        <p className="copyright">
-          &copy; 2026 Pesque & Fale
-        </p>
-      </footer>
+    <div className="footer-contact">
+      <h3>Contato</h3>
+      <p>Email: <strong>pesquefale@gmail.com</strong></p>
+    </div>
+
+  </div>
+
+  <p className="copyright">
+    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
+  </p>
+</footer>
 
     </Layout>
   );
