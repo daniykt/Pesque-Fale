@@ -1,199 +1,140 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import Layout from "../../components/sidebar/layout";
 import "./notificacao.css";
 
+import { db } from "../../firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+import { observeAuthState } from "../../auth";
+
 export default function Notificacao() {
+  const [user, setUser] = useState(null);
   const [notificacoes, setNotificacoes] = useState([]);
 
   useEffect(() => {
-    localStorage.removeItem("notificacoes");
-    localStorage.removeItem("contadorNotificacoes");
-
-    const dadosIniciais = [
-      {
-        id: 1,
-        data: "05/05/2025 10:35",
-        usuario: "Reginaldosilva",
-        texto: "Lugarzinho da hora pra pescar, viu? Vou aproveitar mais vezes com certeza!",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 2,
-        data: "05/05/2025 11:10",
-        usuario: "JoaoPescador",
-        texto: "A pescaria de sábado foi ótima, peguei um dourado enorme no laguna!",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 3,
-        data: "06/05/2025 09:15",
-        usuario: "MariaClara",
-        texto: "Gostei muito da estrutura do local, banheiros limpos e atendimento nota 10.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 4,
-        data: "06/05/2025 14:22",
-        usuario: "PedroSantos",
-        texto: "O acesso é um pouco difícil se chover, mas o peixe compensa a viagem.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 5,
-        data: "07/05/2025 08:45",
-        usuario: "AnaBeatriz",
-        texto: "Preços justos pelo passeio e aluguel de barco. Recomendo para famílias.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-      {
-        id: 6,
-        data: "07/05/2025 16:00",
-        usuario: "LucasAndrade",
-        texto: "Voltarei com a família no próximo feriado. Ambiente muito tranquilo e seguro.",
-        lida: false,
-        curtida: null,
-        favorito: false,
-      },
-    ];
-    
-    setNotificacoes(dadosIniciais);
-    localStorage.setItem("notificacoes", JSON.stringify(dadosIniciais));
-    
-    // Atualiza o contador no Sidebar imediatamente
-    localStorage.setItem("contadorNotificacoes", dadosIniciais.length);
-    window.dispatchEvent(new CustomEvent("notificacoesAtualizadas", { detail: dadosIniciais.length }));
-
+    const unsubscribe = observeAuthState(setUser);
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
-    if (notificacoes.length > 0) {
-      localStorage.setItem("notificacoes", JSON.stringify(notificacoes));
+    if (!user) return;
+
+    const q = query(
+      collection(db, "notificacoes"),
+      where("para", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lista = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setNotificacoes(lista);
+    });
+
+    return unsubscribe;
+  }, [user]);
+
+  const excluirNotificacao = async (id) => {
+    await deleteDoc(doc(db, "notificacoes", id));
+  };
+
+  // ⏱️ tempo relativo (BONITO)
+  const tempoRelativo = (timestamp) => {
+    if (!timestamp) return "";
+
+    const agora = new Date();
+    const data = new Date(timestamp.seconds * 1000);
+    const diff = Math.floor((agora - data) / 1000);
+
+    if (diff < 60) return "agora";
+    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
+    if (diff < 2592000) return `há ${Math.floor(diff / 86400)} dias`;
+
+    return data.toLocaleDateString();
+  };
+
+  // 🧠 mensagens MUITO mais claras
+  const renderTexto = (n) => {
+    switch (n.tipo) {
+      case "seguindo":
+        return (
+          <>
+            <strong>{n.de}</strong> começou a seguir você
+          </>
+        );
+
+      case "curtida":
+        return (
+          <>
+            <strong>{n.de}</strong> curtiu sua publicação
+          </>
+        );
+
+      case "comentario":
+        return (
+          <>
+            <strong>{n.de}</strong> comentou na sua publicação:
+            <span className="texto-comentario"> "{n.texto}"</span>
+          </>
+        );
+
+      default:
+        return "Nova notificação";
     }
-    const naoLidas = notificacoes.filter((n) => !n.lida).length;
-    localStorage.setItem("contadorNotificacoes", naoLidas);
-    window.dispatchEvent(new CustomEvent("notificacoesAtualizadas", { detail: naoLidas }));
-  }, [notificacoes]);
-
-  const toggleCurtir = (id) => {
-    setNotificacoes((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, curtida: n.curtida === "like" ? null : "like" } : n
-      )
-    );
-  };
-
-  const toggleDescurtir = (id) => {
-    setNotificacoes((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, curtida: n.curtida === "dislike" ? null : "dislike" } : n
-      )
-    );
-  };
-
-  const toggleFavorito = (id) => {
-    setNotificacoes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, favorito: !n.favorito } : n))
-    );
-  };
-
-  const excluir = (id) => {
-    setNotificacoes((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  const marcarComoLida = (id) => {
-    setNotificacoes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
-    );
-  };
-
-  // Estilo base dos botões
-  const estiloBotaoBase = {
-    backgroundColor: "#082a66",
-    color: "white",
-    border: "none",
-    padding: "8px 15px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontWeight: "bold",
-    fontSize: "14px",
   };
 
   return (
     <Layout>
-      {/* Conteúdo principal - será expandido pelo flex */}
-      <div className="container-notificacoes" style={{ paddingTop: "20px" }}>
-        {notificacoes.map((n) => (
-          <div key={n.id} className={`notificacao ${n.lida ? "lida" : ""}`}>
-            <div className="meta">
-              <span className="data">{n.data}</span>
-              <button className="close" onClick={() => excluir(n.id)}>
-                &times;
-              </button>
-            </div>
-            <p className="comentario">
-              <strong>{n.usuario}:</strong> {n.texto}
-            </p>
-            <div className="botoes">
-              <button
-                onClick={() => marcarComoLida(n.id)}
-                style={estiloBotaoBase}
-                disabled={n.lida}
-              >
-                <i className="fas fa-check"></i> {n.lida ? "Lida" : "Marcar como lida"}
-              </button>
-              <button
-                onClick={() => toggleCurtir(n.id)}
-                style={{
-                  ...estiloBotaoBase,
-                  backgroundColor: n.curtida === "like" ? "#28a745" : "#082a66",
-                }}
-              >
-                <i className={n.curtida === "like" ? "fas fa-thumbs-up" : "far fa-thumbs-up"}></i> Curtir
-              </button>
-              <button
-                onClick={() => toggleDescurtir(n.id)}
-                style={{
-                  ...estiloBotaoBase,
-                  backgroundColor: n.curtida === "dislike" ? "#bb1b2bff" : "#082a66",
-                }}
-              >
-                <i className={n.curtida === "dislike" ? "fas fa-thumbs-down" : "far fa-thumbs-down"}></i> Não Curtir
-              </button>
-              <button
-                onClick={() => toggleFavorito(n.id)}
-                style={{
-                  ...estiloBotaoBase,
-                  backgroundColor: n.favorito ? "#ffc107" : "#082a66",
-                }}
-              >
-                <i className={n.favorito ? "fas fa-star" : "far fa-star"}></i> Favorito
-              </button>
-            </div>
-          </div>
-        ))}
-        {notificacoes.length === 0 && (
-          <p style={{ textAlign: "center", marginTop: "20px" }}>
-            Nenhuma notificação por enquanto!
-          </p>
-        )}
-      </div>
+      <div className="container-notificacoes">
 
-      {/* Footer – agora é irmão direto do conteúdo */}
-      <footer>
+        <h2 className="titulo">🔔 Notificações</h2>
+
+        {notificacoes.length === 0 ? (
+          <p className="vazio">Nenhuma notificação ainda</p>
+        ) : (
+          notificacoes.map((n) => (
+            <div key={n.id} className="card-notificacao">
+
+              {/* Ícone */}
+              <div className="icone">
+                {n.tipo === "seguindo" && "👤"}
+                {n.tipo === "curtida" && "👍"}
+                {n.tipo === "comentario" && "💬"}
+              </div>
+
+              {/* Conteúdo */}
+              <div className="conteudo">
+                <p className="texto">{renderTexto(n)}</p>
+                <span className="tempo">
+                  {tempoRelativo(n.createdAt)}
+                </span>
+              </div>
+
+              {/* Excluir */}
+              <button
+                className="btn-excluir"
+                onClick={() => excluirNotificacao(n.id)}
+              >
+                ✖
+              </button>
+
+            </div>
+          ))
+        )}
+
+      </div>
+         <footer>
   <div className="footer-container">
 
     <div className="footer-info">
