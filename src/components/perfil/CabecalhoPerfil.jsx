@@ -10,31 +10,39 @@ export default function CabecalhoPerfil({
   usuario,
   bio,
   localizacao,
-  isOwnProfile, // 🔥 NOVO
+  isOwnProfile,
 }) {
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
   const handleFotoClick = () => {
     if (!isOwnProfile) return;
-    fileInputFotoRef.current.click();
+    fileInputFotoRef.current?.click();
   };
 
   const handleBannerClick = () => {
     if (!isOwnProfile) return;
-    fileInputBannerRef.current.click();
+    fileInputBannerRef.current?.click();
   };
 
   const handleFotoChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    onFotoChange(file);
+
+    // 🔥 proteção contra undefined
+    if (typeof onFotoChange === "function") {
+      onFotoChange(file);
+    }
   };
 
   const handleBannerChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    onBannerChange(file);
+
+    // 🔥 proteção contra undefined
+    if (typeof onBannerChange === "function") {
+      onBannerChange(file);
+    }
   };
 
   return (
@@ -53,7 +61,6 @@ export default function CabecalhoPerfil({
           </span>
         )}
 
-        {/* 🔥 Overlay só aparece se for dono */}
         {isOwnProfile && (
           <div className="banner-overlay">
             <span className="material-symbols-outlined">photo_camera</span>
@@ -65,7 +72,7 @@ export default function CabecalhoPerfil({
       {/* LINHA ABAIXO DO BANNER */}
       <div className="cabecalho-inferior">
 
-        {/* FOTO DE PERFIL */}
+        {/* FOTO */}
         <div className="foto-perfil-wrapper">
           <img
             src={fotoPerfil}
@@ -75,7 +82,6 @@ export default function CabecalhoPerfil({
             title={isOwnProfile ? "Clique para trocar a foto" : ""}
           />
 
-          {/* 🔥 Overlay só se for dono */}
           {isOwnProfile && (
             <div className="foto-perfil-overlay" onClick={handleFotoClick}>
               <span className="material-symbols-outlined">photo_camera</span>
@@ -83,7 +89,7 @@ export default function CabecalhoPerfil({
           )}
         </div>
 
-        {/* 🔥 BOTÕES DESKTOP - só dono */}
+        {/* BOTÕES */}
         {isOwnProfile && (
           <div className="cabecalho-botoes">
             <button
@@ -105,7 +111,7 @@ export default function CabecalhoPerfil({
         )}
       </div>
 
-      {/* INPUTS HIDDEN */}
+      {/* INPUTS */}
       {isOwnProfile && (
         <>
           <input
@@ -126,7 +132,7 @@ export default function CabecalhoPerfil({
         </>
       )}
 
-      {/* INFORMAÇÕES DO USUÁRIO */}
+      {/* INFO USER */}
       <div className="usuario-data">
         <h2 className="usuario-nome">
           {usuario?.nome || "Usuário"}
@@ -151,7 +157,7 @@ export default function CabecalhoPerfil({
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* 🔥 BOTÕES MOBILE - só dono */}
+      {/* BOTÕES MOBILE */}
       {isOwnProfile && (
         <div className="cabecalho-botoes-mobile">
           <button

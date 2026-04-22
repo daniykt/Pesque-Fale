@@ -11,7 +11,7 @@ import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
 import Pesquisa from "../pages/Pesquisa/pesquisa";
 import Notificacao from "../pages/Notificacao/notificacao";
-import LocaisAvaliados from "../pages/locaisAvaliados/locaisAvaliados";
+import Chat from "../pages/chat/Chat"; 
 import Sobre from "../pages/Sobre/sobre";
 
 function AppRoutes() {
@@ -94,10 +94,10 @@ function AppRoutes() {
         />
 
         <Route
-          path="/locais"
+          path="/chat"
           element={
             <ProtectedRoute user={user}>
-              <LocaisAvaliados />
+              <Chat />
             </ProtectedRoute>
           }
         />
