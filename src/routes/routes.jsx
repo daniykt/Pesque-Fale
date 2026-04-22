@@ -37,6 +37,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
 
         {/* 🔒 ROTAS PROTEGIDAS */}
+
         <Route
           path="/home"
           element={
@@ -46,7 +47,6 @@ function AppRoutes() {
           }
         />
 
-        {/* 🔥 PERFIL DINÂMICO */}
         <Route
           path="/perfil/:id"
           element={
@@ -56,7 +56,6 @@ function AppRoutes() {
           }
         />
 
-        {/* 👤 SEU PERFIL (opcional manter) */}
         <Route
           path="/perfil"
           element={
@@ -93,8 +92,19 @@ function AppRoutes() {
           }
         />
 
+        {/* ✅ INBOX (ESSENCIAL) */}
         <Route
           path="/chat"
+          element={
+            <ProtectedRoute user={user}>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ CHAT PRIVADO */}
+        <Route
+          path="/chat/:chatId"
           element={
             <ProtectedRoute user={user}>
               <Chat />
