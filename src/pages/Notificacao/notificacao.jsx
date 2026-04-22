@@ -194,35 +194,39 @@ export default function Notificacao() {
 
       {/* Footer – agora é irmão direto do conteúdo */}
       <footer>
-        <div className="footer-container">
-          <div>
-            <h3>Sobre Nós</h3>
-            <p>
-              Grupo de estudantes dedicados ao desenvolvimento de iniciativas
-              voltadas à melhoria do trabalho socioeconômico em Matão-SP e região.
-            </p>
-          </div>
-          <div>
-            <h3>Links Úteis</h3>
-                <a href="/home">Página Inicial</a>
-                <br />
-                <a href="/pesquisar">Pesquisa de Locais</a>
-                <br />
-                <a href="/locais">Melhores Locais</a>
-                <br />
-                <a href="/notificacao">Notificações</a>
-                <br />
-                <a href="/sobre">Sobre Nós</a>
-                <br />
-                <a href="/perfil">Perfil</a>
-          </div>
-          <div>
-            <h3>Contato</h3>
-            <p>Email: pesquefale@gmail.com</p>
-          </div>
-        </div>
-        <p className="copyright">&copy; Pesque & Fale 2025 - Todos os direitos reservados.</p>
-      </footer>
+  <div className="footer-container">
+
+    <div className="footer-info">
+      <h3>Sobre Nós</h3>
+      <p>
+        Plataforma criada por estudantes com o objetivo de conectar pescadores,
+        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
+      </p>
+    </div>
+
+    <div className="footer-links">
+      <h3>Links Úteis</h3>
+
+      <a href="/home">Página Inicial</a><br />
+      <a href="/pesquisar">Pesquisa de Locais</a><br />
+      <a href="/chat">Chat de Pescadores</a><br />
+      <a href="/notificacao">Notificações</a><br />
+      <a href="/sobre">Sobre Nós</a><br />
+      <a href="/perfil">Perfil</a>
+
+    </div>
+
+    <div className="footer-contact">
+      <h3>Contato</h3>
+      <p>Email: <strong>pesquefale@gmail.com</strong></p>
+    </div>
+
+  </div>
+
+  <p className="copyright">
+    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
+  </p>
+</footer>
     </Layout>
   );
 }
