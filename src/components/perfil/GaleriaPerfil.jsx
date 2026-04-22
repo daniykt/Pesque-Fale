@@ -12,14 +12,14 @@ export default function GaleriaPerfil({
   const abrirPost = (post) => setPostSelecionado(post);
   const fecharPost = () => setPostSelecionado(null);
 
-  // 🔥 GARANTE ARRAY (resolve seu erro)
+  // 🔥 GARANTE ARRAY
   const getCurtidasArray = (curtidas) => {
     if (Array.isArray(curtidas)) return curtidas;
-    if (typeof curtidas === "number") return []; // converte antigo
+    if (typeof curtidas === "number") return [];
     return [];
   };
 
-  // 👍 CURTIR (COM CORREÇÃO COMPLETA)
+  // 👍 CURTIR
   const handleCurtir = (post) => {
     if (!user) return alert("Faça login");
 
@@ -39,12 +39,11 @@ export default function GaleriaPerfil({
 
     salvarPosts(novosPosts);
 
-    // Atualiza modal sem bug
     const atualizado = novosPosts.find((p) => p.id === post.id);
     setPostSelecionado(atualizado);
   };
 
-  // 💬 COMENTAR (COM USUÁRIO)
+  // 💬 COMENTAR
   const handleComentar = (post) => {
     if (!user) return alert("Faça login");
 
@@ -85,7 +84,23 @@ export default function GaleriaPerfil({
     fecharPost();
   };
 
-  // 📊 CONTADOR SEGURO
+  // 🔗 COMPARTILHAR (PRA TODOS)
+  const handleShare = async (post) => {
+    const url = window.location.href;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "Pesque & Fale",
+        text: `Olha essa publicação em ${post.local}`,
+        url,
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Link copiado!");
+    }
+  };
+
+  // 📊 CONTADOR
   const contarCurtidas = (post) => {
     return Array.isArray(post.curtidas)
       ? post.curtidas.length
@@ -135,19 +150,16 @@ export default function GaleriaPerfil({
             className="galeria-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* FECHAR */}
             <button className="galeria-modal-fechar" onClick={fecharPost}>
               <span className="material-symbols-outlined">close</span>
             </button>
 
-            {/* IMAGEM */}
             <img
               src={postSelecionado.imagem}
               alt={postSelecionado.local}
               className="galeria-modal-foto"
             />
 
-            {/* INFO */}
             <div className="galeria-modal-info">
               <p className="galeria-modal-data">
                 {postSelecionado.data}
@@ -175,6 +187,15 @@ export default function GaleriaPerfil({
                   💬 {postSelecionado.comentarios?.length || 0}
                 </button>
 
+                {/* 🔗 AGORA PRA TODOS */}
+                <button
+                  className="btn-interacao"
+                  onClick={() => handleShare(postSelecionado)}
+                >
+                  🔗 Compartilhar
+                </button>
+
+                {/* 🗑️ SÓ DONO */}
                 {user?.uid === usuarioPerfil?.id && (
                   <button
                     className="btn-interacao btn-deletar"
