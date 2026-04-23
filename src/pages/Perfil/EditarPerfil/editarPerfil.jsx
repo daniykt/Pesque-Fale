@@ -63,16 +63,20 @@ export default function EditarPerfil() {
     setSalvando(true);
 
     try {
-      // 🔥 SALVA NO FIRESTORE
-      await setDoc(doc(db, "usuarios", user.uid), {
-        nome,
-        bio,
-        localizacao,
-        fotoPerfil,
-        banner,
-      });
+      // ✅ CORREÇÃO AQUI (merge: true)
+      await setDoc(
+        doc(db, "usuarios", user.uid),
+        {
+          nome,
+          bio,
+          localizacao,
+          fotoPerfil,
+          banner,
+        },
+        { merge: true } // 🔥 NÃO APAGA MAIS OS DADOS
+      );
 
-      // 💾 mantém localStorage (compatibilidade com resto do app)
+      // 💾 mantém localStorage
       localStorage.setItem("nome", nome);
       localStorage.setItem("bio", bio);
       localStorage.setItem("localizacao", localizacao);
@@ -125,14 +129,27 @@ export default function EditarPerfil() {
                 <p>Trocar capa</p>
               </div>
             </div>
-            <input type="file" accept="image/*" ref={bannerInputRef} style={{ display: "none" }} onChange={handleBannerChange} />
+            <input
+              type="file"
+              accept="image/*"
+              ref={bannerInputRef}
+              style={{ display: "none" }}
+              onChange={handleBannerChange}
+            />
           </div>
 
           <div className="editar-secao editar-secao-foto">
             <label className="editar-label">Foto de Perfil</label>
-            <div className="editar-foto-wrapper" onClick={() => fotoInputRef.current.click()}>
+            <div
+              className="editar-foto-wrapper"
+              onClick={() => fotoInputRef.current.click()}
+            >
               {fotoPerfil ? (
-                <img src={fotoPerfil} alt="Foto de perfil" className="editar-foto-preview" />
+                <img
+                  src={fotoPerfil}
+                  alt="Foto de perfil"
+                  className="editar-foto-preview"
+                />
               ) : (
                 <div className="editar-foto-vazio">
                   <span className="material-symbols-outlined">person</span>
@@ -142,7 +159,15 @@ export default function EditarPerfil() {
                 <span className="material-symbols-outlined">photo_camera</span>
               </div>
             </div>
-            <input type="file" accept="image/*" ref={fotoInputRef} style={{ display: "none" }} onChange={handleFotoChange} />
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fotoInputRef}
+              style={{ display: "none" }}
+              onChange={handleFotoChange}
+            />
+
             <p className="editar-dica">Clique na foto para trocar</p>
           </div>
 
@@ -150,6 +175,7 @@ export default function EditarPerfil() {
             <label className="editar-label" htmlFor="campo-nome">
               Nome completo <span className="editar-obrigatorio">*</span>
             </label>
+
             <input
               id="campo-nome"
               type="text"
@@ -162,6 +188,7 @@ export default function EditarPerfil() {
               }}
               maxLength={60}
             />
+
             <p className="editar-contador">{nome.length}/60</p>
 
             {erro && (
@@ -173,9 +200,15 @@ export default function EditarPerfil() {
           </div>
 
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-localizacao">Localização</label>
+            <label className="editar-label" htmlFor="campo-localizacao">
+              Localização
+            </label>
+
             <div className="editar-input-icone">
-              <span className="material-symbols-outlined editar-input-icone-symbol">location_on</span>
+              <span className="material-symbols-outlined editar-input-icone-symbol">
+                location_on
+              </span>
+
               <input
                 id="campo-localizacao"
                 type="text"
@@ -190,6 +223,7 @@ export default function EditarPerfil() {
 
           <div className="editar-secao">
             <label className="editar-label" htmlFor="campo-bio">Bio</label>
+
             <textarea
               id="campo-bio"
               className="editar-textarea"
@@ -199,6 +233,7 @@ export default function EditarPerfil() {
               maxLength={150}
               rows={4}
             />
+
             <p className="editar-contador">{bio.length}/150</p>
           </div>
 
