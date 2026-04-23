@@ -179,6 +179,22 @@ export default function Perfil() {
       await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
         fotoPerfil: reader.result,
       });
+  // 🖼️ ATUALIZAR FOTO DE PERFIL
+  const handleFotoChange = async (file) => {
+    if (!isOwnProfile || !usuarioPerfil?.id) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      try {
+        await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
+          fotoPerfil: base64,
+        });
+        // O estado será atualizado automaticamente via onSnapshot
+      } catch (error) {
+        console.error("Erro ao atualizar foto de perfil:", error);
+        alert("Não foi possível atualizar a foto. Tente novamente.");
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -190,6 +206,21 @@ export default function Perfil() {
       await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
         banner: reader.result,
       });
+  // 🌄 ATUALIZAR BANNER
+  const handleBannerChange = async (file) => {
+    if (!isOwnProfile || !usuarioPerfil?.id) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      try {
+        await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
+          banner: base64,
+        });
+      } catch (error) {
+        console.error("Erro ao atualizar banner:", error);
+        alert("Não foi possível atualizar a capa. Tente novamente.");
+      }
     };
     reader.readAsDataURL(file);
   };

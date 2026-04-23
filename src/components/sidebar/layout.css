@@ -1,11 +1,11 @@
 /* layout.css */
 .main-layout-content {
-  margin-left: 280px; /* largura da sidebar */
+  margin-left: 280px;
   min-height: 100vh;
   background-color: #f7f7f7;
   flex-direction: column;
   box-sizing: border-box;
-  /* Garante que o conteúdo não tente "encolher" horizontalmente */
+  display: flex;
   align-items: stretch; 
 }
 
