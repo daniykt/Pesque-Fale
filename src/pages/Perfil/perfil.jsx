@@ -50,7 +50,34 @@ export default function Perfil() {
     return unsubscribe;
   }, []);
 
-  // 🔥 DADOS EM TEMPO REAL
+  const isOwnProfile = !id || id === user?.uid;
+
+  // =========================
+  // ⚡ CACHE INSTANTÂNEO
+  // =========================
+  useEffect(() => {
+    if (!isOwnProfile) return;
+
+    const cache = localStorage.getItem("usuarioCache");
+
+    if (cache) {
+      const dados = JSON.parse(cache);
+
+      setUsuarioPerfil((prev) => ({
+        ...prev,
+        ...dados,
+      }));
+
+      setBio(dados.bio || "");
+      setLocalizacao(dados.localizacao || "");
+      setFotoPerfil(dados.fotoPerfil || "");
+      setBanner(dados.banner || null);
+    }
+  }, [isOwnProfile]);
+
+  // =========================
+  // 🔥 FIRESTORE REALTIME
+  // =========================
   useEffect(() => {
     if (!user && !id) return;
 
@@ -74,8 +101,6 @@ export default function Perfil() {
 
     return unsubscribe;
   }, [id, user]);
-
-  const isOwnProfile = !id || id === user?.uid;
 
   // 🔍 VER SE SEGUE
   useEffect(() => {
@@ -196,7 +221,6 @@ export default function Perfil() {
     };
 
     reader.readAsDataURL(file);
-
     e.target.value = "";
   };
 
@@ -221,7 +245,6 @@ export default function Perfil() {
             onMensagem={irParaChat}
           />
 
-          {/* 🔥 CORREÇÃO AQUI */}
           <EstatisticasPerfil
             totalPosts={posts.length}
             usuario={usuarioPerfil}
@@ -249,40 +272,40 @@ export default function Perfil() {
           )}
         </div>
       </div>
-         <footer>
-  <div className="footer-container">
 
-    <div className="footer-info">
-      <h3>Sobre Nós</h3>
-      <p>
-        Plataforma criada por estudantes com o objetivo de conectar pescadores,
-        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
-      </p>
-    </div>
+      {/* FOOTER */}
+      <footer>
+        <div className="footer-container">
 
-    <div className="footer-links">
-      <h3>Links Úteis</h3>
+          <div className="footer-info">
+            <h3>Sobre Nós</h3>
+            <p>
+              Plataforma criada por estudantes com o objetivo de conectar pescadores,
+              compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
+            </p>
+          </div>
 
-      <a href="/home">Página Inicial</a><br />
-      <a href="/pesquisar">Pesquisa de Locais</a><br />
-      <a href="/chat">Chat de Pescadores</a><br />
-      <a href="/notificacao">Notificações</a><br />
-      <a href="/sobre">Sobre Nós</a><br />
-      <a href="/perfil">Perfil</a>
+          <div className="footer-links">
+            <h3>Links Úteis</h3>
+            <a href="/home">Página Inicial</a><br />
+            <a href="/pesquisar">Pesquisa de Locais</a><br />
+            <a href="/chat">Chat de Pescadores</a><br />
+            <a href="/notificacao">Notificações</a><br />
+            <a href="/sobre">Sobre Nós</a><br />
+            <a href="/perfil">Perfil</a>
+          </div>
 
-    </div>
+          <div className="footer-contact">
+            <h3>Contato</h3>
+            <p>Email: <strong>pesquefale@gmail.com</strong></p>
+          </div>
 
-    <div className="footer-contact">
-      <h3>Contato</h3>
-      <p>Email: <strong>pesquefale@gmail.com</strong></p>
-    </div>
+        </div>
 
-  </div>
-
-  <p className="copyright">
-    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
-  </p>
-</footer>
+        <p className="copyright">
+          &copy; Pesque & Fale 2026 - Todos os direitos reservados.
+        </p>
+      </footer>
     </Layout>
   );
 }
