@@ -172,13 +172,6 @@ export default function Perfil() {
     });
   };
 
-  // 🖼️ FOTO
-  const handleFotoChange = async (file) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
-        fotoPerfil: reader.result,
-      });
   // 🖼️ ATUALIZAR FOTO DE PERFIL
   const handleFotoChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
@@ -199,13 +192,6 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // 🌄 BANNER
-  const handleBannerChange = async (file) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
-        banner: reader.result,
-      });
   // 🌄 ATUALIZAR BANNER
   const handleBannerChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
