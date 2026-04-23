@@ -10,31 +10,41 @@ export default function CabecalhoPerfil({
   usuario,
   bio,
   localizacao,
-  isOwnProfile, // 🔥 NOVO
+  isOwnProfile,
+
+  // 🔥 NOVAS PROPS
+  isFollowing,
+  onSeguir,
+  onDeixarDeSeguir,
+  onMensagem,
 }) {
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
   const handleFotoClick = () => {
     if (!isOwnProfile) return;
-    fileInputFotoRef.current.click();
+    fileInputFotoRef.current?.click();
   };
 
   const handleBannerClick = () => {
     if (!isOwnProfile) return;
-    fileInputBannerRef.current.click();
+    fileInputBannerRef.current?.click();
   };
 
   const handleFotoChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    onFotoChange(file);
+    if (typeof onFotoChange === "function") {
+      onFotoChange(file);
+    }
   };
 
   const handleBannerChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
-    onBannerChange(file);
+    if (typeof onBannerChange === "function") {
+      onBannerChange(file);
+    }
   };
 
   return (
@@ -53,7 +63,6 @@ export default function CabecalhoPerfil({
           </span>
         )}
 
-        {/* 🔥 Overlay só aparece se for dono */}
         {isOwnProfile && (
           <div className="banner-overlay">
             <span className="material-symbols-outlined">photo_camera</span>
@@ -62,10 +71,9 @@ export default function CabecalhoPerfil({
         )}
       </div>
 
-      {/* LINHA ABAIXO DO BANNER */}
       <div className="cabecalho-inferior">
 
-        {/* FOTO DE PERFIL */}
+        {/* FOTO */}
         <div className="foto-perfil-wrapper">
           <img
             src={fotoPerfil}
@@ -75,7 +83,6 @@ export default function CabecalhoPerfil({
             title={isOwnProfile ? "Clique para trocar a foto" : ""}
           />
 
-          {/* 🔥 Overlay só se for dono */}
           {isOwnProfile && (
             <div className="foto-perfil-overlay" onClick={handleFotoClick}>
               <span className="material-symbols-outlined">photo_camera</span>
@@ -83,29 +90,58 @@ export default function CabecalhoPerfil({
           )}
         </div>
 
-        {/* 🔥 BOTÕES DESKTOP - só dono */}
-        {isOwnProfile && (
-          <div className="cabecalho-botoes">
-            <button
-              className="btn-cabecalho btn-editar"
-              onClick={() => (window.location.href = "/perfil/editar")}
-            >
-              <span className="material-symbols-outlined">edit</span>
-              Editar Perfil
-            </button>
+        {/* BOTÕES */}
+        <div className="cabecalho-botoes">
+          {isOwnProfile ? (
+            <>
+              <button
+                className="btn-cabecalho btn-editar"
+                onClick={() => (window.location.href = "/perfil/editar")}
+              >
+                <span className="material-symbols-outlined">edit</span>
+                Editar Perfil
+              </button>
 
-            <button
-              className="btn-cabecalho btn-publicar"
-              onClick={onPublicar}
-            >
-              <span className="material-symbols-outlined">add</span>
-              Nova Publicação
-            </button>
-          </div>
-        )}
+              <button
+                className="btn-cabecalho btn-publicar"
+                onClick={onPublicar}
+              >
+                <span className="material-symbols-outlined">add</span>
+                Nova Publicação
+              </button>
+            </>
+          ) : (
+            <>
+              {!isFollowing ? (
+                <button
+                  className="btn-cabecalho btn-seguir"
+                  onClick={onSeguir}
+                >
+                  Seguir
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn-cabecalho"
+                    onClick={onDeixarDeSeguir}
+                  >
+                    Deixar de seguir
+                  </button>
+
+                  <button
+                    className="btn-cabecalho"
+                    onClick={onMensagem}
+                  >
+                    Mensagem
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* INPUTS HIDDEN */}
+      {/* INPUTS */}
       {isOwnProfile && (
         <>
           <input
@@ -126,7 +162,7 @@ export default function CabecalhoPerfil({
         </>
       )}
 
-      {/* INFORMAÇÕES DO USUÁRIO */}
+      {/* INFO */}
       <div className="usuario-data">
         <h2 className="usuario-nome">
           {usuario?.nome || "Usuário"}
@@ -151,26 +187,43 @@ export default function CabecalhoPerfil({
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* 🔥 BOTÕES MOBILE - só dono */}
-      {isOwnProfile && (
-        <div className="cabecalho-botoes-mobile">
-          <button
-            className="btn-cabecalho btn-editar"
-            onClick={() => (window.location.href = "/perfil/editar")}
-          >
-            <span className="material-symbols-outlined">edit</span>
-            Editar Perfil
-          </button>
+      {/* MOBILE */}
+      <div className="cabecalho-botoes-mobile">
+        {isOwnProfile ? (
+          <>
+            <button
+              className="btn-cabecalho btn-editar"
+              onClick={() => (window.location.href = "/perfil/editar")}
+            >
+              Editar Perfil
+            </button>
 
-          <button
-            className="btn-cabecalho btn-publicar"
-            onClick={onPublicar}
-          >
-            <span className="material-symbols-outlined">add</span>
-            Nova Publicação
-          </button>
-        </div>
-      )}
+            <button
+              className="btn-cabecalho btn-publicar"
+              onClick={onPublicar}
+            >
+              Nova Publicação
+            </button>
+          </>
+        ) : (
+          <>
+            {!isFollowing ? (
+              <button className="btn-cabecalho" onClick={onSeguir}>
+                Seguir
+              </button>
+            ) : (
+              <>
+                <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>
+                  Deixar de seguir
+                </button>
+                <button className="btn-cabecalho" onClick={onMensagem}>
+                  Mensagem
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

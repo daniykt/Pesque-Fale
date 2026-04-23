@@ -159,17 +159,16 @@ export default function Sidebar() {
                 <span className="nav-text">Pesquisa</span>
               </Link>
             </li>
-
-            <li>
-              <Link
-                to="/locais"
-                className={`nav-item ${isActive('/locais') ? 'active' : ''}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <span className="material-symbols-outlined">location_on</span>
-                <span className="nav-text">Melhores Locais</span>
-              </Link>
-            </li>
+<li>
+  <Link
+    to="/chat"
+    className={`nav-item ${isActive('/chat') ? 'active' : ''}`}
+    onClick={() => setIsMenuOpen(false)}
+  >
+    <span className="material-symbols-outlined">chat</span>
+    <span className="nav-text">Chat</span>
+  </Link>
+</li>
 
             <li>
               <Link

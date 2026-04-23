@@ -11,7 +11,7 @@ import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
 import Pesquisa from "../pages/Pesquisa/pesquisa";
 import Notificacao from "../pages/Notificacao/notificacao";
-import LocaisAvaliados from "../pages/locaisAvaliados/locaisAvaliados";
+import Chat from "../pages/chat/Chat"; 
 import Sobre from "../pages/Sobre/sobre";
 
 function AppRoutes() {
@@ -37,6 +37,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
 
         {/* 🔒 ROTAS PROTEGIDAS */}
+
         <Route
           path="/home"
           element={
@@ -46,7 +47,6 @@ function AppRoutes() {
           }
         />
 
-        {/* 🔥 PERFIL DINÂMICO */}
         <Route
           path="/perfil/:id"
           element={
@@ -56,7 +56,6 @@ function AppRoutes() {
           }
         />
 
-        {/* 👤 SEU PERFIL (opcional manter) */}
         <Route
           path="/perfil"
           element={
@@ -93,11 +92,22 @@ function AppRoutes() {
           }
         />
 
+        {/* ✅ INBOX (ESSENCIAL) */}
         <Route
-          path="/locais"
+          path="/chat"
           element={
             <ProtectedRoute user={user}>
-              <LocaisAvaliados />
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ CHAT PRIVADO */}
+        <Route
+          path="/chat/:chatId"
+          element={
+            <ProtectedRoute user={user}>
+              <Chat />
             </ProtectedRoute>
           }
         />
