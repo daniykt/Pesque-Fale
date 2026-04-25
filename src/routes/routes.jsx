@@ -9,6 +9,7 @@ import Login from "../pages/Login/login";
 import Home from "../pages/Home/Home";
 import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
+import NovaPublicacao from "../pages/NovaPublicacao/novapublicacao";
 import Pesquisa from "../pages/Pesquisa/pesquisa";
 import Notificacao from "../pages/Notificacao/notificacao";
 import Chat from "../pages/chat/Chat"; 
@@ -73,6 +74,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/publicar"
+  element={
+    <ProtectedRoute user={user}>
+      <NovaPublicacao />
+    </ProtectedRoute>
+  }
+/>
+
 
         <Route
           path="/pesquisar"

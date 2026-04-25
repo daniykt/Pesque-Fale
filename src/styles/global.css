@@ -921,3 +921,72 @@ body.dark-mode .filtro-group option {
   background-color: #1e1e1e;
   color: #f1f1f1;
 }
+
+/* Cabeçalho do Perfil */
+body.dark-mode .cabecalho-perfil {
+  background-color: #1e1e1e;
+}
+
+body.dark-mode .usuario-nome {
+  color: #90caf9;
+}
+
+body.dark-mode .usuario-info-texto {
+  color: #b0b0b0;
+}
+
+body.dark-mode .usuario-bio {
+  color: #f1f1f1;
+}
+
+body.dark-mode .usuario-icone {
+  color: #b0b0b0;
+}
+
+body.dark-mode .btn-cabecalho.btn-editar {
+  background-color: #1e1e1e;
+  color: #90caf9;
+  border-color: #444;
+}
+
+body.dark-mode .btn-cabecalho.btn-editar:hover {
+  background-color: #2a2a2a;
+  border-color: #90caf9;
+}
+
+body.dark-mode .btn-cabecalho.btn-publicar {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+body.dark-mode .btn-cabecalho.btn-publicar:hover {
+  background-color: #0056b3;
+}
+
+body.dark-mode .btn-cabecalho.btn-seguir {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+body.dark-mode .btn-cabecalho.btn-seguir:hover {
+  background-color: #0056b3;
+}
+
+body.dark-mode .btn-cabecalho {
+  background-color: #2a2a2a;
+  color: #f1f1f1;
+  border-color: #444;
+}
+
+body.dark-mode .btn-cabecalho:hover {
+  background-color: #333;
+  border-color: #90caf9;
+}
+
+body.dark-mode .cabecalho-botoes-mobile .btn-cabecalho {
+  background-color: #2a2a2a;
+  color: #f1f1f1;
+  border-color: #444;
+}
