@@ -1,7 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./novapublicacao.css";
+
+import { db } from "../../firebase";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { observeAuthState } from "../../auth";
 
 const TAGS_FIXAS = [
   "Rio", "Lago", "Represa", "Mar", "Pesca Esportiva",
@@ -11,6 +15,7 @@ const TAGS_FIXAS = [
 export default function NovaPublicacao() {
   const navigate = useNavigate();
 
+  const [user, setUser] = useState(null);
   const [foto, setFoto] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [descricao, setDescricao] = useState("");
@@ -24,6 +29,12 @@ export default function NovaPublicacao() {
   const [erros, setErros] = useState({});
 
   const fotoInputRef = useRef(null);
+
+  // Pega o usuário autenticado
+  useEffect(() => {
+    const unsubscribe = observeAuthState(setUser);
+    return unsubscribe;
+  }, []);
 
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
@@ -55,36 +66,44 @@ export default function NovaPublicacao() {
     const novosErros = {};
     if (!fotoPreview) novosErros.foto = "Adicione uma foto para publicar.";
     if (!local.trim()) novosErros.local = "Informe o nome do local.";
-    // ✅ avaliação não é mais obrigatória
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   };
 
-  const handlePublicar = () => {
+  const handlePublicar = async () => {
     if (!validar()) return;
+    if (!user) return;
 
     setPublicando(true);
 
-    setTimeout(() => {
-      const posts = JSON.parse(localStorage.getItem("posts")) || [];
+    try {
       const novoPost = {
         id: Date.now(),
         imagem: fotoPreview,
         data: new Date().toLocaleString(),
-        descricao: descricao || "Sem descrição",
+        comentario: descricao || "Sem descrição",
         local: local,
-        // Se não avaliou, não mostra nada
         avaliacao: avaliacao > 0 ? "⭐".repeat(avaliacao) : null,
         avaliacaoNumero: avaliacao > 0 ? avaliacao : null,
         tags: tagsSelecionadas,
-        curtidas: 0,
+        curtidas: [],
         comentarios: [],
       };
-      localStorage.setItem("posts", JSON.stringify([novoPost, ...posts]));
+
+      // Salva no Firestore — mesmo padrão do Perfil.jsx
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        posts: arrayUnion(novoPost),
+      });
+
       setPublicando(false);
       setPublicado(true);
+
       setTimeout(() => navigate("/perfil"), 1200);
-    }, 900);
+    } catch (error) {
+      console.error("Erro ao publicar:", error);
+      setPublicando(false);
+      setErros({ geral: "Erro ao publicar. Tente novamente." });
+    }
   };
 
   return (
@@ -285,6 +304,14 @@ export default function NovaPublicacao() {
               </div>
             )}
           </div>
+
+          {/* ERRO GERAL */}
+          {erros.geral && (
+            <p className="nova-pub-erro-msg">
+              <span className="material-symbols-outlined">error</span>
+              {erros.geral}
+            </p>
+          )}
 
           {/* BOTÃO PUBLICAR */}
           <button
