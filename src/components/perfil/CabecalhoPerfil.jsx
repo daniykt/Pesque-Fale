@@ -1,11 +1,11 @@
 import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Cabecalhoperfil.css";
 
 export default function CabecalhoPerfil({
   fotoPerfil,
   onFotoChange,
   onBannerChange,
-  onPublicar,
   banner,
   usuario,
   bio,
@@ -18,6 +18,7 @@ export default function CabecalhoPerfil({
   onDeixarDeSeguir,
   onMensagem,
 }) {
+  const navigate = useNavigate();
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
@@ -90,24 +91,24 @@ export default function CabecalhoPerfil({
           )}
         </div>
 
-        {/* BOTÕES */}
+        {/* BOTÕES DESKTOP */}
         <div className="cabecalho-botoes">
           {isOwnProfile ? (
             <>
               <button
                 className="btn-cabecalho btn-editar"
-                onClick={() => (window.location.href = "/perfil/editar")}
+                onClick={() => navigate("/perfil/editar")}
               >
                 <span className="material-symbols-outlined">edit</span>
-                Editar Perfil
+                <span className="btn-texto">Editar Perfil</span>
               </button>
 
               <button
                 className="btn-cabecalho btn-publicar"
-                onClick={onPublicar}
+                onClick={() => navigate("/publicar")}
               >
                 <span className="material-symbols-outlined">add</span>
-                Nova Publicação
+                <span className="btn-texto">Nova Publicação</span>
               </button>
             </>
           ) : (
@@ -187,20 +188,20 @@ export default function CabecalhoPerfil({
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* MOBILE */}
+      {/* BOTÕES MOBILE */}
       <div className="cabecalho-botoes-mobile">
         {isOwnProfile ? (
           <>
             <button
               className="btn-cabecalho btn-editar"
-              onClick={() => (window.location.href = "/perfil/editar")}
+              onClick={() => navigate("/perfil/editar")}
             >
               Editar Perfil
             </button>
 
             <button
               className="btn-cabecalho btn-publicar"
-              onClick={onPublicar}
+              onClick={() => navigate("/publicar")}
             >
               Nova Publicação
             </button>
