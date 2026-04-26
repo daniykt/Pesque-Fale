@@ -3,7 +3,7 @@ import "../../styles/base.css";
 import "../../styles/global.css";
 import "./login.css";
 
-import { loginWithEmail, registerWithEmail, logout, updateUserName } from "../../auth";
+import { loginWithEmail, registerWithEmail, logout, updateUserName, verificarOnboarding } from "../../auth";
 import { useNavigate } from "react-router-dom";
 
 // IMAGENS
@@ -18,15 +18,10 @@ export default function Login() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [justRegistered, setJustRegistered] = useState(false);
-
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
 
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -48,24 +43,34 @@ export default function Login() {
     }
   }, [toast.visible]);
 
-useEffect(() => {
-  const msg = sessionStorage.getItem('mensagemLogin');
-  if (msg) {
-    showToast(msg, 'success');
-    sessionStorage.removeItem('mensagemLogin'); 
-  }
-}, []);
+  useEffect(() => {
+    const msg = sessionStorage.getItem("mensagemLogin");
+    if (msg) {
+      showToast(msg, "success");
+      sessionStorage.removeItem("mensagemLogin");
+    }
+  }, []);
 
+  // LOGIN — verifica onboarding antes de redirecionar
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await loginWithEmail(loginData.email, loginData.password);
-      navigate("/home", { state: { loginSuccess: true, isNewUser: justRegistered } });
+      const userCredential = await loginWithEmail(loginData.email, loginData.password);
+      const uid = userCredential.user.uid;
+
+      const onboardingFeito = await verificarOnboarding(uid);
+
+      if (onboardingFeito) {
+        navigate("/home");
+      } else {
+        navigate("/onboarding");
+      }
     } catch (error) {
       showToast("E-mail ou senha incorretos.", "error");
     }
   };
 
+  // CADASTRO — passa nome para criar documento no Firestore e vai para /onboarding
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -78,14 +83,18 @@ useEffect(() => {
     }
 
     try {
-      await registerWithEmail(registerData.email, registerData.password);
+      // ✅ Passa o nome para criar o documento no Firestore
+      await registerWithEmail(registerData.email, registerData.password, registerData.name);
       await updateUserName(registerData.name);
-      await logout();
 
       showToast("Conta criada com sucesso!", "success");
-      showToast("Conta criada com sucesso! Faça login para continuar.", "success");
-      setIsRegisterActive(false);
       setJustRegistered(true);
+
+      // ✅ Vai direto para o onboarding após cadastro
+      setTimeout(() => {
+        navigate("/onboarding");
+      }, 1200);
+
     } catch (error) {
       showToast("Erro ao criar conta.", "error");
     }
