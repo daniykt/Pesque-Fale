@@ -204,3 +204,60 @@ body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
   .onboarding-progresso { margin-bottom: 32px; }
   .onboarding-passos { padding: 16px; }
 }
+
+/* =========================================
+   INPUTS
+   ========================================= */
+.onboarding-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.onboarding-input-icone {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff;
+  font-size: 22px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.onboarding-input {
+  width: 100%;
+  padding: 14px 16px 14px 52px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+  color: #333;
+}
+
+.onboarding-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* Dark mode */
+body.dark-mode .onboarding-input {
+  background-color: #1e1e1e;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+body.dark-mode .onboarding-input::placeholder {
+  color: #888;
+}
+
+body.dark-mode .onboarding-input:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
+}
+
+body.dark-mode .onboarding-input-icone {
+  color: #90caf9;
+}

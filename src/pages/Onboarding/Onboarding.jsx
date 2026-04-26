@@ -1,10 +1,13 @@
+// src/pages/Onboarding/Onboarding.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
 
-import { db } from "../../firebase";
+import { db, auth } from "../../firebase"; // auth também importado aqui
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { observeAuthState } from "../../auth";
+import { updateProfile } from "firebase/auth";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -16,6 +19,8 @@ export default function Onboarding() {
   // Estados das etapas
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
+  const [nome, setNome] = useState("");
+  const [localizacao, setLocalizacao] = useState("");
 
   const fotoInputRef = useRef(null);
 
@@ -30,15 +35,21 @@ export default function Onboarding() {
       try {
         const docSnap = await getDoc(doc(db, "usuarios", currentUser.uid));
         if (docSnap.exists()) {
-          const nome = docSnap.data().nome || currentUser.displayName || "Pescador";
-          setNomeUsuario(nome.split(" ")[0]);
+          const data = docSnap.data();
+          // Nome completo (para a tela 3)
+          setNome(data.nome || "");
+          setLocalizacao(data.localizacao || "");
+          // Nome de exibição na tela 1 (primeiro nome)
+          const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
+          setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
       } catch (e) {
-        setNomeUsuario(currentUser.displayName?.split(" ")[0] || "Pescador");
+        const fallback = currentUser.displayName?.split(" ")[0] || "Pescador";
+        setNomeUsuario(fallback);
       }
     });
     return unsubscribe;
-  }, []);
+  }, [navigate]);
 
   const avancar = () => {
     if (etapa < TOTAL_ETAPAS) setEtapa((e) => e + 1);
@@ -59,7 +70,10 @@ export default function Onboarding() {
   };
 
   const handleSalvarFoto = async () => {
-    if (!fotoPreview || !user) { avancar(); return; }
+    if (!fotoPreview || !user) {
+      avancar();
+      return;
+    }
     try {
       await updateDoc(doc(db, "usuarios", user.uid), {
         fotoPerfil: fotoPreview,
@@ -67,6 +81,32 @@ export default function Onboarding() {
     } catch (e) {
       console.error("Erro ao salvar foto:", e);
     }
+    avancar();
+  };
+
+  // Tela 3 — Nome e localização (função async corrigida)
+  const handleSalvarNomeLocalizacao = async () => {
+    if (!user) return avancar();
+
+    if (!nome.trim()) {
+      alert("Por favor, informe seu nome.");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        nome: nome.trim(),
+        localizacao: localizacao.trim(),
+      });
+
+      // Atualiza também o displayName no Firebase Auth
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: nome.trim() });
+      }
+    } catch (error) {
+      console.error("Erro ao salvar dados:", error);
+    }
+
     avancar();
   };
 
@@ -176,6 +216,49 @@ export default function Onboarding() {
             onClick={handleSalvarFoto}
           >
             {fotoPreview ? "Salvar e continuar" : "Continuar sem foto"}
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+
+          <button className="onboarding-btn-pular" onClick={pular}>
+            Pular esta etapa
+          </button>
+
+        </div>
+      )}
+
+      {/* TELA 3 — NOME E LOCALIZAÇÃO */}
+      {etapa === 3 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+
+          <h1 className="onboarding-titulo">Qual é o seu nome e onde você pesca?</h1>
+          <p className="onboarding-descricao">
+            Essas informações ajudam a personalizar sua experiência e a conectar você com pescadores da sua região.
+          </p>
+
+          <div className="onboarding-input-wrapper">
+            <span className="material-symbols-outlined onboarding-input-icone">person</span>
+            <input
+              type="text"
+              className="onboarding-input"
+              placeholder="Nome completo"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </div>
+
+          <div className="onboarding-input-wrapper">
+            <span className="material-symbols-outlined onboarding-input-icone">location_on</span>
+            <input
+              type="text"
+              className="onboarding-input"
+              placeholder="Cidade, estado ou região"
+              value={localizacao}
+              onChange={(e) => setLocalizacao(e.target.value)}
+            />
+          </div>
+
+          <button className="onboarding-btn-primary" onClick={handleSalvarNomeLocalizacao}>
+            Continuar
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
 
