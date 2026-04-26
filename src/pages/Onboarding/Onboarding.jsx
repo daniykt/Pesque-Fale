@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
 
 import { db } from "../../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { observeAuthState } from "../../auth";
 
 export default function Onboarding() {
@@ -13,6 +13,12 @@ export default function Onboarding() {
   const [etapa, setEtapa] = useState(1);
   const TOTAL_ETAPAS = 6;
 
+  // Estados das etapas
+  const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+
+  const fotoInputRef = useRef(null);
+
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
       if (!currentUser) {
@@ -21,12 +27,11 @@ export default function Onboarding() {
       }
       setUser(currentUser);
 
-      // Busca o nome salvo no Firestore
       try {
         const docSnap = await getDoc(doc(db, "usuarios", currentUser.uid));
         if (docSnap.exists()) {
           const nome = docSnap.data().nome || currentUser.displayName || "Pescador";
-          setNomeUsuario(nome.split(" ")[0]); // pega só o primeiro nome
+          setNomeUsuario(nome.split(" ")[0]);
         }
       } catch (e) {
         setNomeUsuario(currentUser.displayName?.split(" ")[0] || "Pescador");
@@ -41,6 +46,28 @@ export default function Onboarding() {
 
   const pular = () => {
     if (etapa < TOTAL_ETAPAS) setEtapa((e) => e + 1);
+  };
+
+  // Tela 2 — Foto de perfil
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFotoPerfil(file);
+    const reader = new FileReader();
+    reader.onload = () => setFotoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSalvarFoto = async () => {
+    if (!fotoPreview || !user) { avancar(); return; }
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        fotoPerfil: fotoPreview,
+      });
+    } catch (e) {
+      console.error("Erro ao salvar foto:", e);
+    }
+    avancar();
   };
 
   return (
@@ -100,6 +127,60 @@ export default function Onboarding() {
 
           <button className="onboarding-btn-pular" onClick={() => navigate("/home")}>
             Pular por agora
+          </button>
+
+        </div>
+      )}
+
+      {/* TELA 2 — FOTO DE PERFIL */}
+      {etapa === 2 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+
+          <h1 className="onboarding-titulo">Adicione sua foto de perfil</h1>
+          <p className="onboarding-descricao">
+            Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
+          </p>
+
+          {/* ÁREA DA FOTO */}
+          <div
+            className="onboarding-foto-wrapper"
+            onClick={() => fotoInputRef.current.click()}
+            title="Clique para escolher uma foto"
+          >
+            {fotoPreview ? (
+              <>
+                <img src={fotoPreview} alt="Foto de perfil" className="onboarding-foto-preview" />
+                <div className="onboarding-foto-overlay">
+                  <span className="material-symbols-outlined">photo_camera</span>
+                  <span>Trocar foto</span>
+                </div>
+              </>
+            ) : (
+              <div className="onboarding-foto-vazio">
+                <span className="material-symbols-outlined onboarding-foto-icone">add_a_photo</span>
+                <span className="onboarding-foto-texto">Clique para adicionar</span>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            ref={fotoInputRef}
+            style={{ display: "none" }}
+            onChange={handleFotoChange}
+          />
+
+          <button
+            className="onboarding-btn-primary"
+            onClick={handleSalvarFoto}
+          >
+            {fotoPreview ? "Salvar e continuar" : "Continuar sem foto"}
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+
+          <button className="onboarding-btn-pular" onClick={pular}>
+            Pular esta etapa
           </button>
 
         </div>
