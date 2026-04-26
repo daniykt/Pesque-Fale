@@ -1,0 +1,206 @@
+/* =========================================
+   CONTAINER GERAL
+   ========================================= */
+.onboarding-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(24px, 5vw, 60px) clamp(16px, 4vw, 40px);
+  background: linear-gradient(160deg, #f0f4ff 0%, #ffffff 60%);
+}
+
+/* =========================================
+   BARRA DE PROGRESSO
+   ========================================= */
+.onboarding-progresso {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 48px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.onboarding-progresso-item {
+  flex: 1;
+  height: 5px;
+  border-radius: 10px;
+  background-color: #e0e0e0;
+  transition: background-color 0.4s ease;
+}
+
+.onboarding-progresso-item.ativa {
+  background-color: #007bff;
+}
+
+/* =========================================
+   TELA GERAL
+   ========================================= */
+.onboarding-tela {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 480px;
+  gap: 20px;
+}
+
+.onboarding-tela-animada {
+  animation: telaEntrar 0.35s ease;
+}
+
+@keyframes telaEntrar {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   TELA 1 — BOAS VINDAS
+   ========================================= */
+.onboarding-icone-wrapper {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #e8f0fe, #c7d8fc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.15);
+}
+
+.onboarding-emoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.onboarding-titulo {
+  margin: 0;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  font-weight: 700;
+  color: var(--cor-secundaria, #062A6C);
+  line-height: 1.3;
+}
+
+.onboarding-nome {
+  color: #007bff;
+}
+
+.onboarding-descricao {
+  margin: 0;
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.7;
+  max-width: 380px;
+}
+
+/* PASSOS */
+.onboarding-passos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8ecf4;
+  margin: 4px 0;
+}
+
+.onboarding-passo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.onboarding-passo-icone {
+  font-size: 22px;
+  color: #007bff;
+  flex-shrink: 0;
+}
+
+/* =========================================
+   BOTÕES
+   ========================================= */
+.onboarding-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px 24px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+  margin-top: 8px;
+}
+
+.onboarding-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.4);
+}
+
+.onboarding-btn-primary .material-symbols-outlined { font-size: 20px; }
+
+.onboarding-btn-pular {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.onboarding-btn-pular:hover { color: #777; }
+
+/* =========================================
+   DARK MODE
+   ========================================= */
+body.dark-mode .onboarding-container {
+  background: linear-gradient(160deg, #0f1a2e 0%, #121212 60%);
+}
+
+body.dark-mode .onboarding-titulo { color: #90caf9; }
+body.dark-mode .onboarding-nome { color: #64b5f6; }
+body.dark-mode .onboarding-descricao { color: #b0b0b0; }
+
+body.dark-mode .onboarding-passos {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .onboarding-passo { color: #f1f1f1; }
+
+body.dark-mode .onboarding-icone-wrapper {
+  background: linear-gradient(135deg, #0f3460, #062A6C);
+}
+
+body.dark-mode .onboarding-progresso-item { background-color: #333; }
+body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+@media (max-width: 480px) {
+  .onboarding-container { padding: 24px 16px; }
+  .onboarding-progresso { margin-bottom: 32px; }
+  .onboarding-passos { padding: 16px; }
+}
