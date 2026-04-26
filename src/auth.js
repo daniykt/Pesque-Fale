@@ -7,6 +7,8 @@ import {
 } from "firebase/auth";
 
 import { auth } from "./firebase";
+import { db } from "./firebase";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 // 🔐 LOGIN
 export const loginWithEmail = async (email, password) => {
@@ -19,14 +21,45 @@ export const loginWithEmail = async (email, password) => {
   }
 };
 
-// 🆕 CADASTRO
-export const registerWithEmail = async (email, password) => {
+// 🆕 CADASTRO — cria documento no Firestore com onboardingConcluido: false
+export const registerWithEmail = async (email, password, nome) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Cria o documento do usuário no Firestore
+    await setDoc(doc(db, "usuarios", user.uid), {
+      nome: nome || "",
+      email: email,
+      fotoPerfil: "",
+      banner: null,
+      bio: "",
+      localizacao: "",
+      seguidores: [],
+      seguindo: [],
+      posts: [],
+      onboardingConcluido: false, // ← controla o onboarding
+      criadoEm: serverTimestamp(),
+    });
+
     return userCredential;
   } catch (error) {
     console.error("Erro no cadastro:", error);
     throw error;
+  }
+};
+
+// ✅ VERIFICAR SE ONBOARDING FOI CONCLUÍDO
+export const verificarOnboarding = async (uid) => {
+  try {
+    const docSnap = await getDoc(doc(db, "usuarios", uid));
+    if (docSnap.exists()) {
+      return docSnap.data().onboardingConcluido === true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Erro ao verificar onboarding:", error);
+    return false;
   }
 };
 
