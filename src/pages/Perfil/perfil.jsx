@@ -285,6 +285,7 @@ export default function Perfil() {
               user={user}
               usuarioPerfil={usuarioPerfil}
               salvarPosts={salvarPosts}
+              navigate={navigate} 
             />
           )}
         </div>

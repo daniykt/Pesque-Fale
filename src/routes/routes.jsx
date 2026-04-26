@@ -10,9 +10,10 @@ import Home from "../pages/Home/Home";
 import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
 import NovaPublicacao from "../pages/NovaPublicacao/novapublicacao";
+import VisualizacaoPost from "../pages/VisualizacaoPost/VisualizacaoPost";
 import Pesquisa from "../pages/Pesquisa/pesquisa";
 import Notificacao from "../pages/Notificacao/notificacao";
-import Chat from "../pages/chat/Chat"; 
+import Chat from "../pages/chat/Chat";
 import Sobre from "../pages/Sobre/sobre";
 
 function AppRoutes() {
@@ -76,14 +77,22 @@ function AppRoutes() {
         />
 
         <Route
-  path="/publicar"
-  element={
-    <ProtectedRoute user={user}>
-      <NovaPublicacao />
-    </ProtectedRoute>
-  }
-/>
+          path="/publicar"
+          element={
+            <ProtectedRoute user={user}>
+              <NovaPublicacao />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/post/:userId/:postId"
+          element={
+            <ProtectedRoute user={user}>
+              <VisualizacaoPost />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/pesquisar"
@@ -103,7 +112,7 @@ function AppRoutes() {
           }
         />
 
-        {/* ✅ INBOX (ESSENCIAL) */}
+        {/* ✅ INBOX */}
         <Route
           path="/chat"
           element={
