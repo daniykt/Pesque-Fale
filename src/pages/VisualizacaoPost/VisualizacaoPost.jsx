@@ -4,13 +4,7 @@ import Layout from "../../components/sidebar/layout";
 import "./VisualizacaoPost.css";
 
 import { db } from "../../firebase";
-import {
-  doc,
-  onSnapshot,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-} from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { observeAuthState } from "../../auth";
 
 export default function VisualizacaoPost() {
@@ -23,54 +17,50 @@ export default function VisualizacaoPost() {
   const [carregando, setCarregando] = useState(true);
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [linkCopiado, setLinkCopiado] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [modalExclusao, setModalExclusao] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
-  // Auth
   useEffect(() => {
     const unsubscribe = observeAuthState(setUser);
     return unsubscribe;
   }, []);
 
-  // Busca o post via onSnapshot
   useEffect(() => {
     if (!userId) return;
-
     const docRef = doc(db, "usuarios", userId);
-
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setUsuarioPerfil({ id: docSnap.id, ...data });
-
         const posts = data.posts || [];
         const postEncontrado = posts.find((p) => String(p.id) === String(postId));
         setPost(postEncontrado || null);
       }
       setCarregando(false);
     });
-
     return unsubscribe;
   }, [userId, postId]);
 
-  const jaCurtiu = post?.curtidas?.includes(user?.uid);
-
-  // Atualiza os posts no Firestore
-  const atualizarPosts = async (postsAtualizados) => {
-    await updateDoc(doc(db, "usuarios", userId), {
-      posts: postsAtualizados,
-    });
+  const mostrarFeedback = (msg, tipo = "sucesso") => {
+    setFeedback({ msg, tipo });
+    setTimeout(() => setFeedback(null), 3000);
   };
 
-  // Curtir / Descurtir
+  const jaCurtiu = post?.curtidas?.includes(user?.uid);
+
+  const atualizarPosts = async (postsAtualizados) => {
+    await updateDoc(doc(db, "usuarios", userId), { posts: postsAtualizados });
+  };
+
   const handleCurtir = async () => {
     if (!user || !post) return;
-
     const postsAtuais = usuarioPerfil.posts || [];
     const postsAtualizados = postsAtuais.map((p) => {
       if (String(p.id) !== String(postId)) return p;
-
       const curtidas = p.curtidas || [];
       const jaCurtiu = curtidas.includes(user.uid);
-
       return {
         ...p,
         curtidas: jaCurtiu
@@ -78,16 +68,12 @@ export default function VisualizacaoPost() {
           : [...curtidas, user.uid],
       };
     });
-
     await atualizarPosts(postsAtualizados);
   };
 
-  // Comentar
   const handleComentar = async () => {
     if (!user || !comentario.trim() || !post) return;
-
     setEnviando(true);
-
     const novoComentario = {
       id: Date.now(),
       texto: comentario.trim(),
@@ -96,42 +82,46 @@ export default function VisualizacaoPost() {
       autorId: user.uid,
       data: new Date().toLocaleString(),
     };
-
     const postsAtuais = usuarioPerfil.posts || [];
     const postsAtualizados = postsAtuais.map((p) => {
       if (String(p.id) !== String(postId)) return p;
-      return {
-        ...p,
-        comentarios: [...(p.comentarios || []), novoComentario],
-      };
+      return { ...p, comentarios: [...(p.comentarios || []), novoComentario] };
     });
-
     await atualizarPosts(postsAtualizados);
     setComentario("");
     setEnviando(false);
   };
 
-  // Compartilhar
   const handleCompartilhar = async () => {
     const url = window.location.href;
-    if (navigator.share) {
-      await navigator.share({ title: "Pesque & Fale", text: "Olha esse post!", url });
-    } else {
-      navigator.clipboard.writeText(url);
-      alert("Link copiado!");
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Pesque & Fale", text: `Olha essa publicação em ${post?.local}!`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setLinkCopiado(true);
+        setTimeout(() => setLinkCopiado(false), 2500);
+      }
+    } catch (e) {
+      // usuário cancelou — silencioso
     }
   };
 
-  // Excluir post (só dono)
-  const handleExcluir = async () => {
-    if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
+  const handleExcluir = () => setModalExclusao(true);
 
-    const postsAtualizados = (usuarioPerfil.posts || []).filter(
-      (p) => String(p.id) !== String(postId)
-    );
-
-    await atualizarPosts(postsAtualizados);
-    navigate(`/perfil`);
+  const confirmarExcluir = async () => {
+    setExcluindo(true);
+    try {
+      const postsAtualizados = (usuarioPerfil.posts || []).filter(
+        (p) => String(p.id) !== String(postId)
+      );
+      await atualizarPosts(postsAtualizados);
+      navigate("/perfil");
+    } catch (e) {
+      setExcluindo(false);
+      setModalExclusao(false);
+      mostrarFeedback("Erro ao excluir. Tente novamente.", "erro");
+    }
   };
 
   if (carregando) {
@@ -151,9 +141,7 @@ export default function VisualizacaoPost() {
         <div className="vp-nao-encontrado">
           <span className="material-symbols-outlined vp-nao-encontrado-icone">search_off</span>
           <p>Publicação não encontrada.</p>
-          <button className="vp-btn-voltar-erro" onClick={() => navigate(-1)}>
-            Voltar
-          </button>
+          <button className="vp-btn-voltar-erro" onClick={() => navigate(-1)}>Voltar</button>
         </div>
       </Layout>
     );
@@ -173,35 +161,104 @@ export default function VisualizacaoPost() {
           </button>
         </div>
 
+        {/* FEEDBACK VISUAL */}
+        {feedback && (
+          <div className={`vp-feedback vp-feedback-${feedback.tipo}`}>
+            <span className="material-symbols-outlined">
+              {feedback.tipo === "erro" ? "error" : "check_circle"}
+            </span>
+            {feedback.msg}
+          </div>
+        )}
+
+        {linkCopiado && (
+          <div className="vp-feedback vp-feedback-sucesso">
+            <span className="material-symbols-outlined">link</span>
+            Link copiado para a área de transferência!
+          </div>
+        )}
+
+        {/* MODAL DE EXCLUSÃO */}
+        {modalExclusao && (
+          <div className="vp-modal-fundo" onClick={() => !excluindo && setModalExclusao(false)}>
+            <div className="vp-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="vp-modal-icone">
+                <span className="material-symbols-outlined">delete_forever</span>
+              </div>
+              <h2 className="vp-modal-titulo">Excluir publicação?</h2>
+              <p className="vp-modal-texto">
+                Essa ação não pode ser desfeita. A publicação será removida permanentemente.
+              </p>
+              <div className="vp-modal-botoes">
+                <button
+                  className="vp-modal-btn-cancelar"
+                  onClick={() => setModalExclusao(false)}
+                  disabled={excluindo}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="vp-modal-btn-excluir"
+                  onClick={confirmarExcluir}
+                  disabled={excluindo}
+                >
+                  {excluindo ? (
+                    <>
+                      <span className="material-symbols-outlined vp-enviando">hourglass_top</span>
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">delete</span>
+                      Sim, excluir
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="vp-card">
 
-          {/* FOTO DO POST */}
+          {/* FOTO */}
           <div className="vp-foto-wrapper">
             <img src={post.imagem} alt={post.local} className="vp-foto" />
           </div>
 
-          {/* INFORMAÇÕES */}
           <div className="vp-info">
 
             {/* AUTOR */}
             <div className="vp-autor">
-              <img
-                src={usuarioPerfil?.fotoPerfil || "https://via.placeholder.com/40"}
-                alt={usuarioPerfil?.nome}
-                className="vp-autor-foto"
+              <div
+                className="vp-autor-clicavel"
                 onClick={() => navigate(`/perfil/${userId}`)}
-              />
+                title={`Ver perfil de ${usuarioPerfil?.nome || "Pescador"}`}
+              >
+                {usuarioPerfil?.fotoPerfil ? (
+                  <img
+                    src={usuarioPerfil.fotoPerfil}
+                    alt={usuarioPerfil?.nome}
+                    className="vp-autor-foto"
+                  />
+                ) : (
+                  <div className="vp-autor-foto-placeholder">
+                    <span className="material-symbols-outlined">person</span>
+                  </div>
+                )}
+              </div>
+
               <div className="vp-autor-dados">
                 <span
                   className="vp-autor-nome"
                   onClick={() => navigate(`/perfil/${userId}`)}
+                  title={`Ver perfil de ${usuarioPerfil?.nome || "Pescador"}`}
                 >
                   {usuarioPerfil?.nome || "Pescador"}
                 </span>
                 <span className="vp-data">{post.data}</span>
               </div>
 
-              {/* Excluir — só dono */}
               {isDono && (
                 <button className="vp-btn-excluir" onClick={handleExcluir} title="Excluir post">
                   <span className="material-symbols-outlined">delete</span>
@@ -243,38 +300,47 @@ export default function VisualizacaoPost() {
                 <span className="material-symbols-outlined">
                   {jaCurtiu ? "favorite" : "favorite_border"}
                 </span>
-                {post.curtidas?.length || 0}
+                <span>{post.curtidas?.length || 0} {post.curtidas?.length === 1 ? "curtida" : "curtidas"}</span>
               </button>
 
-              <button className="vp-btn-acao" onClick={() => document.getElementById("campo-comentario").focus()}>
+              <button
+                className="vp-btn-acao"
+                onClick={() => document.getElementById("campo-comentario").focus()}
+              >
                 <span className="material-symbols-outlined">chat_bubble_outline</span>
-                {post.comentarios?.length || 0}
+                <span>{post.comentarios?.length || 0} {post.comentarios?.length === 1 ? "comentário" : "comentários"}</span>
               </button>
 
-              <button className="vp-btn-acao" onClick={handleCompartilhar}>
-                <span className="material-symbols-outlined">share</span>
-                Compartilhar
+              <button
+                className={`vp-btn-acao ${linkCopiado ? "vp-btn-copiado" : ""}`}
+                onClick={handleCompartilhar}
+              >
+                <span className="material-symbols-outlined">
+                  {linkCopiado ? "check" : "share"}
+                </span>
+                <span>{linkCopiado ? "Copiado!" : "Compartilhar"}</span>
               </button>
             </div>
 
-            {/* SEÇÃO DE COMENTÁRIOS */}
+            {/* COMENTÁRIOS */}
             <div className="vp-comentarios">
               <h3 className="vp-comentarios-titulo">
                 Comentários ({post.comentarios?.length || 0})
               </h3>
 
-              {/* Lista de comentários */}
               {post.comentarios?.length > 0 ? (
                 <div className="vp-comentarios-lista">
                   {post.comentarios.map((c) => (
-                    <div key={c.id} className="vp-comentario-item">
-                      <img
-                        src={c.autorFoto || "https://via.placeholder.com/36"}
-                        alt={c.autorNome}
-                        className="vp-comentario-foto"
-                      />
+                    <div key={c.id || c.data} className="vp-comentario-item">
+                      {c.autorFoto ? (
+                        <img src={c.autorFoto} alt={c.autorNome} className="vp-comentario-foto" />
+                      ) : (
+                        <div className="vp-comentario-foto-placeholder">
+                          <span className="material-symbols-outlined">person</span>
+                        </div>
+                      )}
                       <div className="vp-comentario-conteudo">
-                        <span className="vp-comentario-autor">{c.autorNome}</span>
+                        <span className="vp-comentario-autor">{c.autorNome || c.nome || "Pescador"}</span>
                         <p className="vp-comentario-texto">{c.texto}</p>
                         <span className="vp-comentario-data">{c.data}</span>
                       </div>
@@ -285,14 +351,15 @@ export default function VisualizacaoPost() {
                 <p className="vp-sem-comentarios">Nenhum comentário ainda. Seja o primeiro!</p>
               )}
 
-              {/* Campo de novo comentário */}
               {user && (
                 <div className="vp-novo-comentario">
-                  <img
-                    src={user.photoURL || "https://via.placeholder.com/36"}
-                    alt="Você"
-                    className="vp-comentario-foto"
-                  />
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="Você" className="vp-comentario-foto" />
+                  ) : (
+                    <div className="vp-comentario-foto-placeholder">
+                      <span className="material-symbols-outlined">person</span>
+                    </div>
+                  )}
                   <div className="vp-comentario-input-wrapper">
                     <input
                       id="campo-comentario"
@@ -308,8 +375,13 @@ export default function VisualizacaoPost() {
                       className="vp-comentario-enviar"
                       onClick={handleComentar}
                       disabled={!comentario.trim() || enviando}
+                      title="Enviar comentário"
                     >
-                      <span className="material-symbols-outlined">send</span>
+                      {enviando ? (
+                        <span className="material-symbols-outlined vp-enviando">hourglass_top</span>
+                      ) : (
+                        <span className="material-symbols-outlined">send</span>
+                      )}
                     </button>
                   </div>
                 </div>
