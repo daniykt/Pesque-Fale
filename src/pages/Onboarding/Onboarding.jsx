@@ -19,11 +19,14 @@ export default function Onboarding() {
   // Estados das etapas
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
+  const [fotoCapa, setFotoCapa] = useState(null);
+  const [fotoCapaPreview, setFotoCapaPreview] = useState(null);
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
 
   const fotoInputRef = useRef(null);
+  const capaInputRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
@@ -40,6 +43,8 @@ export default function Onboarding() {
           setNome(data.nome || "");
           setLocalizacao(data.localizacao || "");
           setBio(data.bio || "");
+          setFotoCapaPreview(data.banner || null);
+          setFotoPreview(data.fotoPerfil || null);
           const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
           setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
@@ -121,6 +126,31 @@ export default function Onboarding() {
       console.error("Erro ao salvar bio:", error);
     }
 
+    avancar();
+  };
+
+  // Tela 5 — Foto de capa
+  const handleCapaChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFotoCapa(file);
+    const reader = new FileReader();
+    reader.onload = () => setFotoCapaPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSalvarCapa = async () => {
+    if (!fotoCapaPreview || !user) {
+      avancar();
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        banner: fotoCapaPreview,
+      });
+    } catch (e) {
+      console.error("Erro ao salvar capa:", e);
+    }
     avancar();
   };
 
@@ -306,6 +336,59 @@ export default function Onboarding() {
 
           <button className="onboarding-btn-primary" onClick={handleSalvarBio}>
             Continuar
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+
+          <button className="onboarding-btn-pular" onClick={pular}>
+            Pular esta etapa
+          </button>
+
+        </div>
+      )}
+
+      {/* TELA 5 — FOTO DE CAPA */}
+      {etapa === 5 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+
+          <h1 className="onboarding-titulo">Adicione uma foto de capa</h1>
+          <p className="onboarding-descricao">
+            Dê um toque pessoal ao seu perfil com uma imagem de fundo.
+          </p>
+
+          <div
+            className="onboarding-capa-wrapper"
+            onClick={() => capaInputRef.current.click()}
+            title="Clique para escolher uma capa"
+          >
+            {fotoCapaPreview ? (
+              <>
+                <img src={fotoCapaPreview} alt="Foto de capa" className="onboarding-capa-preview" />
+                <div className="onboarding-capa-overlay">
+                  <span className="material-symbols-outlined">image</span>
+                  <span>Trocar capa</span>
+                </div>
+              </>
+            ) : (
+              <div className="onboarding-capa-vazio">
+                <span className="material-symbols-outlined onboarding-capa-icone">add_photo_alternate</span>
+                <span className="onboarding-capa-texto">Clique para adicionar uma capa</span>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            ref={capaInputRef}
+            style={{ display: "none" }}
+            onChange={handleCapaChange}
+          />
+
+          <button
+            className="onboarding-btn-primary"
+            onClick={handleSalvarCapa}
+          >
+            {fotoCapaPreview ? "Salvar e continuar" : "Continuar sem capa"}
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
 
