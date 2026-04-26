@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
 
-import { db, auth } from "../../firebase"; // auth também importado aqui
+import { db, auth } from "../../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { observeAuthState } from "../../auth";
 import { updateProfile } from "firebase/auth";
@@ -21,6 +21,7 @@ export default function Onboarding() {
   const [fotoPreview, setFotoPreview] = useState(null);
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
+  const [bio, setBio] = useState("");
 
   const fotoInputRef = useRef(null);
 
@@ -36,10 +37,9 @@ export default function Onboarding() {
         const docSnap = await getDoc(doc(db, "usuarios", currentUser.uid));
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Nome completo (para a tela 3)
           setNome(data.nome || "");
           setLocalizacao(data.localizacao || "");
-          // Nome de exibição na tela 1 (primeiro nome)
+          setBio(data.bio || "");
           const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
           setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
@@ -84,7 +84,7 @@ export default function Onboarding() {
     avancar();
   };
 
-  // Tela 3 — Nome e localização (função async corrigida)
+  // Tela 3 — Nome e localização
   const handleSalvarNomeLocalizacao = async () => {
     if (!user) return avancar();
 
@@ -99,12 +99,26 @@ export default function Onboarding() {
         localizacao: localizacao.trim(),
       });
 
-      // Atualiza também o displayName no Firebase Auth
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: nome.trim() });
       }
     } catch (error) {
       console.error("Erro ao salvar dados:", error);
+    }
+
+    avancar();
+  };
+
+  // Tela 4 — Bio
+  const handleSalvarBio = async () => {
+    if (!user) return avancar();
+
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        bio: bio.trim(),
+      });
+    } catch (error) {
+      console.error("Erro ao salvar bio:", error);
     }
 
     avancar();
@@ -181,7 +195,6 @@ export default function Onboarding() {
             Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
           </p>
 
-          {/* ÁREA DA FOTO */}
           <div
             className="onboarding-foto-wrapper"
             onClick={() => fotoInputRef.current.click()}
@@ -258,6 +271,40 @@ export default function Onboarding() {
           </div>
 
           <button className="onboarding-btn-primary" onClick={handleSalvarNomeLocalizacao}>
+            Continuar
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+
+          <button className="onboarding-btn-pular" onClick={pular}>
+            Pular esta etapa
+          </button>
+
+        </div>
+      )}
+
+      {/* TELA 4 — BIO */}
+      {etapa === 4 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+
+          <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
+          <p className="onboarding-descricao">
+            Uma boa bio ajuda outros pescadores a te conhecerem e a se conectarem com você.
+          </p>
+
+          <div className="onboarding-input-wrapper onboarding-input-wrapper-bio">
+            <span className="material-symbols-outlined onboarding-input-icone onboarding-input-icone-bio">edit_note</span>
+            <textarea
+              className="onboarding-textarea"
+              placeholder="Sou pescador há 10 anos, adoro pescar em rios de água doce..."
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              maxLength={300}
+            />
+            <span className="onboarding-contador">{bio.length}/300</span>
+          </div>
+
+          <button className="onboarding-btn-primary" onClick={handleSalvarBio}>
             Continuar
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
