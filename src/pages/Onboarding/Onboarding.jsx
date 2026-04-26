@@ -154,6 +154,21 @@ export default function Onboarding() {
     avancar();
   };
 
+  // Tela 6 — Conclusão (marca onboarding como concluído)
+  const handleConcluir = async () => {
+    if (!user) return;
+
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        onboardingConcluido: true,
+      });
+    } catch (e) {
+      console.error("Erro ao finalizar onboarding:", e);
+    }
+
+    navigate("/home", { state: { onboardingCompleto: true } });
+  };
+
   return (
     <div className="onboarding-container">
 
@@ -394,6 +409,27 @@ export default function Onboarding() {
 
           <button className="onboarding-btn-pular" onClick={pular}>
             Pular esta etapa
+          </button>
+
+        </div>
+      )}
+
+      {/* TELA 6 — CONCLUSÃO */}
+      {etapa === 6 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+
+          <div className="onboarding-icone-wrapper">
+            <span className="onboarding-emoji">🎉</span>
+          </div>
+
+          <h1 className="onboarding-titulo">Perfil completo, bora pescar!</h1>
+          <p className="onboarding-descricao">
+            Seu perfil foi configurado com sucesso. Agora você pode explorar locais de pesca, conectar-se com outros pescadores e compartilhar suas aventuras.
+          </p>
+
+          <button className="onboarding-btn-primary" onClick={handleConcluir}>
+            Ir para Home
+            <span className="material-symbols-outlined">home</span>
           </button>
 
         </div>

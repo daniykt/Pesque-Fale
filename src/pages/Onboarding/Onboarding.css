@@ -408,3 +408,16 @@ body.dark-mode .onboarding-capa-vazio {
 body.dark-mode .onboarding-capa-icone {
   color: #90caf9;
 }
+
+/* =========================================
+   TELA 6 — CONCLUSÃO (ícone verde)
+   ========================================= */
+.onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  box-shadow: 0 8px 24px rgba(40, 167, 69, 0.15);
+}
+
+/* Dark mode */
+body.dark-mode .onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
+  background: linear-gradient(135deg, #1a3a22, #0f2a14);
+}
