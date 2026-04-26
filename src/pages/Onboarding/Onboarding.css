@@ -261,3 +261,69 @@ body.dark-mode .onboarding-input:focus {
 body.dark-mode .onboarding-input-icone {
   color: #90caf9;
 }
+
+/* =========================================
+   TEXTAREA (BIO)
+   ========================================= */
+.onboarding-input-wrapper-bio {
+  position: relative;
+}
+
+.onboarding-input-icone-bio {
+  top: 16px;
+  transform: translateY(0);
+}
+
+.onboarding-textarea {
+  width: 100%;
+  padding: 14px 16px 14px 52px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+  color: #333;
+  line-height: 1.5;
+}
+
+.onboarding-textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+.onboarding-contador {
+  position: absolute;
+  right: 16px;
+  bottom: 8px;
+  font-size: 0.8rem;
+  color: #888;
+  background: rgba(255,255,255,0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Dark mode */
+body.dark-mode .onboarding-textarea {
+  background-color: #1e1e1e;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+body.dark-mode .onboarding-textarea::placeholder {
+  color: #888;
+}
+
+body.dark-mode .onboarding-textarea:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
+}
+
+body.dark-mode .onboarding-contador {
+  background: rgba(0,0,0,0.7);
+  color: #ccc;
+}
