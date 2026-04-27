@@ -12,26 +12,86 @@
 }
 
 /* =========================================
-   BARRA DE PROGRESSO
+   BARRA DE PROGRESSO (CÍRCULOS NUMERADOS)
    ========================================= */
 .onboarding-progresso {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
   margin-bottom: 48px;
   width: 100%;
-  max-width: 480px;
+  max-width: 500px;
 }
 
-.onboarding-progresso-item {
-  flex: 1;
-  height: 5px;
-  border-radius: 10px;
+.onboarding-progresso-circulo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.4s ease, transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.onboarding-progresso-circulo.ativa {
+  background-color: #007bff;
+  transform: scale(1.1);
+}
+
+.onboarding-progresso-numero {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.onboarding-progresso-linha {
+  width: 28px;
+  height: 3px;
   background-color: #e0e0e0;
   transition: background-color 0.4s ease;
+  flex-shrink: 0;
+  margin: 0 4px;
 }
 
-.onboarding-progresso-item.ativa {
+.onboarding-progresso-linha.preenchida {
   background-color: #007bff;
+}
+
+/* Dark mode */
+body.dark-mode .onboarding-progresso-circulo {
+  background-color: #333;
+}
+
+body.dark-mode .onboarding-progresso-circulo.ativa {
+  background-color: #007bff;
+}
+
+body.dark-mode .onboarding-progresso-linha {
+  background-color: #333;
+}
+
+body.dark-mode .onboarding-progresso-linha.preenchida {
+  background-color: #007bff;
+}
+
+/* Responsivo: círculos menores em telas pequenas */
+@media (max-width: 480px) {
+  .onboarding-progresso-circulo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .onboarding-progresso-numero {
+    font-size: 0.7rem;
+  }
+
+  .onboarding-progresso-linha {
+    width: 18px;
+  }
 }
 
 /* =========================================

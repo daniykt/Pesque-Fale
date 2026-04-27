@@ -173,14 +173,24 @@ export default function Onboarding() {
     <div className="onboarding-container">
 
       {/* BARRA DE PROGRESSO */}
-      <div className="onboarding-progresso">
-        {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => (
-          <div
-            key={i}
-            className={`onboarding-progresso-item ${i + 1 <= etapa ? "ativa" : ""}`}
-          />
-        ))}
-      </div>
+<div className="onboarding-progresso">
+  {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => {
+    const numero = i + 1;
+    const ativa = numero <= etapa;
+    return (
+      <React.Fragment key={i}>
+        {/* Círculo numerado */}
+        <div className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}>
+          <span className="onboarding-progresso-numero">{numero}</span>
+        </div>
+        {/* Linha conectora (exceto após o último) */}
+        {i < TOTAL_ETAPAS - 1 && (
+          <div className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`} />
+        )}
+      </React.Fragment>
+    );
+  })}
+</div>
 
       {/* TELA 1 — BOAS VINDAS */}
       {etapa === 1 && (
