@@ -1,7 +1,10 @@
-/* =========================================
-   CONTAINER GERAL
-   ========================================= */
+/* ═══════════════════════════════════════════
+   ONBOARDING — Pesque & Fale
+   ═══════════════════════════════════════════ */
+
+/* ─── Container geral ─── */
 .onboarding-container {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -11,9 +14,7 @@
   background: linear-gradient(160deg, #f0f4ff 0%, #ffffff 60%);
 }
 
-/* =========================================
-   BARRA DE PROGRESSO (CÍRCULOS NUMERADOS)
-   ========================================= */
+/* ─── Barra de progresso ─── */
 .onboarding-progresso {
   display: flex;
   align-items: center;
@@ -31,8 +32,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.4s ease, transform 0.3s ease;
   flex-shrink: 0;
+  transition: background-color 0.4s ease, transform 0.3s ease;
 }
 
 .onboarding-progresso-circulo.ativa {
@@ -47,106 +48,52 @@
   line-height: 1;
 }
 
-/* LINHA FLEXÍVEL */
 .onboarding-progresso-linha {
-  flex: 1;                     /* ocupa o espaço disponível */
+  flex: 1;
   height: 3px;
   background-color: #e0e0e0;
+  margin: 0 6px;
+  min-width: 8px;
   transition: background-color 0.4s ease;
-  margin: 0 6px;               /* espaçamento lateral */
-  min-width: 8px;              /* evita que desapareça em telas muito pequenas */
 }
 
 .onboarding-progresso-linha.preenchida {
   background-color: #007bff;
 }
 
-/* Dark mode */
-body.dark-mode .onboarding-progresso-circulo {
-  background-color: #333;
-}
-
-body.dark-mode .onboarding-progresso-circulo.ativa {
-  background-color: #007bff;
-}
-
-body.dark-mode .onboarding-progresso-linha {
-  background-color: #333;
-}
-
-body.dark-mode .onboarding-progresso-linha.preenchida {
-  background-color: #007bff;
-}
-
-/* Responsivo: reduz tamanho dos círculos e margens */
-@media (max-width: 480px) {
-  .onboarding-progresso-circulo {
-    width: 26px;
-    height: 26px;
-  }
-
-  .onboarding-progresso-numero {
-    font-size: 0.7rem;
-  }
-
-  .onboarding-progresso-linha {
-    margin: 0 4px;
-    min-width: 6px;
-  }
-}
-
-/* =========================================
-   BOTÃO DE TEMA (DARK/LIGHT)
-   ========================================= */
-/* Botão de tema integrado à barra de progresso */
-.onboarding-theme-btn-progress {
-  background: none;
-  border: none;
+/* ─── FAB de tema ─── */
+.onboarding-fab-theme {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-left: 12px;
-  flex-shrink: 0;
-  transition: background 0.2s, transform 0.2s;
+  z-index: 15;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
-.onboarding-theme-btn-progress .material-symbols-outlined {
+.onboarding-fab-theme:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.onboarding-fab-theme .material-symbols-outlined {
   font-size: 24px;
-  color: var(--cor-texto, #333);
+  color: #ffffff;
 }
 
-/* Efeito hover sutil */
-.onboarding-theme-btn-progress:hover {
-  background: rgba(0, 0, 0, 0.08);
-  transform: scale(1.1);
-}
-
-/* Dark mode do botão */
-body.dark-mode .onboarding-theme-btn-progress .material-symbols-outlined {
-  color: #f1f1f1;
-}
-body.dark-mode .onboarding-theme-btn-progress:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Responsivo: botão menor em telas pequenas */
-@media (max-width: 480px) {
-  .onboarding-theme-btn-progress {
-    width: 28px;
-    height: 28px;
-    margin-left: 8px;
-  }
-  .onboarding-theme-btn-progress .material-symbols-outlined {
-    font-size: 20px;
-  }
-}
-/* =========================================
-   TELA GERAL
-   ========================================= */
+/* ─── Tela geral ─── */
 .onboarding-tela {
   display: flex;
   flex-direction: column;
@@ -166,18 +113,16 @@ body.dark-mode .onboarding-theme-btn-progress:hover {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================
-   TELA 1 — BOAS VINDAS
-   ========================================= */
+/* ─── Tela 1: Boas-vindas ─── */
 .onboarding-icone-wrapper {
   width: 90px;
   height: 90px;
-  background: linear-gradient(135deg, #e8f0fe, #c7d8fc);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
+  background: linear-gradient(135deg, #e8f0fe, #c7d8fc);
   box-shadow: 0 8px 24px rgba(0, 123, 255, 0.15);
 }
 
@@ -206,17 +151,16 @@ body.dark-mode .onboarding-theme-btn-progress:hover {
   max-width: 380px;
 }
 
-/* PASSOS */
 .onboarding-passos {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  background-color: #fff;
-  border-radius: 16px;
   padding: 20px 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  background-color: #fff;
   border: 1px solid #e8ecf4;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   margin: 4px 0;
 }
 
@@ -235,9 +179,7 @@ body.dark-mode .onboarding-theme-btn-progress:hover {
   flex-shrink: 0;
 }
 
-/* =========================================
-   BOTÕES
-   ========================================= */
+/* ─── Botões ─── */
 .onboarding-btn-primary {
   display: flex;
   align-items: center;
@@ -245,16 +187,16 @@ body.dark-mode .onboarding-theme-btn-progress:hover {
   gap: 8px;
   width: 100%;
   padding: 15px 24px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #fff;
   border: none;
   border-radius: 12px;
+  font-family: inherit;
   font-size: 1.05rem;
   font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #fff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
   box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   margin-top: 8px;
 }
 
@@ -263,61 +205,29 @@ body.dark-mode .onboarding-theme-btn-progress:hover {
   box-shadow: 0 8px 24px rgba(0, 123, 255, 0.4);
 }
 
-.onboarding-btn-primary .material-symbols-outlined { font-size: 20px; }
+.onboarding-btn-primary .material-symbols-outlined {
+  font-size: 20px;
+}
 
 .onboarding-btn-pular {
   background: none;
   border: none;
-  color: #aaa;
-  font-size: 0.88rem;
-  cursor: pointer;
-  font-family: inherit;
   padding: 4px 8px;
   border-radius: 6px;
-  transition: color 0.2s ease;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #aaa;
   text-decoration: underline;
   text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.onboarding-btn-pular:hover { color: #777; }
-
-/* =========================================
-   DARK MODE
-   ========================================= */
-body.dark-mode .onboarding-container {
-  background: linear-gradient(160deg, #0f1a2e 0%, #121212 60%);
+.onboarding-btn-pular:hover {
+  color: #777;
 }
 
-body.dark-mode .onboarding-titulo { color: #90caf9; }
-body.dark-mode .onboarding-nome { color: #64b5f6; }
-body.dark-mode .onboarding-descricao { color: #b0b0b0; }
-
-body.dark-mode .onboarding-passos {
-  background-color: #1e1e1e;
-  border-color: #333;
-}
-
-body.dark-mode .onboarding-passo { color: #f1f1f1; }
-
-body.dark-mode .onboarding-icone-wrapper {
-  background: linear-gradient(135deg, #0f3460, #062A6C);
-}
-
-body.dark-mode .onboarding-progresso-item { background-color: #333; }
-body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
-
-/* =========================================
-   RESPONSIVIDADE
-   ========================================= */
-@media (max-width: 480px) {
-  .onboarding-container { padding: 24px 16px; }
-  .onboarding-progresso { margin-bottom: 32px; }
-  .onboarding-passos { padding: 16px; }
-}
-
-/* =========================================
-   INPUTS
-   ========================================= */
+/* ─── Inputs ─── */
 .onboarding-input-wrapper {
   position: relative;
   width: 100%;
@@ -328,10 +238,10 @@ body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #007bff;
-  font-size: 22px;
-  pointer-events: none;
   z-index: 1;
+  font-size: 22px;
+  color: #007bff;
+  pointer-events: none;
 }
 
 .onboarding-input {
@@ -339,12 +249,12 @@ body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
   padding: 14px 16px 14px 52px;
   border: 2px solid #e0e0e0;
   border-radius: 12px;
-  font-size: 1rem;
   font-family: inherit;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #fff;
-  color: #333;
 }
 
 .onboarding-input:focus {
@@ -352,29 +262,7 @@ body.dark-mode .onboarding-progresso-item.ativa { background-color: #007bff; }
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
 
-/* Dark mode */
-body.dark-mode .onboarding-input {
-  background-color: #1e1e1e;
-  border-color: #444;
-  color: #f1f1f1;
-}
-
-body.dark-mode .onboarding-input::placeholder {
-  color: #888;
-}
-
-body.dark-mode .onboarding-input:focus {
-  border-color: #90caf9;
-  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
-}
-
-body.dark-mode .onboarding-input-icone {
-  color: #90caf9;
-}
-
-/* =========================================
-   TEXTAREA (BIO)
-   ========================================= */
+/* ─── Textarea (bio) ─── */
 .onboarding-input-wrapper-bio {
   position: relative;
 }
@@ -386,18 +274,18 @@ body.dark-mode .onboarding-input-icone {
 
 .onboarding-textarea {
   width: 100%;
+  min-height: 100px;
   padding: 14px 16px 14px 52px;
   border: 2px solid #e0e0e0;
   border-radius: 12px;
-  font-size: 1rem;
   font-family: inherit;
+  font-size: 1rem;
+  color: #333;
+  background-color: #fff;
+  line-height: 1.5;
   resize: vertical;
-  min-height: 100px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #fff;
-  color: #333;
-  line-height: 1.5;
 }
 
 .onboarding-textarea:focus {
@@ -409,37 +297,78 @@ body.dark-mode .onboarding-input-icone {
   position: absolute;
   right: 16px;
   bottom: 8px;
-  font-size: 0.8rem;
-  color: #888;
-  background: rgba(255,255,255,0.9);
   padding: 2px 6px;
   border-radius: 4px;
+  font-size: 0.8rem;
+  color: #888;
+  background: rgba(255, 255, 255, 0.9);
   pointer-events: none;
 }
 
-/* Dark mode */
-body.dark-mode .onboarding-textarea {
-  background-color: #1e1e1e;
-  border-color: #444;
-  color: #f1f1f1;
+/* ─── Foto de perfil ─── */
+.onboarding-foto-wrapper {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 3px dashed #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
-body.dark-mode .onboarding-textarea::placeholder {
+.onboarding-foto-wrapper:hover {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.onboarding-foto-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.onboarding-foto-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.onboarding-foto-wrapper:hover .onboarding-foto-overlay {
+  opacity: 1;
+}
+
+.onboarding-foto-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   color: #888;
 }
 
-body.dark-mode .onboarding-textarea:focus {
-  border-color: #90caf9;
-  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
+.onboarding-foto-icone {
+  font-size: 36px;
+  color: #007bff;
 }
 
-body.dark-mode .onboarding-contador {
-  background: rgba(0,0,0,0.7);
-  color: #ccc;
+.onboarding-foto-texto {
+  padding: 0 8px;
+  font-size: 0.8rem;
+  text-align: center;
 }
-/* =========================================
-   FOTO DE CAPA
-   ========================================= */
+
+/* ─── Foto de capa ─── */
 .onboarding-capa-wrapper {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -448,9 +377,9 @@ body.dark-mode .onboarding-contador {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
+  cursor: pointer;
   background-color: #f9f9f9;
   transition: border-color 0.2s, background-color 0.2s;
 }
@@ -469,12 +398,12 @@ body.dark-mode .onboarding-contador {
 .onboarding-capa-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
+  background: rgba(0, 0, 0, 0.4);
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -500,7 +429,104 @@ body.dark-mode .onboarding-contador {
   font-size: 0.9rem;
 }
 
-/* Dark mode */
+/* ─── Tela 6: Conclusão (ícone verde) ─── */
+.onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  box-shadow: 0 8px 24px rgba(40, 167, 69, 0.15);
+}
+
+/* ═══════════════════════════════════════════
+   DARK MODE
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .onboarding-container {
+  background: linear-gradient(160deg, #0f1a2e 0%, #121212 60%);
+}
+
+body.dark-mode .onboarding-titulo      { color: #90caf9; }
+body.dark-mode .onboarding-nome        { color: #64b5f6; }
+body.dark-mode .onboarding-descricao   { color: #b0b0b0; }
+
+body.dark-mode .onboarding-passos {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .onboarding-passo {
+  color: #f1f1f1;
+}
+
+body.dark-mode .onboarding-icone-wrapper {
+  background: linear-gradient(135deg, #0f3460, #062A6C);
+}
+
+/* Progresso */
+body.dark-mode .onboarding-progresso-circulo        { background-color: #333; }
+body.dark-mode .onboarding-progresso-circulo.ativa  { background-color: #007bff; }
+body.dark-mode .onboarding-progresso-linha          { background-color: #333; }
+body.dark-mode .onboarding-progresso-linha.preenchida { background-color: #007bff; }
+
+/* Inputs */
+body.dark-mode .onboarding-input {
+  background-color: #1e1e1e;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+body.dark-mode .onboarding-input::placeholder {
+  color: #888;
+}
+
+body.dark-mode .onboarding-input:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
+}
+
+body.dark-mode .onboarding-input-icone {
+  color: #90caf9;
+}
+
+/* Textarea */
+body.dark-mode .onboarding-textarea {
+  background-color: #1e1e1e;
+  border-color: #444;
+  color: #f1f1f1;
+}
+
+body.dark-mode .onboarding-textarea::placeholder {
+  color: #888;
+}
+
+body.dark-mode .onboarding-textarea:focus {
+  border-color: #90caf9;
+  box-shadow: 0 0 0 3px rgba(144, 202, 249, 0.2);
+}
+
+body.dark-mode .onboarding-contador {
+  background: rgba(0, 0, 0, 0.7);
+  color: #ccc;
+}
+
+/* Foto de perfil */
+body.dark-mode .onboarding-foto-wrapper {
+  background-color: #1e1e1e;
+  border-color: #444;
+}
+
+body.dark-mode .onboarding-foto-wrapper:hover {
+  background-color: #2a2a2a;
+  border-color: #90caf9;
+}
+
+body.dark-mode .onboarding-foto-vazio {
+  color: #aaa;
+}
+
+body.dark-mode .onboarding-foto-icone {
+  color: #90caf9;
+}
+
+/* Foto de capa */
 body.dark-mode .onboarding-capa-wrapper {
   background-color: #1e1e1e;
   border-color: #444;
@@ -519,61 +545,49 @@ body.dark-mode .onboarding-capa-icone {
   color: #90caf9;
 }
 
-/* =========================================
-   TELA 6 — CONCLUSÃO (ícone verde)
-   ========================================= */
-.onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
-  background: linear-gradient(135deg, #d4edda, #c3e6cb);
-  box-shadow: 0 8px 24px rgba(40, 167, 69, 0.15);
-}
-
-/* Dark mode */
+/* Tela 6 */
 body.dark-mode .onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
   background: linear-gradient(135deg, #1a3a22, #0f2a14);
 }
 
-/* =========================================
-   FAB DE TEMA (canto inferior direito)
-   ========================================= */
-.onboarding-fab-theme {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-  transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-}
+/* ═══════════════════════════════════════════
+   RESPONSIVIDADE
+   ═══════════════════════════════════════════ */
 
-.onboarding-fab-theme:hover {
-  background: rgba(0, 0, 0, 0.5);
-  transform: scale(1.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
-.onboarding-fab-theme .material-symbols-outlined {
-  font-size: 24px;
-  color: #ffffff;
-}
-
-/* Ajuste para mobile */
 @media (max-width: 480px) {
+  .onboarding-container {
+    padding: 24px 16px;
+  }
+
+  .onboarding-progresso {
+    margin-bottom: 32px;
+  }
+
+  .onboarding-progresso-circulo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .onboarding-progresso-numero {
+    font-size: 0.7rem;
+  }
+
+  .onboarding-progresso-linha {
+    margin: 0 4px;
+    min-width: 6px;
+  }
+
+  .onboarding-passos {
+    padding: 16px;
+  }
+
   .onboarding-fab-theme {
     bottom: 20px;
     right: 20px;
     width: 42px;
     height: 42px;
   }
+
   .onboarding-fab-theme .material-symbols-outlined {
     font-size: 20px;
   }

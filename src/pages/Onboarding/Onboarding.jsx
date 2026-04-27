@@ -1,60 +1,53 @@
-// src/pages/Onboarding/Onboarding.jsx
-
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Onboarding.css";
+import { updateProfile } from "firebase/auth";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 import { db, auth } from "../../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { observeAuthState } from "../../auth";
-import { updateProfile } from "firebase/auth";
+
+import "./Onboarding.css";
+
+const TOTAL_ETAPAS = 6;
 
 export default function Onboarding() {
   const navigate = useNavigate();
+
+  /* ─── Estados ─── */
   const [user, setUser] = useState(null);
   const [nomeUsuario, setNomeUsuario] = useState("");
   const [etapa, setEtapa] = useState(1);
-  const TOTAL_ETAPAS = 6;
 
-  // Estados das etapas
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [fotoCapa, setFotoCapa] = useState(null);
   const [fotoCapaPreview, setFotoCapaPreview] = useState(null);
+
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
 
-  // Dark mode
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const novo = !prev;
-      if (novo) {
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("theme", "dark");
-      } else {
-        document.body.classList.remove("dark-mode");
-        localStorage.setItem("theme", "light");
-      }
-      return novo;
-    });
-  };
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark-mode");
-    } else {
-      document.body.classList.remove("dark-mode");
-    }
-  }, [darkMode]);
-
   const fotoInputRef = useRef(null);
   const capaInputRef = useRef(null);
 
+  /* ─── Efeitos ─── */
+
+  // Aplica tema escuro/claro no body
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  // Observa estado de autenticação e carrega dados do usuário
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
       if (!currentUser) {
@@ -72,6 +65,7 @@ export default function Onboarding() {
           setBio(data.bio || "");
           setFotoCapaPreview(data.banner || null);
           setFotoPreview(data.fotoPerfil || null);
+
           const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
           setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
@@ -80,8 +74,13 @@ export default function Onboarding() {
         setNomeUsuario(fallback);
       }
     });
+
     return unsubscribe;
   }, [navigate]);
+
+  /* ─── Handlers ─── */
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   const avancar = () => {
     if (etapa < TOTAL_ETAPAS) setEtapa((e) => e + 1);
@@ -91,10 +90,11 @@ export default function Onboarding() {
     if (etapa < TOTAL_ETAPAS) setEtapa((e) => e + 1);
   };
 
-  // Tela 2 — Foto de perfil
+  // ── Etapa 2: Foto de perfil ──
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setFotoPerfil(file);
     const reader = new FileReader();
     reader.onload = () => setFotoPreview(reader.result);
@@ -107,16 +107,14 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), {
-        fotoPerfil: fotoPreview,
-      });
+      await updateDoc(doc(db, "usuarios", user.uid), { fotoPerfil: fotoPreview });
     } catch (e) {
       console.error("Erro ao salvar foto:", e);
     }
     avancar();
   };
 
-  // Tela 3 — Nome e localização
+  // ── Etapa 3: Nome e localização ──
   const handleSalvarNomeLocalizacao = async () => {
     if (!user) return avancar();
 
@@ -141,14 +139,12 @@ export default function Onboarding() {
     avancar();
   };
 
-  // Tela 4 — Bio
+  // ── Etapa 4: Bio ──
   const handleSalvarBio = async () => {
     if (!user) return avancar();
 
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), {
-        bio: bio.trim(),
-      });
+      await updateDoc(doc(db, "usuarios", user.uid), { bio: bio.trim() });
     } catch (error) {
       console.error("Erro ao salvar bio:", error);
     }
@@ -156,10 +152,11 @@ export default function Onboarding() {
     avancar();
   };
 
-  // Tela 5 — Foto de capa
+  // ── Etapa 5: Foto de capa ──
   const handleCapaChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setFotoCapa(file);
     const reader = new FileReader();
     reader.onload = () => setFotoCapaPreview(reader.result);
@@ -172,23 +169,19 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), {
-        banner: fotoCapaPreview,
-      });
+      await updateDoc(doc(db, "usuarios", user.uid), { banner: fotoCapaPreview });
     } catch (e) {
       console.error("Erro ao salvar capa:", e);
     }
     avancar();
   };
 
-  // Tela 6 — Conclusão
+  // ── Etapa 6: Conclusão ──
   const handleConcluir = async () => {
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), {
-        onboardingConcluido: true,
-      });
+      await updateDoc(doc(db, "usuarios", user.uid), { onboardingConcluido: true });
     } catch (e) {
       console.error("Erro ao finalizar onboarding:", e);
     }
@@ -196,9 +189,11 @@ export default function Onboarding() {
     navigate("/home", { state: { onboardingCompleto: true } });
   };
 
+  /* ─── Render ─── */
+
   return (
     <div className="onboarding-container">
-      {/* BARRA DE PROGRESSO (apenas números) */}
+      {/* ── Barra de progresso ── */}
       <div className="onboarding-progresso">
         {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => {
           const numero = i + 1;
@@ -216,15 +211,13 @@ export default function Onboarding() {
         })}
       </div>
 
-      {/* TELA 1 — BOAS VINDAS */}
+      {/* ── Etapa 1: Boas-vindas ── */}
       {etapa === 1 && (
         <div className="onboarding-tela onboarding-tela-animada">
-          <div className="onboarding-icone-wrapper">
-            <span className="onboarding-emoji">🎣</span>
-          </div>
 
           <h1 className="onboarding-titulo">
-            Bem-vindo ao Pesque & Fale,<br />
+            Bem-vindo ao Pesque &amp; Fale,
+            <br />
             <span className="onboarding-nome">{nomeUsuario}!</span>
           </h1>
 
@@ -263,10 +256,11 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* TELA 2 — FOTO DE PERFIL */}
+      {/* ── Etapa 2: Foto de perfil ── */}
       {etapa === 2 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Adicione sua foto de perfil</h1>
+
           <p className="onboarding-descricao">
             Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
           </p>
@@ -311,10 +305,11 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* TELA 3 — NOME E LOCALIZAÇÃO */}
+      {/* ── Etapa 3: Nome e localização ── */}
       {etapa === 3 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Qual é o seu nome e onde você pesca?</h1>
+
           <p className="onboarding-descricao">
             Essas informações ajudam a personalizar sua experiência e a conectar você com pescadores da sua região.
           </p>
@@ -352,16 +347,19 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* TELA 4 — BIO */}
+      {/* ── Etapa 4: Bio ── */}
       {etapa === 4 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
+
           <p className="onboarding-descricao">
             Uma boa bio ajuda outros pescadores a te conhecerem e a se conectarem com você.
           </p>
 
           <div className="onboarding-input-wrapper onboarding-input-wrapper-bio">
-            <span className="material-symbols-outlined onboarding-input-icone onboarding-input-icone-bio">edit_note</span>
+            <span className="material-symbols-outlined onboarding-input-icone onboarding-input-icone-bio">
+              edit_note
+            </span>
             <textarea
               className="onboarding-textarea"
               placeholder="Sou pescador há 10 anos, adoro pescar em rios de água doce..."
@@ -384,10 +382,11 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* TELA 5 — FOTO DE CAPA */}
+      {/* ── Etapa 5: Foto de capa ── */}
       {etapa === 5 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Adicione uma foto de capa</h1>
+
           <p className="onboarding-descricao">
             Dê um toque pessoal ao seu perfil com uma imagem de fundo.
           </p>
@@ -432,7 +431,7 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* TELA 6 — CONCLUSÃO */}
+      {/* ── Etapa 6: Conclusão ── */}
       {etapa === 6 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <div className="onboarding-icone-wrapper">
@@ -440,8 +439,10 @@ export default function Onboarding() {
           </div>
 
           <h1 className="onboarding-titulo">Perfil completo, bora pescar!</h1>
+
           <p className="onboarding-descricao">
-            Seu perfil foi configurado com sucesso. Agora você pode explorar locais de pesca, conectar-se com outros pescadores e compartilhar suas aventuras.
+            Seu perfil foi configurado com sucesso. Agora você pode explorar locais de pesca,
+            conectar-se com outros pescadores e compartilhar suas aventuras.
           </p>
 
           <button className="onboarding-btn-primary" onClick={handleConcluir}>
@@ -451,7 +452,7 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* FAB DE TEMA */}
+      {/* ── FAB de tema ── */}
       <button
         className="onboarding-fab-theme"
         onClick={toggleDarkMode}
