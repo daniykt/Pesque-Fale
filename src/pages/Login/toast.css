@@ -162,3 +162,16 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.btn-login {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

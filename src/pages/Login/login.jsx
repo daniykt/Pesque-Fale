@@ -22,7 +22,8 @@ export default function Login() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
-  const [isRegistering, setIsRegistering] = useState(false); // estado do loading
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
 
@@ -55,23 +56,26 @@ export default function Login() {
   }, []);
 
   // LOGIN
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await loginWithEmail(loginData.email, loginData.password);
-      const uid = userCredential.user.uid;
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setIsLoggingIn(true); // ativa o loading
 
-      const onboardingFeito = await verificarOnboarding(uid);
+  try {
+    const userCredential = await loginWithEmail(loginData.email, loginData.password);
+    const uid = userCredential.user.uid;
 
-      if (onboardingFeito) {
-        navigate("/home");
-      } else {
-        navigate("/onboarding");
-      }
-    } catch (error) {
-      showToast("E-mail ou senha incorretos.", "error");
+    const onboardingFeito = await verificarOnboarding(uid);
+
+    if (onboardingFeito) {
+      navigate("/home");
+    } else {
+      navigate("/onboarding");
     }
-  };
+  } catch (error) {
+    showToast("E-mail ou senha incorretos.", "error");
+    setIsLoggingIn(false); // libera o botão em caso de erro
+  }
+};
 
   // CADASTRO – loading no botão
   const handleRegister = async (e) => {
@@ -160,7 +164,20 @@ export default function Login() {
                   </span>
                 </div>
 
-                <button type="submit" className="btn">ENTRAR</button>
+                <button
+  type="submit"
+  className="btn btn-login"
+  disabled={isLoggingIn}
+>
+  {isLoggingIn ? (
+    <>
+      <span className="btn-spinner"></span>
+      Entrando...
+    </>
+  ) : (
+    "ENTRAR"
+  )}
+</button>
 
                 <div className="login-register">
                   <p>
