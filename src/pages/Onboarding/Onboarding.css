@@ -17,11 +17,10 @@
 .onboarding-progresso {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin-bottom: 48px;
   width: 100%;
   max-width: 500px;
+  margin-bottom: 48px;
+  gap: 0;
 }
 
 .onboarding-progresso-circulo {
@@ -48,13 +47,14 @@
   line-height: 1;
 }
 
+/* LINHA FLEXÍVEL */
 .onboarding-progresso-linha {
-  width: 28px;
+  flex: 1;                     /* ocupa o espaço disponível */
   height: 3px;
   background-color: #e0e0e0;
   transition: background-color 0.4s ease;
-  flex-shrink: 0;
-  margin: 0 4px;
+  margin: 0 6px;               /* espaçamento lateral */
+  min-width: 8px;              /* evita que desapareça em telas muito pequenas */
 }
 
 .onboarding-progresso-linha.preenchida {
@@ -78,7 +78,7 @@ body.dark-mode .onboarding-progresso-linha.preenchida {
   background-color: #007bff;
 }
 
-/* Responsivo: círculos menores em telas pequenas */
+/* Responsivo: reduz tamanho dos círculos e margens */
 @media (max-width: 480px) {
   .onboarding-progresso-circulo {
     width: 26px;
@@ -90,10 +90,10 @@ body.dark-mode .onboarding-progresso-linha.preenchida {
   }
 
   .onboarding-progresso-linha {
-    width: 18px;
+    margin: 0 4px;
+    min-width: 6px;
   }
 }
-
 /* =========================================
    TELA GERAL
    ========================================= */
