@@ -94,6 +94,54 @@ body.dark-mode .onboarding-progresso-linha.preenchida {
     min-width: 6px;
   }
 }
+
+/* =========================================
+   BOTÃO DE TEMA (DARK/LIGHT)
+   ========================================= */
+.onboarding-theme-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.onboarding-theme-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  transform: scale(1.1);
+}
+
+.onboarding-theme-btn .material-symbols-outlined {
+  font-size: 24px;
+  color: #333;
+}
+
+/* Dark mode do botão */
+body.dark-mode .onboarding-theme-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .onboarding-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .onboarding-theme-btn .material-symbols-outlined {
+  color: #f1f1f1;
+}
+
+/* Ajuste no container para permitir posicionamento absolute */
+.onboarding-container {
+  position: relative; /* já pode estar, mas garanta */
+}
 /* =========================================
    TELA GERAL
    ========================================= */

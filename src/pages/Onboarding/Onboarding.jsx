@@ -1,5 +1,3 @@
-// src/pages/Onboarding/Onboarding.jsx
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
@@ -24,9 +22,19 @@ export default function Onboarding() {
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   const fotoInputRef = useRef(null);
   const capaInputRef = useRef(null);
+
+  useEffect(() => {
+  if (darkMode) {
+    document.body.classList.add("dark-mode");
+  } else {
+    document.body.classList.remove("dark-mode");
+  }
+}, [darkMode]);
 
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
@@ -171,6 +179,16 @@ export default function Onboarding() {
 
   return (
     <div className="onboarding-container">
+
+      <button
+  className="onboarding-theme-btn"
+  onClick={toggleDarkMode}
+  title={darkMode ? "Modo claro" : "Modo escuro"}
+>
+  <span className="material-symbols-outlined">
+    {darkMode ? "light_mode" : "dark_mode"}
+  </span>
+</button>
 
       {/* BARRA DE PROGRESSO */}
 <div className="onboarding-progresso">
