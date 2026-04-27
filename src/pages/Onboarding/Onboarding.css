@@ -98,49 +98,51 @@ body.dark-mode .onboarding-progresso-linha.preenchida {
 /* =========================================
    BOTÃO DE TEMA (DARK/LIGHT)
    ========================================= */
-.onboarding-theme-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.06);
+/* Botão de tema integrado à barra de progresso */
+.onboarding-theme-btn-progress {
+  background: none;
   border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-left: 12px;
+  flex-shrink: 0;
   transition: background 0.2s, transform 0.2s;
 }
 
-.onboarding-theme-btn:hover {
-  background: rgba(0, 0, 0, 0.12);
+.onboarding-theme-btn-progress .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--cor-texto, #333);
+}
+
+/* Efeito hover sutil */
+.onboarding-theme-btn-progress:hover {
+  background: rgba(0, 0, 0, 0.08);
   transform: scale(1.1);
 }
 
-.onboarding-theme-btn .material-symbols-outlined {
-  font-size: 24px;
-  color: #333;
-}
-
 /* Dark mode do botão */
-body.dark-mode .onboarding-theme-btn {
+body.dark-mode .onboarding-theme-btn-progress .material-symbols-outlined {
+  color: #f1f1f1;
+}
+body.dark-mode .onboarding-theme-btn-progress:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-body.dark-mode .onboarding-theme-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-body.dark-mode .onboarding-theme-btn .material-symbols-outlined {
-  color: #f1f1f1;
-}
-
-/* Ajuste no container para permitir posicionamento absolute */
-.onboarding-container {
-  position: relative; /* já pode estar, mas garanta */
+/* Responsivo: botão menor em telas pequenas */
+@media (max-width: 480px) {
+  .onboarding-theme-btn-progress {
+    width: 28px;
+    height: 28px;
+    margin-left: 8px;
+  }
+  .onboarding-theme-btn-progress .material-symbols-outlined {
+    font-size: 20px;
+  }
 }
 /* =========================================
    TELA GERAL
@@ -528,4 +530,51 @@ body.dark-mode .onboarding-capa-icone {
 /* Dark mode */
 body.dark-mode .onboarding-tela:nth-child(6) .onboarding-icone-wrapper {
   background: linear-gradient(135deg, #1a3a22, #0f2a14);
+}
+
+/* =========================================
+   FAB DE TEMA (canto inferior direito)
+   ========================================= */
+.onboarding-fab-theme {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.onboarding-fab-theme:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.onboarding-fab-theme .material-symbols-outlined {
+  font-size: 24px;
+  color: #ffffff;
+}
+
+/* Ajuste para mobile */
+@media (max-width: 480px) {
+  .onboarding-fab-theme {
+    bottom: 20px;
+    right: 20px;
+    width: 42px;
+    height: 42px;
+  }
+  .onboarding-fab-theme .material-symbols-outlined {
+    font-size: 20px;
+  }
 }

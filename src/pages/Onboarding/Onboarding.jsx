@@ -1,3 +1,5 @@
+// src/pages/Onboarding/Onboarding.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Onboarding.css";
@@ -22,45 +24,36 @@ export default function Onboarding() {
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
-const [darkMode, setDarkMode] = useState(() => {
-  // Inicializa com o valor salvo no localStorage
-  return localStorage.getItem("theme") === "dark";
-});
 
-const toggleDarkMode = () => {
-  setDarkMode((prev) => {
-    const novo = !prev;
-    if (novo) {
+  // Dark mode
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const novo = !prev;
+      if (novo) {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("theme", "light");
+      }
+      return novo;
+    });
+  };
+
+  useEffect(() => {
+    if (darkMode) {
       document.body.classList.add("dark-mode");
-      localStorage.setItem("theme", "dark");
     } else {
       document.body.classList.remove("dark-mode");
-      localStorage.setItem("theme", "light");
     }
-    return novo;
-  });
-};
-
-useEffect(() => {
-  if (darkMode) {
-    document.body.classList.add("dark-mode");
-    localStorage.setItem("theme", "dark");
-  } else {
-    document.body.classList.remove("dark-mode");
-    localStorage.setItem("theme", "light");
-  }
-}, [darkMode]);
+  }, [darkMode]);
 
   const fotoInputRef = useRef(null);
   const capaInputRef = useRef(null);
-
-  useEffect(() => {
-  if (darkMode) {
-    document.body.classList.add("dark-mode");
-  } else {
-    document.body.classList.remove("dark-mode");
-  }
-}, [darkMode]);
 
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
@@ -188,7 +181,7 @@ useEffect(() => {
     avancar();
   };
 
-  // Tela 6 — Conclusão (marca onboarding como concluído)
+  // Tela 6 — Conclusão
   const handleConcluir = async () => {
     if (!user) return;
 
@@ -205,41 +198,27 @@ useEffect(() => {
 
   return (
     <div className="onboarding-container">
-
-      <button
-  className="onboarding-theme-btn"
-  onClick={toggleDarkMode}
-  title={darkMode ? "Modo claro" : "Modo escuro"}
->
-  <span className="material-symbols-outlined">
-    {darkMode ? "light_mode" : "dark_mode"}
-  </span>
-</button>
-
-      {/* BARRA DE PROGRESSO */}
-<div className="onboarding-progresso">
-  {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => {
-    const numero = i + 1;
-    const ativa = numero <= etapa;
-    return (
-      <React.Fragment key={i}>
-        {/* Círculo numerado */}
-        <div className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}>
-          <span className="onboarding-progresso-numero">{numero}</span>
-        </div>
-        {/* Linha conectora (exceto após o último) */}
-        {i < TOTAL_ETAPAS - 1 && (
-          <div className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`} />
-        )}
-      </React.Fragment>
-    );
-  })}
-</div>
+      {/* BARRA DE PROGRESSO (apenas números) */}
+      <div className="onboarding-progresso">
+        {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => {
+          const numero = i + 1;
+          const ativa = numero <= etapa;
+          return (
+            <React.Fragment key={i}>
+              <div className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}>
+                <span className="onboarding-progresso-numero">{numero}</span>
+              </div>
+              {i < TOTAL_ETAPAS - 1 && (
+                <div className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
 
       {/* TELA 1 — BOAS VINDAS */}
       {etapa === 1 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <div className="onboarding-icone-wrapper">
             <span className="onboarding-emoji">🎣</span>
           </div>
@@ -281,14 +260,12 @@ useEffect(() => {
           <button className="onboarding-btn-pular" onClick={avancar}>
             Pular esta etapa
           </button>
-
         </div>
       )}
 
       {/* TELA 2 — FOTO DE PERFIL */}
       {etapa === 2 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <h1 className="onboarding-titulo">Adicione sua foto de perfil</h1>
           <p className="onboarding-descricao">
             Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
@@ -323,10 +300,7 @@ useEffect(() => {
             onChange={handleFotoChange}
           />
 
-          <button
-            className="onboarding-btn-primary"
-            onClick={handleSalvarFoto}
-          >
+          <button className="onboarding-btn-primary" onClick={handleSalvarFoto}>
             {fotoPreview ? "Salvar e continuar" : "Continuar sem foto"}
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
@@ -334,14 +308,12 @@ useEffect(() => {
           <button className="onboarding-btn-pular" onClick={pular}>
             Pular esta etapa
           </button>
-
         </div>
       )}
 
       {/* TELA 3 — NOME E LOCALIZAÇÃO */}
       {etapa === 3 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <h1 className="onboarding-titulo">Qual é o seu nome e onde você pesca?</h1>
           <p className="onboarding-descricao">
             Essas informações ajudam a personalizar sua experiência e a conectar você com pescadores da sua região.
@@ -377,14 +349,12 @@ useEffect(() => {
           <button className="onboarding-btn-pular" onClick={pular}>
             Pular esta etapa
           </button>
-
         </div>
       )}
 
       {/* TELA 4 — BIO */}
       {etapa === 4 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
           <p className="onboarding-descricao">
             Uma boa bio ajuda outros pescadores a te conhecerem e a se conectarem com você.
@@ -411,14 +381,12 @@ useEffect(() => {
           <button className="onboarding-btn-pular" onClick={pular}>
             Pular esta etapa
           </button>
-
         </div>
       )}
 
       {/* TELA 5 — FOTO DE CAPA */}
       {etapa === 5 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <h1 className="onboarding-titulo">Adicione uma foto de capa</h1>
           <p className="onboarding-descricao">
             Dê um toque pessoal ao seu perfil com uma imagem de fundo.
@@ -453,10 +421,7 @@ useEffect(() => {
             onChange={handleCapaChange}
           />
 
-          <button
-            className="onboarding-btn-primary"
-            onClick={handleSalvarCapa}
-          >
+          <button className="onboarding-btn-primary" onClick={handleSalvarCapa}>
             {fotoCapaPreview ? "Salvar e continuar" : "Continuar sem capa"}
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
@@ -464,14 +429,12 @@ useEffect(() => {
           <button className="onboarding-btn-pular" onClick={pular}>
             Pular esta etapa
           </button>
-
         </div>
       )}
 
       {/* TELA 6 — CONCLUSÃO */}
       {etapa === 6 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <div className="onboarding-icone-wrapper">
             <span className="onboarding-emoji">🎉</span>
           </div>
@@ -485,10 +448,19 @@ useEffect(() => {
             Ir para Home
             <span className="material-symbols-outlined">home</span>
           </button>
-
         </div>
       )}
 
+      {/* FAB DE TEMA */}
+      <button
+        className="onboarding-fab-theme"
+        onClick={toggleDarkMode}
+        title={darkMode ? "Modo claro" : "Modo escuro"}
+      >
+        <span className="material-symbols-outlined">
+          {darkMode ? "light_mode" : "dark_mode"}
+        </span>
+      </button>
     </div>
   );
 }
