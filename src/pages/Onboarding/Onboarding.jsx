@@ -22,8 +22,34 @@ export default function Onboarding() {
   const [nome, setNome] = useState("");
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+const [darkMode, setDarkMode] = useState(() => {
+  // Inicializa com o valor salvo no localStorage
+  return localStorage.getItem("theme") === "dark";
+});
+
+const toggleDarkMode = () => {
+  setDarkMode((prev) => {
+    const novo = !prev;
+    if (novo) {
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
+    return novo;
+  });
+};
+
+useEffect(() => {
+  if (darkMode) {
+    document.body.classList.add("dark-mode");
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.body.classList.remove("dark-mode");
+    localStorage.setItem("theme", "light");
+  }
+}, [darkMode]);
 
   const fotoInputRef = useRef(null);
   const capaInputRef = useRef(null);
