@@ -224,8 +224,8 @@ export default function Onboarding() {
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
 
-          <button className="onboarding-btn-pular" onClick={() => navigate("/home")}>
-            Pular por agora
+          <button className="onboarding-btn-pular" onClick={avancar}>
+            Pular esta etapa
           </button>
 
         </div>
