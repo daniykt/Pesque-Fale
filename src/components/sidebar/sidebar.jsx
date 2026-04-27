@@ -27,15 +27,14 @@ export default function Sidebar() {
   const auth = getAuth();
 
   // 🔴 LOGOUT — agora só é chamado ao confirmar
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      sessionStorage.setItem('mensagemLogin', 'Você saiu da conta com sucesso.');
-      navigate("/");
-    } catch (error) {
-      console.error("Erro ao sair:", error);
-    }
-  };
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
+    navigate("/");
+  } catch (error) {
+    console.error("Erro ao sair:", error);
+  }
+};
 
   // Inicializa notificações
   useEffect(() => {

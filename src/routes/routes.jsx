@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import Index from "../pages/Index/Index";
 import Login from "../pages/Login/login";
+import Onboarding from "../pages/Onboarding/Onboarding";
 import Home from "../pages/Home/Home";
 import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
@@ -18,18 +19,19 @@ import Sobre from "../pages/Sobre/sobre";
 
 function AppRoutes() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // ← começa true
 
   useEffect(() => {
     const unsubscribe = observeAuthState((currentUser) => {
       setUser(currentUser);
-      setLoading(false);
+      setLoading(false); // ← só para de carregar quando Firebase responde
     });
 
     return unsubscribe;
   }, []);
 
-  if (loading) return <h1>Carregando...</h1>;
+  // Não renderiza nada até saber o estado do auth
+  if (loading) return null;
 
   return (
     <BrowserRouter>
@@ -38,12 +40,14 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
 
-        {/* 🔒 ROTAS PROTEGIDAS */}
+        {/* ✅ ONBOARDING — sem ProtectedRoute, o componente valida internamente */}
+        <Route path="/onboarding" element={<Onboarding />} />
 
+        {/* 🔒 ROTAS PROTEGIDAS */}
         <Route
           path="/home"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Home />
             </ProtectedRoute>
           }
@@ -52,7 +56,7 @@ function AppRoutes() {
         <Route
           path="/perfil/:id"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Perfil />
             </ProtectedRoute>
           }
@@ -61,7 +65,7 @@ function AppRoutes() {
         <Route
           path="/perfil"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Perfil />
             </ProtectedRoute>
           }
@@ -70,7 +74,7 @@ function AppRoutes() {
         <Route
           path="/perfil/editar"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <EditarPerfil />
             </ProtectedRoute>
           }
@@ -79,7 +83,7 @@ function AppRoutes() {
         <Route
           path="/publicar"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <NovaPublicacao />
             </ProtectedRoute>
           }
@@ -88,7 +92,7 @@ function AppRoutes() {
         <Route
           path="/post/:userId/:postId"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <VisualizacaoPost />
             </ProtectedRoute>
           }
@@ -97,7 +101,7 @@ function AppRoutes() {
         <Route
           path="/pesquisar"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Pesquisa />
             </ProtectedRoute>
           }
@@ -106,27 +110,25 @@ function AppRoutes() {
         <Route
           path="/notificacao"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Notificacao />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ INBOX */}
         <Route
           path="/chat"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Chat />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ CHAT PRIVADO */}
         <Route
           path="/chat/:chatId"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Chat />
             </ProtectedRoute>
           }
@@ -135,7 +137,7 @@ function AppRoutes() {
         <Route
           path="/sobre"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} loading={loading}>
               <Sobre />
             </ProtectedRoute>
           }
