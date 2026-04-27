@@ -4,7 +4,14 @@ import Layout from "../../components/sidebar/layout";
 import "./VisualizacaoPost.css";
 
 import { db } from "../../firebase";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { 
+  doc, 
+  onSnapshot, 
+  updateDoc, 
+  addDoc, 
+  collection, 
+  serverTimestamp 
+} from "firebase/firestore";
 import { observeAuthState } from "../../auth";
 
 export default function VisualizacaoPost() {
@@ -54,43 +61,97 @@ export default function VisualizacaoPost() {
     await updateDoc(doc(db, "usuarios", userId), { posts: postsAtualizados });
   };
 
-  const handleCurtir = async () => {
-    if (!user || !post) return;
-    const postsAtuais = usuarioPerfil.posts || [];
-    const postsAtualizados = postsAtuais.map((p) => {
-      if (String(p.id) !== String(postId)) return p;
-      const curtidas = p.curtidas || [];
-      const jaCurtiu = curtidas.includes(user.uid);
-      return {
-        ...p,
-        curtidas: jaCurtiu
-          ? curtidas.filter((id) => id !== user.uid)
-          : [...curtidas, user.uid],
-      };
-    });
-    await atualizarPosts(postsAtualizados);
-  };
+const handleCurtir = async () => {
+  if (!user || !post) return;
+
+  const postsAtuais = usuarioPerfil.posts || [];
+
+  let curtiuAgora = false;
+
+  const postsAtualizados = postsAtuais.map((p) => {
+    if (String(p.id) !== String(postId)) return p;
+
+    const curtidas = p.curtidas || [];
+    const jaCurtiu = curtidas.includes(user.uid);
+
+    if (!jaCurtiu) curtiuAgora = true;
+
+    return {
+      ...p,
+      curtidas: jaCurtiu
+        ? curtidas.filter((id) => id !== user.uid)
+        : [...curtidas, user.uid],
+    };
+  });
+
+  await atualizarPosts(postsAtualizados);
+
+  // 🔥 NOTIFICAÇÃO
+  if (curtiuAgora && user.uid !== userId) {
+    try {
+      await addDoc(collection(db, "notificacoes"), {
+        tipo: "curtida",
+        de: user.displayName || "Pescador",
+        para: userId,
+        postId: postId,
+        createdAt: serverTimestamp(),
+        lida: false,
+      });
+    } catch (error) {
+      console.error("Erro ao notificar curtida:", error);
+    }
+  }
+};
 
   const handleComentar = async () => {
-    if (!user || !comentario.trim() || !post) return;
-    setEnviando(true);
-    const novoComentario = {
-      id: Date.now(),
-      texto: comentario.trim(),
-      autorNome: user.displayName || "Pescador",
-      autorFoto: user.photoURL || "",
-      autorId: user.uid,
-      data: new Date().toLocaleString(),
-    };
-    const postsAtuais = usuarioPerfil.posts || [];
-    const postsAtualizados = postsAtuais.map((p) => {
-      if (String(p.id) !== String(postId)) return p;
-      return { ...p, comentarios: [...(p.comentarios || []), novoComentario] };
-    });
-    await atualizarPosts(postsAtualizados);
-    setComentario("");
-    setEnviando(false);
+  if (!user || !comentario.trim() || !post) return;
+
+  setEnviando(true);
+
+  const textoComentario = comentario.trim();
+
+  const novoComentario = {
+    id: Date.now(),
+    texto: textoComentario,
+    autorNome: user.displayName || "Pescador",
+    autorFoto: user.photoURL || "",
+    autorId: user.uid,
+    data: new Date().toLocaleString(),
   };
+
+  const postsAtuais = usuarioPerfil.posts || [];
+
+  const postsAtualizados = postsAtuais.map((p) => {
+    if (String(p.id) !== String(postId)) return p;
+
+    return {
+      ...p,
+      comentarios: [...(p.comentarios || []), novoComentario],
+    };
+  });
+
+  await atualizarPosts(postsAtualizados);
+
+  setComentario("");
+  setEnviando(false);
+
+  // 🔥 NOTIFICAÇÃO
+  if (user.uid !== userId) {
+    try {
+      await addDoc(collection(db, "notificacoes"), {
+        tipo: "comentario",
+        de: user.displayName || "Pescador",
+        para: userId,
+        texto: textoComentario,
+        postId: postId,
+        createdAt: serverTimestamp(),
+        lida: false,
+      });
+    } catch (error) {
+      console.error("Erro ao notificar comentário:", error);
+    }
+  }
+};
 
   const handleCompartilhar = async () => {
     const url = window.location.href;
