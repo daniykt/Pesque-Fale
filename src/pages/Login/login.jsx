@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import "../../styles/base.css";
 import "../../styles/global.css";
 import "./login.css";
-// Importe também o CSS do toast (se necessário, ou coloque os estilos do spinner aqui)
 import "./toast.css";
 
 import { loginWithEmail, registerWithEmail, logout, updateUserName, verificarOnboarding } from "../../auth";

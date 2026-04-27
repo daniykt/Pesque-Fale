@@ -171,7 +171,12 @@
   gap: 8px;
 }
 
-.btn-login:disabled {
-  opacity: 0.7;
+/* Evita fundo branco ao desabilitar o botão */
+.btn-login:disabled,
+.btn-register:disabled {
+  background-color: #062A6C !important;
+  color: #fff !important;
+  border-color: #062A6C !important;
+  opacity: 0.8;
   cursor: not-allowed;
 }
