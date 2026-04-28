@@ -32,19 +32,20 @@ export default function Chat() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [loadingConversas, setLoadingConversas] = useState(false);
   const [busca, setBusca] = useState("");
-  const [digitando, setDigitando] = useState(false); // Indicador de digitação do outro usuário
+  const [digitando, setDigitando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const mensagensEndRef = useRef(null);
   const mensagensContainerRef = useRef(null);
 
-  // 🔐 usuário
+  // 🔐 Usuário autenticado
   useEffect(() => {
     const unsubscribe = observeAuthState(setUser);
     return unsubscribe;
   }, []);
 
   // =========================
-  // 🔥 INBOX MELHORADO
+  // 📥 INBOX - Lista de Conversas
   // =========================
   useEffect(() => {
     const carregarConversas = async () => {
@@ -53,7 +54,10 @@ export default function Chat() {
 
       try {
         const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) return;
+        if (!meuDoc.exists()) {
+          setLoadingConversas(false);
+          return;
+        }
 
         const dados = meuDoc.data();
         const seguindo = dados?.seguindo || [];
@@ -68,17 +72,25 @@ export default function Chat() {
 
             let ultimaMsg = null;
             let ultimaData = null;
+            let naoLidas = 0;
+
             try {
               const q = query(
                 collection(db, "chats", cid, "mensagens"),
                 orderBy("createdAt", "desc"),
-                limit(1)
+                limit(20)
               );
               const snap = await getDocs(q);
               if (!snap.empty) {
                 const msg = snap.docs[0].data();
                 ultimaMsg = msg.texto;
                 ultimaData = msg.createdAt?.toDate?.() || new Date(msg.createdAt);
+
+                // Contar não lidas (mensagens do outro usuário não lidas)
+                naoLidas = snap.docs.filter(d => {
+                  const m = d.data();
+                  return m.userId !== user.uid && m.status !== "visto";
+                }).length;
               }
             } catch (_) {}
 
@@ -88,6 +100,7 @@ export default function Chat() {
               foto: u?.fotoPerfil || "",
               ultimaMensagem: ultimaMsg || "Nenhuma mensagem ainda",
               ultimaData: ultimaData,
+              naoLidas: naoLidas,
             };
           })
         );
@@ -113,7 +126,7 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 🔒 PERMISSÃO + DADOS DO OUTRO
+  // 🔒 Permissão + Dados do Outro Usuário
   // =========================
   useEffect(() => {
     const verificar = async () => {
@@ -152,7 +165,7 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 💬 MENSAGENS
+  // 💬 Mensagens em Tempo Real
   // =========================
   useEffect(() => {
     if (!chatId || !permitido) return;
@@ -175,18 +188,19 @@ export default function Chat() {
   }, [chatId, permitido]);
 
   // =========================
-  // ✉️ ENVIAR + NOTIFICAÇÃO
+  // ✉️ Enviar Mensagem
   // =========================
   const enviarMensagem = async () => {
-    if (!texto.trim()) return;
+    if (!texto.trim() || enviando) return;
+    setEnviando(true);
 
     try {
       await addDoc(collection(db, "chats", chatId, "mensagens"), {
-        texto,
+        texto: texto.trim(),
         userId: user.uid,
         nome: user.displayName || "Pescador",
         createdAt: serverTimestamp(),
-        status: "enviado", // Pode evoluir para "entregue"/"visto"
+        status: "enviado",
       });
 
       const ids = chatId.split("_");
@@ -197,20 +211,21 @@ export default function Chat() {
           tipo: "mensagem",
           de: user.displayName || "Usuário",
           para: outroId,
-          texto: texto,
+          texto: texto.trim(),
           createdAt: serverTimestamp(),
         });
       }
 
       setTexto("");
-      setDigitando(false); // Opcional: reseta digitação se você mesmo envia
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
+    } finally {
+      setEnviando(false);
     }
   };
 
   // =========================
-  // 📜 SCROLL
+  // 📜 Scroll Automático
   // =========================
   const scrollToBottom = () => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -225,7 +240,7 @@ export default function Chat() {
   const handleScroll = () => {
     const el = mensagensContainerRef.current;
     if (!el) return;
-    const threshold = 100;
+    const threshold = 120;
     const isNearBottom =
       el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     setShowScrollBtn(!isNearBottom);
@@ -239,7 +254,7 @@ export default function Chat() {
     }
   }, []);
 
-  // ⏱️ AUXILIARES
+  // ⏱️ Helpers de Formatação
   const formatarHora = (timestamp) => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -278,7 +293,7 @@ export default function Chat() {
     if (diff < 3600) return `${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
-    return data.toLocaleDateString("pt-BR");
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   };
 
   const conversasFiltradas = conversas.filter((c) =>
@@ -286,16 +301,21 @@ export default function Chat() {
   );
 
   // =========================
-  // 🔥 INBOX UI
+  // 🏠 RENDER: INBOX
   // =========================
   if (!chatId) {
     return (
       <Layout>
         <div className="chat-wrapper">
-          <div className="chat-header">
+          <div className="chat-header-simple">
             <div className="chat-header-left">
               <span className="chat-header-icon">🐟</span>
-              <h1 className="chat-title">Conversas</h1>
+              <div>
+                <h1 className="chat-title">Conversas</h1>
+                <div className="chat-subtitle">
+                  {conversas.length} {conversas.length === 1 ? "conversa" : "conversas"}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -303,7 +323,7 @@ export default function Chat() {
             <input
               className="busca-input"
               type="text"
-              placeholder="Buscar conversa..."
+              placeholder="🔍 Buscar conversa..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -312,20 +332,27 @@ export default function Chat() {
           {loadingConversas ? (
             <div
               style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--texto-medio)",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--chat-text-secondary)",
+                fontSize: "0.9rem",
+                gap: "10px",
               }}
             >
+              <div className="spinner" style={{ borderColor: "var(--chat-border)", borderTopColor: "var(--chat-primary)" }} />
               Carregando conversas...
             </div>
           ) : (
             <div className="lista-conversas">
               {conversasFiltradas.length === 0 ? (
                 <div className="conversa-vazia">
-                  {busca
-                    ? "Nenhuma conversa encontrada"
-                    : "Você ainda não segue ninguém."}
+                  {busca ? (
+                    <>😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"</>
+                  ) : (
+                    <>🎣 Você ainda não segue ninguém.<br />Descubra pescadores na pesquisa!</>
+                  )}
                 </div>
               ) : (
                 conversasFiltradas.map((c) => (
@@ -336,11 +363,7 @@ export default function Chat() {
                   >
                     <div className="conversa-avatar">
                       {c.foto ? (
-                        <img
-                          src={c.foto}
-                          alt={c.nome}
-                          className="conversa-avatar"
-                        />
+                        <img src={c.foto} alt={c.nome} />
                       ) : (
                         <span>{c.nome.charAt(0).toUpperCase()}</span>
                       )}
@@ -356,6 +379,9 @@ export default function Chat() {
                         <span className="conversa-hora">
                           {tempoRelativo(c.ultimaData)}
                         </span>
+                      )}
+                      {c.naoLidas > 0 && (
+                        <span className="conversa-badge">{c.naoLidas}</span>
                       )}
                     </div>
                   </div>
@@ -374,20 +400,31 @@ export default function Chat() {
   if (!permitido) {
     return (
       <Layout>
-        <div style={{ textAlign: "center", marginTop: "60px" }}>
-          <h2>🔒 Chat bloqueado</h2>
-          <p>Você precisa seguir este usuário para conversar.</p>
+        <div className="chat-wrapper" style={{ justifyContent: "center", alignItems: "center" }}>
+          <div className="chat-vazio">
+            <div className="chat-vazio-icon" style={{ fontSize: "2.5rem" }}>🔒</div>
+            <p>Chat bloqueado</p>
+            <span>Você precisa seguir este usuário para conversar.</span>
+            <button
+              className="btn-enviar"
+              style={{ marginTop: "16px", padding: "10px 24px", borderRadius: "24px", width: "auto" }}
+              onClick={() => navigate("/chat")}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>arrow_back</span>
+              <span style={{ marginLeft: "6px", fontSize: "0.85rem", fontWeight: 500 }}>Voltar</span>
+            </button>
+          </div>
         </div>
       </Layout>
     );
   }
 
   // =========================
-  // 💬 CHAT PRINCIPAL
+  // 💬 RENDER: CHAT PRINCIPAL
   // =========================
   const renderizarMensagens = () => {
     return mensagens.map((msg, index) => {
-      const isMine = msg.userId === user.uid;
+      const isMine = msg.userId === user?.uid;
       const hora = formatarHora(msg.createdAt);
       const mostrarData =
         index === 0 ||
@@ -417,7 +454,7 @@ export default function Chat() {
       const avatarMeu =
         isMine && !mesmoRemetente ? (
           <div className="msg-avatar">
-            <span>{user.displayName?.charAt(0) || "?"}</span>
+            <span>{user?.displayName?.charAt(0) || "?"}</span>
           </div>
         ) : null;
 
@@ -475,12 +512,11 @@ export default function Chat() {
             <button
               className="btn-voltar-chat"
               onClick={() => navigate("/chat")}
-              title="Voltar"
+              title="Voltar às conversas"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
 
-            {/* Avatar do contato */}
             {outroUsuario?.foto ? (
               <img
                 src={outroUsuario.foto}
@@ -488,18 +524,18 @@ export default function Chat() {
                 className="chat-avatar"
               />
             ) : (
-              <div className="msg-avatar" style={{ marginRight: 10 }}>
+              <div className="chat-avatar">
                 {outroUsuario?.nome?.charAt(0) || "?"}
               </div>
             )}
 
-            <div>
+            <div className="chat-header-info">
               <h1 className="chat-title">
                 {outroUsuario?.nome || "Pescador"}
               </h1>
               <div className="chat-subtitle">
                 {digitando ? (
-                  <span style={{ color: "var(--texto-medio)", fontStyle: "italic" }}>
+                  <span style={{ color: "rgba(255,255,255,0.8)", fontStyle: "italic" }}>
                     digitando...
                   </span>
                 ) : (
@@ -511,7 +547,6 @@ export default function Chat() {
               </div>
             </div>
           </div>
-          {/* Header right sem badge duplicado */}
         </div>
 
         {/* Mensagens */}
@@ -522,15 +557,15 @@ export default function Chat() {
         >
           {mensagens.length === 0 && !digitando ? (
             <div className="chat-vazio">
-              <span className="chat-vazio-icon">💬</span>
+              <div className="chat-vazio-icon">💬</div>
               <p>Nenhuma mensagem ainda</p>
-              <span>Seja o primeiro a dizer olá!</span>
+              <span>Seja o primeiro a dizer olá! 👋</span>
             </div>
           ) : (
             renderizarMensagens()
           )}
 
-          {/* Indicador de digitação na área de mensagens */}
+          {/* Indicador de digitação */}
           {digitando && (
             <div className="msg-digitando">
               <div className="msg-avatar">
@@ -562,7 +597,7 @@ export default function Chat() {
 
         {/* Botão scroll para baixo */}
         {showScrollBtn && (
-          <button className="btn-scroll-bottom" onClick={scrollToBottom}>
+          <button className="btn-scroll-bottom" onClick={scrollToBottom} title="Rolar para baixo">
             <span className="material-symbols-outlined">arrow_downward</span>
           </button>
         )}
@@ -570,21 +605,33 @@ export default function Chat() {
         {/* Input */}
         <div className="chat-input-area">
           <div className="chat-input-row">
-            <button className="btn-emoji" title="Emoji">
+            <button className="btn-emoji" title="Adicionar emoji">
               <span className="material-symbols-outlined">emoji_emotions</span>
             </button>
             <input
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              onChange={(e) => {
+                setTexto(e.target.value);
+                // Limitar a 500 caracteres
+                if (e.target.value.length > 500) {
+                  setTexto(e.target.value.slice(0, 500));
+                }
+              }}
               placeholder="Digite sua mensagem..."
-              onKeyDown={(e) => e.key === "Enter" && enviarMensagem()}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+              maxLength={500}
             />
             <button
               className="btn-enviar"
               onClick={enviarMensagem}
-              disabled={!texto.trim()}
+              disabled={!texto.trim() || enviando}
+              title="Enviar mensagem"
             >
-              <span className="material-symbols-outlined">send</span>
+              {enviando ? (
+                <div className="spinner" />
+              ) : (
+                <span className="material-symbols-outlined">send</span>
+              )}
             </button>
           </div>
           <span className="char-count">{texto.length}/500</span>
