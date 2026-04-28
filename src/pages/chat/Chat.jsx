@@ -9,10 +9,12 @@ import {
   addDoc,
   query,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   doc,
   getDoc,
+  getDocs,
 } from "firebase/firestore";
 
 import { observeAuthState } from "../../auth";
@@ -27,9 +29,9 @@ export default function Chat() {
   const [permitido, setPermitido] = useState(false);
   const [conversas, setConversas] = useState([]);
   const [outroUsuario, setOutroUsuario] = useState(null);
-
-  // 👇 NOVO: controla se o botão “rolar para baixo” está visível
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [loadingConversas, setLoadingConversas] = useState(false);
+  const [busca, setBusca] = useState("");
 
   const mensagensEndRef = useRef(null);
   const mensagensContainerRef = useRef(null);
@@ -41,11 +43,12 @@ export default function Chat() {
   }, []);
 
   // =========================
-  // 🔥 INBOX (USUÁRIOS SEGUIDOS)
+  // 🔥 INBOX MELHORADO
   // =========================
   useEffect(() => {
-    const carregarSeguindo = async () => {
+    const carregarConversas = async () => {
       if (!user || chatId) return;
+      setLoadingConversas(true);
 
       try {
         const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
@@ -56,27 +59,58 @@ export default function Chat() {
 
         const lista = await Promise.all(
           seguindo.map(async (id) => {
-            const docSnap = await getDoc(doc(db, "usuarios", id));
-            if (!docSnap.exists()) return null;
+            const userDoc = await getDoc(doc(db, "usuarios", id));
+            if (!userDoc.exists()) return null;
 
-            const u = docSnap.data();
-            const chatIdGerado = [user.uid, id].sort().join("_");
+            const u = userDoc.data();
+            const cid = [user.uid, id].sort().join("_");
+
+            // Buscar última mensagem
+            let ultimaMsg = null;
+            let ultimaData = null;
+            try {
+              const q = query(
+                collection(db, "chats", cid, "mensagens"),
+                orderBy("createdAt", "desc"),
+                limit(1)
+              );
+              const snap = await getDocs(q);
+              if (!snap.empty) {
+                const msg = snap.docs[0].data();
+                ultimaMsg = msg.texto;
+                ultimaData = msg.createdAt?.toDate?.() || new Date(msg.createdAt);
+              }
+            } catch (_) {}
 
             return {
-              chatId: chatIdGerado,
+              chatId: cid,
               nome: u?.nome || "Usuário",
               foto: u?.fotoPerfil || "",
+              ultimaMensagem: ultimaMsg || "Nenhuma mensagem ainda",
+              ultimaData: ultimaData,
             };
           })
         );
 
-        setConversas(lista.filter(Boolean));
+        // Ordenar por data (mais recente primeiro)
+        const ordenada = lista
+          .filter(Boolean)
+          .sort((a, b) => {
+            if (!a.ultimaData && !b.ultimaData) return 0;
+            if (!a.ultimaData) return 1;
+            if (!b.ultimaData) return -1;
+            return b.ultimaData - a.ultimaData;
+          });
+
+        setConversas(ordenada);
       } catch (error) {
-        console.error("Erro ao carregar seguindo:", error);
+        console.error("Erro ao carregar conversas:", error);
+      } finally {
+        setLoadingConversas(false);
       }
     };
 
-    carregarSeguindo();
+    carregarConversas();
   }, [user, chatId]);
 
   // =========================
@@ -187,11 +221,10 @@ export default function Chat() {
     }
   }, [mensagens, showScrollBtn]);
 
-  // Monitorar se o usuário está perto do final
   const handleScroll = () => {
     const el = mensagensContainerRef.current;
     if (!el) return;
-    const threshold = 100; // px
+    const threshold = 100;
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     setShowScrollBtn(!isNearBottom);
   };
@@ -228,6 +261,22 @@ export default function Chat() {
     });
   };
 
+  const tempoRelativo = (data) => {
+    if (!data) return "";
+    const agora = new Date();
+    const diff = Math.floor((agora - data) / 1000);
+    if (diff < 60) return "agora";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
+    return data.toLocaleDateString("pt-BR");
+  };
+
+  // Filtro de busca
+  const conversasFiltradas = conversas.filter(c =>
+    c.nome.toLowerCase().includes(busca.toLowerCase())
+  );
+
   // =========================
   // 🔥 INBOX UI
   // =========================
@@ -242,33 +291,57 @@ export default function Chat() {
             </div>
           </div>
 
-          <div className="lista-conversas">
-            {conversas.length === 0 ? (
-              <div className="conversa-vazia">
-                Você ainda não segue ninguém.
-              </div>
-            ) : (
-              conversas.map((c) => (
-                <div
-                  key={c.chatId}
-                  className="conversa-item"
-                  onClick={() => navigate(`/chat/${c.chatId}`)}
-                >
-                  <div className="conversa-avatar">
-                    {c.foto ? (
-                      <img src={c.foto} alt={c.nome} className="conversa-avatar" />
-                    ) : (
-                      <span>{c.nome.charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="conversa-nome">{c.nome}</div>
-                    <div className="conversa-dica">Toque para conversar</div>
-                  </div>
-                </div>
-              ))
-            )}
+          {/* Campo de busca */}
+          <div className="busca-conversas">
+            <input
+              className="busca-input"
+              type="text"
+              placeholder="Buscar conversa..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
           </div>
+
+          {loadingConversas ? (
+            <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-medio)" }}>
+              Carregando conversas...
+            </div>
+          ) : (
+            <div className="lista-conversas">
+              {conversasFiltradas.length === 0 ? (
+                <div className="conversa-vazia">
+                  {busca ? "Nenhuma conversa encontrada" : "Você ainda não segue ninguém."}
+                </div>
+              ) : (
+                conversasFiltradas.map((c) => (
+                  <div
+                    key={c.chatId}
+                    className="conversa-item"
+                    onClick={() => navigate(`/chat/${c.chatId}`)}
+                  >
+                    <div className="conversa-avatar">
+                      {c.foto ? (
+                        <img src={c.foto} alt={c.nome} className="conversa-avatar" />
+                      ) : (
+                        <span>{c.nome.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="conversa-info">
+                      <div className="conversa-nome">{c.nome}</div>
+                      <div className="conversa-ultima-msg">{c.ultimaMensagem}</div>
+                    </div>
+                    <div className="conversa-meta">
+                      {c.ultimaData && (
+                        <span className="conversa-hora">{tempoRelativo(c.ultimaData)}</span>
+                      )}
+                      {/* Badge de não lidas (placeholder para futura implementação) */}
+                      {/* <span className="conversa-badge">2</span> */}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </Layout>
     );
@@ -289,12 +362,9 @@ export default function Chat() {
   }
 
   // =========================
-  // 💬 CHAT PRINCIPAL
+  // 💬 CHAT PRINCIPAL (agrupamento + data)
   // =========================
   const renderizarMensagens = () => {
-    let ultimaData = null;
-    let ultimoUserId = null; // para agrupar sequências
-
     return mensagens.map((msg, index) => {
       const isMine = msg.userId === user.uid;
       const hora = formatarHora(msg.createdAt);
@@ -304,14 +374,12 @@ export default function Chat() {
       const mesmoRemetente = index > 0 && mensagens[index - 1].userId === msg.userId;
       const classeSequencia = mesmoRemetente ? "msg-grupo--sequencia" : "";
 
-      // Separador de data (se necessário)
       const separador = mostrarData ? (
         <div className="data-separador" key={`data-${msg.id}`}>
           {formatarData(msg.createdAt)}
         </div>
       ) : null;
 
-      // Renderizar avatar apenas se não for sequência (e não for minha mensagem)
       const avatarOutro =
         !isMine && !mesmoRemetente ? (
           <div className="msg-avatar">
@@ -323,7 +391,6 @@ export default function Chat() {
           </div>
         ) : null;
 
-      // Avatar meu (direita) só se não for sequência
       const avatarMeu =
         isMine && !mesmoRemetente ? (
           <div className="msg-avatar">
@@ -331,7 +398,6 @@ export default function Chat() {
           </div>
         ) : null;
 
-      // Spacer para minhas mensagens (empurrar para direita) – aparece apenas se não houver avatar
       const spacerMeu = isMine && !avatarMeu ? <div className="msg-avatar-spacer" /> : null;
       const spacerOutro = !isMine && !avatarOutro ? <div className="msg-avatar-spacer" /> : null;
 
@@ -339,11 +405,8 @@ export default function Chat() {
         <React.Fragment key={msg.id}>
           {separador}
           <div className={`msg-grupo ${isMine ? "msg-grupo--minha" : "msg-grupo--outra"} ${classeSequencia}`}>
-            {/* Lado esquerdo: avatar do outro ou spacer */}
             {!isMine && (avatarOutro || spacerOutro)}
-
             <div className="msg-conteudo">
-              {/* Nome do remetente apenas na primeira da sequência */}
               {!isMine && !mesmoRemetente && (
                 <span className="msg-nome">{msg.nome}</span>
               )}
@@ -352,8 +415,6 @@ export default function Chat() {
                 <span className="msg-hora">{hora}</span>
               </div>
             </div>
-
-            {/* Lado direito: spacer ou avatar meu */}
             {isMine && (spacerMeu || avatarMeu)}
           </div>
         </React.Fragment>
@@ -399,7 +460,7 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Área de mensagens com scroll */}
+        {/* Mensagens */}
         <div className="chat-mensagens" ref={mensagensContainerRef} onScroll={handleScroll}>
           {mensagens.length === 0 ? (
             <div className="chat-vazio">
@@ -413,7 +474,6 @@ export default function Chat() {
           <div ref={mensagensEndRef} />
         </div>
 
-        {/* Botão de scroll para baixo */}
         {showScrollBtn && (
           <button className="btn-scroll-bottom" onClick={scrollToBottom}>
             <span className="material-symbols-outlined">arrow_downward</span>
