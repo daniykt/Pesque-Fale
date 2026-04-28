@@ -26,6 +26,7 @@ export default function Chat() {
   const [texto, setTexto] = useState("");
   const [permitido, setPermitido] = useState(false);
   const [conversas, setConversas] = useState([]);
+  const [outroUsuario, setOutroUsuario] = useState(null); // dados do outro usuário no chat
 
   const mensagensEndRef = useRef(null);
 
@@ -75,7 +76,7 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 🔒 PERMISSÃO
+  // 🔒 PERMISSÃO + CARREGAR DADOS DO OUTRO USUÁRIO
   // =========================
   useEffect(() => {
     const verificar = async () => {
@@ -95,6 +96,16 @@ export default function Chat() {
           dados?.seguidores?.includes(outroId)
         ) {
           setPermitido(true);
+        }
+
+        // Buscar dados do outro usuário
+        const outroDoc = await getDoc(doc(db, "usuarios", outroId));
+        if (outroDoc.exists()) {
+          const outro = outroDoc.data();
+          setOutroUsuario({
+            nome: outro?.nome || "Usuário",
+            foto: outro?.fotoPerfil || "",
+          });
         }
       } catch (error) {
         console.error("Erro ao verificar permissão:", error);
@@ -141,7 +152,6 @@ export default function Chat() {
         createdAt: serverTimestamp(),
       });
 
-      // 🔥 NOTIFICAÇÃO DE MENSAGEM
       const ids = chatId.split("_");
       const outroId = ids.find((id) => id !== user.uid);
 
@@ -168,77 +178,55 @@ export default function Chat() {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
 
+  // ⏱️ função para formatar hora
+  const formatarHora = (timestamp) => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   // =========================
-  // 🔥 INBOX UI
+  // 🔥 INBOX UI (sem chatId)
   // =========================
   if (!chatId) {
     return (
       <Layout>
         <div className="chat-wrapper">
+          <div className="chat-header">
+            <div className="chat-header-left">
+              <span className="chat-header-icon">🐟</span>
+              <h1 className="chat-title">Conversas</h1>
+            </div>
+          </div>
 
-          <h2 style={{ marginBottom: "20px" }}>💬 Conversas</h2>
-
-          {conversas.length === 0 ? (
-            <p>Você ainda não segue ninguém</p>
-          ) : (
-            conversas.map((c) => (
-              <div
-                key={c.chatId}
-                className="chat-item"
-                onClick={() => navigate(`/chat/${c.chatId}`)}
-                style={{
-                  padding: "12px",
-                  borderBottom: "1px solid #ddd",
-                  cursor: "pointer",
-                }}
-              >
-                <strong>{c.nome}</strong>
-
-                {/* 🔥 VOLTOU AQUI */}
-                <p style={{ opacity: 0.7 }}>
-                  Toque para iniciar uma conversa
-                </p>
+          <div className="lista-conversas">
+            {conversas.length === 0 ? (
+              <div className="conversa-vazia">
+                Você ainda não segue ninguém.
               </div>
-            ))
-          )}
-
+            ) : (
+              conversas.map((c) => (
+                <div
+                  key={c.chatId}
+                  className="conversa-item"
+                  onClick={() => navigate(`/chat/${c.chatId}`)}
+                >
+                  <div className="conversa-avatar">
+                    {c.foto ? (
+                      <img src={c.foto} alt={c.nome} className="conversa-avatar" />
+                    ) : (
+                      <span>{c.nome.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="conversa-nome">{c.nome}</div>
+                    <div className="conversa-dica">Toque para conversar</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-
-             <footer>
-  <div className="footer-container">
-
-    <div className="footer-info">
-      <h3>Sobre Nós</h3>
-      <p>
-        Plataforma criada por estudantes com o objetivo de conectar pescadores,
-        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
-      </p>
-    </div>
-
-    <div className="footer-links">
-      <h3>Links Úteis</h3>
-
-      <a href="/home">Página Inicial</a><br />
-      <a href="/pesquisar">Pesquisa de Locais</a><br />
-      <a href="/chat">Chat de Pescadores</a><br />
-      <a href="/notificacao">Notificações</a><br />
-      <a href="/sobre">Sobre Nós</a><br />
-      <a href="/perfil">Perfil</a>
-
-    </div>
-
-    <div className="footer-contact">
-      <h3>Contato</h3>
-      <p>Email: <strong>pesquefale@gmail.com</strong></p>
-    </div>
-
-  </div>
-
-  <p className="copyright">
-    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
-  </p>
-</footer>
-
       </Layout>
     );
   }
@@ -258,68 +246,118 @@ export default function Chat() {
   }
 
   // =========================
-  // 💬 CHAT
+  // 💬 CHAT (com chatId e permitido)
   // =========================
   return (
     <Layout>
       <div className="chat-wrapper">
-
-        <div className="chat-mensagens">
-          {mensagens.map((msg) => (
-            <div key={msg.id}>
-              <strong>{msg.nome}</strong>
-              <p>{msg.texto}</p>
+        {/* Header do chat com o outro usuário */}
+        <div className="chat-header">
+          <div className="chat-header-left">
+            <span className="chat-header-icon">🐟</span>
+            <div>
+              <h1 className="chat-title">
+                {outroUsuario?.nome || "Pescador"}
+              </h1>
+              <div className="chat-subtitle">
+                <span className="online-dot"></span>
+                <span>Online</span>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="chat-header-right">
+            <div className="user-badge">
+              {outroUsuario?.foto ? (
+                <img
+                  src={outroUsuario.foto}
+                  alt={outroUsuario.nome}
+                  className="user-avatar-img"
+                />
+              ) : (
+                <div className="user-avatar-placeholder">
+                  {outroUsuario?.nome?.charAt(0) || "?"}
+                </div>
+              )}
+              <span className="user-name-badge">
+                {outroUsuario?.nome || "Usuário"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Área de mensagens */}
+        <div className="chat-mensagens">
+          {mensagens.length === 0 ? (
+            <div className="chat-vazio">
+              <span className="chat-vazio-icon">💬</span>
+              <p>Nenhuma mensagem ainda</p>
+              <span>Seja o primeiro a dizer olá!</span>
+            </div>
+          ) : (
+            mensagens.map((msg) => {
+              const isMine = msg.userId === user.uid;
+              return (
+                <div
+                  key={msg.id}
+                  className={`msg-grupo ${isMine ? "msg-grupo--minha" : "msg-grupo--outra"}`}
+                >
+                  {!isMine && (
+                    <div className="msg-avatar">
+                      {outroUsuario?.foto ? (
+                        <img src={outroUsuario.foto} alt={msg.nome} />
+                      ) : (
+                        <span>{msg.nome?.charAt(0) || "?"}</span>
+                      )}
+                    </div>
+                  )}
+                  {isMine && <div className="msg-avatar-spacer" />}
+                  
+                  <div className="msg-conteudo">
+                    {!isMine && (
+                      <span className="msg-nome">{msg.nome}</span>
+                    )}
+                    <div className={`msg-bolha ${isMine ? "msg-bolha--minha" : "msg-bolha--outra"}`}>
+                      <p>{msg.texto}</p>
+                      <span className="msg-hora">
+                        {formatarHora(msg.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {isMine && (
+                    <div className="msg-avatar">
+                      {/* Avatar do usuário logado (pode ser o mesmo do badge no header) */}
+                      <span>{user.displayName?.charAt(0) || "?"}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
           <div ref={mensagensEndRef} />
         </div>
 
+        {/* Área de input */}
         <div className="chat-input-area">
-          <input
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Digite..."
-          />
-          <button onClick={enviarMensagem}>Enviar</button>
+          <div className="chat-input-row">
+            <input
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Digite sua mensagem..."
+              onKeyDown={(e) => e.key === "Enter" && enviarMensagem()}
+            />
+            <button
+              className="btn-enviar"
+              onClick={enviarMensagem}
+              disabled={!texto.trim()}
+            >
+              <span className="material-symbols-outlined">send</span>
+            </button>
+          </div>
+          <span className="char-count">{texto.length}/500</span>
         </div>
-
       </div>
-
-       <footer>
-  <div className="footer-container">
-
-    <div className="footer-info">
-      <h3>Sobre Nós</h3>
-      <p>
-        Plataforma criada por estudantes com o objetivo de conectar pescadores,
-        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
-      </p>
-    </div>
-
-    <div className="footer-links">
-      <h3>Links Úteis</h3>
-
-      <a href="/home">Página Inicial</a><br />
-      <a href="/pesquisar">Pesquisa de Locais</a><br />
-      <a href="/chat">Chat de Pescadores</a><br />
-      <a href="/notificacao">Notificações</a><br />
-      <a href="/sobre">Sobre Nós</a><br />
-      <a href="/perfil">Perfil</a>
-
-    </div>
-
-    <div className="footer-contact">
-      <h3>Contato</h3>
-      <p>Email: <strong>pesquefale@gmail.com</strong></p>
-    </div>
-
-  </div>
-
-  <p className="copyright">
-    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
-  </p>
-</footer>
-
     </Layout>
   );
 }
