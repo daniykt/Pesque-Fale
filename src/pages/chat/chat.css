@@ -595,3 +595,51 @@ footer p {
   color: var(--texto-medio);
   font-style: italic;
 }
+
+/* ── Separador de data ──────────────────── */
+.data-separador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 8px 0;
+  color: var(--texto-medio);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.data-separador::before,
+.data-separador::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--borda);
+}
+
+/* ── Botão de rolar para baixo ─────────── */
+.btn-scroll-bottom {
+  position: absolute;
+  bottom: 80px; /* acima do input */
+  right: 20px;
+  background: var(--agua-rasa);
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 5;
+}
+
+.btn-scroll-bottom:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.btn-scroll-bottom .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--texto-claro);
+}

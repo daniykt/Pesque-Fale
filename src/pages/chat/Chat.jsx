@@ -26,9 +26,13 @@ export default function Chat() {
   const [texto, setTexto] = useState("");
   const [permitido, setPermitido] = useState(false);
   const [conversas, setConversas] = useState([]);
-  const [outroUsuario, setOutroUsuario] = useState(null); // dados do outro usuário no chat
+  const [outroUsuario, setOutroUsuario] = useState(null);
+
+  // 👇 NOVO: controla se o botão “rolar para baixo” está visível
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const mensagensEndRef = useRef(null);
+  const mensagensContainerRef = useRef(null);
 
   // 🔐 usuário
   useEffect(() => {
@@ -76,7 +80,7 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 🔒 PERMISSÃO + CARREGAR DADOS DO OUTRO USUÁRIO
+  // 🔒 PERMISSÃO + DADOS DO OUTRO
   // =========================
   useEffect(() => {
     const verificar = async () => {
@@ -98,7 +102,6 @@ export default function Chat() {
           setPermitido(true);
         }
 
-        // Buscar dados do outro usuário
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
@@ -174,19 +177,59 @@ export default function Chat() {
   // =========================
   // 📜 SCROLL
   // =========================
-  useEffect(() => {
+  const scrollToBottom = () => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensagens]);
+  };
 
-  // ⏱️ função para formatar hora
+  useEffect(() => {
+    if (!showScrollBtn) {
+      scrollToBottom();
+    }
+  }, [mensagens, showScrollBtn]);
+
+  // Monitorar se o usuário está perto do final
+  const handleScroll = () => {
+    const el = mensagensContainerRef.current;
+    if (!el) return;
+    const threshold = 100; // px
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    setShowScrollBtn(!isNearBottom);
+  };
+
+  useEffect(() => {
+    const el = mensagensContainerRef.current;
+    if (el) {
+      el.addEventListener("scroll", handleScroll);
+      return () => el.removeEventListener("scroll", handleScroll);
+    }
+  }, []);
+
+  // ⏱️ funções auxiliares
   const formatarHora = (timestamp) => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const mesmoDia = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    const date1 = d1.toDate ? d1.toDate() : new Date(d1);
+    const date2 = d2.toDate ? d2.toDate() : new Date(d2);
+    return date1.toDateString() === date2.toDateString();
+  };
+
+  const formatarData = (timestamp) => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   // =========================
-  // 🔥 INBOX UI (sem chatId)
+  // 🔥 INBOX UI
   // =========================
   if (!chatId) {
     return (
@@ -246,12 +289,82 @@ export default function Chat() {
   }
 
   // =========================
-  // 💬 CHAT (com chatId e permitido)
+  // 💬 CHAT PRINCIPAL
   // =========================
+  const renderizarMensagens = () => {
+    let ultimaData = null;
+    let ultimoUserId = null; // para agrupar sequências
+
+    return mensagens.map((msg, index) => {
+      const isMine = msg.userId === user.uid;
+      const hora = formatarHora(msg.createdAt);
+      const mostrarData =
+        index === 0 || !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
+
+      const mesmoRemetente = index > 0 && mensagens[index - 1].userId === msg.userId;
+      const classeSequencia = mesmoRemetente ? "msg-grupo--sequencia" : "";
+
+      // Separador de data (se necessário)
+      const separador = mostrarData ? (
+        <div className="data-separador" key={`data-${msg.id}`}>
+          {formatarData(msg.createdAt)}
+        </div>
+      ) : null;
+
+      // Renderizar avatar apenas se não for sequência (e não for minha mensagem)
+      const avatarOutro =
+        !isMine && !mesmoRemetente ? (
+          <div className="msg-avatar">
+            {outroUsuario?.foto ? (
+              <img src={outroUsuario.foto} alt={msg.nome} />
+            ) : (
+              <span>{msg.nome?.charAt(0) || "?"}</span>
+            )}
+          </div>
+        ) : null;
+
+      // Avatar meu (direita) só se não for sequência
+      const avatarMeu =
+        isMine && !mesmoRemetente ? (
+          <div className="msg-avatar">
+            <span>{user.displayName?.charAt(0) || "?"}</span>
+          </div>
+        ) : null;
+
+      // Spacer para minhas mensagens (empurrar para direita) – aparece apenas se não houver avatar
+      const spacerMeu = isMine && !avatarMeu ? <div className="msg-avatar-spacer" /> : null;
+      const spacerOutro = !isMine && !avatarOutro ? <div className="msg-avatar-spacer" /> : null;
+
+      return (
+        <React.Fragment key={msg.id}>
+          {separador}
+          <div className={`msg-grupo ${isMine ? "msg-grupo--minha" : "msg-grupo--outra"} ${classeSequencia}`}>
+            {/* Lado esquerdo: avatar do outro ou spacer */}
+            {!isMine && (avatarOutro || spacerOutro)}
+
+            <div className="msg-conteudo">
+              {/* Nome do remetente apenas na primeira da sequência */}
+              {!isMine && !mesmoRemetente && (
+                <span className="msg-nome">{msg.nome}</span>
+              )}
+              <div className={`msg-bolha ${isMine ? "msg-bolha--minha" : "msg-bolha--outra"}`}>
+                <p>{msg.texto}</p>
+                <span className="msg-hora">{hora}</span>
+              </div>
+            </div>
+
+            {/* Lado direito: spacer ou avatar meu */}
+            {isMine && (spacerMeu || avatarMeu)}
+          </div>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <Layout>
       <div className="chat-wrapper">
-        {/* Header do chat com o outro usuário */}
+        {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
             <span className="chat-header-icon">🐟</span>
@@ -286,8 +399,8 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Área de mensagens */}
-        <div className="chat-mensagens">
+        {/* Área de mensagens com scroll */}
+        <div className="chat-mensagens" ref={mensagensContainerRef} onScroll={handleScroll}>
           {mensagens.length === 0 ? (
             <div className="chat-vazio">
               <span className="chat-vazio-icon">💬</span>
@@ -295,50 +408,19 @@ export default function Chat() {
               <span>Seja o primeiro a dizer olá!</span>
             </div>
           ) : (
-            mensagens.map((msg) => {
-              const isMine = msg.userId === user.uid;
-              return (
-                <div
-                  key={msg.id}
-                  className={`msg-grupo ${isMine ? "msg-grupo--minha" : "msg-grupo--outra"}`}
-                >
-                  {!isMine && (
-                    <div className="msg-avatar">
-                      {outroUsuario?.foto ? (
-                        <img src={outroUsuario.foto} alt={msg.nome} />
-                      ) : (
-                        <span>{msg.nome?.charAt(0) || "?"}</span>
-                      )}
-                    </div>
-                  )}
-                  {isMine && <div className="msg-avatar-spacer" />}
-                  
-                  <div className="msg-conteudo">
-                    {!isMine && (
-                      <span className="msg-nome">{msg.nome}</span>
-                    )}
-                    <div className={`msg-bolha ${isMine ? "msg-bolha--minha" : "msg-bolha--outra"}`}>
-                      <p>{msg.texto}</p>
-                      <span className="msg-hora">
-                        {formatarHora(msg.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {isMine && (
-                    <div className="msg-avatar">
-                      {/* Avatar do usuário logado (pode ser o mesmo do badge no header) */}
-                      <span>{user.displayName?.charAt(0) || "?"}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+            renderizarMensagens()
           )}
           <div ref={mensagensEndRef} />
         </div>
 
-        {/* Área de input */}
+        {/* Botão de scroll para baixo */}
+        {showScrollBtn && (
+          <button className="btn-scroll-bottom" onClick={scrollToBottom}>
+            <span className="material-symbols-outlined">arrow_downward</span>
+          </button>
+        )}
+
+        {/* Input */}
         <div className="chat-input-area">
           <div className="chat-input-row">
             <input
