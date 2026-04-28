@@ -32,6 +32,7 @@ export default function Chat() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [loadingConversas, setLoadingConversas] = useState(false);
   const [busca, setBusca] = useState("");
+  const [digitando, setDigitando] = useState(false); // Indicador de digitação do outro usuário
 
   const mensagensEndRef = useRef(null);
   const mensagensContainerRef = useRef(null);
@@ -65,7 +66,6 @@ export default function Chat() {
             const u = userDoc.data();
             const cid = [user.uid, id].sort().join("_");
 
-            // Buscar última mensagem
             let ultimaMsg = null;
             let ultimaData = null;
             try {
@@ -92,7 +92,6 @@ export default function Chat() {
           })
         );
 
-        // Ordenar por data (mais recente primeiro)
         const ordenada = lista
           .filter(Boolean)
           .sort((a, b) => {
@@ -187,6 +186,7 @@ export default function Chat() {
         userId: user.uid,
         nome: user.displayName || "Pescador",
         createdAt: serverTimestamp(),
+        status: "enviado", // Pode evoluir para "entregue"/"visto"
       });
 
       const ids = chatId.split("_");
@@ -203,6 +203,7 @@ export default function Chat() {
       }
 
       setTexto("");
+      setDigitando(false); // Opcional: reseta digitação se você mesmo envia
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
     }
@@ -219,13 +220,14 @@ export default function Chat() {
     if (!showScrollBtn) {
       scrollToBottom();
     }
-  }, [mensagens, showScrollBtn]);
+  }, [mensagens, showScrollBtn, digitando]);
 
   const handleScroll = () => {
     const el = mensagensContainerRef.current;
     if (!el) return;
     const threshold = 100;
-    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    const isNearBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     setShowScrollBtn(!isNearBottom);
   };
 
@@ -237,7 +239,7 @@ export default function Chat() {
     }
   }, []);
 
-  // ⏱️ funções auxiliares
+  // ⏱️ AUXILIARES
   const formatarHora = (timestamp) => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -251,9 +253,16 @@ export default function Chat() {
     return date1.toDateString() === date2.toDateString();
   };
 
-  const formatarData = (timestamp) => {
+  const formatarDataAmigavel = (timestamp) => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const hoje = new Date();
+    const ontem = new Date(hoje);
+    ontem.setDate(hoje.getDate() - 1);
+
+    if (date.toDateString() === hoje.toDateString()) return "Hoje";
+    if (date.toDateString() === ontem.toDateString()) return "Ontem";
+
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "long",
@@ -272,8 +281,7 @@ export default function Chat() {
     return data.toLocaleDateString("pt-BR");
   };
 
-  // Filtro de busca
-  const conversasFiltradas = conversas.filter(c =>
+  const conversasFiltradas = conversas.filter((c) =>
     c.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
@@ -291,7 +299,6 @@ export default function Chat() {
             </div>
           </div>
 
-          {/* Campo de busca */}
           <div className="busca-conversas">
             <input
               className="busca-input"
@@ -303,14 +310,22 @@ export default function Chat() {
           </div>
 
           {loadingConversas ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-medio)" }}>
+            <div
+              style={{
+                padding: "40px",
+                textAlign: "center",
+                color: "var(--texto-medio)",
+              }}
+            >
               Carregando conversas...
             </div>
           ) : (
             <div className="lista-conversas">
               {conversasFiltradas.length === 0 ? (
                 <div className="conversa-vazia">
-                  {busca ? "Nenhuma conversa encontrada" : "Você ainda não segue ninguém."}
+                  {busca
+                    ? "Nenhuma conversa encontrada"
+                    : "Você ainda não segue ninguém."}
                 </div>
               ) : (
                 conversasFiltradas.map((c) => (
@@ -321,21 +336,27 @@ export default function Chat() {
                   >
                     <div className="conversa-avatar">
                       {c.foto ? (
-                        <img src={c.foto} alt={c.nome} className="conversa-avatar" />
+                        <img
+                          src={c.foto}
+                          alt={c.nome}
+                          className="conversa-avatar"
+                        />
                       ) : (
                         <span>{c.nome.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="conversa-info">
                       <div className="conversa-nome">{c.nome}</div>
-                      <div className="conversa-ultima-msg">{c.ultimaMensagem}</div>
+                      <div className="conversa-ultima-msg">
+                        {c.ultimaMensagem}
+                      </div>
                     </div>
                     <div className="conversa-meta">
                       {c.ultimaData && (
-                        <span className="conversa-hora">{tempoRelativo(c.ultimaData)}</span>
+                        <span className="conversa-hora">
+                          {tempoRelativo(c.ultimaData)}
+                        </span>
                       )}
-                      {/* Badge de não lidas (placeholder para futura implementação) */}
-                      {/* <span className="conversa-badge">2</span> */}
                     </div>
                   </div>
                 ))
@@ -362,21 +383,23 @@ export default function Chat() {
   }
 
   // =========================
-  // 💬 CHAT PRINCIPAL (agrupamento + data)
+  // 💬 CHAT PRINCIPAL
   // =========================
   const renderizarMensagens = () => {
     return mensagens.map((msg, index) => {
       const isMine = msg.userId === user.uid;
       const hora = formatarHora(msg.createdAt);
       const mostrarData =
-        index === 0 || !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
+        index === 0 ||
+        !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
 
-      const mesmoRemetente = index > 0 && mensagens[index - 1].userId === msg.userId;
+      const mesmoRemetente =
+        index > 0 && mensagens[index - 1].userId === msg.userId;
       const classeSequencia = mesmoRemetente ? "msg-grupo--sequencia" : "";
 
       const separador = mostrarData ? (
         <div className="data-separador" key={`data-${msg.id}`}>
-          {formatarData(msg.createdAt)}
+          {formatarDataAmigavel(msg.createdAt)}
         </div>
       ) : null;
 
@@ -398,21 +421,42 @@ export default function Chat() {
           </div>
         ) : null;
 
-      const spacerMeu = isMine && !avatarMeu ? <div className="msg-avatar-spacer" /> : null;
-      const spacerOutro = !isMine && !avatarOutro ? <div className="msg-avatar-spacer" /> : null;
+      const spacerMeu =
+        isMine && !avatarMeu ? <div className="msg-avatar-spacer" /> : null;
+      const spacerOutro =
+        !isMine && !avatarOutro ? <div className="msg-avatar-spacer" /> : null;
 
       return (
         <React.Fragment key={msg.id}>
           {separador}
-          <div className={`msg-grupo ${isMine ? "msg-grupo--minha" : "msg-grupo--outra"} ${classeSequencia}`}>
+          <div
+            className={`msg-grupo ${
+              isMine ? "msg-grupo--minha" : "msg-grupo--outra"
+            } ${classeSequencia}`}
+          >
             {!isMine && (avatarOutro || spacerOutro)}
             <div className="msg-conteudo">
               {!isMine && !mesmoRemetente && (
                 <span className="msg-nome">{msg.nome}</span>
               )}
-              <div className={`msg-bolha ${isMine ? "msg-bolha--minha" : "msg-bolha--outra"}`}>
+              <div
+                className={`msg-bolha ${
+                  isMine ? "msg-bolha--minha" : "msg-bolha--outra"
+                }`}
+              >
                 <p>{msg.texto}</p>
                 <span className="msg-hora">{hora}</span>
+                {isMine && (
+                  <div
+                    className={`msg-status ${
+                      msg.status === "visto" ? "visto" : ""
+                    }`}
+                  >
+                    <span className="material-symbols-outlined">
+                      {msg.status === "visto" ? "done_all" : "done"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             {isMine && (spacerMeu || avatarMeu)}
@@ -428,41 +472,55 @@ export default function Chat() {
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <span className="chat-header-icon">🐟</span>
+            <button
+              className="btn-voltar-chat"
+              onClick={() => navigate("/chat")}
+              title="Voltar"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+
+            {/* Avatar do contato */}
+            {outroUsuario?.foto ? (
+              <img
+                src={outroUsuario.foto}
+                alt={outroUsuario.nome}
+                className="chat-avatar"
+              />
+            ) : (
+              <div className="msg-avatar" style={{ marginRight: 10 }}>
+                {outroUsuario?.nome?.charAt(0) || "?"}
+              </div>
+            )}
+
             <div>
               <h1 className="chat-title">
                 {outroUsuario?.nome || "Pescador"}
               </h1>
               <div className="chat-subtitle">
-                <span className="online-dot"></span>
-                <span>Online</span>
+                {digitando ? (
+                  <span style={{ color: "var(--texto-medio)", fontStyle: "italic" }}>
+                    digitando...
+                  </span>
+                ) : (
+                  <>
+                    <span className="online-dot"></span>
+                    <span>Online</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
-
-          <div className="chat-header-right">
-            <div className="user-badge">
-              {outroUsuario?.foto ? (
-                <img
-                  src={outroUsuario.foto}
-                  alt={outroUsuario.nome}
-                  className="user-avatar-img"
-                />
-              ) : (
-                <div className="user-avatar-placeholder">
-                  {outroUsuario?.nome?.charAt(0) || "?"}
-                </div>
-              )}
-              <span className="user-name-badge">
-                {outroUsuario?.nome || "Usuário"}
-              </span>
-            </div>
-          </div>
+          {/* Header right sem badge duplicado */}
         </div>
 
         {/* Mensagens */}
-        <div className="chat-mensagens" ref={mensagensContainerRef} onScroll={handleScroll}>
-          {mensagens.length === 0 ? (
+        <div
+          className="chat-mensagens"
+          ref={mensagensContainerRef}
+          onScroll={handleScroll}
+        >
+          {mensagens.length === 0 && !digitando ? (
             <div className="chat-vazio">
               <span className="chat-vazio-icon">💬</span>
               <p>Nenhuma mensagem ainda</p>
@@ -471,9 +529,38 @@ export default function Chat() {
           ) : (
             renderizarMensagens()
           )}
+
+          {/* Indicador de digitação na área de mensagens */}
+          {digitando && (
+            <div className="msg-digitando">
+              <div className="msg-avatar">
+                {outroUsuario?.foto ? (
+                  <img
+                    src={outroUsuario.foto}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <span>{outroUsuario?.nome?.charAt(0) || "?"}</span>
+                )}
+              </div>
+              <div className="bolha-digitando">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          )}
+
           <div ref={mensagensEndRef} />
         </div>
 
+        {/* Botão scroll para baixo */}
         {showScrollBtn && (
           <button className="btn-scroll-bottom" onClick={scrollToBottom}>
             <span className="material-symbols-outlined">arrow_downward</span>
@@ -483,6 +570,9 @@ export default function Chat() {
         {/* Input */}
         <div className="chat-input-area">
           <div className="chat-input-row">
+            <button className="btn-emoji" title="Emoji">
+              <span className="material-symbols-outlined">emoji_emotions</span>
+            </button>
             <input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}

@@ -758,3 +758,147 @@ footer p {
 .busca-input:focus {
   border-color: var(--ondulacao);
 }
+
+/* ── Indicador de digitação ─────────────── */
+.digitando-indicador {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texto-medio);
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.digitando-pontos {
+  display: flex;
+  gap: 3px;
+}
+
+.digitando-pontos span {
+  width: 5px;
+  height: 5px;
+  background: var(--texto-medio);
+  border-radius: 50%;
+  animation: salto 1.2s ease-in-out infinite;
+}
+
+.digitando-pontos span:nth-child(2) { animation-delay: 0.2s; }
+.digitando-pontos span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes salto {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+/* ── Marcador de enviado/visto ──────────── */
+.msg-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.msg-status .material-symbols-outlined {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.msg-status.visto .material-symbols-outlined {
+  color: var(--ondulacao);
+}
+
+/* ── Botão de voltar ────────────────────── */
+.btn-voltar-chat {
+  background: none;
+  border: none;
+  color: var(--texto-medio);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-voltar-chat:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--texto-claro);
+}
+
+/* ── Botão de emoji ─────────────────────── */
+.btn-emoji {
+  background: none;
+  border: none;
+  color: var(--barro);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.2s, transform 0.15s;
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.btn-emoji:hover {
+  background: rgba(200, 169, 122, 0.15);
+  transform: scale(1.1);
+}
+
+/* ── Header simplificado ───────────────── */
+.chat-header-left .chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  border: 2px solid var(--borda);
+}
+
+/* ── Indicador de digitação na área de mensagens ── */
+.msg-digitando {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+
+.msg-digitando .bolha-digitando {
+  background: var(--bolha-outra);
+  padding: 10px 16px;
+  border-radius: 18px 18px 18px 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.bolha-digitando span {
+  width: 8px;
+  height: 8px;
+  background: var(--texto-medio);
+  border-radius: 50%;
+  animation: salto 1.2s ease-in-out infinite;
+}
+
+.bolha-digitando span:nth-child(2) { animation-delay: 0.2s; }
+.bolha-digitando span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes salto {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+}
+
+/* Ajuste para o avatar do outro no indicador de digitação */
+.msg-digitando .msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--agua-media);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #fff;
+  flex-shrink: 0;
+}
