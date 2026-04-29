@@ -50,99 +50,73 @@ export default function Chat() {
   // 📥 INBOX - Lista de Conversas
   // =========================
   useEffect(() => {
-    const carregarConversas = async () => {
-      if (!user || chatId) return;
-      setLoadingConversas(true);
+  if (!user) return;
 
-      try {
-        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) {
-          setLoadingConversas(false);
-          return;
+  setLoadingConversas(true);
+
+  const unsubscribes = [];
+
+  const carregarConversasRealtime = async () => {
+    const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+    if (!meuDoc.exists()) return;
+
+    const dados = meuDoc.data();
+    const seguindo = dados?.seguindo || [];
+
+    seguindo.forEach((id) => {
+      const cid = [user.uid, id].sort().join("_");
+
+      const q = query(
+        collection(db, "chats", cid, "mensagens"),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        let ultimaMsg = "Nenhuma mensagem ainda";
+        let ultimaData = null;
+
+        if (!snapshot.empty) {
+          const msg = snapshot.docs[0].data();
+          ultimaMsg = msg.texto;
+          ultimaData = msg.createdAt?.toDate?.() || new Date();
         }
 
-        const dados = meuDoc.data();
-        const seguindo = dados?.seguindo || [];
+        const userDoc = await getDoc(doc(db, "usuarios", id));
+        const u = userDoc.data();
 
-        const lista = await Promise.all(
-          seguindo.map(async (id) => {
-            const userDoc = await getDoc(doc(db, "usuarios", id));
-            if (!userDoc.exists()) return null;
+        setConversas((prev) => {
+          const outras = prev.filter((c) => c.chatId !== cid);
 
-            const u = userDoc.data();
-            const cid = [user.uid, id].sort().join("_");
+          const nova = {
+            chatId: cid,
+            nome: u?.nome || "Usuário",
+            foto: u?.fotoPerfil || "",
+            ultimaMensagem: ultimaMsg,
+            ultimaData: ultimaData,
+            naoLidas: 0,
+          };
 
-            let ultimaMsg = null;
-            let ultimaData = null;
-            let naoLidas = 0;
-
-            try {
-              const q = query(
-                collection(db, "chats", cid, "mensagens"),
-                orderBy("createdAt", "desc"),
-                limit(1)
-              );
-              const snap = await getDocs(q);
-              if (!snap.empty) {
-                const msg = snap.docs[0].data();
-                ultimaMsg = msg.texto;
-                ultimaData = msg.createdAt?.toDate?.() || new Date(msg.createdAt);
-              }
-
-              const qNaoLidas = query(
-                collection(db, "chats", cid, "mensagens"),
-                where("userId", "!=", user.uid),
-                where("status", "in", ["enviado", "entregue"])
-              );
-              const snapNaoLidas = await getDocs(qNaoLidas);
-              naoLidas = snapNaoLidas.size;
-            } catch (_) {
-              try {
-                const qAll = query(
-                  collection(db, "chats", cid, "mensagens"),
-                  orderBy("createdAt", "desc"),
-                  limit(50)
-                );
-                const snapAll = await getDocs(qAll);
-                naoLidas = snapAll.docs.filter((d) => {
-                  const m = d.data();
-                  return m.userId !== user.uid && m.status !== "visto";
-                }).length;
-              } catch (e) {
-                console.log("Erro ao contar não lidas:", e);
-              }
-            }
-
-            return {
-              chatId: cid,
-              nome: u?.nome || "Usuário",
-              foto: u?.fotoPerfil || "",
-              ultimaMensagem: ultimaMsg || "Nenhuma mensagem ainda",
-              ultimaData: ultimaData,
-              naoLidas: naoLidas,
-            };
-          })
-        );
-
-        const ordenada = lista
-          .filter(Boolean)
-          .sort((a, b) => {
-            if (!a.ultimaData && !b.ultimaData) return 0;
+          return [nova, ...outras].sort((a, b) => {
             if (!a.ultimaData) return 1;
             if (!b.ultimaData) return -1;
             return b.ultimaData - a.ultimaData;
           });
+        });
+      });
 
-        setConversas(ordenada);
-      } catch (error) {
-        console.error("Erro ao carregar conversas:", error);
-      } finally {
-        setLoadingConversas(false);
-      }
-    };
+      unsubscribes.push(unsubscribe);
+    });
 
-    carregarConversas();
-  }, [user, chatId]);
+    setLoadingConversas(false);
+  };
+
+  carregarConversasRealtime();
+
+  return () => {
+    unsubscribes.forEach((unsub) => unsub());
+  };
+}, [user]);
 
   // =========================
   // 🔒 Permissão + Dados do Outro Usuário

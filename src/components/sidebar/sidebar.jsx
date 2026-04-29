@@ -111,7 +111,7 @@ const handleLogout = async () => {
     return () => document.body.classList.remove('no-scroll');
   }, [isMenuOpen]);
 
-  const isActive = (path) => location.pathname === path;
+const isActive = (path) => location.pathname.startsWith(path);  
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleTheme = () => setIsDarkMode(prev => !prev);
