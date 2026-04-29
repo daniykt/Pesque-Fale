@@ -104,7 +104,7 @@ export default function Chat() {
                   limit(50)
                 );
                 const snapAll = await getDocs(qAll);
-                naoLidas = snapAll.docs.filter(d => {
+                naoLidas = snapAll.docs.filter((d) => {
                   const m = d.data();
                   return m.userId !== user.uid && m.status !== "visto";
                 }).length;
@@ -201,7 +201,7 @@ export default function Chat() {
       }));
       setMensagens(msgs);
 
-      const mensagensParaAtualizar = snapshot.docs.filter(d => {
+      const mensagensParaAtualizar = snapshot.docs.filter((d) => {
         const m = d.data();
         return m.userId !== user.uid && m.status !== "visto";
       });
@@ -362,18 +362,6 @@ export default function Chat() {
           <div
             className={`msg-group ${isMine ? "mine" : "theirs"} ${classeSequencia}`}
           >
-            {!isMine && !mesmoRemetente ? (
-              <div className="msg-avatar">
-                {outroUsuario?.foto ? (
-                  <img src={outroUsuario.foto} alt={msg.nome} />
-                ) : (
-                  <span>{msg.nome?.charAt(0) || "?"}</span>
-                )}
-              </div>
-            ) : !isMine ? (
-              <div className="msg-avatar-spacer" />
-            ) : null}
-
             <div className="msg-content">
               <div className={`msg-bubble ${isMine ? "me" : "other"}`}>
                 <p>{msg.texto}</p>
@@ -392,14 +380,6 @@ export default function Chat() {
                 </span>
               </div>
             </div>
-
-            {isMine && !mesmoRemetente ? (
-              <div className="msg-avatar">
-                <span>{user?.displayName?.charAt(0) || "?"}</span>
-              </div>
-            ) : isMine ? (
-              <div className="msg-avatar-spacer" />
-            ) : null}
           </div>
         </React.Fragment>
       );
@@ -409,204 +389,215 @@ export default function Chat() {
   return (
     <Layout>
       <div className="chat-page">
-      <div className="chat-layout">
-        {/* ── Painel de Conversas ── */}
-        <aside className="conversations-panel">
-          <div className="conversations-header">
-            <h2>Conversas</h2>
-            <div className="search-box">
-              <span className="material-symbols-outlined">search</span>
-              <input
-                type="text"
-                placeholder="Buscar conversa..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
+        <div className="chat-layout">
+          {/* ── Painel de Conversas ── */}
+          <aside className="conversations-panel">
+            <div className="conversations-header">
+              <h2>Conversas</h2>
+              <div className="search-box">
+                <span className="material-symbols-outlined">search</span>
+                <input
+                  type="text"
+                  placeholder="Buscar conversa..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
 
-          {loadingConversas ? (
-            <div className="conversations-loading">
-              <div className="spinner" />
-              <span>Carregando conversas...</span>
-            </div>
-          ) : (
-            <div className="conversations-list">
-              {conversasFiltradas.length === 0 ? (
-                <div className="conversa-vazia">
-                  {busca ? (
-                    <>😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"</>
-                  ) : (
-                    <>🎣 Você ainda não segue ninguém.<br />Descubra pescadores na pesquisa!</>
-                  )}
-                </div>
-              ) : (
-                conversasFiltradas.map((c) => (
-                  <div
-                    key={c.chatId}
-                    className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
-                    onClick={() => navigate(`/chat/${c.chatId}`)}
-                  >
-                    <div className="conv-avatar">
-                      {c.foto ? (
-                        <img src={c.foto} alt={c.nome} />
-                      ) : (
-                        <div className="fallback">{c.nome.charAt(0).toUpperCase()}</div>
-                      )}
-                    </div>
-                    <div className="conv-info">
-                      <div className="conv-top">
-                        <span className="conv-name">{c.nome}</span>
-                        <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
-                      </div>
-                      <div className="conv-bottom">
-                        <span className="conv-preview">{c.ultimaMensagem}</span>
-                        {c.naoLidas > 0 && (
-                          <span className="conv-badge">{c.naoLidas}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </aside>
-
-        {/* ── Painel do Chat ── */}
-        <main className="chat-panel">
-          {!chatId ? (
-            <div className="chat-empty-state">
-              <div className="chat-empty-icon">💬</div>
-              <p>Selecione uma conversa</p>
-              <span>Escolha um pescador para começar a conversar</span>
-            </div>
-          ) : !permitido ? (
-            <div className="chat-empty-state">
-              <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>🔒</div>
-              <p>Chat bloqueado</p>
-              <span>Você precisa seguir este usuário para conversar.</span>
-              <button
-                className="btn-voltar-bloqueio"
-                onClick={() => navigate("/chat")}
-              >
-                <span className="material-symbols-outlined">arrow_back</span>
-                Voltar
-              </button>
-            </div>
-          ) : (
-            <>
-              <header className="chat-header">
-                <div className="chat-header-left">
-                  <div className="chat-header-avatar">
-                    {outroUsuario?.foto ? (
-                      <img src={outroUsuario.foto} alt={outroUsuario.nome} />
+            {loadingConversas ? (
+              <div className="conversations-loading">
+                <div className="spinner" />
+                <span>Carregando conversas...</span>
+              </div>
+            ) : (
+              <div className="conversations-list">
+                {conversasFiltradas.length === 0 ? (
+                  <div className="conversa-vazia">
+                    {busca ? (
+                      <>
+                        😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"
+                      </>
                     ) : (
-                      <div className="fallback">{outroUsuario?.nome?.charAt(0) || "?"}</div>
+                      <>
+                        🎣 Você ainda não segue ninguém.<br />
+                        Descubra pescadores na pesquisa!
+                      </>
                     )}
-                  </div>
-                  <div className="chat-header-info">
-                    <h3>{outroUsuario?.nome || "Pescador"}</h3>
-                    {digitando ? (
-                      <span className="digitando">digitando...</span>
-                    ) : (
-                      <span><span className="online-dot" />Online</span>
-                    )}
-                  </div>
-                </div>
-                <div className="chat-header-actions">
-                  <button className="icon-btn" title="Ligar">
-                    <span className="material-symbols-outlined">call</span>
-                  </button>
-                  <button className="icon-btn" title="Vídeo">
-                    <span className="material-symbols-outlined">videocam</span>
-                  </button>
-                  <button className="icon-btn" title="Mais opções">
-                    <span className="material-symbols-outlined">more_vert</span>
-                  </button>
-                </div>
-              </header>
-
-              <div
-                className="chat-messages"
-                ref={mensagensContainerRef}
-                onScroll={handleScroll}
-              >
-                {mensagens.length === 0 && !digitando ? (
-                  <div className="chat-empty-state">
-                    <div className="chat-empty-icon">👋</div>
-                    <p>Nenhuma mensagem ainda</p>
-                    <span>Seja o primeiro a dizer olá!</span>
                   </div>
                 ) : (
-                  renderizarMensagens()
+                  conversasFiltradas.map((c) => (
+                    <div
+                      key={c.chatId}
+                      className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
+                      onClick={() => navigate(`/chat/${c.chatId}`)}
+                    >
+                      <div className="conv-avatar">
+                        {c.foto ? (
+                          <img src={c.foto} alt={c.nome} />
+                        ) : (
+                          <div className="fallback">
+                            {c.nome.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="conv-info">
+                        <div className="conv-top">
+                          <span className="conv-name">{c.nome}</span>
+                          <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
+                        </div>
+                        <div className="conv-bottom">
+                          <span className="conv-preview">{c.ultimaMensagem}</span>
+                          {c.naoLidas > 0 && (
+                            <span className="conv-badge">{c.naoLidas}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
+              </div>
+            )}
+          </aside>
 
-                {digitando && (
-                  <div className="msg-digitando">
-                    <div className="msg-avatar">
+          {/* ── Painel do Chat ── */}
+          <main className="chat-panel">
+            {!chatId ? (
+              <div className="chat-empty-state">
+                <div className="chat-empty-icon">💬</div>
+                <p>Selecione uma conversa</p>
+                <span>Escolha um pescador para começar a conversar</span>
+              </div>
+            ) : !permitido ? (
+              <div className="chat-empty-state">
+                <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>
+                  🔒
+                </div>
+                <p>Chat bloqueado</p>
+                <span>Você precisa seguir este usuário para conversar.</span>
+                <button
+                  className="btn-voltar-bloqueio"
+                  onClick={() => navigate("/chat")}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Voltar
+                </button>
+              </div>
+            ) : (
+              <>
+                <header className="chat-header">
+                  <div className="chat-header-left">
+                    <div className="chat-header-avatar">
                       {outroUsuario?.foto ? (
-                        <img src={outroUsuario.foto} alt="" />
+                        <img src={outroUsuario.foto} alt={outroUsuario.nome} />
                       ) : (
-                        <span>{outroUsuario?.nome?.charAt(0) || "?"}</span>
+                        <div className="fallback">
+                          {outroUsuario?.nome?.charAt(0) || "?"}
+                        </div>
                       )}
                     </div>
-                    <div className="bolha-digitando">
-                      <span></span>
-                      <span></span>
-                      <span></span>
+                    <div className="chat-header-info">
+                      <h3>{outroUsuario?.nome || "Pescador"}</h3>
+                      {digitando ? (
+                        <span className="digitando">digitando...</span>
+                      ) : (
+                        <span>
+                          <span className="online-dot" />
+                          Online
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <div className="chat-header-actions">
+                    <button className="icon-btn" title="Ligar">
+                      <span className="material-symbols-outlined">call</span>
+                    </button>
+                    <button className="icon-btn" title="Vídeo">
+                      <span className="material-symbols-outlined">videocam</span>
+                    </button>
+                    <button className="icon-btn" title="Mais opções">
+                      <span className="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </div>
+                </header>
+
+                <div
+                  className="chat-messages"
+                  ref={mensagensContainerRef}
+                  onScroll={handleScroll}
+                >
+                  {mensagens.length === 0 && !digitando ? (
+                    <div className="chat-empty-state">
+                      <div className="chat-empty-icon">👋</div>
+                      <p>Nenhuma mensagem ainda</p>
+                      <span>Seja o primeiro a dizer olá!</span>
+                    </div>
+                  ) : (
+                    renderizarMensagens()
+                  )}
+
+                  {digitando && (
+                    <div className="msg-digitando">
+                      <div className="bolha-digitando">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={mensagensEndRef} />
+                </div>
+
+                {showScrollBtn && (
+                  <button
+                    className="btn-scroll-bottom"
+                    onClick={scrollToBottom}
+                    title="Rolar para baixo"
+                  >
+                    <span className="material-symbols-outlined">arrow_downward</span>
+                  </button>
                 )}
 
-                <div ref={mensagensEndRef} />
-              </div>
-
-              {showScrollBtn && (
-                <button className="btn-scroll-bottom" onClick={scrollToBottom} title="Rolar para baixo">
-                  <span className="material-symbols-outlined">arrow_downward</span>
-                </button>
-              )}
-
-              <div className="chat-input-area">
-                <div className="chat-input-row">
-                  <button className="btn-attach" title="Anexar">
-                    <span className="material-symbols-outlined">add</span>
-                  </button>
-                  <input
-                    value={texto}
-                    onChange={(e) => {
-                      setTexto(e.target.value);
-                      if (e.target.value.length > 500) {
-                        setTexto(e.target.value.slice(0, 500));
-                      }
-                    }}
-                    placeholder="Digite uma mensagem..."
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
-                    maxLength={500}
-                  />
-                  <button className="btn-attach" title="Emoji">
-                    <span className="material-symbols-outlined">mood</span>
-                  </button>
-                  <button
-                    className="btn-send"
-                    onClick={enviarMensagem}
-                    disabled={!texto.trim() || enviando}
-                    title="Enviar mensagem"
-                  >
-                    {enviando ? (
-                      <div className="spinner-sm" />
-                    ) : (
-                      <span className="material-symbols-outlined">send</span>
-                    )}
-                  </button>
+                <div className="chat-input-area">
+                  <div className="chat-input-row">
+                    <button className="btn-attach" title="Anexar">
+                      <span className="material-symbols-outlined">add</span>
+                    </button>
+                    <input
+                      value={texto}
+                      onChange={(e) => {
+                        setTexto(e.target.value);
+                        if (e.target.value.length > 500) {
+                          setTexto(e.target.value.slice(0, 500));
+                        }
+                      }}
+                      placeholder="Digite uma mensagem..."
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+                      maxLength={500}
+                    />
+                    <button className="btn-attach" title="Emoji">
+                      <span className="material-symbols-outlined">mood</span>
+                    </button>
+                    <button
+                      className="btn-send"
+                      onClick={enviarMensagem}
+                      disabled={!texto.trim() || enviando}
+                      title="Enviar mensagem"
+                    >
+                      {enviando ? (
+                        <div className="spinner-sm" />
+                      ) : (
+                        <span className="material-symbols-outlined">send</span>
+                      )}
+                    </button>
+                  </div>
+                  <span className="char-count">{texto.length}/500</span>
                 </div>
-                <span className="char-count">{texto.length}/500</span>
-              </div>
-            </>
-          )}
-        </main>
-      </div>
+              </>
+            )}
+          </main>
+        </div>
       </div>
     </Layout>
   );
