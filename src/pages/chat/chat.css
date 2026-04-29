@@ -486,11 +486,17 @@
 /* ── Grupos de Mensagens ────────────────────────────────────── */
 .msg-group {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  flex-direction: column;
   max-width: 70%;
   margin-top: 12px;
-  animation: msg-enter 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.msg-group.mine {
+  align-self: flex-end;
+}
+
+.msg-group.theirs {
+  align-self: flex-start;
 }
 
 @keyframes msg-enter {
@@ -509,36 +515,6 @@
 
 .msg-group.sequencia {
   margin-top: 2px;
-}
-
-/* ── Avatar ─────────────────────────────────────────────────── */
-.msg-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  align-self: flex-end;
-  background: linear-gradient(135deg, var(--chat-primary), var(--chat-primary-dark));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 2px solid var(--chat-surface);
-  box-shadow: var(--chat-shadow);
-}
-
-.msg-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.msg-avatar-spacer {
-  width: 32px;
-  flex-shrink: 0;
 }
 
 /* ── Conteúdo da Mensagem ───────────────────────────────────── */
@@ -626,18 +602,8 @@
 /* ── Indicador de Digitação ────────────────────────────────── */
 .msg-digitando {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  margin-top: 4px;
-  animation: msg-enter 0.2s ease-out both;
-  align-self: flex-start;
-}
-
-.msg-digitando .msg-avatar {
-  width: 28px;
-  height: 28px;
-  font-size: 0.65rem;
+  align-items: flex-start;
+  margin-top: 8px;
 }
 
 .bolha-digitando {
@@ -1066,14 +1032,6 @@ body.dark-mode .conversations-list::-webkit-scrollbar-thumb {
   .chat-header-avatar {
     width: 38px;
     height: 38px;
-  }
-  .msg-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 0.65rem;
-  }
-  .msg-avatar-spacer {
-    width: 28px;
   }
   .msg-bubble {
     padding: 8px 12px;
