@@ -389,7 +389,7 @@ export default function Chat() {
   return (
     <Layout>
       <div className="chat-page">
-        <div className="chat-layout">
+        <div className={`chat-layout ${chatId ? "show-chat" : "show-list"}`}>
           {/* ── Painel de Conversas ── */}
           <aside className="conversations-panel">
             <div className="conversations-header">
@@ -486,6 +486,15 @@ export default function Chat() {
             ) : (
               <>
                 <header className="chat-header">
+                  {window.innerWidth <= 768 && (
+  <button
+    className="icon-btn"
+    onClick={() => navigate("/chat")}
+    title="Voltar"
+  >
+    <span className="material-symbols-outlined">arrow_back</span>
+  </button>
+)}
                   <div className="chat-header-left">
                     <div className="chat-header-avatar">
                       {outroUsuario?.foto ? (

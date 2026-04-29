@@ -636,7 +636,7 @@
 /* ── Botão Scroll para Baixo ───────────────────────────────── */
 .btn-scroll-bottom {
   position: absolute;
-  bottom: 88px;
+  bottom: 125px;
   right: 24px;
   background: var(--chat-surface);
   border: 1px solid var(--chat-border);
@@ -758,7 +758,6 @@
 }
 
 .btn-send:disabled {
-  background: var(--chat-border);
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
@@ -998,22 +997,36 @@ body.dark-mode .conversations-list::-webkit-scrollbar-thumb {
 }
 
 @media (max-width: 768px) {
-  .conversations-panel {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 10;
-    box-shadow: 4px 0 12px rgba(0,0,0,0.1);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+
+  .chat-layout {
+    flex-direction: column;
   }
-  .conversations-panel.open {
-    transform: translateX(0);
-  }
+
+  /* ESCONDE TUDO POR PADRÃO */
+  .conversations-panel,
   .chat-panel {
     width: 100%;
+    height: 100%;
   }
+
+  /* 👇 MOSTRA LISTA quando NÃO tem chat aberto */
+  .chat-layout.show-list .conversations-panel {
+    display: flex;
+  }
+
+  .chat-layout.show-list .chat-panel {
+    display: none;
+  }
+
+  /* 👇 MOSTRA CHAT quando tem chat aberto */
+  .chat-layout.show-chat .conversations-panel {
+    display: none;
+  }
+
+  .chat-layout.show-chat .chat-panel {
+    display: flex;
+  }
+
 }
 
 @media (max-width: 640px) {
