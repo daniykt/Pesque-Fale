@@ -17,7 +17,7 @@
   align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 860px;       /* acompanha o card */
+  max-width: 860px;
   margin-bottom: 24px;
 }
 
@@ -50,11 +50,11 @@
 }
 
 /* =========================================
-   CARD PRINCIPAL — mais largo no desktop
+   CARD PRINCIPAL
    ========================================= */
 .editar-perfil-card {
   width: 100%;
-  max-width: 860px;       /* era 620px — agora bem mais largo */
+  max-width: 860px;
   background-color: var(--cor-fundo);
   border-radius: 15px;
   box-shadow: var(--sombra-padrao);
@@ -253,68 +253,6 @@
   background-color: #fff;
 }
 
-/* =========================================
-   MENSAGEM DE ERRO — sem alert()
-   ========================================= */
-.editar-erro {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: #fff0f0;
-  border: 1px solid #f5c6cb;
-  border-radius: 8px;
-  color: #c0392b;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.editar-erro .material-symbols-outlined { font-size: 20px; }
-
-/* =========================================
-   BOTÃO SALVAR
-   ========================================= */
-.btn-salvar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 14px 20px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background-color: #007bff;
-  color: #fff;
-  transition: all 0.3s ease;
-  margin-top: 8px;
-}
-
-.btn-salvar:hover:not(:disabled) {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.35);
-}
-
-.btn-salvar:disabled { cursor: not-allowed; opacity: 0.85; }
-.btn-salvando { background-color: #5a9fd4; }
-.btn-salvo { background-color: #28a745; }
-.btn-salvar .material-symbols-outlined { font-size: 22px; }
-
-/* =========================================
-   RESPONSIVIDADE
-   ========================================= */
-@media (max-width: 600px) {
-  .editar-perfil-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .editar-banner-preview { height: 130px; }
-  .editar-perfil-card { padding: 20px 16px; }
-}
-
-/* Adicione isso no EditarPerfil.css
-   dentro da seção de INPUTS E TEXTAREA */
-
 /* Input com erro — borda vermelha */
 .editar-input-erro {
   border-color: #e74c3c !important;
@@ -322,7 +260,9 @@
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12);
 }
 
-/* Mensagem de erro visual */
+/* =========================================
+   MENSAGEM DE ERRO
+   ========================================= */
 .editar-erro {
   display: flex;
   align-items: center;
@@ -357,4 +297,74 @@ body.dark-mode .editar-erro {
   background-color: #3a1a1a;
   border-color: #7a3030;
   color: #f08080;
+}
+
+/* =========================================
+   BOTÃO SALVAR
+   ========================================= */
+.btn-salvar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: #fff;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.35);
+}
+
+.btn-salvar:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+/* Estado: salvando — verde escuro */
+.btn-salvando {
+  background-color: #16a34a !important;
+}
+
+/* Estado: salvo — verde claro */
+.btn-salvo {
+  background-color: #22c55e !important;
+}
+
+.btn-salvar .material-symbols-outlined { font-size: 22px; }
+
+/* =========================================
+   SPINNER DE LOADING
+   ========================================= */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+@media (max-width: 600px) {
+  .editar-perfil-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .editar-banner-preview { height: 130px; }
+  .editar-perfil-card { padding: 20px 16px; }
 }
