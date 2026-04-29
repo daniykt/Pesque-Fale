@@ -1,10 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../../components/sidebar/layout";
 import "./Editarperfil.css";
 
 import { db } from "../../../firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { observeAuthState } from "../../../auth";
 
 export default function EditarPerfil() {
@@ -12,11 +12,11 @@ export default function EditarPerfil() {
 
   const [user, setUser] = useState(null);
 
-  const [nome, setNome] = useState(localStorage.getItem("nome") || "");
-  const [bio, setBio] = useState(localStorage.getItem("bio") || "");
-  const [localizacao, setLocalizacao] = useState(localStorage.getItem("localizacao") || "");
-  const [fotoPerfil, setFotoPerfil] = useState(localStorage.getItem("fotoPerfil") || "");
-  const [banner, setBanner] = useState(localStorage.getItem("banner") || "");
+  const [nome, setNome] = useState("");
+  const [bio, setBio] = useState("");
+  const [localizacao, setLocalizacao] = useState("");
+  const [fotoPerfil, setFotoPerfil] = useState("");
+  const [banner, setBanner] = useState("");
 
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
@@ -25,11 +25,39 @@ export default function EditarPerfil() {
   const fotoInputRef = useRef(null);
   const bannerInputRef = useRef(null);
 
-  // 🔐 usuário logado
-  React.useEffect(() => {
-    const unsubscribe = observeAuthState((currentUser) => setUser(currentUser));
+  // 🔐 pega usuário logado
+  useEffect(() => {
+    const unsubscribe = observeAuthState((currentUser) => {
+      setUser(currentUser);
+    });
     return unsubscribe;
   }, []);
+
+  // 🔥 CARREGAR DADOS DO FIRESTORE
+  useEffect(() => {
+    const carregarDados = async () => {
+      if (!user) return;
+
+      try {
+        const docRef = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(docRef);
+
+        if (snap.exists()) {
+          const data = snap.data();
+
+          setNome(data.nome || "");
+          setBio(data.bio || "");
+          setLocalizacao(data.localizacao || "");
+          setFotoPerfil(data.fotoPerfil || "");
+          setBanner(data.banner || "");
+        }
+      } catch (e) {
+        console.error("Erro ao carregar perfil:", e);
+      }
+    };
+
+    carregarDados();
+  }, [user]);
 
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
@@ -49,14 +77,11 @@ export default function EditarPerfil() {
     reader.readAsDataURL(file);
   };
 
-  // =========================
-  // 💾 SALVAR PERFIL (CORRIGIDO + CACHE)
-  // =========================
   const handleSalvar = async () => {
     setErro("");
 
     if (!nome.trim()) {
-      setErro("O nome não pode ficar vazio. Por favor, preencha seu nome.");
+      setErro("O nome não pode ficar vazio.");
       return;
     }
 
@@ -68,11 +93,8 @@ export default function EditarPerfil() {
     setSalvando(true);
 
     try {
-      const docRef = doc(db, "usuarios", user.uid);
-
-      // 🔥 NÃO APAGA posts/seguidores
       await setDoc(
-        docRef,
+        doc(db, "usuarios", user.uid),
         {
           nome,
           bio,
@@ -83,41 +105,25 @@ export default function EditarPerfil() {
         { merge: true }
       );
 
-      // =========================
-      // ⚡ CACHE INSTANTÂNEO
-      // =========================
-      const cacheAtual = localStorage.getItem("usuarioCache");
-      const cacheParse = cacheAtual ? JSON.parse(cacheAtual) : {};
-
-      const novoCache = {
-        ...cacheParse,
-        nome,
-        bio,
-        localizacao,
-        fotoPerfil,
-        banner,
-      };
-
-      localStorage.setItem("usuarioCache", JSON.stringify(novoCache));
-
-      // 💾 compatibilidade (pode manter)
-      localStorage.setItem("nome", nome);
-      localStorage.setItem("bio", bio);
-      localStorage.setItem("localizacao", localizacao);
-      if (fotoPerfil) localStorage.setItem("fotoPerfil", fotoPerfil);
-      if (banner) localStorage.setItem("banner", banner);
+      // 🔥 Atualiza cache correto
+      localStorage.setItem(
+        "usuarioCache",
+        JSON.stringify({
+          nome,
+          bio,
+          localizacao,
+          fotoPerfil,
+          banner,
+        })
+      );
 
       setSalvando(false);
       setSalvo(true);
 
-      // ⚡ volta rápido (sem delay perceptível)
-      setTimeout(() => {
-        navigate("/perfil");
-      }, 500);
-
+      setTimeout(() => navigate("/perfil"), 500);
     } catch (error) {
       console.error(error);
-      setErro("Erro ao salvar no servidor. Tente novamente.");
+      setErro("Erro ao salvar.");
       setSalvando(false);
     }
   };
@@ -181,7 +187,7 @@ export default function EditarPerfil() {
               {fotoPerfil ? (
                 <img
                   src={fotoPerfil}
-                  alt="Foto de perfil"
+                  alt="Foto"
                   className="editar-foto-preview"
                 />
               ) : (
@@ -202,102 +208,64 @@ export default function EditarPerfil() {
               style={{ display: "none" }}
               onChange={handleFotoChange}
             />
-
-            <p className="editar-dica">Clique na foto para trocar</p>
           </div>
 
           {/* NOME */}
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-nome">
-              Nome completo <span className="editar-obrigatorio">*</span>
-            </label>
-
+            <label className="editar-label">Nome</label>
             <input
-              id="campo-nome"
-              type="text"
-              className={`editar-input ${erro ? "editar-input-erro" : ""}`}
-              placeholder="Seu nome completo"
+              className={`editar-input ${erro && !nome.trim() ? "editar-input-erro" : ""}`}
               value={nome}
-              onChange={(e) => {
-                setNome(e.target.value);
-                if (erro) setErro("");
-              }}
-              maxLength={60}
+              onChange={(e) => setNome(e.target.value)}
             />
-
-            <p className="editar-contador">{nome.length}/60</p>
-
-            {erro && (
-              <div className="editar-erro">
-                <span className="material-symbols-outlined">error</span>
-                {erro}
-              </div>
-            )}
           </div>
 
-          {/* LOCALIZAÇÃO */}
+          {/* LOCAL */}
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-localizacao">
-              Localização
-            </label>
-
-            <div className="editar-input-icone">
-              <span className="material-symbols-outlined editar-input-icone-symbol">
-                location_on
-              </span>
-
-              <input
-                id="campo-localizacao"
-                type="text"
-                className="editar-input editar-input-com-icone"
-                placeholder="Ex: Matão, SP"
-                value={localizacao}
-                onChange={(e) => setLocalizacao(e.target.value)}
-                maxLength={60}
-              />
-            </div>
+            <label className="editar-label">Localização</label>
+            <input
+              className="editar-input"
+              value={localizacao}
+              onChange={(e) => setLocalizacao(e.target.value)}
+            />
           </div>
 
           {/* BIO */}
           <div className="editar-secao">
-            <label className="editar-label" htmlFor="campo-bio">
-              Bio
-            </label>
-
+            <label className="editar-label">Bio</label>
             <textarea
-              id="campo-bio"
               className="editar-textarea"
-              placeholder="Conte um pouco sobre você..."
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              maxLength={150}
-              rows={4}
             />
-
-            <p className="editar-contador">{bio.length}/150</p>
           </div>
 
-          {/* BOTÃO */}
+          {/* ERRO */}
+          {erro && (
+            <div className="editar-erro">
+              <span className="material-symbols-outlined">error</span>
+              {erro}
+            </div>
+          )}
+
+          {/* BOTÃO SALVAR */}
           <button
             className={`btn-salvar ${salvando ? "btn-salvando" : ""} ${salvo ? "btn-salvo" : ""}`}
             onClick={handleSalvar}
-            disabled={salvando || salvo}
+            disabled={salvando}
           >
-            {salvo ? (
+            {salvando ? (
+              <>
+                <span className="btn-spinner" />
+                Salvando alterações...
+              </>
+            ) : salvo ? (
               <>
                 <span className="material-symbols-outlined">check_circle</span>
-                Salvo com sucesso!
-              </>
-            ) : salvando ? (
-              <>
-                <span className="material-symbols-outlined">hourglass_top</span>
-                Salvando...
+                Salvo!
               </>
             ) : (
-              <>
-                <span className="material-symbols-outlined">save</span>
-                Salvar Alterações
-              </>
+              "Salvar Alterações"
             )}
           </button>
 
