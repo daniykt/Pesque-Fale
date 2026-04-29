@@ -15,6 +15,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { observeAuthState } from "../../auth";
@@ -78,21 +80,38 @@ export default function Chat() {
               const q = query(
                 collection(db, "chats", cid, "mensagens"),
                 orderBy("createdAt", "desc"),
-                limit(20)
+                limit(1)
               );
               const snap = await getDocs(q);
               if (!snap.empty) {
                 const msg = snap.docs[0].data();
                 ultimaMsg = msg.texto;
                 ultimaData = msg.createdAt?.toDate?.() || new Date(msg.createdAt);
+              }
 
-                // Contar não lidas (mensagens do outro usuário não lidas)
-                naoLidas = snap.docs.filter(d => {
+              const qNaoLidas = query(
+                collection(db, "chats", cid, "mensagens"),
+                where("userId", "!=", user.uid),
+                where("status", "in", ["enviado", "entregue"])
+              );
+              const snapNaoLidas = await getDocs(qNaoLidas);
+              naoLidas = snapNaoLidas.size;
+            } catch (_) {
+              try {
+                const qAll = query(
+                  collection(db, "chats", cid, "mensagens"),
+                  orderBy("createdAt", "desc"),
+                  limit(50)
+                );
+                const snapAll = await getDocs(qAll);
+                naoLidas = snapAll.docs.filter(d => {
                   const m = d.data();
                   return m.userId !== user.uid && m.status !== "visto";
                 }).length;
+              } catch (e) {
+                console.log("Erro ao contar não lidas:", e);
               }
-            } catch (_) {}
+            }
 
             return {
               chatId: cid,
@@ -165,27 +184,43 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 💬 Mensagens em Tempo Real
+  // 💬 Mensagens em Tempo Real + Marcar como Visto
   // =========================
   useEffect(() => {
-    if (!chatId || !permitido) return;
+    if (!chatId || !permitido || !user) return;
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
       orderBy("createdAt", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMensagens(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-      );
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMensagens(msgs);
+
+      const mensagensParaAtualizar = snapshot.docs.filter(d => {
+        const m = d.data();
+        return m.userId !== user.uid && m.status !== "visto";
+      });
+
+      if (mensagensParaAtualizar.length > 0) {
+        await Promise.all(
+          mensagensParaAtualizar.map(async (docSnap) => {
+            try {
+              await updateDoc(docSnap.ref, { status: "visto" });
+            } catch (e) {
+              console.log("Erro ao marcar como visto:", e);
+            }
+          })
+        );
+      }
     });
 
     return unsubscribe;
-  }, [chatId, permitido]);
+  }, [chatId, permitido, user]);
 
   // =========================
   // ✉️ Enviar Mensagem
@@ -301,51 +336,102 @@ export default function Chat() {
   );
 
   // =========================
-  // 🏠 RENDER: INBOX
+  // 🎨 RENDER: INBOX + CHAT
   // =========================
-  if (!chatId) {
-    return (
-      <Layout>
-        <div className="chat-wrapper">
-          <div className="chat-header-simple">
-            <div className="chat-header-left">
-              <span className="chat-header-icon">🐟</span>
-              <div>
-                <h1 className="chat-title">Conversas</h1>
-                <div className="chat-subtitle">
-                  {conversas.length} {conversas.length === 1 ? "conversa" : "conversas"}
-                </div>
+  const renderizarMensagens = () => {
+    return mensagens.map((msg, index) => {
+      const isMine = msg.userId === user?.uid;
+      const hora = formatarHora(msg.createdAt);
+      const mostrarData =
+        index === 0 ||
+        !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
+
+      const mesmoRemetente =
+        index > 0 && mensagens[index - 1].userId === msg.userId;
+      const classeSequencia = mesmoRemetente ? "sequencia" : "";
+
+      const separador = mostrarData ? (
+        <div className="date-separator" key={`data-${msg.id}`}>
+          {formatarDataAmigavel(msg.createdAt)}
+        </div>
+      ) : null;
+
+      return (
+        <React.Fragment key={msg.id}>
+          {separador}
+          <div
+            className={`msg-group ${isMine ? "mine" : "theirs"} ${classeSequencia}`}
+          >
+            {!isMine && !mesmoRemetente ? (
+              <div className="msg-avatar">
+                {outroUsuario?.foto ? (
+                  <img src={outroUsuario.foto} alt={msg.nome} />
+                ) : (
+                  <span>{msg.nome?.charAt(0) || "?"}</span>
+                )}
+              </div>
+            ) : !isMine ? (
+              <div className="msg-avatar-spacer" />
+            ) : null}
+
+            <div className="msg-content">
+              <div className={`msg-bubble ${isMine ? "me" : "other"}`}>
+                <p>{msg.texto}</p>
+                <span className="msg-time">
+                  {hora}
+                  {isMine && (
+                    <span
+                      className={`msg-status ${msg.status === "visto" ? "visto" : ""}`}
+                      title={msg.status === "visto" ? "Visto" : "Enviado"}
+                    >
+                      <span className="material-symbols-outlined">
+                        {msg.status === "visto" ? "done_all" : "done"}
+                      </span>
+                    </span>
+                  )}
+                </span>
               </div>
             </div>
-          </div>
 
-          <div className="busca-conversas">
-            <input
-              className="busca-input"
-              type="text"
-              placeholder="🔍 Buscar conversa..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
+            {isMine && !mesmoRemetente ? (
+              <div className="msg-avatar">
+                <span>{user?.displayName?.charAt(0) || "?"}</span>
+              </div>
+            ) : isMine ? (
+              <div className="msg-avatar-spacer" />
+            ) : null}
+          </div>
+        </React.Fragment>
+      );
+    });
+  };
+
+  return (
+    <Layout>
+      <div className="chat-page">
+      <div className="chat-layout">
+        {/* ── Painel de Conversas ── */}
+        <aside className="conversations-panel">
+          <div className="conversations-header">
+            <h2>Conversas</h2>
+            <div className="search-box">
+              <span className="material-symbols-outlined">search</span>
+              <input
+                type="text"
+                placeholder="Buscar conversa..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
+            </div>
           </div>
 
           {loadingConversas ? (
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--chat-text-secondary)",
-                fontSize: "0.9rem",
-                gap: "10px",
-              }}
-            >
-              <div className="spinner" style={{ borderColor: "var(--chat-border)", borderTopColor: "var(--chat-primary)" }} />
-              Carregando conversas...
+            <div className="conversations-loading">
+              <div className="spinner" />
+              <span>Carregando conversas...</span>
             </div>
           ) : (
-            <div className="lista-conversas">
+            <div className="conversations-list">
               {conversasFiltradas.length === 0 ? (
                 <div className="conversa-vazia">
                   {busca ? (
@@ -358,284 +444,169 @@ export default function Chat() {
                 conversasFiltradas.map((c) => (
                   <div
                     key={c.chatId}
-                    className="conversa-item"
+                    className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
                     onClick={() => navigate(`/chat/${c.chatId}`)}
                   >
-                    <div className="conversa-avatar">
+                    <div className="conv-avatar">
                       {c.foto ? (
                         <img src={c.foto} alt={c.nome} />
                       ) : (
-                        <span>{c.nome.charAt(0).toUpperCase()}</span>
+                        <div className="fallback">{c.nome.charAt(0).toUpperCase()}</div>
                       )}
                     </div>
-                    <div className="conversa-info">
-                      <div className="conversa-nome">{c.nome}</div>
-                      <div className="conversa-ultima-msg">
-                        {c.ultimaMensagem}
+                    <div className="conv-info">
+                      <div className="conv-top">
+                        <span className="conv-name">{c.nome}</span>
+                        <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
                       </div>
-                    </div>
-                    <div className="conversa-meta">
-                      {c.ultimaData && (
-                        <span className="conversa-hora">
-                          {tempoRelativo(c.ultimaData)}
-                        </span>
-                      )}
-                      {c.naoLidas > 0 && (
-                        <span className="conversa-badge">{c.naoLidas}</span>
-                      )}
+                      <div className="conv-bottom">
+                        <span className="conv-preview">{c.ultimaMensagem}</span>
+                        {c.naoLidas > 0 && (
+                          <span className="conv-badge">{c.naoLidas}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
           )}
-        </div>
-      </Layout>
-    );
-  }
+        </aside>
 
-  // =========================
-  // 🔒 BLOQUEIO
-  // =========================
-  if (!permitido) {
-    return (
-      <Layout>
-        <div className="chat-wrapper" style={{ justifyContent: "center", alignItems: "center" }}>
-          <div className="chat-vazio">
-            <div className="chat-vazio-icon" style={{ fontSize: "2.5rem" }}>🔒</div>
-            <p>Chat bloqueado</p>
-            <span>Você precisa seguir este usuário para conversar.</span>
-            <button
-              className="btn-enviar"
-              style={{ marginTop: "16px", padding: "10px 24px", borderRadius: "24px", width: "auto" }}
-              onClick={() => navigate("/chat")}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>arrow_back</span>
-              <span style={{ marginLeft: "6px", fontSize: "0.85rem", fontWeight: 500 }}>Voltar</span>
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // =========================
-  // 💬 RENDER: CHAT PRINCIPAL
-  // =========================
-  const renderizarMensagens = () => {
-    return mensagens.map((msg, index) => {
-      const isMine = msg.userId === user?.uid;
-      const hora = formatarHora(msg.createdAt);
-      const mostrarData =
-        index === 0 ||
-        !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
-
-      const mesmoRemetente =
-        index > 0 && mensagens[index - 1].userId === msg.userId;
-      const classeSequencia = mesmoRemetente ? "msg-grupo--sequencia" : "";
-
-      const separador = mostrarData ? (
-        <div className="data-separador" key={`data-${msg.id}`}>
-          {formatarDataAmigavel(msg.createdAt)}
-        </div>
-      ) : null;
-
-      const avatarOutro =
-        !isMine && !mesmoRemetente ? (
-          <div className="msg-avatar">
-            {outroUsuario?.foto ? (
-              <img src={outroUsuario.foto} alt={msg.nome} />
-            ) : (
-              <span>{msg.nome?.charAt(0) || "?"}</span>
-            )}
-          </div>
-        ) : null;
-
-      const avatarMeu =
-        isMine && !mesmoRemetente ? (
-          <div className="msg-avatar">
-            <span>{user?.displayName?.charAt(0) || "?"}</span>
-          </div>
-        ) : null;
-
-      const spacerMeu =
-        isMine && !avatarMeu ? <div className="msg-avatar-spacer" /> : null;
-      const spacerOutro =
-        !isMine && !avatarOutro ? <div className="msg-avatar-spacer" /> : null;
-
-      return (
-        <React.Fragment key={msg.id}>
-          {separador}
-          <div
-            className={`msg-grupo ${
-              isMine ? "msg-grupo--minha" : "msg-grupo--outra"
-            } ${classeSequencia}`}
-          >
-            {!isMine && (avatarOutro || spacerOutro)}
-            <div className="msg-conteudo">
-              {!isMine && !mesmoRemetente && (
-                <span className="msg-nome">{msg.nome}</span>
-              )}
-              <div
-                className={`msg-bolha ${
-                  isMine ? "msg-bolha--minha" : "msg-bolha--outra"
-                }`}
+        {/* ── Painel do Chat ── */}
+        <main className="chat-panel">
+          {!chatId ? (
+            <div className="chat-empty-state">
+              <div className="chat-empty-icon">💬</div>
+              <p>Selecione uma conversa</p>
+              <span>Escolha um pescador para começar a conversar</span>
+            </div>
+          ) : !permitido ? (
+            <div className="chat-empty-state">
+              <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>🔒</div>
+              <p>Chat bloqueado</p>
+              <span>Você precisa seguir este usuário para conversar.</span>
+              <button
+                className="btn-voltar-bloqueio"
+                onClick={() => navigate("/chat")}
               >
-                <p>{msg.texto}</p>
-                <span className="msg-hora">{hora}</span>
-                {isMine && (
-                  <div
-                    className={`msg-status ${
-                      msg.status === "visto" ? "visto" : ""
-                    }`}
-                  >
-                    <span className="material-symbols-outlined">
-                      {msg.status === "visto" ? "done_all" : "done"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {isMine && (spacerMeu || avatarMeu)}
-          </div>
-        </React.Fragment>
-      );
-    });
-  };
-
-  return (
-    <Layout>
-      <div className="chat-wrapper">
-        {/* Header */}
-        <div className="chat-header">
-          <div className="chat-header-left">
-            <button
-              className="btn-voltar-chat"
-              onClick={() => navigate("/chat")}
-              title="Voltar às conversas"
-            >
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-
-            {outroUsuario?.foto ? (
-              <img
-                src={outroUsuario.foto}
-                alt={outroUsuario.nome}
-                className="chat-avatar"
-              />
-            ) : (
-              <div className="chat-avatar">
-                {outroUsuario?.nome?.charAt(0) || "?"}
-              </div>
-            )}
-
-            <div className="chat-header-info">
-              <h1 className="chat-title">
-                {outroUsuario?.nome || "Pescador"}
-              </h1>
-              <div className="chat-subtitle">
-                {digitando ? (
-                  <span style={{ color: "rgba(255,255,255,0.8)", fontStyle: "italic" }}>
-                    digitando...
-                  </span>
-                ) : (
-                  <>
-                    <span className="online-dot"></span>
-                    <span>Online</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mensagens */}
-        <div
-          className="chat-mensagens"
-          ref={mensagensContainerRef}
-          onScroll={handleScroll}
-        >
-          {mensagens.length === 0 && !digitando ? (
-            <div className="chat-vazio">
-              <div className="chat-vazio-icon">💬</div>
-              <p>Nenhuma mensagem ainda</p>
-              <span>Seja o primeiro a dizer olá! 👋</span>
+                <span className="material-symbols-outlined">arrow_back</span>
+                Voltar
+              </button>
             </div>
           ) : (
-            renderizarMensagens()
-          )}
+            <>
+              <header className="chat-header">
+                <div className="chat-header-left">
+                  <div className="chat-header-avatar">
+                    {outroUsuario?.foto ? (
+                      <img src={outroUsuario.foto} alt={outroUsuario.nome} />
+                    ) : (
+                      <div className="fallback">{outroUsuario?.nome?.charAt(0) || "?"}</div>
+                    )}
+                  </div>
+                  <div className="chat-header-info">
+                    <h3>{outroUsuario?.nome || "Pescador"}</h3>
+                    {digitando ? (
+                      <span className="digitando">digitando...</span>
+                    ) : (
+                      <span><span className="online-dot" />Online</span>
+                    )}
+                  </div>
+                </div>
+                <div className="chat-header-actions">
+                  <button className="icon-btn" title="Ligar">
+                    <span className="material-symbols-outlined">call</span>
+                  </button>
+                  <button className="icon-btn" title="Vídeo">
+                    <span className="material-symbols-outlined">videocam</span>
+                  </button>
+                  <button className="icon-btn" title="Mais opções">
+                    <span className="material-symbols-outlined">more_vert</span>
+                  </button>
+                </div>
+              </header>
 
-          {/* Indicador de digitação */}
-          {digitando && (
-            <div className="msg-digitando">
-              <div className="msg-avatar">
-                {outroUsuario?.foto ? (
-                  <img
-                    src={outroUsuario.foto}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
-                  />
+              <div
+                className="chat-messages"
+                ref={mensagensContainerRef}
+                onScroll={handleScroll}
+              >
+                {mensagens.length === 0 && !digitando ? (
+                  <div className="chat-empty-state">
+                    <div className="chat-empty-icon">👋</div>
+                    <p>Nenhuma mensagem ainda</p>
+                    <span>Seja o primeiro a dizer olá!</span>
+                  </div>
                 ) : (
-                  <span>{outroUsuario?.nome?.charAt(0) || "?"}</span>
+                  renderizarMensagens()
                 )}
+
+                {digitando && (
+                  <div className="msg-digitando">
+                    <div className="msg-avatar">
+                      {outroUsuario?.foto ? (
+                        <img src={outroUsuario.foto} alt="" />
+                      ) : (
+                        <span>{outroUsuario?.nome?.charAt(0) || "?"}</span>
+                      )}
+                    </div>
+                    <div className="bolha-digitando">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={mensagensEndRef} />
               </div>
-              <div className="bolha-digitando">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          )}
 
-          <div ref={mensagensEndRef} />
-        </div>
-
-        {/* Botão scroll para baixo */}
-        {showScrollBtn && (
-          <button className="btn-scroll-bottom" onClick={scrollToBottom} title="Rolar para baixo">
-            <span className="material-symbols-outlined">arrow_downward</span>
-          </button>
-        )}
-
-        {/* Input */}
-        <div className="chat-input-area">
-          <div className="chat-input-row">
-            <button className="btn-emoji" title="Adicionar emoji">
-              <span className="material-symbols-outlined">emoji_emotions</span>
-            </button>
-            <input
-              value={texto}
-              onChange={(e) => {
-                setTexto(e.target.value);
-                // Limitar a 500 caracteres
-                if (e.target.value.length > 500) {
-                  setTexto(e.target.value.slice(0, 500));
-                }
-              }}
-              placeholder="Digite sua mensagem..."
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
-              maxLength={500}
-            />
-            <button
-              className="btn-enviar"
-              onClick={enviarMensagem}
-              disabled={!texto.trim() || enviando}
-              title="Enviar mensagem"
-            >
-              {enviando ? (
-                <div className="spinner" />
-              ) : (
-                <span className="material-symbols-outlined">send</span>
+              {showScrollBtn && (
+                <button className="btn-scroll-bottom" onClick={scrollToBottom} title="Rolar para baixo">
+                  <span className="material-symbols-outlined">arrow_downward</span>
+                </button>
               )}
-            </button>
-          </div>
-          <span className="char-count">{texto.length}/500</span>
-        </div>
+
+              <div className="chat-input-area">
+                <div className="chat-input-row">
+                  <button className="btn-attach" title="Anexar">
+                    <span className="material-symbols-outlined">add</span>
+                  </button>
+                  <input
+                    value={texto}
+                    onChange={(e) => {
+                      setTexto(e.target.value);
+                      if (e.target.value.length > 500) {
+                        setTexto(e.target.value.slice(0, 500));
+                      }
+                    }}
+                    placeholder="Digite uma mensagem..."
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+                    maxLength={500}
+                  />
+                  <button className="btn-attach" title="Emoji">
+                    <span className="material-symbols-outlined">mood</span>
+                  </button>
+                  <button
+                    className="btn-send"
+                    onClick={enviarMensagem}
+                    disabled={!texto.trim() || enviando}
+                    title="Enviar mensagem"
+                  >
+                    {enviando ? (
+                      <div className="spinner-sm" />
+                    ) : (
+                      <span className="material-symbols-outlined">send</span>
+                    )}
+                  </button>
+                </div>
+                <span className="char-count">{texto.length}/500</span>
+              </div>
+            </>
+          )}
+        </main>
+      </div>
       </div>
     </Layout>
   );
