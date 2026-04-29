@@ -9,10 +9,14 @@ import {
   addDoc,
   query,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   doc,
   getDoc,
+  getDocs,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { observeAuthState } from "../../auth";
@@ -26,56 +30,96 @@ export default function Chat() {
   const [texto, setTexto] = useState("");
   const [permitido, setPermitido] = useState(false);
   const [conversas, setConversas] = useState([]);
+  const [outroUsuario, setOutroUsuario] = useState(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [loadingConversas, setLoadingConversas] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [digitando, setDigitando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const mensagensEndRef = useRef(null);
+  const mensagensContainerRef = useRef(null);
 
-  // 🔐 usuário
+  // 🔐 Usuário autenticado
   useEffect(() => {
     const unsubscribe = observeAuthState(setUser);
     return unsubscribe;
   }, []);
 
   // =========================
-  // 🔥 INBOX (USUÁRIOS SEGUIDOS)
+  // 📥 INBOX - Lista de Conversas
   // =========================
   useEffect(() => {
-    const carregarSeguindo = async () => {
-      if (!user || chatId) return;
+  if (!user) return;
 
-      try {
-        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) return;
+  setLoadingConversas(true);
 
-        const dados = meuDoc.data();
-        const seguindo = dados?.seguindo || [];
+  const unsubscribes = [];
 
-        const lista = await Promise.all(
-          seguindo.map(async (id) => {
-            const docSnap = await getDoc(doc(db, "usuarios", id));
-            if (!docSnap.exists()) return null;
+  const carregarConversasRealtime = async () => {
+    const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+    if (!meuDoc.exists()) return;
 
-            const u = docSnap.data();
-            const chatIdGerado = [user.uid, id].sort().join("_");
+    const dados = meuDoc.data();
+    const seguindo = dados?.seguindo || [];
 
-            return {
-              chatId: chatIdGerado,
-              nome: u?.nome || "Usuário",
-              foto: u?.fotoPerfil || "",
-            };
-          })
-        );
+    seguindo.forEach((id) => {
+      const cid = [user.uid, id].sort().join("_");
 
-        setConversas(lista.filter(Boolean));
-      } catch (error) {
-        console.error("Erro ao carregar seguindo:", error);
-      }
-    };
+      const q = query(
+        collection(db, "chats", cid, "mensagens"),
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
 
-    carregarSeguindo();
-  }, [user, chatId]);
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        let ultimaMsg = "Nenhuma mensagem ainda";
+        let ultimaData = null;
+
+        if (!snapshot.empty) {
+          const msg = snapshot.docs[0].data();
+          ultimaMsg = msg.texto;
+          ultimaData = msg.createdAt?.toDate?.() || new Date();
+        }
+
+        const userDoc = await getDoc(doc(db, "usuarios", id));
+        const u = userDoc.data();
+
+        setConversas((prev) => {
+          const outras = prev.filter((c) => c.chatId !== cid);
+
+          const nova = {
+            chatId: cid,
+            nome: u?.nome || "Usuário",
+            foto: u?.fotoPerfil || "",
+            ultimaMensagem: ultimaMsg,
+            ultimaData: ultimaData,
+            naoLidas: 0,
+          };
+
+          return [nova, ...outras].sort((a, b) => {
+            if (!a.ultimaData) return 1;
+            if (!b.ultimaData) return -1;
+            return b.ultimaData - a.ultimaData;
+          });
+        });
+      });
+
+      unsubscribes.push(unsubscribe);
+    });
+
+    setLoadingConversas(false);
+  };
+
+  carregarConversasRealtime();
+
+  return () => {
+    unsubscribes.forEach((unsub) => unsub());
+  };
+}, [user]);
 
   // =========================
-  // 🔒 PERMISSÃO
+  // 🔒 Permissão + Dados do Outro Usuário
   // =========================
   useEffect(() => {
     const verificar = async () => {
@@ -96,6 +140,15 @@ export default function Chat() {
         ) {
           setPermitido(true);
         }
+
+        const outroDoc = await getDoc(doc(db, "usuarios", outroId));
+        if (outroDoc.exists()) {
+          const outro = outroDoc.data();
+          setOutroUsuario({
+            nome: outro?.nome || "Usuário",
+            foto: outro?.fotoPerfil || "",
+          });
+        }
       } catch (error) {
         console.error("Erro ao verificar permissão:", error);
       }
@@ -105,43 +158,60 @@ export default function Chat() {
   }, [user, chatId]);
 
   // =========================
-  // 💬 MENSAGENS
+  // 💬 Mensagens em Tempo Real + Marcar como Visto
   // =========================
   useEffect(() => {
-    if (!chatId || !permitido) return;
+    if (!chatId || !permitido || !user) return;
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
       orderBy("createdAt", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMensagens(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-      );
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMensagens(msgs);
+
+      const mensagensParaAtualizar = snapshot.docs.filter((d) => {
+        const m = d.data();
+        return m.userId !== user.uid && m.status !== "visto";
+      });
+
+      if (mensagensParaAtualizar.length > 0) {
+        await Promise.all(
+          mensagensParaAtualizar.map(async (docSnap) => {
+            try {
+              await updateDoc(docSnap.ref, { status: "visto" });
+            } catch (e) {
+              console.log("Erro ao marcar como visto:", e);
+            }
+          })
+        );
+      }
     });
 
     return unsubscribe;
-  }, [chatId, permitido]);
+  }, [chatId, permitido, user]);
 
   // =========================
-  // ✉️ ENVIAR + NOTIFICAÇÃO
+  // ✉️ Enviar Mensagem
   // =========================
   const enviarMensagem = async () => {
-    if (!texto.trim()) return;
+    if (!texto.trim() || enviando) return;
+    setEnviando(true);
 
     try {
       await addDoc(collection(db, "chats", chatId, "mensagens"), {
-        texto,
+        texto: texto.trim(),
         userId: user.uid,
         nome: user.displayName || "Pescador",
         createdAt: serverTimestamp(),
+        status: "enviado",
       });
 
-      // 🔥 NOTIFICAÇÃO DE MENSAGEM
       const ids = chatId.split("_");
       const outroId = ids.find((id) => id !== user.uid);
 
@@ -150,7 +220,7 @@ export default function Chat() {
           tipo: "mensagem",
           de: user.displayName || "Usuário",
           para: outroId,
-          texto: texto,
+          texto: texto.trim(),
           createdAt: serverTimestamp(),
         });
       }
@@ -158,168 +228,360 @@ export default function Chat() {
       setTexto("");
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
+    } finally {
+      setEnviando(false);
     }
   };
 
   // =========================
-  // 📜 SCROLL
+  // 📜 Scroll Automático
   // =========================
-  useEffect(() => {
+  const scrollToBottom = () => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensagens]);
+  };
+
+  useEffect(() => {
+    if (!showScrollBtn) {
+      scrollToBottom();
+    }
+  }, [mensagens, showScrollBtn, digitando]);
+
+  const handleScroll = () => {
+    const el = mensagensContainerRef.current;
+    if (!el) return;
+    const threshold = 120;
+    const isNearBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    setShowScrollBtn(!isNearBottom);
+  };
+
+  useEffect(() => {
+    const el = mensagensContainerRef.current;
+    if (el) {
+      el.addEventListener("scroll", handleScroll);
+      return () => el.removeEventListener("scroll", handleScroll);
+    }
+  }, []);
+
+  // ⏱️ Helpers de Formatação
+  const formatarHora = (timestamp) => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const mesmoDia = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    const date1 = d1.toDate ? d1.toDate() : new Date(d1);
+    const date2 = d2.toDate ? d2.toDate() : new Date(d2);
+    return date1.toDateString() === date2.toDateString();
+  };
+
+  const formatarDataAmigavel = (timestamp) => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const hoje = new Date();
+    const ontem = new Date(hoje);
+    ontem.setDate(hoje.getDate() - 1);
+
+    if (date.toDateString() === hoje.toDateString()) return "Hoje";
+    if (date.toDateString() === ontem.toDateString()) return "Ontem";
+
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const tempoRelativo = (data) => {
+    if (!data) return "";
+    const agora = new Date();
+    const diff = Math.floor((agora - data) / 1000);
+    if (diff < 60) return "agora";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  };
+
+  const conversasFiltradas = conversas.filter((c) =>
+    c.nome.toLowerCase().includes(busca.toLowerCase())
+  );
 
   // =========================
-  // 🔥 INBOX UI
+  // 🎨 RENDER: INBOX + CHAT
   // =========================
-  if (!chatId) {
-    return (
-      <Layout>
-        <div className="chat-wrapper">
+  const renderizarMensagens = () => {
+    return mensagens.map((msg, index) => {
+      const isMine = msg.userId === user?.uid;
+      const hora = formatarHora(msg.createdAt);
+      const mostrarData =
+        index === 0 ||
+        !mesmoDia(msg.createdAt, mensagens[index - 1]?.createdAt);
 
-          <h2 style={{ marginBottom: "20px" }}>💬 Conversas</h2>
+      const mesmoRemetente =
+        index > 0 && mensagens[index - 1].userId === msg.userId;
+      const classeSequencia = mesmoRemetente ? "sequencia" : "";
 
-          {conversas.length === 0 ? (
-            <p>Você ainda não segue ninguém</p>
-          ) : (
-            conversas.map((c) => (
-              <div
-                key={c.chatId}
-                className="chat-item"
-                onClick={() => navigate(`/chat/${c.chatId}`)}
-                style={{
-                  padding: "12px",
-                  borderBottom: "1px solid #ddd",
-                  cursor: "pointer",
-                }}
-              >
-                <strong>{c.nome}</strong>
+      const separador = mostrarData ? (
+        <div className="date-separator" key={`data-${msg.id}`}>
+          {formatarDataAmigavel(msg.createdAt)}
+        </div>
+      ) : null;
 
-                {/* 🔥 VOLTOU AQUI */}
-                <p style={{ opacity: 0.7 }}>
-                  Toque para iniciar uma conversa
-                </p>
+      return (
+        <React.Fragment key={msg.id}>
+          {separador}
+          <div
+            className={`msg-group ${isMine ? "mine" : "theirs"} ${classeSequencia}`}
+          >
+            <div className="msg-content">
+              <div className={`msg-bubble ${isMine ? "me" : "other"}`}>
+                <p>{msg.texto}</p>
+                <span className="msg-time">
+                  {hora}
+                  {isMine && (
+                    <span
+                      className={`msg-status ${msg.status === "visto" ? "visto" : ""}`}
+                      title={msg.status === "visto" ? "Visto" : "Enviado"}
+                    >
+                      <span className="material-symbols-outlined">
+                        {msg.status === "visto" ? "done_all" : "done"}
+                      </span>
+                    </span>
+                  )}
+                </span>
               </div>
-            ))
-          )}
+            </div>
+          </div>
+        </React.Fragment>
+      );
+    });
+  };
 
-        </div>
-
-             <footer>
-  <div className="footer-container">
-
-    <div className="footer-info">
-      <h3>Sobre Nós</h3>
-      <p>
-        Plataforma criada por estudantes com o objetivo de conectar pescadores,
-        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
-      </p>
-    </div>
-
-    <div className="footer-links">
-      <h3>Links Úteis</h3>
-
-      <a href="/home">Página Inicial</a><br />
-      <a href="/pesquisar">Pesquisa de Locais</a><br />
-      <a href="/chat">Chat de Pescadores</a><br />
-      <a href="/notificacao">Notificações</a><br />
-      <a href="/sobre">Sobre Nós</a><br />
-      <a href="/perfil">Perfil</a>
-
-    </div>
-
-    <div className="footer-contact">
-      <h3>Contato</h3>
-      <p>Email: <strong>pesquefale@gmail.com</strong></p>
-    </div>
-
-  </div>
-
-  <p className="copyright">
-    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
-  </p>
-</footer>
-
-      </Layout>
-    );
-  }
-
-  // =========================
-  // 🔒 BLOQUEIO
-  // =========================
-  if (!permitido) {
-    return (
-      <Layout>
-        <div style={{ textAlign: "center", marginTop: "60px" }}>
-          <h2>🔒 Chat bloqueado</h2>
-          <p>Você precisa seguir este usuário para conversar.</p>
-        </div>
-      </Layout>
-    );
-  }
-
-  // =========================
-  // 💬 CHAT
-  // =========================
   return (
     <Layout>
-      <div className="chat-wrapper">
-
-        <div className="chat-mensagens">
-          {mensagens.map((msg) => (
-            <div key={msg.id}>
-              <strong>{msg.nome}</strong>
-              <p>{msg.texto}</p>
+      <div className="chat-page">
+        <div className={`chat-layout ${chatId ? "show-chat" : "show-list"}`}>
+          {/* ── Painel de Conversas ── */}
+          <aside className="conversations-panel">
+            <div className="conversations-header">
+              <h2>Conversas</h2>
+              <div className="search-box">
+                <span className="material-symbols-outlined">search</span>
+                <input
+                  type="text"
+                  placeholder="Buscar conversa..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+              </div>
             </div>
-          ))}
-          <div ref={mensagensEndRef} />
-        </div>
 
-        <div className="chat-input-area">
-          <input
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Digite..."
-          />
-          <button onClick={enviarMensagem}>Enviar</button>
-        </div>
+            {loadingConversas ? (
+              <div className="conversations-loading">
+                <div className="spinner" />
+                <span>Carregando conversas...</span>
+              </div>
+            ) : (
+              <div className="conversations-list">
+                {conversasFiltradas.length === 0 ? (
+                  <div className="conversa-vazia">
+                    {busca ? (
+                      <>
+                        😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"
+                      </>
+                    ) : (
+                      <>
+                        🎣 Você ainda não segue ninguém.<br />
+                        Descubra pescadores na pesquisa!
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  conversasFiltradas.map((c) => (
+                    <div
+                      key={c.chatId}
+                      className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
+                      onClick={() => navigate(`/chat/${c.chatId}`)}
+                    >
+                      <div className="conv-avatar">
+                        {c.foto ? (
+                          <img src={c.foto} alt={c.nome} />
+                        ) : (
+                          <div className="fallback">
+                            {c.nome.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="conv-info">
+                        <div className="conv-top">
+                          <span className="conv-name">{c.nome}</span>
+                          <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
+                        </div>
+                        <div className="conv-bottom">
+                          <span className="conv-preview">{c.ultimaMensagem}</span>
+                          {c.naoLidas > 0 && (
+                            <span className="conv-badge">{c.naoLidas}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </aside>
 
+          {/* ── Painel do Chat ── */}
+          <main className="chat-panel">
+            {!chatId ? (
+              <div className="chat-empty-state">
+                <div className="chat-empty-icon">💬</div>
+                <p>Selecione uma conversa</p>
+                <span>Escolha um pescador para começar a conversar</span>
+              </div>
+            ) : !permitido ? (
+              <div className="chat-empty-state">
+                <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>
+                  🔒
+                </div>
+                <p>Chat bloqueado</p>
+                <span>Você precisa seguir este usuário para conversar.</span>
+                <button
+                  className="btn-voltar-bloqueio"
+                  onClick={() => navigate("/chat")}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Voltar
+                </button>
+              </div>
+            ) : (
+              <>
+                <header className="chat-header">
+                  {window.innerWidth <= 768 && (
+  <button
+    className="icon-btn"
+    onClick={() => navigate("/chat")}
+    title="Voltar"
+  >
+    <span className="material-symbols-outlined">arrow_back</span>
+  </button>
+)}
+                  <div className="chat-header-left">
+                    <div className="chat-header-avatar">
+                      {outroUsuario?.foto ? (
+                        <img src={outroUsuario.foto} alt={outroUsuario.nome} />
+                      ) : (
+                        <div className="fallback">
+                          {outroUsuario?.nome?.charAt(0) || "?"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="chat-header-info">
+                      <h3>{outroUsuario?.nome || "Pescador"}</h3>
+                      {digitando ? (
+                        <span className="digitando">digitando...</span>
+                      ) : (
+                        <span>
+                          <span className="online-dot" />
+                          Online
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="chat-header-actions">
+                    <button className="icon-btn" title="Ligar">
+                      <span className="material-symbols-outlined">call</span>
+                    </button>
+                    <button className="icon-btn" title="Vídeo">
+                      <span className="material-symbols-outlined">videocam</span>
+                    </button>
+                    <button className="icon-btn" title="Mais opções">
+                      <span className="material-symbols-outlined">more_vert</span>
+                    </button>
+                  </div>
+                </header>
+
+                <div
+                  className="chat-messages"
+                  ref={mensagensContainerRef}
+                  onScroll={handleScroll}
+                >
+                  {mensagens.length === 0 && !digitando ? (
+                    <div className="chat-empty-state">
+                      <div className="chat-empty-icon">👋</div>
+                      <p>Nenhuma mensagem ainda</p>
+                      <span>Seja o primeiro a dizer olá!</span>
+                    </div>
+                  ) : (
+                    renderizarMensagens()
+                  )}
+
+                  {digitando && (
+                    <div className="msg-digitando">
+                      <div className="bolha-digitando">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={mensagensEndRef} />
+                </div>
+
+                {showScrollBtn && (
+                  <button
+                    className="btn-scroll-bottom"
+                    onClick={scrollToBottom}
+                    title="Rolar para baixo"
+                  >
+                    <span className="material-symbols-outlined">arrow_downward</span>
+                  </button>
+                )}
+
+                <div className="chat-input-area">
+                  <div className="chat-input-row">
+                    <button className="btn-attach" title="Anexar">
+                      <span className="material-symbols-outlined">add</span>
+                    </button>
+                    <input
+                      value={texto}
+                      onChange={(e) => {
+                        setTexto(e.target.value);
+                        if (e.target.value.length > 500) {
+                          setTexto(e.target.value.slice(0, 500));
+                        }
+                      }}
+                      placeholder="Digite uma mensagem..."
+                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+                      maxLength={500}
+                    />
+                    <button className="btn-attach" title="Emoji">
+                      <span className="material-symbols-outlined">mood</span>
+                    </button>
+                    <button
+                      className="btn-send"
+                      onClick={enviarMensagem}
+                      disabled={!texto.trim() || enviando}
+                      title="Enviar mensagem"
+                    >
+                      {enviando ? (
+                        <div className="spinner-sm" />
+                      ) : (
+                        <span className="material-symbols-outlined">send</span>
+                      )}
+                    </button>
+                  </div>
+                  <span className="char-count">{texto.length}/500</span>
+                </div>
+              </>
+            )}
+          </main>
+        </div>
       </div>
-
-       <footer>
-  <div className="footer-container">
-
-    <div className="footer-info">
-      <h3>Sobre Nós</h3>
-      <p>
-        Plataforma criada por estudantes com o objetivo de conectar pescadores,
-        compartilhar experiências e fortalecer a comunidade de pesca em Matão-SP e região.
-      </p>
-    </div>
-
-    <div className="footer-links">
-      <h3>Links Úteis</h3>
-
-      <a href="/home">Página Inicial</a><br />
-      <a href="/pesquisar">Pesquisa de Locais</a><br />
-      <a href="/chat">Chat de Pescadores</a><br />
-      <a href="/notificacao">Notificações</a><br />
-      <a href="/sobre">Sobre Nós</a><br />
-      <a href="/perfil">Perfil</a>
-
-    </div>
-
-    <div className="footer-contact">
-      <h3>Contato</h3>
-      <p>Email: <strong>pesquefale@gmail.com</strong></p>
-    </div>
-
-  </div>
-
-  <p className="copyright">
-    &copy; Pesque & Fale 2026 - Todos os direitos reservados.
-  </p>
-</footer>
-
     </Layout>
   );
 }
