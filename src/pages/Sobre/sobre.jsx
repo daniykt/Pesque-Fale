@@ -79,7 +79,7 @@ const SobreNos = () => {
       id: 6,
       nome: 'Rebeca Scutare',
       iniciais: 'RS',
-      badge: 'Docs · Co-fundadora',
+      badge: 'Documentação · Co-fundadora',
       profissao: 'Gestora de Projetos em Formação | Co-Fundadora',
       descricao:
         'Atuo como gestora do projeto Pesque & Fale. Sou responsável por planejar e documentar o projeto. Meu objetivo é contribuir para o sucesso do projeto e garantir sua implementação eficiente.',
