@@ -270,50 +270,6 @@ h1 {
     margin: 0;
 }
 
-/* ===== FOOTER (mantido) ===== */
-footer {
-    background-color: #062A6C;
-    color: white;
-    padding: 30px 20px;
-    margin-top: 40px;
-}
-
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 30px;
-}
-
-.footer-info,
-.footer-links,
-.footer-contact {
-    flex: 1 1 250px;
-}
-
-.footer-links a {
-    color: #ccc;
-    text-decoration: none;
-    display: inline-block;
-    margin: 5px 0;
-    transition: color 0.2s;
-}
-
-.footer-links a:hover {
-    color: white;
-}
-
-.copyright {
-    text-align: center;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    font-size: 0.9rem;
-    color: #ccc;
-}
-
 /* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
     .search-container {
@@ -336,11 +292,6 @@ footer {
     .user-action-btn {
         width: 100%;
         margin-top: 10px;
-    }
-
-    .footer-container {
-        flex-direction: column;
-        gap: 20px;
     }
 }
 
