@@ -56,14 +56,14 @@ const UserCard = ({ user, onClick }) => {
     .join("")
     .toUpperCase();
 
-  const temFoto = user.foto && !imgError;
+  const temFoto = user.fotoPerfil && !imgError;
 
   return (
     <div className="user-card" onClick={onClick}>
       {/* Avatar com fallback de iniciais — sem via.placeholder.com */}
       {temFoto ? (
         <img
-          src={user.foto}
+          src={user.fotoPerfil}
           alt={nomeExibicao}
           className="user-avatar"
           onError={() => setImgError(true)}
