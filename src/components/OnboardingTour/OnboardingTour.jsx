@@ -1,4 +1,3 @@
-// src/components/onboardingTour/OnboardingTour.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import './OnboardingTour.css';
 
@@ -34,6 +33,22 @@ const STEPS = [
     titulo: 'Notificações 🔔',
     descricao:
       'Fique por dentro das novidades! Veja quando alguém curtir ou comentar nas suas publicações.',
+    posicao: 'direita',
+  },
+  {
+    id: 'chat',
+    selector: 'a[href="/chat"]',
+    titulo: 'Chat 💬',
+    descricao:
+      'Converse diretamente com outros pescadores! Troque dicas, combine pescarias e faça novas amizades.',
+    posicao: 'direita',
+  },
+  {
+    id: 'sobre',
+    selector: 'a[href="/sobre"]',
+    titulo: 'Sobre Nós 🎓',
+    descricao:
+      'Conheça a equipe por trás do Pesque & Fale e saiba mais sobre o projeto desenvolvido na FATEC.',
     posicao: 'direita',
   },
   {
