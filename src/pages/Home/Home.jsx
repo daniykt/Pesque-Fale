@@ -15,12 +15,6 @@ import imgHenrique from "../../assets/image/sobrenos/fotohenrique.jpg";
 import imgLucas from "../../assets/image/sobrenos/fotolucas.jpg";
 import imgDanilo from "../../assets/image/sobrenos/fotodanilo.jpg";
 
-const TOAST_ICONS = {
-  success: "check_circle",
-  error: "error",
-  info: "info",
-};
-
 const Home = () => {
   const location = useLocation();
 
@@ -69,34 +63,16 @@ const Home = () => {
   ]);
   const [comentariosInput, setComentariosInput] = useState({});
 
-  // 🔔 TOAST
-  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+useEffect(() => {
+  const isNewUser = location.state?.isNewUser;
+  const loginSuccess = location.state?.loginSuccess;
 
-  const showToast = (message, type = "info") =>
-    setToast({ visible: true, message, type });
+  if (loginSuccess && isNewUser) {
+    localStorage.setItem("shouldShowTour", "true");
+  }
 
-  const hideToast = () => setToast((t) => ({ ...t, visible: false }));
-
-  // ✅ Toast de boas-vindas
-  useEffect(() => {
-    const isNewUser = location.state?.isNewUser;
-    const loginSuccess = location.state?.loginSuccess;
-
-    if (loginSuccess) {
-      const message = isNewUser
-        ? "Bem-vindo ao Pesque & Fale! Sua conta foi criada com sucesso. 🎣"
-        : "Bem-vindo de volta! Boas pescarias por aqui. 🎣";
-      showToast(message, "success");
-      
-      // Se é novo usuário, marca no localStorage para mostrar o tour
-      if (isNewUser) {
-        localStorage.setItem("shouldShowTour", "true");
-      }
-    }
-
-    // Limpa o state da URL após capturar tudo que precisava
-    window.history.replaceState({}, document.title);
-  }, []);
+  window.history.replaceState({}, document.title);
+}, []);
 
   // ✅ Tour — mostra para novos usuários
   useEffect(() => {
@@ -116,13 +92,6 @@ const Home = () => {
     setShowTour(false);
     localStorage.setItem("hasSeenTour", "true");
   };
-
-  useEffect(() => {
-    if (toast.visible) {
-      const timer = setTimeout(hideToast, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast.visible]);
 
   // Dark mode
   useEffect(() => {
@@ -254,21 +223,6 @@ const Home = () => {
 
   return (
     <Layout>
-
-      {/* 🔔 TOAST */}
-      {toast.visible && (
-        <div className={`site-toast show ${toast.type}`}>
-          <div className="toast-content">
-            <span className="material-symbols-outlined toast-icon">
-              {TOAST_ICONS[toast.type]}
-            </span>
-            <div className="toast-message">{toast.message}</div>
-          </div>
-          <button className="toast-close-btn" onClick={hideToast}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      )}
 
       <div className="column">
         <main className="main-content">
