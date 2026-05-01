@@ -58,6 +58,22 @@ const STEPS = [
       'Aqui você personaliza sua conta, vê suas publicações e gerencia suas informações de pescador.',
     posicao: 'direita',
   },
+  {
+  id: 'logout',
+  selector: '[data-tour="logout"]',
+  titulo: 'Sair da Conta 🚪',
+  descricao:
+    'Aqui você pode sair da sua conta com segurança. Use quando estiver em um dispositivo compartilhado.',
+  posicao: 'direita',
+},
+{
+  id: 'tema',
+  selector: '[data-tour="theme"]',
+  titulo: 'Modo Escuro 🌙',
+  descricao:
+    'Prefere um visual mais confortável à noite? Ative o modo escuro com um clique!',
+  posicao: 'direita',
+}
 ];
 
 const getRect = (selector) => {

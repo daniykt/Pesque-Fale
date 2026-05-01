@@ -207,10 +207,6 @@ ul {
     box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
 }
 
-.hero-visual {
-    animation: float 3s ease-in-out infinite;
-}
-
 /* ==================== FEATURES ==================== */
 .features {
     padding: 5rem 0;
