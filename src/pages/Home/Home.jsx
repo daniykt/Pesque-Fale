@@ -77,9 +77,7 @@ const Home = () => {
 
   const hideToast = () => setToast((t) => ({ ...t, visible: false }));
 
-  // ✅ Toast de boas-vindas + controle do tour unificados
-  // Precisam estar no mesmo useEffect para evitar que o replaceState
-  // limpe o location.state antes do tour conseguir ler o isNewUser
+  // ✅ Toast de boas-vindas
   useEffect(() => {
     const isNewUser = location.state?.isNewUser;
     const loginSuccess = location.state?.loginSuccess;
@@ -89,16 +87,27 @@ const Home = () => {
         ? "Bem-vindo ao Pesque & Fale! Sua conta foi criada com sucesso. 🎣"
         : "Bem-vindo de volta! Boas pescarias por aqui. 🎣";
       showToast(message, "success");
+      
+      // Se é novo usuário, marca no localStorage para mostrar o tour
+      if (isNewUser) {
+        localStorage.setItem("shouldShowTour", "true");
+      }
     }
 
     // Limpa o state da URL após capturar tudo que precisava
     window.history.replaceState({}, document.title);
+  }, []);
 
-    // Inicia o tour se for novo usuário e ainda não tiver visto
-    const jaViuTour = localStorage.getItem("hasSeenTour");
-    if (isNewUser && !jaViuTour) {
-      const timer = setTimeout(() => setShowTour(true), 1200);
-      return () => clearTimeout(timer);
+  // ✅ Tour — mostra para novos usuários
+  useEffect(() => {
+    const shouldShowTour = localStorage.getItem("shouldShowTour");
+    
+    // Se tem shouldShowTour, mostra o tour IMEDIATAMENTE
+    if (shouldShowTour === "true") {
+      // Limpa a flag imediatamente
+      localStorage.removeItem("shouldShowTour");
+      // Mostra o tour
+      setShowTour(true);
     }
   }, []);
 
