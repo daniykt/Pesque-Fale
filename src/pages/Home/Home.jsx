@@ -63,35 +63,19 @@ const Home = () => {
   ]);
   const [comentariosInput, setComentariosInput] = useState({});
 
-useEffect(() => {
-  const isNewUser = location.state?.isNewUser;
-  const loginSuccess = location.state?.loginSuccess;
-
-  if (loginSuccess && isNewUser) {
-    localStorage.setItem("shouldShowTour", "true");
-  }
-
-  window.history.replaceState({}, document.title);
-}, []);
-
-  // ✅ Tour — mostra para novos usuários
   useEffect(() => {
-    const shouldShowTour = localStorage.getItem("shouldShowTour");
-    
-    // Se tem shouldShowTour, mostra o tour IMEDIATAMENTE
-    if (shouldShowTour === "true") {
-      // Limpa a flag imediatamente
-      localStorage.removeItem("shouldShowTour");
-      // Mostra o tour
-      setShowTour(true);
-    }
-  }, []);
+  const shouldShowTour = location.state?.showTour;
+
+  if (shouldShowTour) {
+    setShowTour(true);
+    window.history.replaceState({}, document.title);
+  }
+}, [location.state]);
 
   // Finaliza o tour e salva no localStorage para não exibir novamente
-  const finalizarTour = () => {
-    setShowTour(false);
-    localStorage.setItem("hasSeenTour", "true");
-  };
+const finalizarTour = () => {
+  setShowTour(false);
+};
 
   // Dark mode
   useEffect(() => {
