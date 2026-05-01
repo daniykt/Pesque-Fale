@@ -24,6 +24,7 @@ const Home = () => {
   const location = useLocation();
 
   const [darkMode, setDarkMode] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [postsState, setPostsState] = useState([
     {
       autor: "Henrique",
@@ -86,6 +87,25 @@ const Home = () => {
       window.history.replaceState({}, document.title);
     }
   }, []);
+
+  // 🗺️ Controle do tour de onboarding
+  // Exibe o tour apenas uma vez, somente para novos usuários que ainda não o viram
+  useEffect(() => {
+    const jaViuTour = localStorage.getItem("hasSeenTour");
+    const isNewUser = location.state?.isNewUser;
+
+    if (isNewUser && !jaViuTour) {
+      // Pequeno delay para o toast de boas-vindas aparecer primeiro
+      const timer = setTimeout(() => setShowTour(true), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Finaliza o tour e salva no localStorage para não exibir novamente
+  const finalizarTour = () => {
+    setShowTour(false);
+    localStorage.setItem("hasSeenTour", "true");
+  };
 
   useEffect(() => {
     if (toast.visible) {
