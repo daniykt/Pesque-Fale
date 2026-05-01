@@ -77,26 +77,26 @@ const Home = () => {
 
   const hideToast = () => setToast((t) => ({ ...t, visible: false }));
 
-  // ✅ Mensagem diferenciada: novo usuário ou retorno
+  // ✅ Toast de boas-vindas + controle do tour unificados
+  // Precisam estar no mesmo useEffect para evitar que o replaceState
+  // limpe o location.state antes do tour conseguir ler o isNewUser
   useEffect(() => {
-    if (location.state?.loginSuccess) {
-      const isNewUser = location.state?.isNewUser;
+    const isNewUser = location.state?.isNewUser;
+    const loginSuccess = location.state?.loginSuccess;
+
+    if (loginSuccess) {
       const message = isNewUser
         ? "Bem-vindo ao Pesque & Fale! Sua conta foi criada com sucesso. 🎣"
         : "Bem-vindo de volta! Boas pescarias por aqui. 🎣";
       showToast(message, "success");
-      window.history.replaceState({}, document.title);
     }
-  }, []);
 
-  // 🗺️ Controle do tour de onboarding
-  // Exibe o tour apenas uma vez, somente para novos usuários que ainda não o viram
-  useEffect(() => {
+    // Limpa o state da URL após capturar tudo que precisava
+    window.history.replaceState({}, document.title);
+
+    // Inicia o tour se for novo usuário e ainda não tiver visto
     const jaViuTour = localStorage.getItem("hasSeenTour");
-    const isNewUser = location.state?.isNewUser;
-
     if (isNewUser && !jaViuTour) {
-      // Pequeno delay para o toast de boas-vindas aparecer primeiro
       const timer = setTimeout(() => setShowTour(true), 1200);
       return () => clearTimeout(timer);
     }

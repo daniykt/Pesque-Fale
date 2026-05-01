@@ -1,3 +1,4 @@
+// src/components/onboardingTour/OnboardingTour.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import './OnboardingTour.css';
 
@@ -28,19 +29,19 @@ const STEPS = [
     posicao: 'direita',
   },
   {
-    id: 'notificacoes',
-    selector: 'a[href="/notificacao"]',
-    titulo: 'Notificações 🔔',
-    descricao:
-      'Fique por dentro das novidades! Veja quando alguém curtir ou comentar nas suas publicações.',
-    posicao: 'direita',
-  },
-  {
     id: 'chat',
     selector: 'a[href="/chat"]',
     titulo: 'Chat 💬',
     descricao:
       'Converse diretamente com outros pescadores! Troque dicas, combine pescarias e faça novas amizades.',
+    posicao: 'direita',
+  },
+  {
+    id: 'notificacoes',
+    selector: 'a[href="/notificacao"]',
+    titulo: 'Notificações 🔔',
+    descricao:
+      'Fique por dentro das novidades! Veja quando alguém curtir ou comentar nas suas publicações.',
     posicao: 'direita',
   },
   {
@@ -138,13 +139,13 @@ export default function OnboardingTour({ onFinalizar }) {
     <>
       {/* Overlay com buraco recortado no elemento destacado */}
       <div className="tour-overlay" onClick={(e) => e.stopPropagation()}>
-        {rect && (
-          <svg className="tour-svg" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <mask id="tour-mask">
-                {/* Fundo branco = área escurecida */}
-                <rect width="100%" height="100%" fill="white" />
-                {/* Buraco arredondado = área iluminada */}
+        <svg className="tour-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <mask id="tour-mask">
+              {/* Fundo branco = área escurecida */}
+              <rect width="100%" height="100%" fill="white" />
+              {/* Buraco só aparece quando há elemento destacado */}
+              {rect && (
                 <rect
                   x={spotX}
                   y={spotY}
@@ -154,15 +155,18 @@ export default function OnboardingTour({ onFinalizar }) {
                   ry="12"
                   fill="black"
                 />
-              </mask>
-            </defs>
-            <rect
-              width="100%"
-              height="100%"
-              fill="rgba(0,0,0,0.6)"
-              mask="url(#tour-mask)"
-            />
-            {/* Borda pulsante ao redor do elemento */}
+              )}
+            </mask>
+          </defs>
+          {/* Fundo escuro sempre presente */}
+          <rect
+            width="100%"
+            height="100%"
+            fill="rgba(0,0,0,0.6)"
+            mask="url(#tour-mask)"
+          />
+          {/* Borda pulsante só quando há elemento destacado */}
+          {rect && (
             <rect
               x={spotX}
               y={spotY}
@@ -175,8 +179,8 @@ export default function OnboardingTour({ onFinalizar }) {
               strokeWidth="2"
               className="tour-spotlight-border"
             />
-          </svg>
-        )}
+          )}
+        </svg>
       </div>
 
       {/* Tooltip */}
