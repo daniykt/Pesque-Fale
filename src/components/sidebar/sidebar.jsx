@@ -211,16 +211,17 @@ const isActive = (path) => location.pathname.startsWith(path);
           {/* 👇 Botão agora abre o card de confirmação */}
           <button
             className="nav-item logout-btn"
+            data-tour="logout"
             onClick={() => {
-              setIsMenuOpen(false);      // Fecha o menu mobile se estiver aberto
-              setMostrarConfirmacao(true); // Abre o card de confirmação
+              setIsMenuOpen(false);      
+              setMostrarConfirmacao(true); 
             }}
           >
             <span className="material-symbols-outlined">logout</span>
             <span className="nav-text">Sair</span>
           </button>
 
-          <button className="theme-btn" onClick={toggleTheme}>
+          <button className="theme-btn" data-tour="theme" onClick={toggleTheme}>
             <span className="material-symbols-outlined">
               {isDarkMode ? 'light_mode' : 'dark_mode'}
             </span>

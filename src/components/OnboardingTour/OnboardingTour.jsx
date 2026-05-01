@@ -131,69 +131,91 @@ useEffect(() => {
   };
 }, []);
 
-  useEffect(() => {
-    const isCentro = !rect || step.posicao === 'centro';
+useEffect(() => {
+  const isCentro = !rect || step.posicao === 'centro';
 
-    if (isCentro) {
-      setTooltipMode('centro');
-      setTooltipStyle({});
-      setArrowClass('tour-arrow--esquerda');
-      return;
+  if (isCentro) {
+    setTooltipMode('centro');
+    setTooltipStyle({});
+    setArrowClass('tour-arrow--esquerda');
+    return;
+  }
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const GAP = 16;
+  const TOOLTIP_H_EST = 350; // altura estimada do tooltip
+
+  const targetCenterY = rect.top + rect.height / 2;
+  const targetCenterX = rect.left + rect.width / 2;
+
+  // Verifica se cabe na lateral direita (preferencial)
+  const fitsRight = rect.right + GAP + TOOLTIP_W <= vw - 16;
+  const fitsLeft = rect.left - GAP - TOOLTIP_W >= 16;
+
+  let side = null; // 'right' | 'left'
+  if (fitsRight) side = 'right';
+  else if (fitsLeft) side = 'left';
+
+  // Se couber na lateral, tentamos alinhar verticalmente
+  if (side) {
+    // Altura ideal: centrado no alvo
+    let idealTop = targetCenterY - TOOLTIP_H_EST / 2;
+    let bottomLimit = vh - 16;
+    let topLimit = 16;
+
+    // Ajusta para não cortar em cima nem embaixo
+    if (idealTop < topLimit) {
+      idealTop = topLimit;
+    } else if (idealTop + TOOLTIP_H_EST > bottomLimit) {
+      // Empurra para cima de modo que a base do tooltip fique no bottomLimit
+      idealTop = bottomLimit - TOOLTIP_H_EST;
+      // Garante não subir além do topo
+      if (idealTop < topLimit) idealTop = topLimit;
     }
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const left = side === 'right'
+      ? rect.right + GAP
+      : rect.left - TOOLTIP_W - GAP;
 
-    const centerY = clamp(rect.top + rect.height / 2, 24, vh - 24);
+    // Calcula a posição vertical da seta em relação ao topo do tooltip
+    // Queremos que a seta fique na altura do alvo (targetCenterY) dentro do tooltip
+    const arrowTopOffset = targetCenterY - idealTop;
+    // Limita a seta dentro do tooltip (mínimo 20px, máximo tooltipHeight - 20px)
+    const arrowTopClamped = Math.min(Math.max(arrowTopOffset, 20), TOOLTIP_H_EST - 20);
 
-    const prefersRight = step.posicao !== 'esquerda';
-    const fitsRight = rect.right + GAP + TOOLTIP_W <= vw - 16;
-    const fitsLeft = rect.left - GAP - TOOLTIP_W >= 16;
+    setTooltipMode('lateral');
+    setTooltipStyle({
+      position: 'fixed',
+      top: `${idealTop}px`,
+      left: `${left}px`,
+      width: `${TOOLTIP_W}px`,
+      maxHeight: `${vh - 32}px`,
+      overflowY: 'auto',
+      '--arrow-top': `${arrowTopClamped}px` // variável CSS para a seta
+    });
+    setArrowClass(side === 'right' ? 'tour-arrow--esquerda' : 'tour-arrow--direita');
+    return;
+  }
 
-    let mode = 'lateral';
-    let style = {};
-    let arrow = 'tour-arrow--esquerda';
+  // Fallback: não cabe na lateral → usar modo inferior (abaixo do alvo)
+  const left = clamp(
+    targetCenterX - TOOLTIP_W / 2,
+    16,
+    vw - TOOLTIP_W - 16
+  );
 
-    if (prefersRight && fitsRight) {
-      style = {
-        position: 'fixed',
-        top: `${centerY}px`,
-        left: `${rect.right + GAP}px`,
-        transform: 'translateY(-50%)',
-        width: `${TOOLTIP_W}px`,
-      };
-      arrow = 'tour-arrow--esquerda';
-    } else if (fitsLeft) {
-      style = {
-        position: 'fixed',
-        top: `${centerY}px`,
-        left: `${rect.left - TOOLTIP_W - GAP}px`,
-        transform: 'translateY(-50%)',
-        width: `${TOOLTIP_W}px`,
-      };
-      arrow = 'tour-arrow--direita';
-    } else {
-      mode = 'inferior';
-      const left = clamp(
-        rect.left + rect.width / 2 - TOOLTIP_W / 2,
-        16,
-        vw - TOOLTIP_W - 16
-      );
-
-      style = {
-        position: 'fixed',
-        top: `${Math.min(rect.bottom + GAP, vh - 16)}px`,
-        left: `${left}px`,
-        transform: 'none',
-        width: `${TOOLTIP_W}px`,
-      };
-      arrow = 'tour-arrow--cima';
-    }
-
-    setTooltipMode(mode);
-    setTooltipStyle(style);
-    setArrowClass(arrow);
-  }, [rect, step.posicao]);
+  setTooltipMode('inferior');
+  setTooltipStyle({
+    position: 'fixed',
+    top: `${Math.min(rect.bottom + GAP, vh - 16)}px`,
+    left: `${left}px`,
+    width: `${TOOLTIP_W}px`,
+    maxHeight: `${vh - 32}px`,
+    overflowY: 'auto'
+  });
+  setArrowClass('tour-arrow--cima');
+}, [rect, step.posicao]);
 
   const avancar = () => {
     if (isUltimo) {
