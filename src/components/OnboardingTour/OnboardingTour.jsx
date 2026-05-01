@@ -1,12 +1,10 @@
-// src/components/onboardingTour/OnboardingTour.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useId } from 'react';
 import './OnboardingTour.css';
 
-// Cada passo aponta para um seletor CSS já existente na sidebar/home
 const STEPS = [
   {
     id: 'boas-vindas',
-    selector: null, // passo inicial sem elemento destacado
+    selector: null,
     titulo: 'Bem-vindo ao Pesque & Fale! 🎣',
     descricao:
       'Que bom ter você aqui! Deixa a gente te mostrar rapidinho as principais seções da plataforma.',
@@ -62,7 +60,6 @@ const STEPS = [
   },
 ];
 
-// Retorna o bounding rect de um seletor ou null
 const getRect = (selector) => {
   if (!selector) return null;
   const el = document.querySelector(selector);
@@ -70,19 +67,26 @@ const getRect = (selector) => {
   return el.getBoundingClientRect();
 };
 
-// Padding ao redor do elemento destacado
 const PAD = 8;
+const TOOLTIP_W = 340;
+const GAP = 16;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function OnboardingTour({ onFinalizar }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState(null);
   const [tooltipStyle, setTooltipStyle] = useState({});
+  const [arrowClass, setArrowClass] = useState('tour-arrow--esquerda');
+  const [tooltipMode, setTooltipMode] = useState('lateral');
+  const maskId = useId();
 
   const step = STEPS[stepIndex];
   const isUltimo = stepIndex === STEPS.length - 1;
   const isPrimeiro = stepIndex === 0;
+  const isBoasVindas = stepIndex === 0;
+  const progresso = ((stepIndex + 1) / STEPS.length) * 100;
 
-  // Atualiza o rect do elemento destacado
   const atualizarRect = useCallback(() => {
     const r = getRect(step.selector);
     setRect(r);
@@ -91,35 +95,93 @@ export default function OnboardingTour({ onFinalizar }) {
   useEffect(() => {
     atualizarRect();
     window.addEventListener('resize', atualizarRect);
-    return () => window.removeEventListener('resize', atualizarRect);
-  }, [atualizarRect]);
+    window.addEventListener('scroll', atualizarRect, true);
 
-  // Posiciona o tooltip relativo ao elemento destacado
+    return () => {
+      window.removeEventListener('resize', atualizarRect);
+      window.removeEventListener('scroll', atualizarRect, true);
+    };
+  }, [atualizarRect]);
+useEffect(() => {
+  const originalBody = document.body.style.overflow;
+  const originalHtml = document.documentElement.style.overflow;
+
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+
+  return () => {
+    document.body.style.overflow = originalBody;
+    document.documentElement.style.overflow = originalHtml;
+  };
+}, []);
+
   useEffect(() => {
-    if (!rect || step.posicao === 'centro') {
+    const isCentro = !rect || step.posicao === 'centro';
+
+    if (isCentro) {
+      setTooltipMode('centro');
       setTooltipStyle({});
+      setArrowClass('tour-arrow--esquerda');
       return;
     }
 
-    const TOOLTIP_W = 300;
-    const GAP = 16;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
 
-    // Posiciona à direita do elemento (sidebar fica à esquerda)
-    const top = rect.top + rect.height / 2;
-    const left = rect.right + GAP;
+    const centerY = clamp(rect.top + rect.height / 2, 24, vh - 24);
 
-    setTooltipStyle({
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-      transform: 'translateY(-50%)',
-      width: `${TOOLTIP_W}px`,
-    });
+    const prefersRight = step.posicao !== 'esquerda';
+    const fitsRight = rect.right + GAP + TOOLTIP_W <= vw - 16;
+    const fitsLeft = rect.left - GAP - TOOLTIP_W >= 16;
+
+    let mode = 'lateral';
+    let style = {};
+    let arrow = 'tour-arrow--esquerda';
+
+    if (prefersRight && fitsRight) {
+      style = {
+        position: 'fixed',
+        top: `${centerY}px`,
+        left: `${rect.right + GAP}px`,
+        transform: 'translateY(-50%)',
+        width: `${TOOLTIP_W}px`,
+      };
+      arrow = 'tour-arrow--esquerda';
+    } else if (fitsLeft) {
+      style = {
+        position: 'fixed',
+        top: `${centerY}px`,
+        left: `${rect.left - TOOLTIP_W - GAP}px`,
+        transform: 'translateY(-50%)',
+        width: `${TOOLTIP_W}px`,
+      };
+      arrow = 'tour-arrow--direita';
+    } else {
+      mode = 'inferior';
+      const left = clamp(
+        rect.left + rect.width / 2 - TOOLTIP_W / 2,
+        16,
+        vw - TOOLTIP_W - 16
+      );
+
+      style = {
+        position: 'fixed',
+        top: `${Math.min(rect.bottom + GAP, vh - 16)}px`,
+        left: `${left}px`,
+        transform: 'none',
+        width: `${TOOLTIP_W}px`,
+      };
+      arrow = 'tour-arrow--cima';
+    }
+
+    setTooltipMode(mode);
+    setTooltipStyle(style);
+    setArrowClass(arrow);
   }, [rect, step.posicao]);
 
   const avancar = () => {
     if (isUltimo) {
-      onFinalizar();
+      onFinalizar?.();
     } else {
       setStepIndex((i) => i + 1);
     }
@@ -129,7 +191,6 @@ export default function OnboardingTour({ onFinalizar }) {
     if (!isPrimeiro) setStepIndex((i) => i - 1);
   };
 
-  // Coordenadas do spotlight
   const spotX = rect ? rect.left - PAD : 0;
   const spotY = rect ? rect.top - PAD : 0;
   const spotW = rect ? rect.width + PAD * 2 : 0;
@@ -137,43 +198,40 @@ export default function OnboardingTour({ onFinalizar }) {
 
   return (
     <>
-      {/* Overlay com buraco recortado no elemento destacado */}
-      <div className="tour-overlay" onClick={(e) => e.stopPropagation()}>
+      <div className="tour-overlay" aria-hidden="true">
         <svg className="tour-svg" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <mask id="tour-mask">
-              {/* Fundo branco = área escurecida */}
+            <mask id={maskId}>
               <rect width="100%" height="100%" fill="white" />
-              {/* Buraco só aparece quando há elemento destacado */}
               {rect && (
                 <rect
                   x={spotX}
                   y={spotY}
                   width={spotW}
                   height={spotH}
-                  rx="12"
-                  ry="12"
+                  rx="16"
+                  ry="16"
                   fill="black"
                 />
               )}
             </mask>
           </defs>
-          {/* Fundo escuro sempre presente */}
+
           <rect
             width="100%"
             height="100%"
-            fill="rgba(0,0,0,0.6)"
-            mask="url(#tour-mask)"
+            fill="rgba(2, 6, 23, 0.62)"
+            mask={`url(#${maskId})`}
           />
-          {/* Borda pulsante só quando há elemento destacado */}
+
           {rect && (
             <rect
               x={spotX}
               y={spotY}
               width={spotW}
               height={spotH}
-              rx="12"
-              ry="12"
+              rx="16"
+              ry="16"
               fill="none"
               stroke="#7BAAFF"
               strokeWidth="2"
@@ -183,24 +241,27 @@ export default function OnboardingTour({ onFinalizar }) {
         </svg>
       </div>
 
-      {/* Tooltip */}
       <div
-        className={`tour-tooltip ${step.posicao === 'centro' ? 'tour-tooltip--centro' : ''}`}
+        className={`tour-tooltip ${
+          step.posicao === 'centro' ? 'tour-tooltip--centro' : ''
+        } ${tooltipMode === 'inferior' ? 'tour-tooltip--inferior' : ''}`}
         style={step.posicao !== 'centro' ? tooltipStyle : undefined}
+        role="dialog"
+        aria-modal="true"
+        aria-live="polite"
       >
-        {/* Setinha lateral quando não é centro */}
-        {step.posicao === 'direita' && <div className="tour-arrow tour-arrow--esquerda" />}
+        {step.posicao !== 'centro' && (
+          <div className={`tour-arrow ${arrowClass}`} />
+        )}
 
-        <div className="tour-tooltip-header">
-          <div className="tour-steps-dots">
-            {STEPS.map((_, i) => (
-              <span
-                key={i}
-                className={`tour-dot ${i === stepIndex ? 'tour-dot--ativo' : ''}`}
-              />
-            ))}
+        <div className="tour-tooltip-top">
+          <div className="tour-chip">
+            <span className="tour-chip-dot" />
+            Tour guiado
           </div>
+
           <button
+            type="button"
             className="tour-btn-pular"
             onClick={onFinalizar}
             aria-label="Pular tour"
@@ -209,23 +270,57 @@ export default function OnboardingTour({ onFinalizar }) {
           </button>
         </div>
 
+        {!isBoasVindas && (
+          <div className="tour-progress">
+            <div className="tour-progress-track">
+              <div className="tour-progress-fill" style={{ width: `${progresso}%` }} />
+            </div>
+            <div className="tour-progress-meta">
+              <span className="tour-contador">
+                Passo {stepIndex + 1} de {STEPS.length}
+              </span>
+              <span className="tour-progress-percent">{Math.round(progresso)}%</span>
+            </div>
+          </div>
+        )}
+
         <h3 className="tour-titulo">{step.titulo}</h3>
         <p className="tour-descricao">{step.descricao}</p>
 
-        <div className="tour-tooltip-footer">
-          <span className="tour-contador">
-            {stepIndex + 1} de {STEPS.length}
-          </span>
-          <div className="tour-btns">
-            {!isPrimeiro && (
-              <button className="tour-btn tour-btn--secundario" onClick={voltar}>
-                Anterior
-              </button>
-            )}
-            <button className="tour-btn tour-btn--primario" onClick={avancar}>
-              {isUltimo ? 'Começar! 🎣' : 'Próximo'}
-            </button>
+        {!isBoasVindas && (
+          <div className="tour-steps-dots" aria-hidden="true">
+            {STEPS.map((_, i) => (
+              <span
+                key={i}
+                className={`tour-dot ${i === stepIndex ? 'tour-dot--ativo' : ''}`}
+              />
+            ))}
           </div>
+        )}
+
+        <div
+          className={`tour-tooltip-footer ${
+            isBoasVindas ? 'tour-tooltip-footer--single' : ''
+          }`}
+        >
+          {!isBoasVindas && (
+            <button
+              type="button"
+              className="tour-btn tour-btn--secundario"
+              onClick={voltar}
+              disabled={isPrimeiro}
+            >
+              Anterior
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="tour-btn tour-btn--primario"
+            onClick={avancar}
+          >
+            {isBoasVindas ? 'Vamos lá' : isUltimo ? 'Começar! 🎣' : 'Próximo'}
+          </button>
         </div>
       </div>
     </>
