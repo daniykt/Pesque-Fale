@@ -53,13 +53,25 @@ export const registerWithEmail = async (email, password, nome) => {
 export const verificarOnboarding = async (uid) => {
   try {
     const docSnap = await getDoc(doc(db, "usuarios", uid));
-    if (docSnap.exists()) {
-      return docSnap.data().onboardingConcluido === true;
+
+    // ⚠️ Se não existe documento → NÃO força onboarding
+    if (!docSnap.exists()) return true;
+
+    const data = docSnap.data();
+
+    // ✅ Se o campo existe, respeita ele
+    if (typeof data.onboardingConcluido === "boolean") {
+      return data.onboardingConcluido;
     }
-    return false;
+
+    // 🧠 Conta antiga (sem campo) → considera como concluído
+    return true;
+
   } catch (error) {
     console.error("Erro ao verificar onboarding:", error);
-    return false;
+
+    // Segurança: nunca travar usuário no onboarding por erro
+    return true;
   }
 };
 
