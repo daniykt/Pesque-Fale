@@ -1,0 +1,250 @@
+/* OnboardingTour.css */
+
+/* ─── Overlay ──────────────────────────────────── */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: all;
+}
+
+.tour-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Borda pulsante no spotlight */
+.tour-spotlight-border {
+  animation: tourPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tourPulse {
+  0%, 100% { opacity: 1; stroke-width: 2; }
+  50%       { opacity: 0.4; stroke-width: 3; }
+}
+
+/* ─── Tooltip ───────────────────────────────────── */
+.tour-tooltip {
+  position: fixed;
+  z-index: 9100;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 300px;
+  animation: tourFadeIn 0.25s ease;
+}
+
+/* Centralizado (passo de boas-vindas) */
+.tour-tooltip--centro {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 360px;
+}
+
+@keyframes tourFadeIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-50%); }
+  to   { opacity: 1; transform: scale(1) translateY(-50%); }
+}
+
+.tour-tooltip--centro {
+  animation: tourFadeInCentro 0.25s ease forwards;
+}
+
+@keyframes tourFadeInCentro {
+  from { opacity: 0; transform: translate(-50%, -48%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* ─── Setinha lateral ───────────────────────────── */
+.tour-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.tour-arrow--esquerda {
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid #ffffff;
+  filter: drop-shadow(-2px 0 2px rgba(0,0,0,0.08));
+}
+
+/* ─── Header do tooltip ─────────────────────────── */
+.tour-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.tour-steps-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d0d8e8;
+  transition: all 0.2s ease;
+}
+
+.tour-dot--ativo {
+  background: #062A6C;
+  width: 18px;
+  border-radius: 4px;
+}
+
+.tour-btn-pular {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.tour-btn-pular:hover {
+  color: #475569;
+}
+
+/* ─── Conteúdo ──────────────────────────────────── */
+.tour-titulo {
+  font-family: 'Anton', sans-serif;
+  font-size: 18px;
+  color: #062A6C;
+  margin: 0 0 8px;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.tour-descricao {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ─── Footer do tooltip ─────────────────────────── */
+.tour-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.tour-contador {
+  font-size: 11px;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.tour-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-btn {
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.tour-btn--primario {
+  background: #062A6C;
+  color: #ffffff;
+}
+
+.tour-btn--primario:hover {
+  background: #0A3A8C;
+  transform: translateY(-1px);
+}
+
+.tour-btn--secundario {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.tour-btn--secundario:hover {
+  background: #e2e8f0;
+}
+
+/* ─── Dark mode ─────────────────────────────────── */
+body.dark-mode .tour-tooltip {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .tour-arrow--esquerda {
+  border-right-color: #1e293b;
+}
+
+body.dark-mode .tour-titulo {
+  color: #7BAAFF;
+}
+
+body.dark-mode .tour-descricao {
+  color: #94a3b8;
+}
+
+body.dark-mode .tour-tooltip-footer {
+  border-top-color: #334155;
+}
+
+body.dark-mode .tour-btn--secundario {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+body.dark-mode .tour-btn--secundario:hover {
+  background: #475569;
+}
+
+body.dark-mode .tour-dot {
+  background: #475569;
+}
+
+body.dark-mode .tour-dot--ativo {
+  background: #7BAAFF;
+}
+
+/* ─── Mobile ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* Na mobile a sidebar vira header no topo,
+     então posicionamos o tooltip abaixo do header */
+  .tour-tooltip {
+    position: fixed !important;
+    top: 80px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 360px;
+  }
+
+  .tour-tooltip--centro {
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .tour-arrow {
+    display: none;
+  }
+}

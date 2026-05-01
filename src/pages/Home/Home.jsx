@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./home.css";
 import Layout from "../../components/sidebar/layout";
+import OnboardingTour from "../../components/OnboardingTour/OnboardingTour";
 
 import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";
 import imgEvento1 from "../../assets/image/eventos/evento1.jpg";
@@ -502,6 +503,7 @@ const Home = () => {
           </div>
         </main>
       </div>
+      {showTour && <OnboardingTour onFinalizar={finalizarTour} />}
     </Layout>
   );
 };
