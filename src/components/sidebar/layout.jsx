@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../sidebar/sidebar';
 import BottomNav from '../bottomNav/BottomNav';
+import OnboardingTour from '../OnboardingTour/OnboardingTour'; // ajuste o caminho
 import './layout.css';
 
 export default function Layout({ children }) {
   const [notifCount, setNotifCount] = useState(0);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('notificacoes');
@@ -22,6 +24,19 @@ export default function Layout({ children }) {
     return () => window.removeEventListener('notificacoesAtualizadas', handleNotifUpdate);
   }, []);
 
+  // Verifica se o tour já foi concluído antes
+  useEffect(() => {
+    const tourConcluido = localStorage.getItem('tourConcluido');
+    if (!tourConcluido) {
+      setShowTour(true);
+    }
+  }, []);
+
+  const finalizarTour = () => {
+    localStorage.setItem('tourConcluido', 'true');
+    setShowTour(false);
+  };
+
   return (
     <>
       <Sidebar />
@@ -29,6 +44,9 @@ export default function Layout({ children }) {
         {children}
       </div>
       <BottomNav notifCount={notifCount} />
+
+      {/* Tour global */}
+      {showTour && <OnboardingTour onFinalizar={finalizarTour} />}
     </>
   );
 }
