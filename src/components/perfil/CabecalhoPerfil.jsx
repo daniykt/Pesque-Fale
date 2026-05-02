@@ -1,3 +1,4 @@
+// src/components/perfil/CabecalhoPerfil.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Cabecalhoperfil.css';
@@ -86,14 +87,16 @@ export default function CabecalhoPerfil({
           </div>
         )}
 
-        {/* Botão 3 pontos — só aparece no mobile via CSS */}
-        <button
-          className="pmenu-trigger"
-          onClick={(e) => { e.stopPropagation(); setMenuAberto(true); }}
-          aria-label="Abrir menu de opções"
-        >
-          <span className="material-symbols-outlined">more_horiz</span>
-        </button>
+        {/* Botão 3 pontos — só aparece no próprio perfil, no mobile */}
+        {isOwnProfile && (
+          <button
+            className="pmenu-trigger"
+            onClick={(e) => { e.stopPropagation(); setMenuAberto(true); }}
+            aria-label="Abrir menu de opções"
+          >
+            <span className="material-symbols-outlined">more_horiz</span>
+          </button>
+        )}
       </div>
 
       {/* LINHA INFERIOR: foto + botões desktop */}
