@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../sidebar/sidebar';
 import BottomNav from '../bottomNav/BottomNav';
-import OnboardingTour from '../OnboardingTour/OnboardingTour'; // ajuste o caminho
+import OnboardingTour from '../OnboardingTour/OnboardingTour';
 import './layout.css';
 
 export default function Layout({ children }) {
