@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./home.css";
 import Layout from "../../components/sidebar/layout";
-import OnboardingTour from "../../components/OnboardingTour/OnboardingTour";
 
 import imgRecantoVerde from "../../assets/image/pesquisa/recantoverde.jpg";
 import imgEvento1 from "../../assets/image/eventos/evento1.jpg";
@@ -19,7 +18,6 @@ const Home = () => {
   const location = useLocation();
 
   const [darkMode, setDarkMode] = useState(false);
-  const [showTour, setShowTour] = useState(false);
   const [postsState, setPostsState] = useState([
     {
       autor: "Henrique",
@@ -63,19 +61,16 @@ const Home = () => {
   ]);
   const [comentariosInput, setComentariosInput] = useState({});
 
+  // Quando Home recebe showTour via state, salva no localStorage para persistir através de navegações
   useEffect(() => {
-  const shouldShowTour = location.state?.showTour;
-
-  if (shouldShowTour) {
-    setShowTour(true);
-    window.history.replaceState({}, document.title);
-  }
-}, [location.state]);
-
-  // Finaliza o tour e salva no localStorage para não exibir novamente
-const finalizarTour = () => {
-  setShowTour(false);
-};
+    const shouldShowTour = location.state?.showTour;
+    if (shouldShowTour) {
+      localStorage.setItem('tourAtivo', 'true');
+      localStorage.removeItem('tourConcluido');
+      // Limpar o state da URL para evitar recarregar o tour
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Dark mode
   useEffect(() => {
@@ -450,7 +445,6 @@ const finalizarTour = () => {
           </div>
         </main>
       </div>
-      {showTour && <OnboardingTour onFinalizar={finalizarTour} />}
     </Layout>
   );
 };

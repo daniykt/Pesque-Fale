@@ -32,6 +32,16 @@ export default function ProfileMenu({
     }
   };
 
+  const reiniciarTour = () => {
+  localStorage.setItem('tourAtivo', 'true');
+  localStorage.removeItem('tourConcluido');
+  localStorage.removeItem('tourCurrentStep');
+  // Dispara o evento storage manualmente para o Layout detectar na mesma aba
+  window.dispatchEvent(new Event('storage'));
+  onClose();
+  navigate('/home');
+};
+
   return (
     <>
       {/* Overlay escurecido */}
@@ -81,6 +91,21 @@ export default function ProfileMenu({
           </Link>
 
           <div className="pmenu-divider" />
+
+          <div className="pmenu-divider" />
+
+{/* Reiniciar Tour */}
+<button className="pmenu-item" onClick={reiniciarTour}>
+  <span className="pmenu-icon pmenu-icon--green">
+    <span className="material-symbols-outlined">restart_alt</span>
+  </span>
+  <span className="pmenu-item-text">Reiniciar Tour</span>
+  <span className="material-symbols-outlined pmenu-chevron">chevron_right</span>
+</button>
+
+<div className="pmenu-divider" />
+
+{/* Sair — já existia */}
 
           {/* Sair */}
           <button

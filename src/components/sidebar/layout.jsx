@@ -6,7 +6,12 @@ import './layout.css';
 
 export default function Layout({ children }) {
   const [notifCount, setNotifCount] = useState(0);
-  const [showTour, setShowTour] = useState(false);
+  // Inicializa showTour diretamente do localStorage para evitar flicker
+  const [showTour, setShowTour] = useState(() => {
+    const tourAtivo = localStorage.getItem('tourAtivo');
+    const tourConcluido = localStorage.getItem('tourConcluido');
+    return tourAtivo === 'true' && tourConcluido !== 'true';
+  });
 
   useEffect(() => {
     const stored = localStorage.getItem('notificacoes');
@@ -24,16 +29,31 @@ export default function Layout({ children }) {
     return () => window.removeEventListener('notificacoesAtualizadas', handleNotifUpdate);
   }, []);
 
-  // Verifica se o tour já foi concluído antes
+  // Monitora o estado do tour através do localStorage
   useEffect(() => {
-    const tourConcluido = localStorage.getItem('tourConcluido');
-    if (!tourConcluido) {
-      setShowTour(true);
-    }
+    const checkTourStatus = () => {
+      const tourAtivo = localStorage.getItem('tourAtivo');
+      const tourConcluido = localStorage.getItem('tourConcluido');
+      
+      if (tourAtivo === 'true' && tourConcluido !== 'true') {
+        setShowTour(true);
+      } else {
+        setShowTour(false);
+      }
+    };
+
+    checkTourStatus();
+    
+    // Monitora mudanças no localStorage
+    window.addEventListener('storage', checkTourStatus);
+    
+    return () => window.removeEventListener('storage', checkTourStatus);
   }, []);
 
   const finalizarTour = () => {
     localStorage.setItem('tourConcluido', 'true');
+    localStorage.removeItem('tourAtivo');
+    localStorage.removeItem('tourCurrentStep');
     setShowTour(false);
   };
 
@@ -45,7 +65,7 @@ export default function Layout({ children }) {
       </div>
       <BottomNav notifCount={notifCount} />
 
-      {/* Tour global */}
+      {/* Tour global que persiste através de navegações */}
       {showTour && <OnboardingTour onFinalizar={finalizarTour} />}
     </>
   );

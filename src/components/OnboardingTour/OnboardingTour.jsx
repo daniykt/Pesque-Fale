@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useId } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useId } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './OnboardingTour.css';
 
@@ -143,20 +143,38 @@ const getRect = (selector) => {
   return el.getBoundingClientRect();
 };
 
+const getRectWithRetry = async (selector, maxAttempts = 10, delayMs = 500) => {
+  if (!selector) return null;
+  for (let i = 0; i < maxAttempts; i++) {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.scrollIntoView({ behavior: 'auto', block: 'center' });
+      return el.getBoundingClientRect();
+    }
+    if (i < maxAttempts - 1) await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  return null;
+};
+
 const PAD = 8;
 const TOOLTIP_W = 340;
 const GAP = 16;
-
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function OnboardingTour({ onFinalizar }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(() => {
+    const saved = localStorage.getItem('tourCurrentStep');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const [rect, setRect] = useState(null);
   const [tooltipStyle, setTooltipStyle] = useState({});
   const [arrowClass, setArrowClass] = useState('tour-arrow--esquerda');
   const [tooltipMode, setTooltipMode] = useState('lateral');
+  const [isWaitingForTarget, setIsWaitingForTarget] = useState(false);
+  const [isVisible, setIsVisible] = useState(false); // controle de fade
   const maskId = useId();
+  const isNavigatingRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -167,17 +185,62 @@ export default function OnboardingTour({ onFinalizar }) {
   const isBoasVindas = stepIndex === 0;
   const progresso = ((stepIndex + 1) / STEPS.length) * 100;
 
-  // Redireciona para /perfil quando a etapa do menu for alcançada no mobile
+  // Salva o step atual
+  useEffect(() => {
+    localStorage.setItem('tourCurrentStep', String(stepIndex));
+  }, [stepIndex]);
+
+  // Navega para /perfil se necessário (menu-perfil)
   useEffect(() => {
     if (isMobile && step.id === 'menu-perfil' && location.pathname !== '/perfil') {
+      setIsWaitingForTarget(true);
+      setIsVisible(false);
+      isNavigatingRef.current = true;
       navigate('/perfil');
+    } else if (step.id !== 'menu-perfil') {
+      setIsWaitingForTarget(false);
+      isNavigatingRef.current = false;
     }
   }, [isMobile, step.id, navigate, location.pathname]);
 
+  // Aguarda o elemento .pmenu-trigger após navegar para /perfil
+  useEffect(() => {
+    if (step.id === 'menu-perfil' && location.pathname === '/perfil') {
+      getRectWithRetry(step.selector, 15, 300).then(r => {
+        setRect(r);
+        setIsWaitingForTarget(false);
+        isNavigatingRef.current = false;
+        // Exibe o tooltip com fade
+        setTimeout(() => setIsVisible(true), 50);
+      });
+    }
+  }, [step.id, step.selector, location.pathname]);
+
+  // Para steps comuns (não menu-perfil), atualiza o rect e controla visibilidade
+  useEffect(() => {
+    if (step.id === 'menu-perfil') return;
+
+    const updateRect = async () => {
+      let r;
+      if (step.selector) {
+        r = await getRectWithRetry(step.selector, 8, 250);
+        if (!r) console.warn(`[Tour] Elemento não encontrado: ${step.selector}`);
+      } else {
+        r = null;
+      }
+      setRect(r);
+      // Pequeno delay para o fade entrar suavemente
+      setTimeout(() => setIsVisible(true), 30);
+    };
+    updateRect();
+  }, [step.id, step.selector, location.pathname]);
+
+  // Reage a resize/scroll
   const atualizarRect = useCallback(() => {
+    if (isNavigatingRef.current || step.id === 'menu-perfil') return;
     const r = getRect(step.selector);
     setRect(r);
-  }, [step.selector]);
+  }, [step.selector, step.id]);
 
   useEffect(() => {
     atualizarRect();
@@ -189,6 +252,7 @@ export default function OnboardingTour({ onFinalizar }) {
     };
   }, [atualizarRect]);
 
+  // Trava scroll da página
   useEffect(() => {
     const originalBody = document.body.style.overflow;
     const originalHtml = document.documentElement.style.overflow;
@@ -200,8 +264,18 @@ export default function OnboardingTour({ onFinalizar }) {
     };
   }, []);
 
+  // Calcula o estilo do tooltip
   useEffect(() => {
+    if (isWaitingForTarget) {
+      setTooltipStyle({ display: 'none' });
+      return;
+    }
+
     const isCentro = !rect || step.posicao === 'centro';
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const TOOLTIP_H_EST = 350;
+
     if (isCentro) {
       setTooltipMode('centro');
       setTooltipStyle({});
@@ -209,24 +283,17 @@ export default function OnboardingTour({ onFinalizar }) {
       return;
     }
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const TOOLTIP_H_EST = 350;
     const targetCenterY = rect.top + rect.height / 2;
     const targetCenterX = rect.left + rect.width / 2;
 
-    // Posição "baixo" (abaixo do elemento) – usada no menu de 3 pontos
     if (step.posicao === 'baixo') {
       const top = rect.bottom + GAP;
       const left = targetCenterX - TOOLTIP_W / 2;
-      const clampedLeft = clamp(left, 16, vw - TOOLTIP_W - 16);
-      const clampedTop = clamp(top, 16, vh - TOOLTIP_H_EST - 16);
-
       setTooltipMode('inferior');
       setTooltipStyle({
         position: 'fixed',
-        top: `${clampedTop}px`,
-        left: `${clampedLeft}px`,
+        top: `${clamp(top, 16, vh - TOOLTIP_H_EST - 16)}px`,
+        left: `${clamp(left, 16, vw - TOOLTIP_W - 16)}px`,
         width: `${TOOLTIP_W}px`,
         maxHeight: `${vh - 32}px`,
         overflowY: 'auto',
@@ -235,18 +302,14 @@ export default function OnboardingTour({ onFinalizar }) {
       return;
     }
 
-    // Posição "cima" (acima do elemento) – usada nos ícones da BottomNav
     if (step.posicao === 'cima') {
       const top = rect.top - TOOLTIP_H_EST - GAP;
       const left = targetCenterX - TOOLTIP_W / 2;
-      const clampedLeft = clamp(left, 16, vw - TOOLTIP_W - 16);
-      const clampedTop = clamp(top, 16, vh - TOOLTIP_H_EST - 16);
-
       setTooltipMode('cima');
       setTooltipStyle({
         position: 'fixed',
-        top: `${clampedTop}px`,
-        left: `${clampedLeft}px`,
+        top: `${clamp(top, 16, vh - TOOLTIP_H_EST - 16)}px`,
+        left: `${clamp(left, 16, vw - TOOLTIP_W - 16)}px`,
         width: `${TOOLTIP_W}px`,
         maxHeight: `${vh - 32}px`,
         overflowY: 'auto',
@@ -255,23 +318,15 @@ export default function OnboardingTour({ onFinalizar }) {
       return;
     }
 
-    // Lateral (direita/esquerda)
+    // Lateral (esquerda/direita)
     const fitsRight = rect.right + GAP + TOOLTIP_W <= vw - 16;
     const fitsLeft = rect.left - GAP - TOOLTIP_W >= 16;
-
     if (fitsRight || fitsLeft) {
       let idealTop = targetCenterY - TOOLTIP_H_EST / 2;
-      const topLimit = 16;
-      const bottomLimit = vh - 16;
-      if (idealTop < topLimit) idealTop = topLimit;
-      if (idealTop + TOOLTIP_H_EST > bottomLimit) {
-        idealTop = bottomLimit - TOOLTIP_H_EST;
-        if (idealTop < topLimit) idealTop = topLimit;
-      }
+      idealTop = clamp(idealTop, 16, vh - TOOLTIP_H_EST - 16);
       const left = fitsRight ? rect.right + GAP : rect.left - TOOLTIP_W - GAP;
       const arrowTopOffset = targetCenterY - idealTop;
       const arrowTopClamped = clamp(arrowTopOffset, 20, TOOLTIP_H_EST - 20);
-
       setTooltipMode('lateral');
       setTooltipStyle({
         position: 'fixed',
@@ -286,30 +341,39 @@ export default function OnboardingTour({ onFinalizar }) {
       return;
     }
 
-    // Inferior (fallback)
-    const left = clamp(targetCenterX - TOOLTIP_W / 2, 16, vw - TOOLTIP_W - 16);
+    // Fallback – inferior
+    const leftFallback = clamp(targetCenterX - TOOLTIP_W / 2, 16, vw - TOOLTIP_W - 16);
     setTooltipMode('inferior');
     setTooltipStyle({
       position: 'fixed',
       top: `${Math.min(rect.bottom + GAP, vh - 16)}px`,
-      left: `${left}px`,
+      left: `${leftFallback}px`,
       width: `${TOOLTIP_W}px`,
       maxHeight: `${vh - 32}px`,
       overflowY: 'auto',
     });
     setArrowClass('tour-arrow--cima');
-  }, [rect, step.posicao]);
+  }, [rect, step.posicao, isWaitingForTarget]);
+
+  // Controla o fade ao trocar de step
+  useEffect(() => {
+    setIsVisible(false);
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, [stepIndex]);
 
   const avancar = () => {
     if (isUltimo) {
+      localStorage.removeItem('tourCurrentStep');
+      localStorage.removeItem('tourAtivo');
       onFinalizar?.();
     } else {
-      setStepIndex((i) => i + 1);
+      setStepIndex(i => i + 1);
     }
   };
 
   const voltar = () => {
-    if (!isPrimeiro) setStepIndex((i) => i - 1);
+    if (!isPrimeiro) setStepIndex(i => i - 1);
   };
 
   const spotX = rect ? rect.left - PAD : 0;
@@ -337,14 +401,12 @@ export default function OnboardingTour({ onFinalizar }) {
               )}
             </mask>
           </defs>
-
           <rect
             width="100%"
             height="100%"
             fill="rgba(2, 6, 23, 0.62)"
             mask={`url(#${maskId})`}
           />
-
           {rect && (
             <rect
               x={spotX}
@@ -367,13 +429,13 @@ export default function OnboardingTour({ onFinalizar }) {
           step.posicao === 'centro' ? 'tour-tooltip--centro' : ''
         } ${tooltipMode === 'inferior' ? 'tour-tooltip--inferior' : ''} ${
           tooltipMode === 'cima' ? 'tour-tooltip--cima' : ''
-        }`}
+        } ${isVisible ? 'tour-tooltip--visible' : ''}`}
         style={step.posicao !== 'centro' ? tooltipStyle : undefined}
         role="dialog"
         aria-modal="true"
         aria-live="polite"
       >
-        {step.posicao !== 'centro' && (
+        {step.posicao !== 'centro' && !isWaitingForTarget && (
           <div className={`tour-arrow ${arrowClass}`} />
         )}
 
