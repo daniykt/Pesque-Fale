@@ -144,33 +144,26 @@ useEffect(() => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const GAP = 16;
-  const TOOLTIP_H_EST = 350; // altura estimada do tooltip
+  const TOOLTIP_H_EST = 350;
 
   const targetCenterY = rect.top + rect.height / 2;
   const targetCenterX = rect.left + rect.width / 2;
 
-  // Verifica se cabe na lateral direita (preferencial)
   const fitsRight = rect.right + GAP + TOOLTIP_W <= vw - 16;
   const fitsLeft = rect.left - GAP - TOOLTIP_W >= 16;
 
-  let side = null; // 'right' | 'left'
+  let side = null;
   if (fitsRight) side = 'right';
   else if (fitsLeft) side = 'left';
 
-  // Se couber na lateral, tentamos alinhar verticalmente
   if (side) {
-    // Altura ideal: centrado no alvo
     let idealTop = targetCenterY - TOOLTIP_H_EST / 2;
-    let bottomLimit = vh - 16;
-    let topLimit = 16;
+    const topLimit = 16;
+    const bottomLimit = vh - 16;
 
-    // Ajusta para não cortar em cima nem embaixo
-    if (idealTop < topLimit) {
-      idealTop = topLimit;
-    } else if (idealTop + TOOLTIP_H_EST > bottomLimit) {
-      // Empurra para cima de modo que a base do tooltip fique no bottomLimit
+    if (idealTop < topLimit) idealTop = topLimit;
+    if (idealTop + TOOLTIP_H_EST > bottomLimit) {
       idealTop = bottomLimit - TOOLTIP_H_EST;
-      // Garante não subir além do topo
       if (idealTop < topLimit) idealTop = topLimit;
     }
 
@@ -178,10 +171,7 @@ useEffect(() => {
       ? rect.right + GAP
       : rect.left - TOOLTIP_W - GAP;
 
-    // Calcula a posição vertical da seta em relação ao topo do tooltip
-    // Queremos que a seta fique na altura do alvo (targetCenterY) dentro do tooltip
     const arrowTopOffset = targetCenterY - idealTop;
-    // Limita a seta dentro do tooltip (mínimo 20px, máximo tooltipHeight - 20px)
     const arrowTopClamped = Math.min(Math.max(arrowTopOffset, 20), TOOLTIP_H_EST - 20);
 
     setTooltipMode('lateral');
@@ -192,18 +182,13 @@ useEffect(() => {
       width: `${TOOLTIP_W}px`,
       maxHeight: `${vh - 32}px`,
       overflowY: 'auto',
-      '--arrow-top': `${arrowTopClamped}px` // variável CSS para a seta
+      '--arrow-top': `${arrowTopClamped}px`,
     });
     setArrowClass(side === 'right' ? 'tour-arrow--esquerda' : 'tour-arrow--direita');
     return;
   }
 
-  // Fallback: não cabe na lateral → usar modo inferior (abaixo do alvo)
-  const left = clamp(
-    targetCenterX - TOOLTIP_W / 2,
-    16,
-    vw - TOOLTIP_W - 16
-  );
+  const left = clamp(targetCenterX - TOOLTIP_W / 2, 16, vw - TOOLTIP_W - 16);
 
   setTooltipMode('inferior');
   setTooltipStyle({
@@ -212,10 +197,10 @@ useEffect(() => {
     left: `${left}px`,
     width: `${TOOLTIP_W}px`,
     maxHeight: `${vh - 32}px`,
-    overflowY: 'auto'
+    overflowY: 'auto',
   });
   setArrowClass('tour-arrow--cima');
-}, [rect, step.posicao]);
+}, [rect, step.posicao, step.id]);
 
   const avancar = () => {
     if (isUltimo) {

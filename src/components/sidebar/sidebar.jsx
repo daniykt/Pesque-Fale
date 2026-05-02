@@ -1,4 +1,3 @@
-// src/components/sidebar/sidebar.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './sidebar.css';
@@ -134,22 +133,23 @@ export default function Sidebar() {
         </nav>
 
         <div className="sidebar-footer">
-          <button
-            className="nav-item logout-btn"
-            onClick={() => setMostrarConfirmacao(true)}
-          >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="nav-text">Sair</span>
-          </button>
+<button
+  className="nav-item logout-btn"
+  data-tour="logout"
+  onClick={() => setMostrarConfirmacao(true)}
+>
+  <span className="material-symbols-outlined">logout</span>
+  <span className="nav-text">Sair</span>
+</button>
 
-          <button className="theme-btn" onClick={toggleTheme}>
-            <span className="material-symbols-outlined">
-              {isDarkMode ? 'light_mode' : 'dark_mode'}
-            </span>
-            <span className="nav-text">
-              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-            </span>
-          </button>
+<button className="theme-btn" data-tour="theme" onClick={toggleTheme}>
+  <span className="material-symbols-outlined">
+    {isDarkMode ? 'light_mode' : 'dark_mode'}
+  </span>
+  <span className="nav-text">
+    {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+  </span>
+</button>
         </div>
       </aside>
 
