@@ -1,7 +1,7 @@
-/* BottomNav.css — Navegação inferior estilo Instagram */
+/* BottomNav.css — Clean outline style */
 
 .bottom-nav {
-  display: none; /* oculta no desktop */
+  display: none;
 }
 
 @media (max-width: 900px) {
@@ -13,15 +13,10 @@
     right: 0;
     z-index: 1100;
     background: #ffffff;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 6px 0 max(8px, env(safe-area-inset-bottom));
+    border-top: 1px solid #e8e8e8;
+    padding: 8px 0 max(10px, env(safe-area-inset-bottom));
     align-items: center;
     justify-content: space-around;
-
-    /* Glassmorphism suave */
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    background: rgba(255, 255, 255, 0.95);
   }
 
   /* Item */
@@ -30,36 +25,20 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 4px;
     flex: 1;
-    padding: 6px 4px 2px;
+    padding: 4px 4px 2px;
     text-decoration: none;
-    color: #8e8e8e;
+    color: #b0b0b0;
     position: relative;
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
-    transition: color 0.18s ease;
-    border-radius: 14px;
+    transition: color 0.15s ease;
     min-width: 0;
   }
 
   .bottom-nav__item--active {
     color: #062A6C;
-  }
-
-  /* Ripple ao toque */
-  .bottom-nav__item--ripple .bottom-nav__icon-wrap::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    background: rgba(6, 42, 108, 0.08);
-    border-radius: 50%;
-    animation: bnav-ripple 0.4s ease-out forwards;
-  }
-
-  @keyframes bnav-ripple {
-    from { transform: scale(0.5); opacity: 1; }
-    to   { transform: scale(1.6); opacity: 0; }
   }
 
   /* Wrapper do ícone */
@@ -68,8 +47,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
   }
 
   /* SVG ícone */
@@ -77,42 +56,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 24px;
+    height: 24px;
   }
 
   .bottom-nav__icon svg {
     width: 100%;
     height: 100%;
+    stroke-width: 1.6;
   }
 
-  .bottom-nav__item--active .bottom-nav__icon {
-    transform: scale(1.08);
-  }
-
-  /* Ponto ativo embaixo do ícone */
-  .bottom-nav__dot {
-    position: absolute;
-    bottom: -5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #062A6C;
-    animation: bnav-dot-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-
-  @keyframes bnav-dot-in {
-    from { transform: translateX(-50%) scale(0); opacity: 0; }
-    to   { transform: translateX(-50%) scale(1); opacity: 1; }
-  }
+  /* Sem ponto, sem escala — item ativo só muda cor */
+  .bottom-nav__dot { display: none; }
 
   /* Badge de notificações */
   .bottom-nav__badge {
     position: absolute;
-    top: -5px;
+    top: -4px;
     right: -6px;
     background: #e3001b;
     color: #fff;
@@ -120,8 +80,8 @@
     font-weight: 700;
     font-family: system-ui, sans-serif;
     line-height: 1;
-    min-width: 16px;
-    height: 16px;
+    min-width: 15px;
+    height: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -129,12 +89,6 @@
     padding: 0 3px;
     border: 1.5px solid #fff;
     z-index: 2;
-    animation: bnav-badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes bnav-badge-pop {
-    from { transform: scale(0); }
-    to   { transform: scale(1); }
   }
 
   /* Label */
@@ -145,12 +99,11 @@
     letter-spacing: 0.01em;
     white-space: nowrap;
     line-height: 1;
-    transition: font-weight 0.15s ease;
+    color: inherit;
   }
 
   .bottom-nav__item--active .bottom-nav__label {
     font-weight: 600;
-    font-size: 10px;
   }
 
   /* Ajuste do conteúdo para não ficar atrás da bottom nav */
@@ -161,24 +114,16 @@
 
 /* ── DARK MODE ── */
 body.dark-mode .bottom-nav {
-  background: rgba(18, 18, 18, 0.96);
-  border-top-color: rgba(255, 255, 255, 0.1);
+  background: #121212;
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .bottom-nav__item {
-  color: #737373;
+  color: #4a4a4a;
 }
 
 body.dark-mode .bottom-nav__item--active {
-  color: #e8eef8;
-}
-
-body.dark-mode .bottom-nav__dot {
-  background: #a8c0f0;
-}
-
-body.dark-mode .bottom-nav__item--ripple .bottom-nav__icon-wrap::before {
-  background: rgba(168, 192, 240, 0.12);
+  color: #a8c0f0;
 }
 
 body.dark-mode .bottom-nav__badge {
