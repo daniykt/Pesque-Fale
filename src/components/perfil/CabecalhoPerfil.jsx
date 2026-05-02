@@ -1,6 +1,9 @@
-import React, { useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import "./Cabecalhoperfil.css";
+// src/components/perfil/CabecalhoPerfil.jsx
+import React, { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Cabecalhoperfil.css';
+import './Profilemenu.css';
+import ProfileMenu from './Profilemenu';
 
 export default function CabecalhoPerfil({
   fotoPerfil,
@@ -11,8 +14,6 @@ export default function CabecalhoPerfil({
   bio,
   localizacao,
   isOwnProfile,
-
-  // 🔥 NOVAS PROPS
   isFollowing,
   onSeguir,
   onDeixarDeSeguir,
@@ -21,6 +22,27 @@ export default function CabecalhoPerfil({
   const navigate = useNavigate();
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
+
+  // Estado do menu e dark mode
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
+  const [mostrarLogout, setMostrarLogout] = useState(false);
+
+  const toggleDark = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
 
   const handleFotoClick = () => {
     if (!isOwnProfile) return;
@@ -35,17 +57,13 @@ export default function CabecalhoPerfil({
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (typeof onFotoChange === "function") {
-      onFotoChange(file);
-    }
+    if (typeof onFotoChange === 'function') onFotoChange(file);
   };
 
   const handleBannerChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (typeof onBannerChange === "function") {
-      onBannerChange(file);
-    }
+    if (typeof onBannerChange === 'function') onBannerChange(file);
   };
 
   return (
@@ -55,13 +73,11 @@ export default function CabecalhoPerfil({
       <div
         className="banner-perfil"
         onClick={handleBannerClick}
-        title={isOwnProfile ? "Clique para trocar a capa" : ""}
+        title={isOwnProfile ? 'Clique para trocar a capa' : ''}
         style={{ backgroundImage: banner ? `url(${banner})` : undefined }}
       >
         {!banner && isOwnProfile && (
-          <span className="banner-icone material-symbols-outlined">
-            add_photo_alternate
-          </span>
+          <span className="banner-icone material-symbols-outlined">add_photo_alternate</span>
         )}
 
         {isOwnProfile && (
@@ -70,8 +86,20 @@ export default function CabecalhoPerfil({
             <p>Trocar capa</p>
           </div>
         )}
+
+        {/* Botão 3 pontos — só aparece no próprio perfil, no mobile */}
+        {isOwnProfile && (
+          <button
+            className="pmenu-trigger"
+            onClick={(e) => { e.stopPropagation(); setMenuAberto(true); }}
+            aria-label="Abrir menu de opções"
+          >
+            <span className="material-symbols-outlined">more_horiz</span>
+          </button>
+        )}
       </div>
 
+      {/* LINHA INFERIOR: foto + botões desktop */}
       <div className="cabecalho-inferior">
 
         {/* FOTO */}
@@ -81,9 +109,8 @@ export default function CabecalhoPerfil({
             alt="Foto de Perfil"
             className="foto-perfil"
             onClick={handleFotoClick}
-            title={isOwnProfile ? "Clique para trocar a foto" : ""}
+            title={isOwnProfile ? 'Clique para trocar a foto' : ''}
           />
-
           {isOwnProfile && (
             <div className="foto-perfil-overlay" onClick={handleFotoClick}>
               <span className="material-symbols-outlined">photo_camera</span>
@@ -95,18 +122,11 @@ export default function CabecalhoPerfil({
         <div className="cabecalho-botoes">
           {isOwnProfile ? (
             <>
-              <button
-                className="btn-cabecalho btn-editar"
-                onClick={() => navigate("/perfil/editar")}
-              >
+              <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
                 <span className="material-symbols-outlined">edit</span>
                 <span className="btn-texto">Editar Perfil</span>
               </button>
-
-              <button
-                className="btn-cabecalho btn-publicar"
-                onClick={() => navigate("/publicar")}
-              >
+              <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
                 <span className="material-symbols-outlined">add</span>
                 <span className="btn-texto">Nova Publicação</span>
               </button>
@@ -114,27 +134,11 @@ export default function CabecalhoPerfil({
           ) : (
             <>
               {!isFollowing ? (
-                <button
-                  className="btn-cabecalho btn-seguir"
-                  onClick={onSeguir}
-                >
-                  Seguir
-                </button>
+                <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>Seguir</button>
               ) : (
                 <>
-                  <button
-                    className="btn-cabecalho"
-                    onClick={onDeixarDeSeguir}
-                  >
-                    Deixar de seguir
-                  </button>
-
-                  <button
-                    className="btn-cabecalho"
-                    onClick={onMensagem}
-                  >
-                    Mensagem
-                  </button>
+                  <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>Deixar de seguir</button>
+                  <button className="btn-cabecalho" onClick={onMensagem}>Mensagem</button>
                 </>
               )}
             </>
@@ -142,32 +146,17 @@ export default function CabecalhoPerfil({
         </div>
       </div>
 
-      {/* INPUTS */}
+      {/* INPUTS ocultos */}
       {isOwnProfile && (
         <>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputBannerRef}
-            style={{ display: "none" }}
-            onChange={handleBannerChange}
-          />
-
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputFotoRef}
-            style={{ display: "none" }}
-            onChange={handleFotoChange}
-          />
+          <input type="file" accept="image/*" ref={fileInputBannerRef} style={{ display: 'none' }} onChange={handleBannerChange} />
+          <input type="file" accept="image/*" ref={fileInputFotoRef}   style={{ display: 'none' }} onChange={handleFotoChange}   />
         </>
       )}
 
-      {/* INFO */}
+      {/* INFO DO USUÁRIO */}
       <div className="usuario-data">
-        <h2 className="usuario-nome">
-          {usuario?.nome || "Usuário"}
-        </h2>
+        <h2 className="usuario-nome">{usuario?.nome || 'Usuário'}</h2>
 
         {usuario?.email && (
           <div className="usuario-info-linha">
@@ -178,9 +167,7 @@ export default function CabecalhoPerfil({
 
         {localizacao && (
           <div className="usuario-info-linha">
-            <span className="material-symbols-outlined usuario-icone">
-              location_on
-            </span>
+            <span className="material-symbols-outlined usuario-icone">location_on</span>
             <span className="usuario-info-texto">{localizacao}</span>
           </div>
         )}
@@ -188,43 +175,41 @@ export default function CabecalhoPerfil({
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* BOTÕES MOBILE */}
+      {/* BOTÕES MOBILE (Editar / Publicar / Seguir) */}
       <div className="cabecalho-botoes-mobile">
         {isOwnProfile ? (
           <>
-            <button
-              className="btn-cabecalho btn-editar"
-              onClick={() => navigate("/perfil/editar")}
-            >
+            <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
               Editar Perfil
             </button>
-
-            <button
-              className="btn-cabecalho btn-publicar"
-              onClick={() => navigate("/publicar")}
-            >
+            <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
               Nova Publicação
             </button>
           </>
         ) : (
           <>
             {!isFollowing ? (
-              <button className="btn-cabecalho" onClick={onSeguir}>
-                Seguir
-              </button>
+              <button className="btn-cabecalho" onClick={onSeguir}>Seguir</button>
             ) : (
               <>
-                <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>
-                  Deixar de seguir
-                </button>
-                <button className="btn-cabecalho" onClick={onMensagem}>
-                  Mensagem
-                </button>
+                <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>Deixar de seguir</button>
+                <button className="btn-cabecalho" onClick={onMensagem}>Mensagem</button>
               </>
             )}
           </>
         )}
       </div>
+
+      {/* BOTTOM SHEET MENU */}
+      <ProfileMenu
+        isOpen={menuAberto}
+        onClose={() => setMenuAberto(false)}
+        isDarkMode={isDarkMode}
+        onToggleDark={toggleDark}
+        mostrarConfirmacao={mostrarLogout}
+        onAbrirLogout={() => setMostrarLogout(true)}
+        onCancelarLogout={() => setMostrarLogout(false)}
+      />
     </div>
   );
 }
