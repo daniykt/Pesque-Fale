@@ -53,27 +53,43 @@ export default function Perfil() {
   const isOwnProfile = !id || id === user?.uid;
 
   // =========================
-  // ⚡ CACHE INSTANTÂNEO
+  // 🧹 LIMPA ESTADOS ao trocar de perfil
+  // Evita que dados do perfil anterior apareçam antes do Firestore responder
   // =========================
   useEffect(() => {
-    if (!isOwnProfile) return;
+    setUsuarioPerfil(null);
+    setFotoPerfil("");
+    setBanner(null);
+    setBio("");
+    setLocalizacao("");
+    setPosts([]);
+    setIsFollowing(false);
+  }, [id]);
+
+  // =========================
+  // ⚡ CACHE INSTANTÂNEO — só para o próprio perfil
+  // =========================
+  useEffect(() => {
+    // Só aplica cache quando for o próprio perfil E o user já foi carregado
+    if (!isOwnProfile || !user) return;
 
     const cache = localStorage.getItem("usuarioCache");
-
     if (cache) {
-      const dados = JSON.parse(cache);
+      try {
+        const dados = JSON.parse(cache);
+        // Só aplica se o cache bater com o uid do usuário logado
+        if (dados.uid && dados.uid !== user.uid) return;
 
-      setUsuarioPerfil((prev) => ({
-        ...prev,
-        ...dados,
-      }));
-
-      setBio(dados.bio || "");
-      setLocalizacao(dados.localizacao || "");
-      setFotoPerfil(dados.fotoPerfil || "");
-      setBanner(dados.banner || null);
+        setUsuarioPerfil((prev) => ({ ...prev, ...dados }));
+        setBio(dados.bio || "");
+        setLocalizacao(dados.localizacao || "");
+        setFotoPerfil(dados.fotoPerfil || "");
+        setBanner(dados.banner || null);
+      } catch {
+        localStorage.removeItem("usuarioCache");
+      }
     }
-  }, [isOwnProfile]);
+  }, [isOwnProfile, user]);
 
   // =========================
   // 🔥 FIRESTORE REALTIME
@@ -96,6 +112,14 @@ export default function Perfil() {
         setLocalizacao(data.localizacao || "");
         setFotoPerfil(data.fotoPerfil || "");
         setBanner(data.banner || null);
+
+        // Atualiza o cache apenas se for o próprio perfil
+        if (!id || id === user?.uid) {
+          localStorage.setItem(
+            "usuarioCache",
+            JSON.stringify({ uid: docSnap.id, ...data })
+          );
+        }
       }
     });
 
@@ -105,7 +129,6 @@ export default function Perfil() {
   // 🔍 VER SE SEGUE
   useEffect(() => {
     if (!user || !usuarioPerfil) return;
-
     const seguidores = usuarioPerfil.seguidores || [];
     setIsFollowing(seguidores.includes(user.uid));
   }, [user, usuarioPerfil]);
@@ -117,11 +140,9 @@ export default function Perfil() {
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayUnion(usuarioPerfil.id),
     });
-
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayUnion(user.uid),
     });
-
     await addDoc(collection(db, "notificacoes"), {
       tipo: "seguindo",
       de: user.displayName || "Pescador",
@@ -137,53 +158,39 @@ export default function Perfil() {
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayRemove(usuarioPerfil.id),
     });
-
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayRemove(user.uid),
     });
   };
 
   // 💬 CHAT
-  const gerarChatId = (id1, id2) => {
-    return [id1, id2].sort().join("_");
-  };
+  const gerarChatId = (id1, id2) => [id1, id2].sort().join("_");
 
   const irParaChat = async () => {
     const chatId = gerarChatId(user.uid, usuarioPerfil.id);
     const chatRef = doc(db, "chats", chatId);
-
     const chatSnap = await getDoc(chatRef);
-
     if (!chatSnap.exists()) {
-      await setDoc(chatRef, {
-        participantes: [user.uid, usuarioPerfil.id],
-      });
+      await setDoc(chatRef, { participantes: [user.uid, usuarioPerfil.id] });
     }
-
     navigate(`/chat/${chatId}`);
   };
 
   // 💾 SALVAR POSTS
   const salvarPosts = async (novosPosts) => {
     if (!usuarioPerfil?.id) return;
-
-    await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
-      posts: novosPosts,
-    });
+    await updateDoc(doc(db, "usuarios", usuarioPerfil.id), { posts: novosPosts });
   };
 
-  // 🖼️ ATUALIZAR FOTO DE PERFIL
+  // 🖼️ FOTO DE PERFIL
   const handleFotoChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
-
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result;
       try {
         await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
-          fotoPerfil: base64,
+          fotoPerfil: reader.result,
         });
-        // O estado será atualizado automaticamente via onSnapshot
       } catch (error) {
         console.error("Erro ao atualizar foto de perfil:", error);
         alert("Não foi possível atualizar a foto. Tente novamente.");
@@ -192,16 +199,14 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // 🌄 ATUALIZAR BANNER
+  // 🌄 BANNER
   const handleBannerChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
-
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result;
       try {
         await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
-          banner: base64,
+          banner: reader.result,
         });
       } catch (error) {
         console.error("Erro ao atualizar banner:", error);
@@ -233,10 +238,8 @@ export default function Perfil() {
         curtidas: [],
         comentarios: [],
       };
-
       salvarPosts([novoPost, ...posts]);
     };
-
     reader.readAsDataURL(file);
     e.target.value = "";
   };
@@ -285,7 +288,7 @@ export default function Perfil() {
               user={user}
               usuarioPerfil={usuarioPerfil}
               salvarPosts={salvarPosts}
-              navigate={navigate} 
+              navigate={navigate}
             />
           )}
         </div>
