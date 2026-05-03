@@ -1,4 +1,3 @@
-// src/components/perfil/CabecalhoPerfil.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Cabecalhoperfil.css';
@@ -105,7 +104,7 @@ export default function CabecalhoPerfil({
         {/* FOTO */}
         <div className="foto-perfil-wrapper">
           <img
-            src={fotoPerfil}
+            src={fotoPerfil || null}
             alt="Foto de Perfil"
             className="foto-perfil"
             onClick={handleFotoClick}
