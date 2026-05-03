@@ -186,7 +186,12 @@ export default function Onboarding() {
       console.error("Erro ao finalizar onboarding:", e);
     }
 
-    navigate("/home", { state: { onboardingCompleto: true } });
+navigate("/home", {
+  state: {
+    showTour: true,
+  },
+  replace: true,
+});
   };
 
   /* ─── Render ─── */

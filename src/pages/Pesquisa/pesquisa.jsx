@@ -5,8 +5,6 @@ import "./pesquisa.css";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 
-/* ===== COMPONENTES REUTILIZÁVEIS ===== */
-
 // Abas (Usuários / Locais)
 const Tabs = ({ activeTab, onTabChange }) => {
   return (
