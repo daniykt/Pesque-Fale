@@ -1,4 +1,3 @@
-// src/components/confirmacao/Confirmacao.jsx
 import React, { useEffect } from 'react';
 import './confirmacao.css';
 

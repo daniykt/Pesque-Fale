@@ -1,4 +1,3 @@
-/* layout.css */
 .main-layout-content {
   margin-left: 280px;
   min-height: 100vh;
@@ -8,21 +7,19 @@
   box-sizing: border-box;
 }
 
-/* REMOVE aquela regra que quebrava tudo */
 .main-layout-content > * {
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Empurra o footer para o final da página quando o conteúdo é curto */
 .main-layout-content > footer {
   margin-top: auto;
 }
 
-/* Responsividade para Mobile */
+/* Mobile — sem sidebar, sem margin-top */
 @media (max-width: 900px) {
   .main-layout-content {
     margin-left: 0;
-    margin-top: 70px;
+    margin-top: 0;
   }
 }

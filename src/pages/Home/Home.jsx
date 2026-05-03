@@ -14,12 +14,6 @@ import imgHenrique from "../../assets/image/sobrenos/fotohenrique.jpg";
 import imgLucas from "../../assets/image/sobrenos/fotolucas.jpg";
 import imgDanilo from "../../assets/image/sobrenos/fotodanilo.jpg";
 
-const TOAST_ICONS = {
-  success: "check_circle",
-  error: "error",
-  info: "info",
-};
-
 const Home = () => {
   const location = useLocation();
 
@@ -67,32 +61,16 @@ const Home = () => {
   ]);
   const [comentariosInput, setComentariosInput] = useState({});
 
-  // 🔔 TOAST
-  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
-
-  const showToast = (message, type = "info") =>
-    setToast({ visible: true, message, type });
-
-  const hideToast = () => setToast((t) => ({ ...t, visible: false }));
-
-  // ✅ Mensagem diferenciada: novo usuário ou retorno
+  // Quando Home recebe showTour via state, salva no localStorage para persistir através de navegações
   useEffect(() => {
-    if (location.state?.loginSuccess) {
-      const isNewUser = location.state?.isNewUser;
-      const message = isNewUser
-        ? "Bem-vindo ao Pesque & Fale! Sua conta foi criada com sucesso. 🎣"
-        : "Bem-vindo de volta! Boas pescarias por aqui. 🎣";
-      showToast(message, "success");
+    const shouldShowTour = location.state?.showTour;
+    if (shouldShowTour) {
+      localStorage.setItem('tourAtivo', 'true');
+      localStorage.removeItem('tourConcluido');
+      // Limpar o state da URL para evitar recarregar o tour
       window.history.replaceState({}, document.title);
     }
-  }, []);
-
-  useEffect(() => {
-    if (toast.visible) {
-      const timer = setTimeout(hideToast, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast.visible]);
+  }, [location.state]);
 
   // Dark mode
   useEffect(() => {
@@ -224,21 +202,6 @@ const Home = () => {
 
   return (
     <Layout>
-
-      {/* 🔔 TOAST */}
-      {toast.visible && (
-        <div className={`site-toast show ${toast.type}`}>
-          <div className="toast-content">
-            <span className="material-symbols-outlined toast-icon">
-              {TOAST_ICONS[toast.type]}
-            </span>
-            <div className="toast-message">{toast.message}</div>
-          </div>
-          <button className="toast-close-btn" onClick={hideToast}>
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      )}
 
       <div className="column">
         <main className="main-content">
