@@ -993,36 +993,93 @@ body.dark-mode .conversations-list::-webkit-scrollbar-thumb {
 }
 
 @media (max-width: 768px) {
-
-  .chat-layout {
-    flex-direction: column;
+  
+  /* ── 1. TRAVAR O CONTAINER PRINCIPAL ─────────────────────────── */
+  .chat-page {
+    height: 100dvh; /* Altura exata do dispositivo */
+    overflow: hidden; /* NUNCA rolar a página inteira */
+    position: fixed;
   }
 
-  /* ESCONDE TUDO POR PADRÃO */
+  .chat-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden; /* Importante: evitar scroll aqui */
+  }
+
+  /* ── 2. MOSTRAR APENAS O PAINEL ATIVO ────────────────────────── */
   .conversations-panel,
   .chat-panel {
     width: 100%;
     height: 100%;
   }
 
-  /* 👇 MOSTRA LISTA quando NÃO tem chat aberto */
-  .chat-layout.show-list .conversations-panel {
+  .chat-layout.show-list .conversations-panel { display: flex; }
+  .chat-layout.show-list .chat-panel { display: none; }
+
+  .chat-layout.show-chat .conversations-panel { display: none; }
+  .chat-layout.show-chat .chat-panel { 
+    display: flex; 
+    flex-direction: column;
+  }
+
+  /* ── 3. ESTRUTURA DO PAINEL DE CHAT (FLEX PURO) ─────────────── */
+  .chat-panel {
     display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden; /* O painel não rola, os filhos rolam */
   }
 
-  .chat-layout.show-list .chat-panel {
-    display: none;
+  /* HEADER: Fixo no topo naturalmente pelo flex-shrink: 0 */
+  .chat-header {
+    flex-shrink: 0; /* Nunca encolhe */
+    z-index: 20;
+    /* Removemos position: sticky pois o flex cuida disso */
+    background: var(--chat-surface);
+    border-bottom: 1px solid var(--chat-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   }
 
-  /* 👇 MOSTRA CHAT quando tem chat aberto */
-  .chat-layout.show-chat .conversations-panel {
-    display: none;
+  body.dark-mode .chat-header {
+    background: #1e1e1e;
+    border-color: #333;
   }
 
-  .chat-layout.show-chat .chat-panel {
-    display: flex;
+  /* MENSAGENS: Ánica área com scroll */
+  .chat-messages {
+    flex: 1; /* Ocupa todo espaço restante */
+    min-height: 0; /* CHAVE MÁGICA: permite o flex funcionar com scroll interno */
+    overflow-y: auto; /* Scroll AQUI */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
   }
 
+  /* INPUT: Fixo no bottom naturalmente */
+  .chat-input-area {
+    flex-shrink: 0; /* Nunca encolhe */
+    z-index: 20;
+    background: var(--chat-surface);
+    border-top: 1px solid var(--chat-border);
+    
+    /* Espaço para não ficar atrás da BottomNav */
+    padding-bottom: calc(14px + 64px + env(safe-area-inset-bottom));
+  }
+
+  body.dark-mode .chat-input-area {
+    background: #1e1e1e;
+    border-color: #333;
+  }
+
+  /* Botão de scroll ajustado */
+  .btn-scroll-bottom {
+    bottom: calc(90px + 64px); /* 90px (altura input) + 64px (nav) */
+    right: 16px;
+    z-index: 25;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1035,9 +1092,6 @@ body.dark-mode .conversations-list::-webkit-scrollbar-thumb {
   .msg-group {
     max-width: 85%;
   }
-  .chat-input-area {
-    padding: 10px 16px 14px;
-  }
   .chat-header-avatar {
     width: 38px;
     height: 38px;
@@ -1047,7 +1101,7 @@ body.dark-mode .conversations-list::-webkit-scrollbar-thumb {
     font-size: 0.85rem;
   }
   .btn-scroll-bottom {
-    bottom: 76px;
+    bottom: 200px;
     right: 14px;
   }
 }
