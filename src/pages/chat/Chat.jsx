@@ -137,44 +137,49 @@ export default function Chat() {
   // =========================
   // 🔒 Permissão + Dados do Outro Usuário (sem flash)
   // =========================
-  useEffect(() => {
-    const verificar = async () => {
-      if (!user || !chatId) return;
+useEffect(() => {
+  if (!user || !chatId) {
+    setPermitido(null);
+    return;
+  }
 
-      try {
-        const ids = chatId.split("_");
-        const outroId = ids.find((id) => id !== user.uid);
+  // Garante que o estado de carregamento seja exibido durante a verificação
+  setPermitido(null);
 
-        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) {
-          setPermitido(false);
-          return;
-        }
+  const verificar = async () => {
+    try {
+      const ids = chatId.split("_");
+      const outroId = ids.find((id) => id !== user.uid);
 
-        const dados = meuDoc.data();
-        const autorizado =
-          dados?.seguindo?.includes(outroId) ||
-          dados?.seguidores?.includes(outroId);
-
-        setPermitido(autorizado);
-
-        // Busca dados do outro usuário (independente de permissão)
-        const outroDoc = await getDoc(doc(db, "usuarios", outroId));
-        if (outroDoc.exists()) {
-          const outro = outroDoc.data();
-          setOutroUsuario({
-            nome: outro?.nome || "Usuário",
-            foto: outro?.fotoPerfil || "",
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao verificar permissão:", error);
+      const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!meuDoc.exists()) {
         setPermitido(false);
+        return;
       }
-    };
 
-    verificar();
-  }, [user, chatId]);
+      const dados = meuDoc.data();
+      const autorizado =
+        dados?.seguindo?.includes(outroId) ||
+        dados?.seguidores?.includes(outroId);
+
+      setPermitido(autorizado);
+
+      const outroDoc = await getDoc(doc(db, "usuarios", outroId));
+      if (outroDoc.exists()) {
+        const outro = outroDoc.data();
+        setOutroUsuario({
+          nome: outro?.nome || "Usuário",
+          foto: outro?.fotoPerfil || "",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao verificar permissão:", error);
+      setPermitido(false);
+    }
+  };
+
+  verificar();
+}, [user, chatId]);
 
   // =========================
   // 💬 Mensagens em Tempo Real + Marcar como Visto
