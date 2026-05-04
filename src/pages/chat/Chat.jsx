@@ -536,6 +536,7 @@ export default function Chat() {
                       <span className="material-symbols-outlined">arrow_back</span>
                     </button>
                   )}
+                   <div className="chat-header-left" key={chatId}>
                   <div className="chat-header-left">
                     <div className="chat-header-avatar">
                       {outroUsuario?.foto ? (
@@ -557,6 +558,7 @@ export default function Chat() {
                         </span>
                       )}
                     </div>
+                  </div>
                   </div>
                   <div className="chat-header-actions">
                     <button className="icon-btn" title="Ligar">
