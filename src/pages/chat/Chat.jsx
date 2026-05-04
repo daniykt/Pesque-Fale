@@ -28,11 +28,12 @@ export default function Chat() {
   const [user, setUser] = useState(null);
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState("");
-  const [permitido, setPermitido] = useState(false);
-  const [conversas, setConversas] = useState([]);
+  // ⬇️ corrigido: null enquanto não verificado
+  const [permitido, setPermitido] = useState(null);
+  // ⬇️ corrigido: null enquanto não carregado
+  const [conversas, setConversas] = useState(null);
   const [outroUsuario, setOutroUsuario] = useState(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [loadingConversas, setLoadingConversas] = useState(false);
   const [busca, setBusca] = useState("");
   const [digitando, setDigitando] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -47,22 +48,30 @@ export default function Chat() {
   }, []);
 
   // =========================
-  // 📥 INBOX - Lista de Conversas
+  // 📥 INBOX – Lista de Conversas (sem flash)
   // =========================
   useEffect(() => {
     if (!user) return;
-
-    setLoadingConversas(true);
 
     const unsubscribes = [];
 
     const carregarConversasRealtime = async () => {
       const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-      if (!meuDoc.exists()) return;
+      if (!meuDoc.exists()) {
+        setConversas([]); // usuário não existe → lista vazia
+        return;
+      }
 
       const dados = meuDoc.data();
       const seguindo = dados?.seguindo || [];
 
+      // Se não segue ninguém, já define array vazio
+      if (seguindo.length === 0) {
+        setConversas([]);
+        return;
+      }
+
+      // Prepara listeners para cada conversa
       seguindo.forEach((id) => {
         const cid = [user.uid, id].sort().join("_");
 
@@ -81,6 +90,7 @@ export default function Chat() {
             ultimaMsg = msg.texto;
             ultimaData = msg.createdAt?.toDate?.() || new Date();
           }
+
           const qNaoLidas = query(
             collection(db, "chats", cid, "mensagens"),
             where("userId", "!=", user.uid)
@@ -94,7 +104,9 @@ export default function Chat() {
           const u = userDoc.data();
 
           setConversas((prev) => {
-            const outras = prev.filter((c) => c.chatId !== cid);
+            // prev pode ser null (primeira vez) – tratamos como array
+            const base = Array.isArray(prev) ? prev : [];
+            const outras = base.filter((c) => c.chatId !== cid);
 
             const nova = {
               chatId: cid,
@@ -115,8 +127,6 @@ export default function Chat() {
 
         unsubscribes.push(unsubscribe);
       });
-
-      setLoadingConversas(false);
     };
 
     carregarConversasRealtime();
@@ -127,7 +137,7 @@ export default function Chat() {
   }, [user]);
 
   // =========================
-  // 🔒 Permissão + Dados do Outro Usuário
+  // 🔒 Permissão + Dados do Outro Usuário (sem flash)
   // =========================
   useEffect(() => {
     const verificar = async () => {
@@ -138,17 +148,19 @@ export default function Chat() {
         const outroId = ids.find((id) => id !== user.uid);
 
         const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) return;
-
-        const dados = meuDoc.data();
-
-        if (
-          dados?.seguindo?.includes(outroId) ||
-          dados?.seguidores?.includes(outroId)
-        ) {
-          setPermitido(true);
+        if (!meuDoc.exists()) {
+          setPermitido(false);
+          return;
         }
 
+        const dados = meuDoc.data();
+        const autorizado =
+          dados?.seguindo?.includes(outroId) ||
+          dados?.seguidores?.includes(outroId);
+
+        setPermitido(autorizado);
+
+        // Busca dados do outro usuário (independente de permissão)
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
@@ -159,6 +171,7 @@ export default function Chat() {
         }
       } catch (error) {
         console.error("Erro ao verificar permissão:", error);
+        setPermitido(false);
       }
     };
 
@@ -169,7 +182,7 @@ export default function Chat() {
   // 💬 Mensagens em Tempo Real + Marcar como Visto
   // =========================
   useEffect(() => {
-    if (!chatId || !permitido || !user) return;
+    if (!chatId || !permitido || !user) return; // permitido === null → false
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
@@ -203,12 +216,11 @@ export default function Chat() {
 
     return unsubscribe;
   }, [chatId, permitido, user]);
-  
+
   useEffect(() => {
     if (!chatId || !mensagensContainerRef.current) return;
 
     const el = mensagensContainerRef.current;
-    // Aguarda o próximo frame para garantir que as mensagens já renderizaram
     requestAnimationFrame(() => {
       el.scrollTop = el.scrollHeight;
     });
@@ -323,9 +335,11 @@ export default function Chat() {
     return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   };
 
-  const conversasFiltradas = conversas.filter((c) =>
-    c.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const conversasFiltradas = conversas
+    ? conversas.filter((c) =>
+        c.nome.toLowerCase().includes(busca.toLowerCase())
+      )
+    : [];
 
   // =========================
   // 🎨 RENDER: INBOX + CHAT
@@ -397,7 +411,8 @@ export default function Chat() {
               </div>
             </div>
 
-            {loadingConversas ? (
+            {/* Estado de carregamento real (null) */}
+            {conversas === null ? (
               <div className="conversations-loading">
                 <div className="spinner" />
                 <span>Carregando conversas...</span>
@@ -460,7 +475,14 @@ export default function Chat() {
                 <p>Selecione uma conversa</p>
                 <span>Escolha um pescador para começar a conversar</span>
               </div>
+            ) : permitido === null ? (
+              // Verificando permissão
+              <div className="chat-empty-state">
+                <div className="spinner" />
+                <p>Verificando...</p>
+              </div>
             ) : !permitido ? (
+              // Bloqueio confirmado
               <div className="chat-empty-state">
                 <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>
                   🔒
