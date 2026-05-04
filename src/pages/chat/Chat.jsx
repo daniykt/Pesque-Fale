@@ -81,6 +81,14 @@ export default function Chat() {
           ultimaMsg = msg.texto;
           ultimaData = msg.createdAt?.toDate?.() || new Date();
         }
+        const qNaoLidas = query(
+          collection(db, "chats", cid, "mensagens"),
+          where("userId", "!=", user.uid)
+        );
+        const snapNaoLidas = await getDocs(qNaoLidas);
+        const naoLidas = snapNaoLidas.docs.filter(
+          (d) => d.data().status !== "visto"
+        ).length;
 
         const userDoc = await getDoc(doc(db, "usuarios", id));
         const u = userDoc.data();
@@ -94,7 +102,7 @@ export default function Chat() {
             foto: u?.fotoPerfil || "",
             ultimaMensagem: ultimaMsg,
             ultimaData: ultimaData,
-            naoLidas: 0,
+            naoLidas,
           };
 
           return [nova, ...outras].sort((a, b) => {
