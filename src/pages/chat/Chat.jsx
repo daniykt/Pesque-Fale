@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./chat.css";
@@ -35,9 +35,11 @@ export default function Chat() {
   const [busca, setBusca] = useState("");
   const [digitando, setDigitando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   const mensagensEndRef = useRef(null);
   const mensagensContainerRef = useRef(null);
+  const primeiraCargaRef = useRef(true);
 
   // 🔐 Usuário autenticado
   useEffect(() => {
@@ -56,20 +58,18 @@ export default function Chat() {
     const carregarConversasRealtime = async () => {
       const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
       if (!meuDoc.exists()) {
-        setConversas([]); // usuário não existe → lista vazia
+        setConversas([]);
         return;
       }
 
       const dados = meuDoc.data();
       const seguindo = dados?.seguindo || [];
 
-      // Se não segue ninguém, já define array vazio
       if (seguindo.length === 0) {
         setConversas([]);
         return;
       }
 
-      // Prepara listeners para cada conversa
       seguindo.forEach((id) => {
         const cid = [user.uid, id].sort().join("_");
 
@@ -102,7 +102,6 @@ export default function Chat() {
           const u = userDoc.data();
 
           setConversas((prev) => {
-            // prev pode ser null (primeira vez) – tratamos como array
             const base = Array.isArray(prev) ? prev : [];
             const outras = base.filter((c) => c.chatId !== cid);
 
@@ -134,58 +133,71 @@ export default function Chat() {
     };
   }, [user]);
 
-  // =========================
-  // 🔒 Permissão + Dados do Outro Usuário (sem flash)
-  // =========================
-useEffect(() => {
-  if (!user || !chatId) {
+  // 🔄 LIMPEZA SINCRONA AO TROCAR DE CONVERSA (elimina flash)
+  useLayoutEffect(() => {
     setPermitido(null);
-    return;
-  }
+    setMensagens([]);
+    setOutroUsuario(null);
+    setDigitando(false);
+    setShowScrollBtn(false);
+    setLoadingMessages(true);
+    primeiraCargaRef.current = true;
+  }, [chatId]);
 
-  // Garante que o estado de carregamento seja exibido durante a verificação
-  setPermitido(null);
-
-  const verificar = async () => {
-    try {
-      const ids = chatId.split("_");
-      const outroId = ids.find((id) => id !== user.uid);
-
-      const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-      if (!meuDoc.exists()) {
-        setPermitido(false);
-        return;
-      }
-
-      const dados = meuDoc.data();
-      const autorizado =
-        dados?.seguindo?.includes(outroId) ||
-        dados?.seguidores?.includes(outroId);
-
-      setPermitido(autorizado);
-
-      const outroDoc = await getDoc(doc(db, "usuarios", outroId));
-      if (outroDoc.exists()) {
-        const outro = outroDoc.data();
-        setOutroUsuario({
-          nome: outro?.nome || "Usuário",
-          foto: outro?.fotoPerfil || "",
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao verificar permissão:", error);
-      setPermitido(false);
+  // =========================
+  // 🔒 Permissão + Dados do Outro Usuário
+  // =========================
+  useEffect(() => {
+    if (!user || !chatId) {
+      setPermitido(null);
+      return;
     }
-  };
 
-  verificar();
-}, [user, chatId]);
+    setPermitido(null);
+
+    const verificar = async () => {
+      try {
+        const ids = chatId.split("_");
+        const outroId = ids.find((id) => id !== user.uid);
+
+        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+        if (!meuDoc.exists()) {
+          setPermitido(false);
+          setLoadingMessages(false);
+          return;
+        }
+
+        const dados = meuDoc.data();
+        const autorizado =
+          dados?.seguindo?.includes(outroId) ||
+          dados?.seguidores?.includes(outroId);
+
+        setPermitido(autorizado);
+        if (!autorizado) setLoadingMessages(false);
+
+        const outroDoc = await getDoc(doc(db, "usuarios", outroId));
+        if (outroDoc.exists()) {
+          const outro = outroDoc.data();
+          setOutroUsuario({
+            nome: outro?.nome || "Usuário",
+            foto: outro?.fotoPerfil || "",
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao verificar permissão:", error);
+        setPermitido(false);
+        setLoadingMessages(false);
+      }
+    };
+
+    verificar();
+  }, [user, chatId]);
 
   // =========================
   // 💬 Mensagens em Tempo Real + Marcar como Visto
   // =========================
   useEffect(() => {
-    if (!chatId || !permitido || !user) return; // permitido === null → false
+    if (!chatId || !permitido || !user) return;
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
@@ -198,6 +210,7 @@ useEffect(() => {
         ...doc.data(),
       }));
       setMensagens(msgs);
+      setLoadingMessages(false); // desliga skeleton
 
       const mensagensParaAtualizar = snapshot.docs.filter((d) => {
         const m = d.data();
@@ -220,30 +233,23 @@ useEffect(() => {
     return unsubscribe;
   }, [chatId, permitido, user]);
 
-// ✅ Efeito único de scroll
-const primeiraCargaRef = useRef(true);
+  // ✅ Efeito único de scroll
+  useEffect(() => {
+    const container = mensagensContainerRef.current;
+    if (!container) return;
 
-useEffect(() => {
-  // Marca que a conversa acabou de mudar (independente de montagem)
-  primeiraCargaRef.current = true;
-}, [chatId]);
+    if (primeiraCargaRef.current) {
+      const timer = setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 0);
+      primeiraCargaRef.current = false;
+      return () => clearTimeout(timer);
+    }
 
-useEffect(() => {
-  const container = mensagensContainerRef.current;
-  if (!container) return;
-
-  if (primeiraCargaRef.current) {
-    const timer = setTimeout(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 0);
-    primeiraCargaRef.current = false;
-    return () => clearTimeout(timer);
-  }
-
-  if (!showScrollBtn) {
-    mensagensEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }
-}, [mensagens, showScrollBtn, digitando]);
+    if (!showScrollBtn) {
+      mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [mensagens, showScrollBtn, digitando]);
 
   // =========================
   // ✉️ Enviar Mensagem
@@ -288,12 +294,6 @@ useEffect(() => {
   const scrollToBottom = () => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  useEffect(() => {
-    if (!showScrollBtn) {
-      scrollToBottom();
-    }
-  }, [mensagens, showScrollBtn, digitando]);
 
   const handleScroll = () => {
     const el = mensagensContainerRef.current;
@@ -361,7 +361,7 @@ useEffect(() => {
     : [];
 
   // =========================
-  // 🎨 RENDER: INBOX + CHAT
+  // 🎨 RENDER
   // =========================
   const renderizarMensagens = () => {
     return mensagens.map((msg, index) => {
@@ -430,7 +430,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Estado de carregamento real (null) */}
             {conversas === null ? (
               <div className="conversations-loading">
                 <div className="spinner" />
@@ -494,14 +493,23 @@ useEffect(() => {
                 <p>Selecione uma conversa</p>
                 <span>Escolha um pescador para começar a conversar</span>
               </div>
-            ) : permitido === null ? (
-              // Verificando permissão
-              <div className="chat-empty-state">
-                <div className="spinner" />
-                <p>Verificando...</p>
+            ) : permitido === null || loadingMessages ? (
+              // 🔄 Skeleton shimmer enquanto carrega
+              <div className="chat-messages chat-messages--loading">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`skeleton-message ${i % 2 === 0 ? 'skeleton--mine' : 'skeleton--theirs'}`}
+                  >
+                    <div className="skeleton-avatar" />
+                    <div className="skeleton-bubble">
+                      <div className="skeleton-line short" />
+                      <div className="skeleton-line medium" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : !permitido ? (
-              // Bloqueio confirmado
               <div className="chat-empty-state">
                 <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>
                   🔒
