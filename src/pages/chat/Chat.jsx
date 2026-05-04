@@ -28,9 +28,7 @@ export default function Chat() {
   const [user, setUser] = useState(null);
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState("");
-  // ⬇️ corrigido: null enquanto não verificado
   const [permitido, setPermitido] = useState(null);
-  // ⬇️ corrigido: null enquanto não carregado
   const [conversas, setConversas] = useState(null);
   const [outroUsuario, setOutroUsuario] = useState(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -217,14 +215,30 @@ export default function Chat() {
     return unsubscribe;
   }, [chatId, permitido, user]);
 
-  useEffect(() => {
-    if (!chatId || !mensagensContainerRef.current) return;
+// ✅ Efeito único de scroll
+const primeiraCargaRef = useRef(true);
 
-    const el = mensagensContainerRef.current;
-    requestAnimationFrame(() => {
-      el.scrollTop = el.scrollHeight;
-    });
-  }, [chatId]);
+useEffect(() => {
+  // Marca que a conversa acabou de mudar (independente de montagem)
+  primeiraCargaRef.current = true;
+}, [chatId]);
+
+useEffect(() => {
+  const container = mensagensContainerRef.current;
+  if (!container) return;
+
+  if (primeiraCargaRef.current) {
+    const timer = setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+    }, 0);
+    primeiraCargaRef.current = false;
+    return () => clearTimeout(timer);
+  }
+
+  if (!showScrollBtn) {
+    mensagensEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
+}, [mensagens, showScrollBtn, digitando]);
 
   // =========================
   // ✉️ Enviar Mensagem
