@@ -50,81 +50,81 @@ export default function Chat() {
   // 📥 INBOX - Lista de Conversas
   // =========================
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  setLoadingConversas(true);
+    setLoadingConversas(true);
 
-  const unsubscribes = [];
+    const unsubscribes = [];
 
-  const carregarConversasRealtime = async () => {
-    const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-    if (!meuDoc.exists()) return;
+    const carregarConversasRealtime = async () => {
+      const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!meuDoc.exists()) return;
 
-    const dados = meuDoc.data();
-    const seguindo = dados?.seguindo || [];
+      const dados = meuDoc.data();
+      const seguindo = dados?.seguindo || [];
 
-    seguindo.forEach((id) => {
-      const cid = [user.uid, id].sort().join("_");
+      seguindo.forEach((id) => {
+        const cid = [user.uid, id].sort().join("_");
 
-      const q = query(
-        collection(db, "chats", cid, "mensagens"),
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
-
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        let ultimaMsg = "Nenhuma mensagem ainda";
-        let ultimaData = null;
-
-        if (!snapshot.empty) {
-          const msg = snapshot.docs[0].data();
-          ultimaMsg = msg.texto;
-          ultimaData = msg.createdAt?.toDate?.() || new Date();
-        }
-        const qNaoLidas = query(
+        const q = query(
           collection(db, "chats", cid, "mensagens"),
-          where("userId", "!=", user.uid)
+          orderBy("createdAt", "desc"),
+          limit(1)
         );
-        const snapNaoLidas = await getDocs(qNaoLidas);
-        const naoLidas = snapNaoLidas.docs.filter(
-          (d) => d.data().status !== "visto"
-        ).length;
 
-        const userDoc = await getDoc(doc(db, "usuarios", id));
-        const u = userDoc.data();
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+          let ultimaMsg = "Nenhuma mensagem ainda";
+          let ultimaData = null;
 
-        setConversas((prev) => {
-          const outras = prev.filter((c) => c.chatId !== cid);
+          if (!snapshot.empty) {
+            const msg = snapshot.docs[0].data();
+            ultimaMsg = msg.texto;
+            ultimaData = msg.createdAt?.toDate?.() || new Date();
+          }
+          const qNaoLidas = query(
+            collection(db, "chats", cid, "mensagens"),
+            where("userId", "!=", user.uid)
+          );
+          const snapNaoLidas = await getDocs(qNaoLidas);
+          const naoLidas = snapNaoLidas.docs.filter(
+            (d) => d.data().status !== "visto"
+          ).length;
 
-          const nova = {
-            chatId: cid,
-            nome: u?.nome || "Usuário",
-            foto: u?.fotoPerfil || "",
-            ultimaMensagem: ultimaMsg,
-            ultimaData: ultimaData,
-            naoLidas,
-          };
+          const userDoc = await getDoc(doc(db, "usuarios", id));
+          const u = userDoc.data();
 
-          return [nova, ...outras].sort((a, b) => {
-            if (!a.ultimaData) return 1;
-            if (!b.ultimaData) return -1;
-            return b.ultimaData - a.ultimaData;
+          setConversas((prev) => {
+            const outras = prev.filter((c) => c.chatId !== cid);
+
+            const nova = {
+              chatId: cid,
+              nome: u?.nome || "Usuário",
+              foto: u?.fotoPerfil || "",
+              ultimaMensagem: ultimaMsg,
+              ultimaData: ultimaData,
+              naoLidas,
+            };
+
+            return [nova, ...outras].sort((a, b) => {
+              if (!a.ultimaData) return 1;
+              if (!b.ultimaData) return -1;
+              return b.ultimaData - a.ultimaData;
+            });
           });
         });
+
+        unsubscribes.push(unsubscribe);
       });
 
-      unsubscribes.push(unsubscribe);
-    });
+      setLoadingConversas(false);
+    };
 
-    setLoadingConversas(false);
-  };
+    carregarConversasRealtime();
 
-  carregarConversasRealtime();
-
-  return () => {
-    unsubscribes.forEach((unsub) => unsub());
-  };
-}, [user]);
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [user]);
 
   // =========================
   // 🔒 Permissão + Dados do Outro Usuário
@@ -203,6 +203,16 @@ export default function Chat() {
 
     return unsubscribe;
   }, [chatId, permitido, user]);
+  
+  useEffect(() => {
+    if (!chatId || !mensagensContainerRef.current) return;
+
+    const el = mensagensContainerRef.current;
+    // Aguarda o próximo frame para garantir que as mensagens já renderizaram
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [chatId]);
 
   // =========================
   // ✉️ Enviar Mensagem
@@ -469,14 +479,14 @@ export default function Chat() {
               <>
                 <header className="chat-header">
                   {window.innerWidth <= 768 && (
-  <button
-    className="icon-btn"
-    onClick={() => navigate("/chat")}
-    title="Voltar"
-  >
-    <span className="material-symbols-outlined">arrow_back</span>
-  </button>
-)}
+                    <button
+                      className="icon-btn"
+                      onClick={() => navigate("/chat")}
+                      title="Voltar"
+                    >
+                      <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
+                  )}
                   <div className="chat-header-left">
                     <div className="chat-header-avatar">
                       {outroUsuario?.foto ? (
