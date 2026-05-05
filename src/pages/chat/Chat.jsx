@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./chat.css";
@@ -28,17 +28,18 @@ export default function Chat() {
   const [user, setUser] = useState(null);
   const [mensagens, setMensagens] = useState([]);
   const [texto, setTexto] = useState("");
-  const [permitido, setPermitido] = useState(false);
-  const [conversas, setConversas] = useState([]);
+  const [permitido, setPermitido] = useState(null);
+  const [conversas, setConversas] = useState(null);
   const [outroUsuario, setOutroUsuario] = useState(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [loadingConversas, setLoadingConversas] = useState(false);
   const [busca, setBusca] = useState("");
   const [digitando, setDigitando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   const mensagensEndRef = useRef(null);
   const mensagensContainerRef = useRef(null);
+  const primeiraCargaRef = useRef(true);
 
   // 🔐 Usuário autenticado
   useEffect(() => {
@@ -47,99 +48,132 @@ export default function Chat() {
   }, []);
 
   // =========================
-  // 📥 INBOX - Lista de Conversas
+  // 📥 INBOX – Lista de Conversas (sem flash)
   // =========================
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  setLoadingConversas(true);
+    const unsubscribes = [];
 
-  const unsubscribes = [];
+    const carregarConversasRealtime = async () => {
+      const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!meuDoc.exists()) {
+        setConversas([]);
+        return;
+      }
 
-  const carregarConversasRealtime = async () => {
-    const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-    if (!meuDoc.exists()) return;
+      const dados = meuDoc.data();
+      const seguindo = dados?.seguindo || [];
 
-    const dados = meuDoc.data();
-    const seguindo = dados?.seguindo || [];
+      if (seguindo.length === 0) {
+        setConversas([]);
+        return;
+      }
 
-    seguindo.forEach((id) => {
-      const cid = [user.uid, id].sort().join("_");
+      seguindo.forEach((id) => {
+        const cid = [user.uid, id].sort().join("_");
 
-      const q = query(
-        collection(db, "chats", cid, "mensagens"),
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
+        const q = query(
+          collection(db, "chats", cid, "mensagens"),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
 
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        let ultimaMsg = "Nenhuma mensagem ainda";
-        let ultimaData = null;
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+          let ultimaMsg = "Nenhuma mensagem ainda";
+          let ultimaData = null;
 
-        if (!snapshot.empty) {
-          const msg = snapshot.docs[0].data();
-          ultimaMsg = msg.texto;
-          ultimaData = msg.createdAt?.toDate?.() || new Date();
-        }
+          if (!snapshot.empty) {
+            const msg = snapshot.docs[0].data();
+            ultimaMsg = msg.texto;
+            ultimaData = msg.createdAt?.toDate?.() || new Date();
+          }
 
-        const userDoc = await getDoc(doc(db, "usuarios", id));
-        const u = userDoc.data();
+          const qNaoLidas = query(
+            collection(db, "chats", cid, "mensagens"),
+            where("userId", "!=", user.uid)
+          );
+          const snapNaoLidas = await getDocs(qNaoLidas);
+          const naoLidas = snapNaoLidas.docs.filter(
+            (d) => d.data().status !== "visto"
+          ).length;
 
-        setConversas((prev) => {
-          const outras = prev.filter((c) => c.chatId !== cid);
+          const userDoc = await getDoc(doc(db, "usuarios", id));
+          const u = userDoc.data();
 
-          const nova = {
-            chatId: cid,
-            nome: u?.nome || "Usuário",
-            foto: u?.fotoPerfil || "",
-            ultimaMensagem: ultimaMsg,
-            ultimaData: ultimaData,
-            naoLidas: 0,
-          };
+          setConversas((prev) => {
+            const base = Array.isArray(prev) ? prev : [];
+            const outras = base.filter((c) => c.chatId !== cid);
 
-          return [nova, ...outras].sort((a, b) => {
-            if (!a.ultimaData) return 1;
-            if (!b.ultimaData) return -1;
-            return b.ultimaData - a.ultimaData;
+            const nova = {
+              chatId: cid,
+              nome: u?.nome || "Usuário",
+              foto: u?.fotoPerfil || "",
+              ultimaMensagem: ultimaMsg,
+              ultimaData: ultimaData,
+              naoLidas,
+            };
+
+            return [nova, ...outras].sort((a, b) => {
+              if (!a.ultimaData) return 1;
+              if (!b.ultimaData) return -1;
+              return b.ultimaData - a.ultimaData;
+            });
           });
         });
+
+        unsubscribes.push(unsubscribe);
       });
+    };
 
-      unsubscribes.push(unsubscribe);
-    });
+    carregarConversasRealtime();
 
-    setLoadingConversas(false);
-  };
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [user]);
 
-  carregarConversasRealtime();
-
-  return () => {
-    unsubscribes.forEach((unsub) => unsub());
-  };
-}, [user]);
+  // 🔄 LIMPEZA SINCRONA AO TROCAR DE CONVERSA (elimina flash)
+  useLayoutEffect(() => {
+    setPermitido(null);
+    setMensagens([]);
+    setOutroUsuario(null);
+    setDigitando(false);
+    setShowScrollBtn(false);
+    setLoadingMessages(true);
+    primeiraCargaRef.current = true;
+  }, [chatId]);
 
   // =========================
   // 🔒 Permissão + Dados do Outro Usuário
   // =========================
   useEffect(() => {
-    const verificar = async () => {
-      if (!user || !chatId) return;
+    if (!user || !chatId) {
+      setPermitido(null);
+      return;
+    }
 
+    setPermitido(null);
+
+    const verificar = async () => {
       try {
         const ids = chatId.split("_");
         const outroId = ids.find((id) => id !== user.uid);
 
         const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) return;
+        if (!meuDoc.exists()) {
+          setPermitido(false);
+          setLoadingMessages(false);
+          return;
+        }
 
         const dados = meuDoc.data();
-
-        if (
+        const autorizado =
           dados?.seguindo?.includes(outroId) ||
-          dados?.seguidores?.includes(outroId)
-        ) {
-          setPermitido(true);
-        }
+          dados?.seguidores?.includes(outroId);
+
+        setPermitido(autorizado);
+        if (!autorizado) setLoadingMessages(false);
 
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
@@ -151,6 +185,8 @@ export default function Chat() {
         }
       } catch (error) {
         console.error("Erro ao verificar permissão:", error);
+        setPermitido(false);
+        setLoadingMessages(false);
       }
     };
 
@@ -174,6 +210,7 @@ export default function Chat() {
         ...doc.data(),
       }));
       setMensagens(msgs);
+      setLoadingMessages(false); // desliga skeleton
 
       const mensagensParaAtualizar = snapshot.docs.filter((d) => {
         const m = d.data();
@@ -195,6 +232,24 @@ export default function Chat() {
 
     return unsubscribe;
   }, [chatId, permitido, user]);
+
+  // ✅ Efeito único de scroll
+  useEffect(() => {
+    const container = mensagensContainerRef.current;
+    if (!container) return;
+
+    if (primeiraCargaRef.current) {
+      const timer = setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 0);
+      primeiraCargaRef.current = false;
+      return () => clearTimeout(timer);
+    }
+
+    if (!showScrollBtn) {
+      mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [mensagens, showScrollBtn, digitando]);
 
   // =========================
   // ✉️ Enviar Mensagem
@@ -239,12 +294,6 @@ export default function Chat() {
   const scrollToBottom = () => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  useEffect(() => {
-    if (!showScrollBtn) {
-      scrollToBottom();
-    }
-  }, [mensagens, showScrollBtn, digitando]);
 
   const handleScroll = () => {
     const el = mensagensContainerRef.current;
@@ -305,12 +354,14 @@ export default function Chat() {
     return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   };
 
-  const conversasFiltradas = conversas.filter((c) =>
-    c.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const conversasFiltradas = conversas
+    ? conversas.filter((c) =>
+        c.nome.toLowerCase().includes(busca.toLowerCase())
+      )
+    : [];
 
   // =========================
-  // 🎨 RENDER: INBOX + CHAT
+  // 🎨 RENDER
   // =========================
   const renderizarMensagens = () => {
     return mensagens.map((msg, index) => {
@@ -379,7 +430,7 @@ export default function Chat() {
               </div>
             </div>
 
-            {loadingConversas ? (
+            {conversas === null ? (
               <div className="conversations-loading">
                 <div className="spinner" />
                 <span>Carregando conversas...</span>
@@ -442,6 +493,22 @@ export default function Chat() {
                 <p>Selecione uma conversa</p>
                 <span>Escolha um pescador para começar a conversar</span>
               </div>
+            ) : permitido === null || loadingMessages ? (
+              // 🔄 Skeleton shimmer enquanto carrega
+              <div className="chat-messages chat-messages--loading">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`skeleton-message ${i % 2 === 0 ? 'skeleton--mine' : 'skeleton--theirs'}`}
+                  >
+                    <div className="skeleton-avatar" />
+                    <div className="skeleton-bubble">
+                      <div className="skeleton-line short" />
+                      <div className="skeleton-line medium" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : !permitido ? (
               <div className="chat-empty-state">
                 <div className="chat-empty-icon" style={{ fontSize: "2.5rem" }}>
@@ -461,14 +528,15 @@ export default function Chat() {
               <>
                 <header className="chat-header">
                   {window.innerWidth <= 768 && (
-  <button
-    className="icon-btn"
-    onClick={() => navigate("/chat")}
-    title="Voltar"
-  >
-    <span className="material-symbols-outlined">arrow_back</span>
-  </button>
-)}
+                    <button
+                      className="icon-btn"
+                      onClick={() => navigate("/chat")}
+                      title="Voltar"
+                    >
+                      <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
+                  )}
+                   <div className="chat-header-left" key={chatId}>
                   <div className="chat-header-left">
                     <div className="chat-header-avatar">
                       {outroUsuario?.foto ? (
@@ -490,6 +558,7 @@ export default function Chat() {
                         </span>
                       )}
                     </div>
+                  </div>
                   </div>
                   <div className="chat-header-actions">
                     <button className="icon-btn" title="Ligar">
