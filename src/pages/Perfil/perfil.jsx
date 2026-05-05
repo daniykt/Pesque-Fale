@@ -282,15 +282,31 @@ export default function Perfil() {
             onTrocarAba={setAbaSelecionada}
           />
 
-          {abaSelecionada === "Galeria" && (
-            <GaleriaPerfil
-              posts={posts}
-              user={user}
-              usuarioPerfil={usuarioPerfil}
-              salvarPosts={salvarPosts}
-              navigate={navigate}
-            />
-          )}
+{abaSelecionada === "Galeria" && (
+  <GaleriaPerfil
+    posts={posts}
+    user={user}
+    usuarioPerfil={usuarioPerfil}
+    salvarPosts={salvarPosts}
+    navigate={navigate}
+  />
+)}
+
+{abaSelecionada === "Equipamentos" && (
+  <div className="aba-em-breve">
+    <span className="material-symbols-outlined">construction</span>
+    <p>Equipamentos</p>
+    <span>Recursos para gerenciar seus equipamentos de pesca estarão aqui.</span>
+  </div>
+)}
+
+{abaSelecionada === "Locais Salvos" && (
+  <div className="aba-em-breve">
+    <span className="material-symbols-outlined">bookmark</span>
+    <p>Locais Salvos</p>
+    <span>Seus pontos de pesca favoritos aparecerão nesta seção.</span>
+  </div>
+)}
         </div>
       </div>
     </Layout>
