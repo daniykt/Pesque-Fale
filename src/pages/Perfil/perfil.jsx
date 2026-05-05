@@ -216,33 +216,39 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // 📸 NOVO POST
-  const handlePostChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  
+  //  Novo handle para publicação de post, agora com prompts para comentário e local
+const handlePostChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    let comentario = prompt("Descrição:");
-    if (comentario === null) return;
+  let comentario = prompt("Descrição:");
+  if (comentario === null) return;
 
-    let local = prompt("Local:");
-    if (local === null) return;
+  let localPost = prompt("Local:");
+  if (localPost === null) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const novoPost = {
-        id: Date.now(),
-        imagem: reader.result,
-        data: new Date().toLocaleString(),
-        comentario,
-        local,
-        curtidas: [],
-        comentarios: [],
-      };
-      salvarPosts([novoPost, ...posts]);
+  const reader = new FileReader();
+  reader.onload = () => {
+    const novoPost = {
+      id:        Date.now(),
+      // ← campos necessários para o feed da home
+      autorId:   user.uid,
+      autorNome: usuarioPerfil?.nome || usuarioPerfil?.displayName || user.displayName || "Pescador",
+      autorFoto: usuarioPerfil?.fotoPerfil || user.photoURL || "",
+      // ← conteúdo
+      imagem:    reader.result,
+      data:      new Date().toLocaleString("pt-BR"),
+      comentario: comentario.trim() || "Sem descrição",
+      local:     localPost.trim(),
+      curtidas:  [],
+      comentarios: [],
     };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    salvarPosts([novoPost, ...posts]);
   };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+};
 
   return (
     <Layout>
