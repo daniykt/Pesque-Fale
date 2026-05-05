@@ -132,14 +132,23 @@ export default function CabecalhoPerfil({
             </>
           ) : (
             <>
-              {!isFollowing ? (
-                <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>Seguir</button>
-              ) : (
-                <>
-                  <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>Deixar de seguir</button>
-                  <button className="btn-cabecalho" onClick={onMensagem}>Mensagem</button>
-                </>
-              )}
+{!isFollowing ? (
+  <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
+    <span className="material-symbols-outlined">person_add</span>
+    <span className="btn-texto">Seguir</span>
+  </button>
+) : (
+  <>
+    <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
+      <span className="material-symbols-outlined">person_remove</span>
+      <span className="btn-texto">Deixar de seguir</span>
+    </button>
+    <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
+      <span className="material-symbols-outlined">chat</span>
+      <span className="btn-texto">Mensagem</span>
+    </button>
+  </>
+)}
             </>
           )}
         </div>
@@ -175,29 +184,38 @@ export default function CabecalhoPerfil({
       </div>
 
       {/* BOTÕES MOBILE (Editar / Publicar / Seguir) */}
-      <div className="cabecalho-botoes-mobile">
-        {isOwnProfile ? (
-          <>
-            <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
-              Editar Perfil
-            </button>
-            <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
-              Nova Publicação
-            </button>
-          </>
-        ) : (
-          <>
-            {!isFollowing ? (
-              <button className="btn-cabecalho" onClick={onSeguir}>Seguir</button>
-            ) : (
-              <>
-                <button className="btn-cabecalho" onClick={onDeixarDeSeguir}>Deixar de seguir</button>
-                <button className="btn-cabecalho" onClick={onMensagem}>Mensagem</button>
-              </>
-            )}
-          </>
-        )}
-      </div>
+<div className="cabecalho-botoes-mobile">
+  {isOwnProfile ? (
+    <>
+      <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
+        Editar Perfil
+      </button>
+      <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
+        Nova Publicação
+      </button>
+    </>
+  ) : (
+    <>
+      {!isFollowing ? (
+        <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
+          <span className="material-symbols-outlined">person_add</span>
+          <span>Seguir</span>
+        </button>
+      ) : (
+        <>
+          <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
+            <span className="material-symbols-outlined">person_remove</span>
+            <span>Deixar de seguir</span>
+          </button>
+          <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
+            <span className="material-symbols-outlined">chat</span>
+            <span>Mensagem</span>
+          </button>
+        </>
+      )}
+    </>
+  )}
+</div>
 
       {/* BOTTOM SHEET MENU */}
       <ProfileMenu
