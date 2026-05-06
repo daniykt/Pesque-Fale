@@ -33,14 +33,13 @@ export default function ProfileMenu({
   };
 
   const reiniciarTour = () => {
-  localStorage.setItem('tourAtivo', 'true');
-  localStorage.removeItem('tourConcluido');
-  localStorage.removeItem('tourCurrentStep');
-  // Dispara o evento storage manualmente para o Layout detectar na mesma aba
-  window.dispatchEvent(new Event('storage'));
-  onClose();
-  navigate('/home');
-};
+    localStorage.setItem('tourAtivo', 'true');
+    localStorage.setItem('tourStartStep', '1');
+    localStorage.removeItem('tourConcluido');
+    localStorage.removeItem('tourCurrentStep');
+    window.dispatchEvent(new Event('storage'));
+    onClose();
+  };
 
   return (
     <>
