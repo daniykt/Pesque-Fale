@@ -79,6 +79,14 @@ export default function Sidebar() {
   const isActive = (path) => location.pathname.startsWith(path);
   const toggleTheme = () => setIsDarkMode(prev => !prev);
 
+  const reiniciarTour = () => {
+    localStorage.setItem('tourAtivo', 'true');
+    localStorage.setItem('tourStartStep', '1');
+    localStorage.removeItem('tourConcluido');
+    localStorage.removeItem('tourCurrentStep');
+    window.dispatchEvent(new Event('storage'));
+  };
+
   return (
     <>
       <aside className="sidebar">
@@ -133,23 +141,28 @@ export default function Sidebar() {
         </nav>
 
         <div className="sidebar-footer">
-<button
-  className="nav-item logout-btn"
-  data-tour="logout"
-  onClick={() => setMostrarConfirmacao(true)}
->
-  <span className="material-symbols-outlined">logout</span>
-  <span className="nav-text">Sair</span>
-</button>
+          <button
+            className="nav-item logout-btn"
+            data-tour="logout"
+            onClick={() => setMostrarConfirmacao(true)}
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span className="nav-text">Sair</span>
+          </button>
 
-<button className="theme-btn" data-tour="theme" onClick={toggleTheme}>
-  <span className="material-symbols-outlined">
-    {isDarkMode ? 'light_mode' : 'dark_mode'}
-  </span>
-  <span className="nav-text">
-    {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-  </span>
-</button>
+          <button className="theme-btn" data-tour="theme" onClick={toggleTheme}>
+            <span className="material-symbols-outlined">
+              {isDarkMode ? 'light_mode' : 'dark_mode'}
+            </span>
+            <span className="nav-text">
+              {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+            </span>
+          </button>
+
+          <button className="theme-btn tour-btn" onClick={reiniciarTour}>
+            <span className="material-symbols-outlined">restart_alt</span>
+            <span className="nav-text">Reiniciar Tour</span>
+          </button>
         </div>
       </aside>
 
