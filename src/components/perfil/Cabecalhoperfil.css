@@ -268,3 +268,81 @@
   .usuario-data { padding: 8px 16px 12px 16px; }
   .usuario-bio { max-width: 100%; }
 }
+
+/* Botão Seguir – azul preenchido */
+.btn-seguir {
+  background-color: #007bff;
+  color: #fff;
+  border: 2px solid #007bff;
+}
+
+.btn-seguir:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.35);
+}
+
+/* Deixar de seguir – contorno azul escuro */
+.btn-deixar-seguir {
+  background-color: #fff;
+  color: #062A6C;
+  border: 2px solid #062A6C;
+}
+
+.btn-deixar-seguir:hover {
+  background-color: #062A6C;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 42, 108, 0.25);
+}
+
+/* Mensagem – verde preenchido */
+.btn-mensagem {
+  background-color: #28a745;
+  color: #fff;
+  border: 2px solid #28a745;
+}
+
+.btn-mensagem:hover {
+  background-color: #1e7e34;
+  border-color: #1e7e34;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.35);
+}
+
+/* =========================================
+   DARK MODE – BOTÕES DE INTERAÇÃO
+   ========================================= */
+body.dark-mode .btn-seguir {
+  background-color: #1a73e8;      /* azul mais vibrante no escuro */
+  border-color: #1a73e8;
+  color: #fff;
+}
+body.dark-mode .btn-seguir:hover {
+  background-color: #1557b0;
+  border-color: #1557b0;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.35);
+}
+
+body.dark-mode .btn-deixar-seguir {
+  background-color: transparent;
+  color: #a8c0f0;                 /* tom claro para contraste */
+  border: 2px solid #a8c0f0;
+}
+body.dark-mode .btn-deixar-seguir:hover {
+  background-color: rgba(168, 192, 240, 0.15);
+  color: #a8c0f0;
+  box-shadow: 0 4px 12px rgba(168, 192, 240, 0.25);
+}
+
+body.dark-mode .btn-mensagem {
+  background-color: #2e7d32;      /* verde escuro */
+  border-color: #2e7d32;
+  color: #fff;
+}
+body.dark-mode .btn-mensagem:hover {
+  background-color: #1b5e20;
+  border-color: #1b5e20;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.35);
+}
