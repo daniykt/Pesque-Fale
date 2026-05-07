@@ -21,11 +21,57 @@ body {
 }
 
 /* ================= ABAS ================= */
+/* ===== LAYOUT PADRÃO (desktop) ===== */
 .notif-tabs {
   display: flex;
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
+  flex-wrap: nowrap; /* desktop: uma linha com scroll */
+}
+
+/* ===== MOBILE: quebra em duas linhas ===== */
+@media (max-width: 600px) {
+  .notif-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    justify-content: center; /* ou flex-start, como preferir */
+    gap: 4px 8px;
+    padding-bottom: 4px;
+  }
+
+  .notif-tab {
+    flex: 0 0 auto;
+    /* remove o padding horizontal excessivo para caber melhor */
+    padding: 6px 12px;
+  }
+
+  /* opcional: se quiser que os itens ocupem largura igual na linha */
+  .notif-tab {
+    flex: 1 0 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .notif-tab {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .notif-tab .material-symbols-outlined {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .notif-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 12px;
+  }
+  .notif-tab {
+    flex: 0 0 auto;
+  }
 }
 
 .notif-tabs::-webkit-scrollbar {
