@@ -47,29 +47,39 @@ export default function Notificacao() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const lista = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setNotificacoes(lista);
+      setNotificacoes((prev) => {
+        const localMap = Object.fromEntries(prev.map((n) => [n.id, n]));
+        return snapshot.docs.map((d) => {
+          const remoto = { id: d.id, ...d.data() };
+          const local  = localMap[d.id];
+          if (local?.lida && !remoto.lida) return { ...remoto, lida: true };
+          return remoto;
+        });
+      });
     });
 
     return unsubscribe;
   }, [user]);
 
-  // 🗑️ Excluir
   const excluirNotificacao = async (id) => {
+    setNotificacoes((prev) => prev.filter((n) => n.id !== id));
     await deleteDoc(doc(db, "notificacoes", id));
   };
 
-  // ✅ Marcar uma como lida
   const marcarComoLida = async (id, lida) => {
     if (lida) return;
+    setNotificacoes((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
+    );
     await updateDoc(doc(db, "notificacoes", id), { lida: true });
   };
 
-  // ✅ Marcar todas como lidas
   const marcarTodasComoLidas = async () => {
     if (!user) return;
     const naoLidas = notificacoes.filter((n) => !n.lida);
     if (naoLidas.length === 0) return;
+
+    setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })));
 
     const batch = writeBatch(db);
     naoLidas.forEach((n) => {
@@ -78,7 +88,6 @@ export default function Notificacao() {
     await batch.commit();
   };
 
-  // ⏱️ Tempo relativo
   const tempoRelativo = (timestamp) => {
     if (!timestamp) return "";
     const agora = new Date();
@@ -92,7 +101,6 @@ export default function Notificacao() {
     return data.toLocaleDateString();
   };
 
-  // 📅 É hoje?
   const isHoje = (timestamp) => {
     if (!timestamp) return false;
     const data  = new Date(timestamp.seconds * 1000);
@@ -104,7 +112,6 @@ export default function Notificacao() {
     );
   };
 
-  // 💬 Texto
   const renderTexto = (n) => {
     switch (n.tipo) {
       case "seguindo":
@@ -130,7 +137,6 @@ export default function Notificacao() {
     }
   };
 
-  // 🎨 Classe do avatar
   const avatarClass = (tipo) => {
     const map = {
       seguindo:    "seguidor",
@@ -141,18 +147,15 @@ export default function Notificacao() {
     return map[tipo] || "seguidor";
   };
 
-  // 🔤 Iniciais
   const iniciais = (nome = "") =>
     nome.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 
-  // 🔢 Contagem não lidas por tipo
   const contarNaoLidas = (tipo) => {
     const base = notificacoes.filter((n) => !n.lida);
     if (tipo === "todas") return base.length;
     return base.filter((n) => n.tipo === tipo).length;
   };
 
-  // 📋 Filtradas
   const notifFiltradas =
     filtro === "todas"
       ? notificacoes
