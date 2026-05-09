@@ -1,129 +1,533 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+  font-family: 'Open Sans', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
-/* ================= CONTAINER ================= */
-.container-notificacoes {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+/* ================= WRAPPER ================= */
+.notif-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 20px;
-    box-sizing: border-box;
+/* ================= HEADER ================= */
+.notif-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 24px 0;
+  flex-shrink: 0;
+}
+
+/* ================= ABAS ================= */
+.notif-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notif-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.notif-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s, border-color 0.15s;
+  background: transparent;
+}
+
+.notif-tab.active {
+  color: #062A6C;
+  border-bottom-color: #062A6C;
+}
+
+/* aba arquivadas tem cor diferente quando ativa */
+.notif-tab.tab-arquivadas.active {
+  color: #64748b;
+  border-bottom-color: #94a3b8;
+}
+
+.notif-tab .tab-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  color: #ffffff;
+  background: #94a3b8;
+}
+
+.notif-tab.active .tab-badge {
+  background: #062A6C;
+}
+
+/* badge da aba arquivadas — tom neutro */
+.tab-badge--arquivo {
+  background: #94a3b8 !important;
+}
+
+/* ================= LISTA ================= */
+.container-notificacoes {
+  flex: 1;
+  overflow-y: auto;
+  background: #f7f7f7;
+  padding: 16px;
+  padding-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ================= LABEL DE SEÇÃO ================= */
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 0 2px;
+}
+
+/* ================= AVISO ARQUIVADAS ================= */
+.arquivo-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.arquivo-aviso .material-symbols-outlined {
+  font-size: 16px;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+/* ================= SEÇÃO ================= */
+.notif-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 /* ================= CARD ================= */
-.notificacao {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 15px;
-
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-
-    position: relative;
-    transition: all 0.2s ease;
+.notif-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, opacity 0.2s, transform 0.2s;
+  position: relative;
 }
 
-.notificacao:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.notif-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
-/* ================= ÍCONE ================= */
-.notificacao .icone {
-    font-size: 22px;
+.notif-card.nao-lida {
+  border-left: 3px solid #062A6C;
+  border-radius: 0 12px 12px 0;
+}
+
+.notif-card.lida {
+  opacity: 0.7;
+}
+
+/* card arquivado — mais apagado e sem cursor de ação */
+.notif-card.arquivada {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.notif-card.arquivada:hover {
+  border-color: #e2e8f0;
+  background: #ffffff;
+}
+
+/* ================= AVATAR ================= */
+.notif-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.notif-avatar.seguidor   { background: #E6F1FB; color: #0C447C; }
+.notif-avatar.curtida    { background: #FBEAF0; color: #72243E; }
+.notif-avatar.comentario { background: #E1F5EE; color: #085041; }
+.notif-avatar.mensagem   { background: #FAEEDA; color: #633806; }
+
+/* ================= ÍCONE DE TIPO ================= */
+.tipo-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+
+.tipo-icon.seguidor   { background: #185FA5; color: #ffffff; }
+.tipo-icon.curtida    { background: #993556; color: #ffffff; }
+.tipo-icon.comentario { background: #0F6E56; color: #ffffff; }
+.tipo-icon.mensagem   { background: #854F0B; color: #ffffff; }
+
+.tipo-icon .material-symbols-outlined {
+  font-size: 9px;
 }
 
 /* ================= CONTEÚDO ================= */
-.conteudo {
-    flex: 1;
+.notif-content {
+  flex: 1;
+  min-width: 0;
 }
 
-.notificacao p {
-    margin: 0;
-    font-size: 15px;
-    color: #222;
+.notif-text {
+  font-size: 14px;
+  color: #1e293b;
+  line-height: 1.5;
+  margin: 0;
 }
 
-/* comentário destacado */
-.texto-comentario {
-    display: block;
-    margin-top: 5px;
-    font-style: italic;
-    color: #555;
+.notif-text strong {
+  font-weight: 600;
 }
 
-/* tempo */
-.data {
-    font-size: 12px;
-    color: gray;
-    margin-top: 5px;
+.notif-quote {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
+  border-left: 2px solid #cbd5e1;
+  border-radius: 0 4px 4px 0;
+  padding: 4px 10px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.notif-time {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.dot-unread {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #062A6C;
+  flex-shrink: 0;
+}
+
+/* ── countdown de arquivamento ── */
+.notif-arquivando {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
 }
 
 /* ================= BOTÃO EXCLUIR ================= */
+.notif-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .btn-excluir {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    opacity: 0.6;
-    transition: 0.2s;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: background 0.15s, color 0.15s;
 }
 
 .btn-excluir:hover {
-    opacity: 1;
-    color: red;
+  background: #f1f5f9;
+  color: #e24b4a;
 }
 
-/* ================= NOTIFICAÇÃO LIDA ================= */
-.notificacao.lida {
-    background: #f5f5f5;
-    opacity: 0.7;
+.btn-excluir .material-symbols-outlined {
+  font-size: 16px;
 }
 
 /* ================= VAZIO ================= */
 .vazio {
-    text-align: center;
-    color: gray;
-    margin-top: 40px;
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 14px;
 }
 
-/* ================= RESPONSIVO ================= */
-@media (max-width: 768px) {
-
-    .container-notificacoes {
-        padding: 15px;
-    }
-
-    .notificacao {
-        padding: 12px;
-        gap: 10px;
-    }
-
-    .notificacao p {
-        font-size: 14px;
-    }
-
+.vazio .material-symbols-outlined {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 10px;
 }
 
-/* telas pequenas */
-@media (max-width: 480px) {
+/* ================= FAB ================= */
+.fab-marcar {
+  position: fixed;
+  bottom: 28px;
+  left: 308px;
+  width: auto;
+  background: #062A6C;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Open Sans', Arial, sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(6, 42, 108, 0.35);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  z-index: 100;
+}
 
-    .notificacao {
-        flex-direction: row;
-        align-items: flex-start;
-    }
+.fab-marcar:hover {
+  background: #0a3a8f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(6, 42, 108, 0.45);
+}
 
-    .notificacao p {
-        font-size: 13px;
-    }
+.fab-marcar:active {
+  transform: scale(0.97);
+}
 
+.fab-marcar .material-symbols-outlined {
+  font-size: 17px;
+}
+
+/* ================= DARK MODE ================= */
+body.dark-mode .notif-header {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+
+body.dark-mode .notif-tab { color: #94a3b8; }
+
+body.dark-mode .notif-tab.active {
+  color: #93b4f0;
+  border-bottom-color: #93b4f0;
+}
+
+body.dark-mode .notif-tab.tab-arquivadas.active {
+  color: #64748b;
+  border-bottom-color: #64748b;
+}
+
+body.dark-mode .notif-tab.active .tab-badge { background: #062A6C; }
+
+body.dark-mode .container-notificacoes { background: #0f172a; }
+body.dark-mode .section-label { color: #64748b; }
+
+body.dark-mode .arquivo-aviso {
+  background: #1e293b;
+  border-color: #334155;
+  color: #64748b;
+}
+
+body.dark-mode .notif-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-mode .notif-card:hover {
+  background: #253347;
+  border-color: #475569;
+}
+
+body.dark-mode .notif-card.nao-lida { border-left-color: #93b4f0; }
+body.dark-mode .notif-text { color: #e2e8f0; }
+
+body.dark-mode .notif-quote {
+  background: #0f172a;
+  border-left-color: #334155;
+  color: #94a3b8;
+}
+
+body.dark-mode .tipo-icon { border-color: #1e293b; }
+body.dark-mode .dot-unread { background: #93b4f0; }
+
+body.dark-mode .btn-excluir { color: #64748b; }
+body.dark-mode .btn-excluir:hover {
+  background: #334155;
+  color: #f87171;
+}
+
+
+/* ================= LOADING AUTH ================= */
+.notif-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.notif-loading-icon {
+  font-size: 40px;
+  animation: pulse-notif 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-notif {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+body.dark-mode .notif-loading {
+  color: #475569;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 900px) {
+  .notif-wrapper {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .notif-header {
+    padding: 10px 12px 0;
+  }
+
+  .notif-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    overflow-x: unset;
+    padding-bottom: 10px;
+  }
+
+  .notif-tab {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 50px;
+    background: #f8fafc;
+    color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ativo: fundo azul sólido em vez de underline */
+  .notif-tab.active {
+    background: #062A6C;
+    color: #ffffff;
+    border-color: #062A6C;
+  }
+
+  .notif-tab.tab-arquivadas.active {
+    background: #64748b;
+    color: #ffffff;
+    border-color: #64748b;
+  }
+
+  .notif-tab.active .tab-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .main-layout-content:has(.notif-wrapper) {
+    padding-bottom: 0 !important;
+  }
+
+  .notif-wrapper {
+    height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+  }
+
+  .container-notificacoes {
+    /* espaço extra só para o FAB não cobrir o último card */
+    padding-bottom: calc(72px + 16px);
+  }
+
+  .fab-marcar {
+    left: 16px;
+    bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
+  }
+
+  .notif-card { padding: 12px; }
+  .notif-text { font-size: 13px; }
+}
+
+/* dark mode chips mobile */
+@media (max-width: 900px) {
+  body.dark-mode .notif-tab {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+  }
+
+  body.dark-mode .notif-tab.active {
+    background: #062A6C;
+    color: #ffffff;
+    border-color: #062A6C;
+  }
+
+  body.dark-mode .notif-tab.tab-arquivadas.active {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+  }
 }

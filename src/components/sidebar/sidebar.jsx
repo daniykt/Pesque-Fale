@@ -4,17 +4,19 @@ import './sidebar.css';
 import { getAuth, signOut } from 'firebase/auth';
 import logo from '../../assets/image/logo/logo.jpg';
 import Confirmacao from '../confirmacao/confirmacao';
+import { useNotifCount } from '../../hooks/useNotifCount';
 
 export default function Sidebar() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
   });
-  const [notifCount, setNotifCount] = useState(0);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
+  const notifCount = useNotifCount();
+
   const location = useLocation();
-  const navigate = useNavigate();
-  const auth = getAuth();
+  const navigate  = useNavigate();
+  const auth      = getAuth();
 
   const handleLogout = async () => {
     try {
@@ -26,47 +28,6 @@ export default function Sidebar() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem('notificacoes');
-    if (!stored) {
-      const notificacoesIniciais = Array.from({ length: 6 }, (_, i) => ({
-        id: i + 1,
-        data: '05/05/2025 10:35',
-        usuario: 'Reginaldosilva',
-        texto: `Lugarzinho da hora pra pescar! (Notif ${i + 1})`,
-        lida: false,
-        curtida: null,
-        favorito: false,
-      }));
-      localStorage.setItem('notificacoes', JSON.stringify(notificacoesIniciais));
-      setNotifCount(6);
-    } else {
-      const parsed = JSON.parse(stored);
-      setNotifCount(parsed.filter(n => !n.lida).length);
-    }
-  }, []);
-
-  const syncNotifCount = () => {
-    const stored = localStorage.getItem('notificacoes');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setNotifCount(parsed.filter(n => !n.lida).length);
-    }
-  };
-
-  useEffect(() => {
-    const handleNotifUpdate = (e) => setNotifCount(e.detail);
-    window.addEventListener('notificacoesAtualizadas', handleNotifUpdate);
-    return () => window.removeEventListener('notificacoesAtualizadas', handleNotifUpdate);
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('focus', syncNotifCount);
-    return () => window.removeEventListener('focus', syncNotifCount);
-  }, []);
-
-  useEffect(() => { syncNotifCount(); }, [location]);
-
-  useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add('dark-mode');
       localStorage.setItem('theme', 'dark');
@@ -76,7 +37,7 @@ export default function Sidebar() {
     }
   }, [isDarkMode]);
 
-  const isActive = (path) => location.pathname.startsWith(path);
+  const isActive    = (path) => location.pathname.startsWith(path);
   const toggleTheme = () => setIsDarkMode(prev => !prev);
 
   const reiniciarTour = () => {
@@ -120,7 +81,9 @@ export default function Sidebar() {
               <Link to="/notificacao" className={`nav-item ${isActive('/notificacao') ? 'active' : ''}`}>
                 <span className="material-symbols-outlined" style={{ position: 'relative' }}>
                   notifications
-                  {notifCount > 0 && <span className="badge">{notifCount}</span>}
+                  {notifCount > 0 && (
+                    <span className="badge">{notifCount > 99 ? '99+' : notifCount}</span>
+                  )}
                 </span>
                 <span className="nav-text">Notificações</span>
               </Link>
