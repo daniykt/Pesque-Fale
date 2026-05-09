@@ -33,6 +33,7 @@ export default function Perfil() {
   const [user, setUser] = useState(null);
   const [usuarioPerfil, setUsuarioPerfil] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [carregando, setCarregando] = useState(true);
 
   const [fotoPerfil, setFotoPerfil] = useState("");
   const [banner, setBanner] = useState(null);
@@ -53,10 +54,33 @@ export default function Perfil() {
   const isOwnProfile = !id || id === user?.uid;
 
   // =========================
-  // 🧹 LIMPA ESTADOS ao trocar de perfil
-  // Evita que dados do perfil anterior apareçam antes do Firestore responder
+  // ⚡ CACHE + SKELETON ao trocar de perfil
   // =========================
   useEffect(() => {
+    const targetId = id || user?.uid;
+    if (!targetId) return;
+
+    // Tenta aplicar cache instantaneamente
+    const cache = localStorage.getItem(`perfilCache_${targetId}`);
+    if (cache) {
+      try {
+        const dados = JSON.parse(cache);
+        // Cache hit: aplica dados imediatamente e não mostra skeleton
+        setUsuarioPerfil((prev) => ({ ...prev, ...dados }));
+        setBio(dados.bio || "");
+        setLocalizacao(dados.localizacao || "");
+        setFotoPerfil(dados.fotoPerfil || "");
+        setBanner(dados.banner || null);
+        setPosts(dados.posts || []);
+        setCarregando(false); // tem cache → sem skeleton
+        return;
+      } catch {
+        localStorage.removeItem(`perfilCache_${targetId}`);
+      }
+    }
+
+    // Cache miss: mostra skeleton e limpa dados do perfil anterior
+    setCarregando(true);
     setUsuarioPerfil(null);
     setFotoPerfil("");
     setBanner(null);
@@ -64,32 +88,7 @@ export default function Perfil() {
     setLocalizacao("");
     setPosts([]);
     setIsFollowing(false);
-  }, [id]);
-
-  // =========================
-  // ⚡ CACHE INSTANTÂNEO — só para o próprio perfil
-  // =========================
-  useEffect(() => {
-    // Só aplica cache quando for o próprio perfil E o user já foi carregado
-    if (!isOwnProfile || !user) return;
-
-    const cache = localStorage.getItem("usuarioCache");
-    if (cache) {
-      try {
-        const dados = JSON.parse(cache);
-        // Só aplica se o cache bater com o uid do usuário logado
-        if (dados.uid && dados.uid !== user.uid) return;
-
-        setUsuarioPerfil((prev) => ({ ...prev, ...dados }));
-        setBio(dados.bio || "");
-        setLocalizacao(dados.localizacao || "");
-        setFotoPerfil(dados.fotoPerfil || "");
-        setBanner(dados.banner || null);
-      } catch {
-        localStorage.removeItem("usuarioCache");
-      }
-    }
-  }, [isOwnProfile, user]);
+  }, [id, user?.uid]);
 
   // =========================
   // 🔥 FIRESTORE REALTIME
@@ -112,14 +111,13 @@ export default function Perfil() {
         setLocalizacao(data.localizacao || "");
         setFotoPerfil(data.fotoPerfil || "");
         setBanner(data.banner || null);
+        setCarregando(false); // Firestore respondeu — esconde o skeleton
 
-        // Atualiza o cache apenas se for o próprio perfil
-        if (!id || id === user?.uid) {
-          localStorage.setItem(
-            "usuarioCache",
-            JSON.stringify({ uid: docSnap.id, ...data })
-          );
-        }
+        // Salva cache por uid — na próxima visita carrega instantâneo sem skeleton
+        localStorage.setItem(
+          `perfilCache_${docSnap.id}`,
+          JSON.stringify({ uid: docSnap.id, ...data })
+        );
       }
     });
 
@@ -243,6 +241,49 @@ export default function Perfil() {
     reader.readAsDataURL(file);
     e.target.value = "";
   };
+
+  if (carregando) {
+    return (
+      <Layout>
+        <div className="container2">
+          <div className="perfil perfil-skeleton">
+            {/* Banner skeleton */}
+            <div className="sk sk-banner" />
+
+            {/* Linha foto + botões */}
+            <div className="sk-inferior">
+              <div className="sk sk-avatar" />
+              <div className="sk-botoes">
+                <div className="sk sk-btn" />
+                <div className="sk sk-btn" />
+              </div>
+            </div>
+
+            {/* Info skeleton */}
+            <div className="sk-info">
+              <div className="sk sk-nome" />
+              <div className="sk sk-linha" />
+              <div className="sk sk-linha sk-linha--curta" />
+            </div>
+
+            {/* Stats skeleton */}
+            <div className="sk-stats">
+              <div className="sk sk-stat" />
+              <div className="sk sk-stat" />
+              <div className="sk sk-stat" />
+            </div>
+
+            {/* Grid skeleton */}
+            <div className="sk-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="sk sk-grid-item" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
