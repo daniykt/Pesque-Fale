@@ -274,9 +274,12 @@ export default function Chat() {
         await addDoc(collection(db, "notificacoes"), {
           tipo: "mensagem",
           de: user.displayName || "Usuário",
+          deId: user.uid,
           para: outroId,
           texto: texto.trim(),
+          chatId: chatId,
           createdAt: serverTimestamp(),
+          lida: false,
         });
       }
 

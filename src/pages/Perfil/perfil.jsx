@@ -144,6 +144,7 @@ export default function Perfil() {
     await addDoc(collection(db, "notificacoes"), {
       tipo: "seguindo",
       de: user.displayName || "Pescador",
+      deId: user.uid,
       para: usuarioPerfil.id,
       createdAt: serverTimestamp(),
     });

@@ -14,31 +14,28 @@ import './NotifToast.css';
 
 // ── Duração do toast em ms (4 s) ──
 const TOAST_DURATION = 4000;
-// ── Quanto tempo após montar ignoramos notifs antigas (ms) ──
-const GRACE_MS = 2000;
+// ── Janela de graça ao montar: ignora notifs mais antigas que X ms ──
+const GRACE_MS = 2500;
 
-// ── Ícone e cor por tipo ──
+// ── Configuração visual por tipo ──
 const TIPO_CONFIG = {
-  seguindo:    { icon: 'person_add',  label: 'Novo seguidor',   avatarClass: 'seguidor',   tipoClass: 'seguidor'   },
-  curtida:     { icon: 'favorite',    label: 'Curtiu sua post', avatarClass: 'curtida',    tipoClass: 'curtida'    },
-  comentario:  { icon: 'chat_bubble', label: 'Comentou',        avatarClass: 'comentario', tipoClass: 'comentario' },
-  mensagem:    { icon: 'send',        label: 'Nova mensagem',   avatarClass: 'mensagem',   tipoClass: 'mensagem'   },
+  seguindo:    { icon: 'person_add',  avatarClass: 'seguidor',   tipoClass: 'seguidor'   },
+  curtida:     { icon: 'favorite',    avatarClass: 'curtida',    tipoClass: 'curtida'    },
+  comentario:  { icon: 'chat_bubble', avatarClass: 'comentario', tipoClass: 'comentario' },
+  mensagem:    { icon: 'send',        avatarClass: 'mensagem',   tipoClass: 'mensagem'   },
 };
 
-// ── Ações rápidas por tipo ──
+// ── Ações contextuais por tipo
+// Campos reais no Firestore (após correção dos arquivos abaixo):
+//   seguindo:   { de, deId, para, tipo, createdAt }
+//   curtida:    { de, deId, para, tipo, postId, createdAt, lida }
+//   comentario: { de, deId, para, tipo, texto, postId, createdAt, lida }
+//   mensagem:   { de, deId, para, tipo, texto, chatId, createdAt, lida }
 const ACOES_RAPIDAS = {
-  seguindo: [
-    { label: 'Ver perfil', action: 'perfil', icon: 'person' },
-  ],
-  curtida: [
-    { label: 'Ver post', action: 'post', icon: 'open_in_new' },
-  ],
-  comentario: [
-    { label: 'Responder', action: 'post', icon: 'reply' },
-  ],
-  mensagem: [
-    { label: 'Responder', action: 'chat', icon: 'reply' },
-  ],
+  seguindo:   [{ label: 'Ver perfil', action: 'perfil',  icon: 'person'      }],
+  curtida:    [{ label: 'Ver post',   action: 'post',    icon: 'open_in_new' }],
+  comentario: [{ label: 'Responder', action: 'post',    icon: 'reply'       }],
+  mensagem:   [{ label: 'Responder', action: 'chat',    icon: 'reply'       }],
 };
 
 function iniciais(nome = '') {
@@ -49,19 +46,26 @@ function iniciais(nome = '') {
     .join('');
 }
 
-export default function NotifToast() {
-  const navigate    = useNavigate();
-  const location    = useLocation();
-  const [user, setUser]     = useState(null);
-  const [toasts, setToasts] = useState([]);   // array de { id, notif, saidoMs }
+function gerarTexto(n) {
+  switch (n.tipo) {
+    case 'seguindo':   return 'começou a seguir você';
+    case 'curtida':    return 'curtiu sua publicação';
+    case 'comentario': return 'comentou na sua publicação';
+    case 'mensagem':   return 'te enviou uma mensagem';
+    default:           return 'nova notificação';
+  }
+}
 
-  // Controla quando o componente montou (para ignorar notifs antigas)
+export default function NotifToast() {
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
+  const [user, setUser]     = useState(null);
+  const [toasts, setToasts] = useState([]);
+
   const mountedAtRef    = useRef(null);
-  // IDs já vistos para não re-exibir
   const seenIdsRef      = useRef(new Set());
-  // timers de auto-fechamento: { [toastId]: timeoutId }
   const timersRef       = useRef({});
-  // id incrementável para chave única
   const toastCounterRef = useRef(0);
 
   // 🔐 Auth
@@ -78,35 +82,27 @@ export default function NotifToast() {
     return unsub;
   }, []);
 
-  // ── Remove toast pelo ID interno ──
+  // ── Remove toast com animação de saída ──
   const remover = useCallback((toastId) => {
     clearTimeout(timersRef.current[toastId]);
     delete timersRef.current[toastId];
-    // marca como "saindo" para animar saída
     setToasts((prev) =>
       prev.map((t) => (t.toastId === toastId ? { ...t, saindo: true } : t))
     );
-    // remove do DOM depois da animação
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
     }, 380);
   }, []);
 
-  // ── Agenda auto-fechamento ──
+  // ── Agenda fechamento automático ──
   const agendarFechamento = useCallback((toastId) => {
     timersRef.current[toastId] = setTimeout(() => remover(toastId), TOAST_DURATION);
   }, [remover]);
 
-  // ── Pausar timer ao hover ──
-  const pausar = useCallback((toastId) => {
-    clearTimeout(timersRef.current[toastId]);
-  }, []);
+  const pausar  = useCallback((toastId) => clearTimeout(timersRef.current[toastId]), []);
+  const retomar = useCallback((toastId) => agendarFechamento(toastId), [agendarFechamento]);
 
-  const retomar = useCallback((toastId) => {
-    agendarFechamento(toastId);
-  }, [agendarFechamento]);
-
-  // 🔔 Listener Firestore
+  // 🔔 Listener Firestore — apenas notificações novas
   useEffect(() => {
     if (!user) return;
 
@@ -120,8 +116,9 @@ export default function NotifToast() {
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
-      // Ignora durante o período de graça (evita exibir notifs antigas ao montar)
       const agora = Date.now();
+
+      // Período de graça: popula seenIds sem exibir toasts (evita notifs antigas ao montar)
       if (agora - mountedAtRef.current < GRACE_MS) {
         snapshot.docs.forEach((d) => seenIdsRef.current.add(d.id));
         return;
@@ -129,24 +126,21 @@ export default function NotifToast() {
 
       snapshot.docChanges().forEach((change) => {
         if (change.type !== 'added') return;
-        const notifId = change.doc.id;
 
-        // Já vimos?
+        const notifId = change.doc.id;
         if (seenIdsRef.current.has(notifId)) return;
         seenIdsRef.current.add(notifId);
 
         const notif = { id: notifId, ...change.doc.data() };
 
-        // Suprime se estiver na tela de notificação
+        // ── Suprime o toast se o usuário já estiver na tela de notificações ──
         if (location.pathname.startsWith('/notificacao')) return;
 
         const toastId = ++toastCounterRef.current;
         setToasts((prev) => {
-          // Máximo de 3 toasts visíveis ao mesmo tempo
-          const novos = prev.length >= 3 ? prev.slice(1) : prev;
-          return [...novos, { toastId, notif, saindo: false }];
+          const base = prev.length >= 3 ? prev.slice(1) : prev;
+          return [...base, { toastId, notif, saindo: false }];
         });
-        // agenda fechamento num próximo tick (depois de setToasts)
         setTimeout(() => agendarFechamento(toastId), 50);
       });
     });
@@ -154,52 +148,73 @@ export default function NotifToast() {
     return unsub;
   }, [user, location.pathname, agendarFechamento]);
 
-  // Se não há toasts, nada a renderizar
+  // ── Clique no corpo: vai para /notificacao ──
+  const handleClickCorpo = useCallback((toastId) => {
+    remover(toastId);
+    navigate('/notificacao');
+  }, [remover, navigate]);
+
+  // ── Clique na ação contextual ──
+  const handleAcao = useCallback((e, toastId, acao, notif) => {
+    e.stopPropagation();
+    remover(toastId);
+
+    switch (acao) {
+      case 'perfil':
+        // seguindo → deId = uid de quem passou a seguir
+        navigate(notif.deId ? `/perfil/${notif.deId}` : '/notificacao');
+        break;
+
+      case 'post':
+        // curtida / comentario → deId (dono do post = userId na rota) + postId
+        // Rota: /post/:userId/:postId — userId aqui é quem sofreu a ação (notif.para)
+        // mas a rota espera o dono do post, que é notif.para (o destinatário da notif)
+        if (notif.postId) {
+          navigate(`/post/${notif.para}/${notif.postId}`);
+        } else {
+          navigate('/notificacao');
+        }
+        break;
+
+      case 'chat':
+        // mensagem → chatId salvo diretamente OU derivado de deId + user.uid
+        if (notif.chatId) {
+          navigate(`/chat/${notif.chatId}`);
+        } else if (notif.deId && user?.uid) {
+          const chatId = [notif.deId, user.uid].sort().join('_');
+          navigate(`/chat/${chatId}`);
+        } else {
+          navigate('/chat');
+        }
+        break;
+
+      default:
+        navigate('/notificacao');
+    }
+  }, [remover, navigate, user]);
+
   if (toasts.length === 0) return null;
 
   return (
     <div className="notif-toast-stack" aria-live="polite" aria-label="Notificações">
       {toasts.map(({ toastId, notif, saindo }) => {
-        const cfg     = TIPO_CONFIG[notif.tipo] || TIPO_CONFIG.seguindo;
-        const acoes   = ACOES_RAPIDAS[notif.tipo] || [];
-
-        const handleClick = () => {
-          remover(toastId);
-          navigate('/notificacao');
-        };
-
-        const handleAcao = (e, acao) => {
-          e.stopPropagation();
-          remover(toastId);
-          switch (acao) {
-            case 'perfil':
-              if (notif.deId) navigate(`/perfil/${notif.deId}`);
-              else navigate('/notificacao');
-              break;
-            case 'post':
-              if (notif.postId && notif.deId) navigate(`/post/${notif.deId}/${notif.postId}`);
-              else navigate('/notificacao');
-              break;
-            case 'chat':
-              if (notif.chatId) navigate(`/chat/${notif.chatId}`);
-              else navigate('/chat');
-              break;
-            default:
-              navigate('/notificacao');
-          }
-        };
+        const cfg   = TIPO_CONFIG[notif.tipo] || TIPO_CONFIG.seguindo;
+        const acoes = ACOES_RAPIDAS[notif.tipo] || [];
 
         return (
           <div
             key={toastId}
             className={`notif-toast ${saindo ? 'notif-toast--saindo' : 'notif-toast--entrando'}`}
             role="alert"
-            onClick={handleClick}
+            onClick={() => handleClickCorpo(toastId)}
             onMouseEnter={() => pausar(toastId)}
             onMouseLeave={() => retomar(toastId)}
           >
             {/* Barra de progresso */}
-            <div className="notif-toast__progress" style={{ animationDuration: `${TOAST_DURATION}ms` }} />
+            <div
+              className="notif-toast__progress"
+              style={{ animationDuration: `${TOAST_DURATION}ms` }}
+            />
 
             {/* Avatar */}
             <div className={`notif-toast__avatar ${cfg.avatarClass}`}>
@@ -212,21 +227,19 @@ export default function NotifToast() {
             {/* Corpo */}
             <div className="notif-toast__body">
               <p className="notif-toast__text">
-                <strong>{notif.de}</strong>{' '}
-                {gerarTexto(notif)}
+                <strong>{notif.de}</strong> {gerarTexto(notif)}
               </p>
               {notif.texto && (
                 <span className="notif-toast__quote">{notif.texto}</span>
               )}
 
-              {/* Ações rápidas */}
               {acoes.length > 0 && (
                 <div className="notif-toast__acoes">
                   {acoes.map((a) => (
                     <button
                       key={a.action}
                       className={`notif-toast__btn notif-toast__btn--${notif.tipo}`}
-                      onClick={(e) => handleAcao(e, a.action)}
+                      onClick={(e) => handleAcao(e, toastId, a.action, notif)}
                     >
                       <span className="material-symbols-outlined">{a.icon}</span>
                       {a.label}
@@ -249,14 +262,4 @@ export default function NotifToast() {
       })}
     </div>
   );
-}
-
-function gerarTexto(n) {
-  switch (n.tipo) {
-    case 'seguindo':    return 'começou a seguir você';
-    case 'curtida':     return 'curtiu sua publicação';
-    case 'comentario':  return 'comentou na sua publicação';
-    case 'mensagem':    return 'te enviou uma mensagem';
-    default:            return 'nova notificação';
-  }
 }
