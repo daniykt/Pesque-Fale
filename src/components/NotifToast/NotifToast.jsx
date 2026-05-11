@@ -6,8 +6,6 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
-  limit,
 } from 'firebase/firestore';
 import { observeAuthState } from '../../auth';
 import './NotifToast.css';
@@ -108,11 +106,11 @@ export default function NotifToast() {
 
     mountedAtRef.current = Date.now();
 
+    // Sem orderBy — evita exigir índice composto no Firestore.
+    // O toast só reage a 'added' via docChanges(), ordem não importa.
     const q = query(
       collection(db, 'notificacoes'),
-      where('para', '==', user.uid),
-      orderBy('createdAt', 'desc'),
-      limit(20)
+      where('para', '==', user.uid)
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
