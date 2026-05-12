@@ -94,7 +94,7 @@ export default function Perfil() {
     setChatLiberado(false);
   }, [id, user?.uid]);
 
-  // 🔥 FIRESTORE REALTIME
+  // 🔥 FIRESTORE REALTIME — isFollowing derivado aqui, sem useEffect separado
   useEffect(() => {
     if (!user && !id) return;
     const userId = id || user?.uid;
@@ -111,6 +111,13 @@ export default function Perfil() {
         setFotoPerfil(data.fotoPerfil || "");
         setBanner(data.banner || null);
         setCarregando(false);
+
+        // Deriva isFollowing aqui — sem useEffect separado, sem flash
+        if (user && docSnap.id !== user.uid) {
+          const seguidores = data.seguidores || [];
+          setIsFollowing(seguidores.includes(user.uid));
+        }
+
         localStorage.setItem(
           `perfilCache_${docSnap.id}`,
           JSON.stringify({ uid: docSnap.id, ...data })
@@ -120,12 +127,7 @@ export default function Perfil() {
     return unsubscribe;
   }, [id, user]);
 
-  // Ver se segue
-  useEffect(() => {
-    if (!user || !usuarioPerfil) return;
-    const seguidores = usuarioPerfil.seguidores || [];
-    setIsFollowing(seguidores.includes(user.uid));
-  }, [user, usuarioPerfil]);
+  // useEffect de isFollowing removido — agora derivado dentro do onSnapshot acima
 
   // Escuta em tempo real o status da solicitação pendente
   useEffect(() => {
@@ -153,16 +155,15 @@ export default function Perfil() {
     return unsub;
   }, [user, usuarioPerfil, isFollowing, isOwnProfile]);
 
-  // ⭐ Verifica permissão de chat
+  // ⭐ Chat liberado se A segue B OU B segue A — sem chat_permissions
   useEffect(() => {
     if (!user || !usuarioPerfil || isOwnProfile) return;
-    const chatId = [user.uid, usuarioPerfil.id].sort().join("_");
-    const checkPermission = async () => {
-      const snap = await getDoc(doc(db, "chat_permissions", chatId));
-      setChatLiberado(snap.exists() && snap.data().accepted === true);
-    };
-    checkPermission();
-  }, [user, usuarioPerfil, isOwnProfile]);
+
+    // B segue A = B está nos seguidores de B (usuarioPerfil.seguidores contém user.uid)
+    const bSegueA = (usuarioPerfil.seguidores || []).includes(user.uid);
+    // A segue B = isFollowing
+    setChatLiberado(isFollowing || bSegueA);
+  }, [user, usuarioPerfil, isOwnProfile, isFollowing]);
 
   const cancelarSolicitacao = async () => {
     if (!user || !usuarioPerfil) return;

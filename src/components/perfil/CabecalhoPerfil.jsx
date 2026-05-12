@@ -110,15 +110,10 @@ export default function CabecalhoPerfil({
             <span className="material-symbols-outlined">person_remove</span>
             <span className="btn-texto">Deixar de seguir</span>
           </button>
-          {chatLiberado ? (
+          {chatLiberado && (
             <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
               <span className="material-symbols-outlined">chat</span>
               <span className="btn-texto">Mensagem</span>
-            </button>
-          ) : (
-            <button className="btn-cabecalho btn-pendente" disabled>
-              <span className="material-symbols-outlined">schedule</span>
-              <span className="btn-texto">Aguardando chat</span>
             </button>
           )}
         </>

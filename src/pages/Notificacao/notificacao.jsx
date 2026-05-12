@@ -14,7 +14,6 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
-  setDoc,
   serverTimestamp,
   addDoc,
 } from "firebase/firestore";
@@ -143,6 +142,7 @@ export default function Notificacao() {
   };
 
   // ── AÇÕES DA SOLICITAÇÃO ──
+  // Aceitar = adiciona A nos seguidores de B + chat liberado automaticamente
   const aceitarSeguidor = async (notif) => {
     if (!notif) return;
     try {
@@ -150,36 +150,9 @@ export default function Notificacao() {
       await updateDoc(doc(db, "usuarios", notif.para), {
         seguidores: arrayUnion(notif.de_id),
       });
-      // Notifica A de que foi aceito como seguidor
+      // Notifica A — aceito como seguidor, chat liberado automaticamente
       await addDoc(collection(db, "notificacoes"), {
         tipo: "solicitacao_aceita_seguidor",
-        de: user?.displayName || "Usuário",
-        de_id: notif.para,     // id de B (quem aceitou)
-        para: notif.de_id,     // notificar A
-        lida: false,
-        createdAt: serverTimestamp(),
-      });
-      await deleteDoc(doc(db, "notificacoes", notif.id));
-      setNotificacoes((prev) => prev.filter((n) => n.id !== notif.id));
-    } catch (e) {
-      console.error("Erro ao aceitar seguidor:", e);
-    }
-  };
-
-  const aceitarChat = async (notif) => {
-    if (!notif) return;
-    try {
-      await updateDoc(doc(db, "usuarios", notif.para), {
-        seguidores: arrayUnion(notif.de_id),
-      });
-      const chatId = [notif.de_id, notif.para].sort().join("_");
-      await setDoc(doc(db, "chat_permissions", chatId), {
-        accepted: true,
-        createdAt: new Date(),
-      });
-      // Notifica A de que foi aceito no chat
-      await addDoc(collection(db, "notificacoes"), {
-        tipo: "solicitacao_aceita_chat",
         de: user?.displayName || "Usuário",
         de_id: notif.para,
         para: notif.de_id,
@@ -189,37 +162,32 @@ export default function Notificacao() {
       await deleteDoc(doc(db, "notificacoes", notif.id));
       setNotificacoes((prev) => prev.filter((n) => n.id !== notif.id));
     } catch (e) {
-      console.error("Erro ao aceitar chat:", e);
+      console.error("Erro ao aceitar:", e);
     }
   };
 
-const recusarSolicitacao = async (notif) => {
-  if (!notif) return;
-  try {
-    // Remove B do array "seguindo" de A
-    await updateDoc(doc(db, "usuarios", notif.de_id), {
-      seguindo: arrayRemove(notif.para),
-    });
-    // Gera notificação para A (recusado)
-    await addDoc(collection(db, "notificacoes"), {
-      tipo: "solicitacao_recusada",
-      de: user?.displayName || "Usuário",
-      de_id: notif.para,
-      para: notif.de_id,
-      lida: false,
-      createdAt: serverTimestamp(),
-    });
-    // Remove a solicitação original
-    await deleteDoc(doc(db, "notificacoes", notif.id));
-    
-    // Atualiza estado local imediatamente (opcional, mas ajuda)
-    setNotificacoes(prev => prev.filter(n => n.id !== notif.id));
-    
-    console.log('Recusa processada, listener deve atualizar statusSolicitacao no perfil');
-  } catch (e) {
-    console.error("Erro ao recusar:", e);
-  }
-};
+  const recusarSolicitacao = async (notif) => {
+    if (!notif) return;
+    try {
+      // Remove B do array "seguindo" de A — A não segue mais B
+      await updateDoc(doc(db, "usuarios", notif.de_id), {
+        seguindo: arrayRemove(notif.para),
+      });
+      // Notifica A de que foi recusado
+      await addDoc(collection(db, "notificacoes"), {
+        tipo: "solicitacao_recusada",
+        de: user?.displayName || "Usuário",
+        de_id: notif.para,   // B (quem recusou)
+        para: notif.de_id,   // A (quem pediu)
+        lida: false,
+        createdAt: serverTimestamp(),
+      });
+      await deleteDoc(doc(db, "notificacoes", notif.id));
+      setNotificacoes((prev) => prev.filter((n) => n.id !== notif.id));
+    } catch (e) {
+      console.error("Erro ao recusar:", e);
+    }
+  };
 
   // ── FUNÇÕES AUXILIARES ──
   const isHoje = (timestamp) => {
@@ -268,9 +236,7 @@ const recusarSolicitacao = async (notif) => {
       case "solicitacao_seguir":
         return <><strong>{n.de}</strong> quer te seguir</>;
       case "solicitacao_aceita_seguidor":
-        return <><strong>{n.de}</strong> aceitou sua solicitação de seguidor</>;
-      case "solicitacao_aceita_chat":
-        return <><strong>{n.de}</strong> aceitou você como seguidor e liberou o chat</>;
+        return <><strong>{n.de}</strong> aceitou sua solicitação — agora vocês podem conversar no chat</>;
       case "solicitacao_recusada":
         return <><strong>{n.de}</strong> recusou sua solicitação de seguir</>;
       default:
@@ -381,7 +347,6 @@ const recusarSolicitacao = async (notif) => {
                         timersRef={timersRef}
                         tempoArquivarMs={TEMPO_ARQUIVAR_MS}
                         onAceitarSeguidor={aceitarSeguidor}
-                        onAceitarChat={aceitarChat}
                         onRecusar={recusarSolicitacao}
                       />
                     ))}
@@ -405,7 +370,6 @@ const recusarSolicitacao = async (notif) => {
                         timersRef={timersRef}
                         tempoArquivarMs={TEMPO_ARQUIVAR_MS}
                         onAceitarSeguidor={aceitarSeguidor}
-                        onAceitarChat={aceitarChat}
                         onRecusar={recusarSolicitacao}
                       />
                     ))}
@@ -475,7 +439,6 @@ function CardNotificacao({
   tempoArquivarMs,
   isArquivada = false,
   onAceitarSeguidor,
-  onAceitarChat,
   onRecusar,
 }) {
   const tipoClass = avatarClass(n.tipo);
@@ -538,14 +501,7 @@ function CardNotificacao({
               onClick={(e) => { e.stopPropagation(); onAceitarSeguidor(n); }}
             >
               <span className="material-symbols-outlined">person_add</span>
-              Aceitar seguidor
-            </button>
-            <button
-              className="notif-toast__btn notif-toast__btn--mensagem"
-              onClick={(e) => { e.stopPropagation(); onAceitarChat(n); }}
-            >
-              <span className="material-symbols-outlined">chat</span>
-              Aceitar no chat
+              Aceitar
             </button>
             <button
               className="notif-toast__btn notif-toast__btn--curtida"
