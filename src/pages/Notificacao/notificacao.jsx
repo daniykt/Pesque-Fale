@@ -8,46 +8,48 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
   deleteDoc,
   doc,
   updateDoc,
   writeBatch,
+  arrayUnion,
+  arrayRemove,
+  serverTimestamp,
+  addDoc,
+  getDoc,
+  getDocs,
 } from "firebase/firestore";
 
 import { observeAuthState } from "../../auth";
 
-// ── Tempo até arquivar após lida (5 minutos em ms) ──
 const TEMPO_ARQUIVAR_MS = 5 * 60 * 1000;
 
 const TIPOS = [
-  { key: "todas",      label: "Todas",        icon: "notifications" },
-  { key: "seguindo",   label: "Seguidores",   icon: "person_add" },
-  { key: "curtida",    label: "Curtidas",     icon: "favorite" },
-  { key: "comentario", label: "Comentários",  icon: "chat_bubble" },
-  { key: "mensagem",   label: "Mensagens",    icon: "send" },
-  { key: "arquivadas", label: "Arquivadas",   icon: "archive" },
+  { key: "todas",      label: "Todas",       icon: "notifications" },
+  { key: "seguindo",   label: "Seguidores",  icon: "person_add"    },
+  { key: "curtida",    label: "Curtidas",    icon: "favorite"      },
+  { key: "comentario", label: "Comentários", icon: "chat_bubble"   },
+  { key: "mensagem",   label: "Mensagens",   icon: "send"          },
+  { key: "arquivadas", label: "Arquivadas",  icon: "archive"       },
 ];
 
 export default function Notificacao() {
-  const [user, setUser]               = useState(null);
+  const [user, setUser] = useState(null);
   const [notificacoes, setNotificacoes] = useState([]);
-  // Arquivadas: só memória local, some ao deslogar
-  const [arquivadas, setArquivadas]   = useState([]);
-  const [filtro, setFiltro]           = useState("todas");
+  const [arquivadas, setArquivadas] = useState([]);
+  const [filtro, setFiltro] = useState("todas");
+  // Mapa uid → bool: currentUser já segue aquela pessoa?
+  const [seguindoMap, setSeguindoMap] = useState({});
 
-  // Mapa de timers: { [id]: timeoutId }
-  // Usamos useRef para não recriar o mapa a cada render
   const timersRef = useRef({});
 
-  // 🔐 Auth — limpa arquivadas ao deslogar
+  // Auth
   useEffect(() => {
     const unsubscribe = observeAuthState((u) => {
       setUser(u);
       if (!u) {
-        // usuário deslogou: limpa arquivadas da memória
         setArquivadas([]);
-        // cancela todos os timers pendentes
+        setSeguindoMap({});
         Object.values(timersRef.current).forEach(clearTimeout);
         timersRef.current = {};
       }
@@ -55,47 +57,55 @@ export default function Notificacao() {
     return unsubscribe;
   }, []);
 
-  // 🔔 Notificações em tempo real
+  // Firestore realtime
   useEffect(() => {
     if (!user) return;
-
     const q = query(
       collection(db, "notificacoes"),
-      where("para", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("para", "==", user.uid)
     );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       setNotificacoes((prev) => {
         const localMap = Object.fromEntries(prev.map((n) => [n.id, n]));
-        return snapshot.docs.map((d) => {
+        const docs = snapshot.docs.map((d) => {
           const remoto = { id: d.id, ...d.data() };
-          const local  = localMap[d.id];
-          // mantém atualização otimista de lida
+          const local = localMap[d.id];
           if (local?.lida && !remoto.lida) return { ...remoto, lida: true };
           return remoto;
         });
+        return docs.sort((a, b) => {
+          const ta = a.createdAt?.seconds ?? 0;
+          const tb = b.createdAt?.seconds ?? 0;
+          return tb - ta;
+        });
       });
-    });
 
-    return unsubscribe;
+      // Atualiza mapa de "seguindo" para os remetentes das notifs do tipo "seguindo"
+      const deIds = snapshot.docs
+        .map((d) => d.data())
+        .filter((d) => d.tipo === "seguindo")
+        .map((d) => d.de_id)
+        .filter(Boolean);
+
+      if (deIds.length > 0 && user?.uid) {
+        const meSnap = await getDoc(doc(db, "usuarios", user.uid));
+        const meusSeguindo = meSnap.exists() ? meSnap.data().seguindo || [] : [];
+        const mapa = {};
+        deIds.forEach((uid) => {
+          mapa[uid] = meusSeguindo.includes(uid);
+        });
+        setSeguindoMap((prev) => ({ ...prev, ...mapa }));
+      }
+    });
+    return unsub;
   }, [user]);
 
-  // ⏳ Motor de arquivamento — observa notificações lidas e agenda timer
+  // Arquivamento automático
   useEffect(() => {
     notificacoes.forEach((n) => {
-      // só agenda se: está lida, não tem timer rodando e não está arquivada
-      if (
-        n.lida &&
-        !timersRef.current[n.id] &&
-        !arquivadas.find((a) => a.id === n.id)
-      ) {
-        timersRef.current[n.id] = setTimeout(() => {
-          arquivar(n);
-        }, TEMPO_ARQUIVAR_MS);
+      if (n.lida && !timersRef.current[n.id] && !arquivadas.find((a) => a.id === n.id)) {
+        timersRef.current[n.id] = setTimeout(() => arquivar(n), TEMPO_ARQUIVAR_MS);
       }
-
-      // se ficou não-lida de novo (ex: edge case), cancela o timer
       if (!n.lida && timersRef.current[n.id]) {
         clearTimeout(timersRef.current[n.id]);
         delete timersRef.current[n.id];
@@ -103,26 +113,20 @@ export default function Notificacao() {
     });
   }, [notificacoes]);
 
-  // 📦 Arquivar: move para memória local e apaga do Firestore
   const arquivar = async (notif) => {
-    // adiciona nas arquivadas locais
     setArquivadas((prev) => {
       if (prev.find((a) => a.id === notif.id)) return prev;
       return [notif, ...prev];
     });
-    // remove da lista ativa
     setNotificacoes((prev) => prev.filter((n) => n.id !== notif.id));
-    // limpa o timer
     delete timersRef.current[notif.id];
-    // apaga do Firestore
     try {
       await deleteDoc(doc(db, "notificacoes", notif.id));
     } catch (e) {
-      console.error("[arquivar] erro ao deletar:", e);
+      console.error("[arquivar] erro:", e);
     }
   };
 
-  // 🗑️ Excluir da lista ativa
   const excluirNotificacao = async (id) => {
     clearTimeout(timersRef.current[id]);
     delete timersRef.current[id];
@@ -130,12 +134,10 @@ export default function Notificacao() {
     await deleteDoc(doc(db, "notificacoes", id));
   };
 
-  // 🗑️ Excluir das arquivadas (só local, já saiu do Firestore)
   const excluirArquivada = (id) => {
     setArquivadas((prev) => prev.filter((a) => a.id !== id));
   };
 
-  // ✅ Marcar uma como lida — otimista
   const marcarComoLida = async (id, lida) => {
     if (lida) return;
     setNotificacoes((prev) =>
@@ -144,48 +146,100 @@ export default function Notificacao() {
     await updateDoc(doc(db, "notificacoes", id), { lida: true });
   };
 
-  // ✅ Marcar todas como lidas — otimista
   const marcarTodasComoLidas = async () => {
     if (!user) return;
     const naoLidas = notificacoes.filter((n) => !n.lida);
     if (naoLidas.length === 0) return;
-
     setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })));
-
     const batch = writeBatch(db);
-    naoLidas.forEach((n) => {
-      batch.update(doc(db, "notificacoes", n.id), { lida: true });
-    });
+    naoLidas.forEach((n) => batch.update(doc(db, "notificacoes", n.id), { lida: true }));
     await batch.commit();
   };
 
-  // ⏱️ Tempo relativo
-  const tempoRelativo = (timestamp) => {
-    if (!timestamp) return "";
-    const agora = new Date();
-    const data  = new Date(timestamp.seconds * 1000);
-    const diff  = Math.floor((agora - data) / 1000);
+  // ── SEGUIR DE VOLTA (a partir da notificação) ──
+  const seguirDeVolta = async (notif) => {
+    if (!user || !notif.de_id) return;
+    const alvoId = notif.de_id;
 
-    if (diff < 60)      return "agora";
-    if (diff < 3600)    return `há ${Math.floor(diff / 60)} min`;
-    if (diff < 86400)   return `há ${Math.floor(diff / 3600)} h`;
-    if (diff < 2592000) return `há ${Math.floor(diff / 86400)} dias`;
-    return data.toLocaleDateString();
+    try {
+      // currentUser segue o remetente
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        seguindo: arrayUnion(alvoId),
+      });
+      // remetente ganha currentUser como seguidor
+      await updateDoc(doc(db, "usuarios", alvoId), {
+        seguidores: arrayUnion(user.uid),
+      });
+      // Busca nome do currentUser
+      const meSnap = await getDoc(doc(db, "usuarios", user.uid));
+      const meuNome = meSnap.exists() ? meSnap.data().nome || "Pescador" : "Pescador";
+      // Notifica o remetente que foi seguido de volta
+      await addDoc(collection(db, "notificacoes"), {
+        tipo: "seguindo",
+        de: meuNome,
+        de_id: user.uid,
+        para: alvoId,
+        lida: false,
+        createdAt: serverTimestamp(),
+      });
+      setSeguindoMap((prev) => ({ ...prev, [alvoId]: true }));
+    } catch (err) {
+      console.error("Erro ao seguir de volta:", err);
+    }
   };
 
-  // 📅 É hoje?
+  // ── DEIXAR DE SEGUIR (a partir da notificação) ──
+  const deixarDeSeguirNotif = async (notif) => {
+    if (!user || !notif.de_id) return;
+    const alvoId = notif.de_id;
+
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        seguindo: arrayRemove(alvoId),
+      });
+      await updateDoc(doc(db, "usuarios", alvoId), {
+        seguidores: arrayRemove(user.uid),
+      });
+      // Remove notificação de seguindo que enviamos ao alvo
+      const q = query(
+        collection(db, "notificacoes"),
+        where("tipo", "==", "seguindo"),
+        where("de_id", "==", user.uid),
+        where("para", "==", alvoId)
+      );
+      const snap = await getDocs(q);
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+
+      setSeguindoMap((prev) => ({ ...prev, [alvoId]: false }));
+    } catch (err) {
+      console.error("Erro ao deixar de seguir:", err);
+    }
+  };
+
+  // ── AUXILIARES ──
   const isHoje = (timestamp) => {
     if (!timestamp) return false;
-    const data  = new Date(timestamp.seconds * 1000);
+    const data = new Date(timestamp.seconds * 1000);
     const agora = new Date();
     return (
-      data.getDate()     === agora.getDate() &&
-      data.getMonth()    === agora.getMonth() &&
+      data.getDate() === agora.getDate() &&
+      data.getMonth() === agora.getMonth() &&
       data.getFullYear() === agora.getFullYear()
     );
   };
 
-  // 💬 Texto da notificação
+  const tempoRelativo = (timestamp) => {
+    if (!timestamp) return "";
+    const agora = new Date();
+    const data = new Date(timestamp.seconds * 1000);
+    const diff = Math.floor((agora - data) / 1000);
+    if (diff < 60) return "agora";
+    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
+    if (diff < 2592000) return `há ${Math.floor(diff / 86400)} dias`;
+    return data.toLocaleDateString();
+  };
+
   const renderTexto = (n) => {
     switch (n.tipo) {
       case "seguindo":
@@ -211,53 +265,46 @@ export default function Notificacao() {
     }
   };
 
-  // 🎨 Classe do avatar
   const avatarClass = (tipo) => {
     const map = {
-      seguindo:    "seguidor",
-      curtida:     "curtida",
-      comentario:  "comentario",
-      mensagem:    "mensagem",
+      seguindo:   "seguidor",
+      curtida:    "curtida",
+      comentario: "comentario",
+      mensagem:   "mensagem",
     };
     return map[tipo] || "seguidor";
   };
 
-  // 🔤 Iniciais
   const iniciais = (nome = "") =>
     nome.split(" ").slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 
-  // 🔢 Contagem não lidas por tipo
   const contarNaoLidas = (tipo) => {
     const base = notificacoes.filter((n) => !n.lida);
     if (tipo === "todas") return base.length;
     if (tipo === "arquivadas") return 0;
+    if (tipo === "seguindo") return base.filter((n) => n.tipo === "seguindo").length;
     return base.filter((n) => n.tipo === tipo).length;
   };
 
-  // 📋 Lista ativa filtrada (exclui aba arquivadas das filtradas normais)
+  const filtrarNotificacoes = () => {
+    if (filtro === "arquivadas") return [];
+    if (filtro === "todas") return notificacoes;
+    return notificacoes.filter((n) => n.tipo === filtro);
+  };
+
+  const notifFiltradas = filtrarNotificacoes();
+  const hoje      = notifFiltradas.filter((n) =>  isHoje(n.createdAt));
+  const anteriores = notifFiltradas.filter((n) => !isHoje(n.createdAt));
   const estaEmArquivadas = filtro === "arquivadas";
 
-  const notifFiltradas = estaEmArquivadas
-    ? []
-    : filtro === "todas"
-      ? notificacoes
-      : notificacoes.filter((n) => n.tipo === filtro);
-
-  const hoje       = notifFiltradas.filter((n) =>  isHoje(n.createdAt));
-  const anteriores = notifFiltradas.filter((n) => !isHoje(n.createdAt));
-
-  // Limpeza de timers ao desmontar o componente
   useEffect(() => {
-    return () => {
-      Object.values(timersRef.current).forEach(clearTimeout);
-    };
+    return () => Object.values(timersRef.current).forEach(clearTimeout);
   }, []);
 
   return (
     <Layout>
       <div className="notif-wrapper">
-
-        {/* ── ABAS ── */}
+        {/* Abas */}
         <div className="notif-header">
           <div className="notif-tabs">
             {TIPOS.map((t) => {
@@ -273,11 +320,9 @@ export default function Notificacao() {
                     {t.icon}
                   </span>
                   {t.label}
-                  {/* badge de quantidade para arquivadas */}
                   {isArq && arquivadas.length > 0 && (
                     <span className="tab-badge tab-badge--arquivo">{arquivadas.length}</span>
                   )}
-                  {/* badge de não lidas para as outras abas */}
                   {!isArq && count > 0 && (
                     <span className="tab-badge">{count}</span>
                   )}
@@ -287,10 +332,8 @@ export default function Notificacao() {
           </div>
         </div>
 
-        {/* ── LISTA ── */}
+        {/* Lista */}
         <div className="container-notificacoes">
-
-          {/* ── MODO NORMAL ── */}
           {!estaEmArquivadas && (
             <>
               {hoje.length > 0 && (
@@ -309,12 +352,14 @@ export default function Notificacao() {
                         onExcluir={excluirNotificacao}
                         timersRef={timersRef}
                         tempoArquivarMs={TEMPO_ARQUIVAR_MS}
+                        jaSeguindo={seguindoMap[n.de_id] || false}
+                        onSeguirDeVolta={seguirDeVolta}
+                        onDeixarDeSeguir={deixarDeSeguirNotif}
                       />
                     ))}
                   </div>
                 </>
               )}
-
               {anteriores.length > 0 && (
                 <>
                   <span className="section-label" style={{ marginTop: 8 }}>Anteriores</span>
@@ -331,12 +376,14 @@ export default function Notificacao() {
                         onExcluir={excluirNotificacao}
                         timersRef={timersRef}
                         tempoArquivarMs={TEMPO_ARQUIVAR_MS}
+                        jaSeguindo={seguindoMap[n.de_id] || false}
+                        onSeguirDeVolta={seguirDeVolta}
+                        onDeixarDeSeguir={deixarDeSeguirNotif}
                       />
                     ))}
                   </div>
                 </>
               )}
-
               {notifFiltradas.length === 0 && (
                 <div className="vazio">
                   <span className="material-symbols-outlined">notifications_off</span>
@@ -346,15 +393,12 @@ export default function Notificacao() {
             </>
           )}
 
-          {/* ── MODO ARQUIVADAS ── */}
           {estaEmArquivadas && (
             <>
-              {/* aviso de sessão */}
               <div className="arquivo-aviso">
                 <span className="material-symbols-outlined">info</span>
                 As notificações arquivadas somem quando você sair da conta.
               </div>
-
               {arquivadas.length > 0 ? (
                 <div className="notif-section">
                   {arquivadas.map((n) => (
@@ -365,7 +409,7 @@ export default function Notificacao() {
                       iniciais={iniciais}
                       renderTexto={renderTexto}
                       tempoRelativo={tempoRelativo}
-                      onLida={() => {}} // já lida, sem ação
+                      onLida={() => {}}
                       onExcluir={excluirArquivada}
                       isArquivada
                     />
@@ -382,7 +426,6 @@ export default function Notificacao() {
         </div>
       </div>
 
-      {/* ── FAB — só aparece fora da aba arquivadas ── */}
       {!estaEmArquivadas && (
         <button className="fab-marcar" onClick={marcarTodasComoLidas}>
           <span className="material-symbols-outlined">done_all</span>
@@ -393,9 +436,7 @@ export default function Notificacao() {
   );
 }
 
-/* ──────────────────────────────────────────────
-   CARD — mostra countdown quando lida e aguardando arquivamento
-────────────────────────────────────────────── */
+// ── Card de Notificação ──
 function CardNotificacao({
   n,
   avatarClass,
@@ -407,34 +448,27 @@ function CardNotificacao({
   timersRef,
   tempoArquivarMs,
   isArquivada = false,
+  jaSeguindo = false,
+  onSeguirDeVolta,
+  onDeixarDeSeguir,
 }) {
   const tipoClass = avatarClass(n.tipo);
-
-  // countdown visual: segundos restantes até arquivar
   const [segundosRestantes, setSegundosRestantes] = useState(null);
+  const [loadingFollow, setLoadingFollow] = useState(false);
+
+  const ehSeguindo = n.tipo === "seguindo";
 
   useEffect(() => {
     if (!n.lida || isArquivada || !timersRef) return;
-
-    // verifica se tem timer rodando pra esse card
     if (!timersRef.current[n.id]) return;
-
-    // calcula quando o timer vai disparar
-    // como não temos o timestamp exato do início, estimamos pela
-    // presença do timer — recalculamos a cada segundo
     const totalSeg = Math.floor(tempoArquivarMs / 1000);
     setSegundosRestantes(totalSeg);
-
     const interval = setInterval(() => {
       setSegundosRestantes((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          return null;
-        }
+        if (prev === null || prev <= 1) { clearInterval(interval); return null; }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [n.lida, n.id]);
 
@@ -445,41 +479,72 @@ function CardNotificacao({
     return m > 0 ? `${m}m ${s}s` : `${s}s`;
   };
 
+  const handleFollow = async (e) => {
+    e.stopPropagation();
+    if (loadingFollow) return;
+    setLoadingFollow(true);
+    try {
+      if (jaSeguindo) {
+        await onDeixarDeSeguir(n);
+      } else {
+        await onSeguirDeVolta(n);
+      }
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
+
   return (
     <div
       className={`notif-card ${n.lida ? "lida" : "nao-lida"} ${isArquivada ? "arquivada" : ""}`}
       onClick={() => onLida(n.id, n.lida)}
     >
-      {/* Avatar */}
       <div className={`notif-avatar ${tipoClass}`}>
         {iniciais(n.de)}
         <span className={`tipo-icon ${tipoClass}`}>
-          <span className="material-symbols-outlined">
-            {tipoIcone(n.tipo)}
-          </span>
+          <span className="material-symbols-outlined">{tipoIcone(n.tipo)}</span>
         </span>
       </div>
 
-      {/* Conteúdo */}
       <div className="notif-content">
         <p className="notif-text">{renderTexto(n)}</p>
         <div className="notif-meta">
           {!n.lida && <span className="dot-unread" />}
           <span className="notif-time">{tempoRelativo(n.createdAt)}</span>
-
-          {/* countdown de arquivamento */}
           {n.lida && !isArquivada && segundosRestantes !== null && (
             <span className="notif-arquivando">
-              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>
-                schedule
-              </span>
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>schedule</span>
               arquivando em {formatarContagem(segundosRestantes)}
             </span>
           )}
         </div>
+
+        {/* Botão "Seguir de volta" — apenas em notificações do tipo seguindo, não arquivadas */}
+        {ehSeguindo && !isArquivada && (
+          <div className="notif-toast__acoes" style={{ marginTop: 8 }}>
+            <button
+              className={`notif-toast__btn ${jaSeguindo ? "notif-btn-seguindo-ativo" : "notif-toast__btn--seguindo"}`}
+              onClick={handleFollow}
+              disabled={loadingFollow}
+            >
+              {loadingFollow ? (
+                <span className="material-symbols-outlined">hourglass_empty</span>
+              ) : jaSeguindo ? (
+                <>
+                  <span className="material-symbols-outlined">person_check</span>
+                  Seguindo
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">person_add</span>
+                  Seguir de volta
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Excluir */}
       <div className="notif-actions">
         <button
           className="btn-excluir"
@@ -495,10 +560,10 @@ function CardNotificacao({
 
 function tipoIcone(tipo) {
   switch (tipo) {
-    case "seguindo":    return "person_add";
-    case "curtida":     return "favorite";
-    case "comentario":  return "chat_bubble";
-    case "mensagem":    return "send";
-    default:            return "notifications";
+    case "seguindo":   return "person_add";
+    case "curtida":    return "favorite";
+    case "comentario": return "chat_bubble";
+    case "mensagem":   return "send";
+    default:           return "notifications";
   }
 }
