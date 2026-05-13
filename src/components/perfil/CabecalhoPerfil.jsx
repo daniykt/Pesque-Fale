@@ -14,11 +14,9 @@ export default function CabecalhoPerfil({
   localizacao,
   isOwnProfile,
   isFollowing,
-  statusSolicitacao,
   chatLiberado,
   onSeguir,
   onDeixarDeSeguir,
-  onCancelarSolicitacao,  
   onMensagem,
 }) {
   const navigate = useNavigate();
@@ -68,6 +66,7 @@ export default function CabecalhoPerfil({
   };
 
   const renderizarBotoes = () => {
+    // ── Perfil próprio ──
     if (isOwnProfile) {
       return (
         <>
@@ -83,32 +82,13 @@ export default function CabecalhoPerfil({
       );
     }
 
-    // Ainda verificando status — não renderiza nada para evitar flash
-    if (statusSolicitacao === null) {
-      return (
-        <button className="btn-cabecalho btn-pendente" disabled style={{ opacity: 0, pointerEvents: 'none' }}>
-          <span className="material-symbols-outlined">hourglass_empty</span>
-          <span className="btn-texto">Carregando</span>
-        </button>
-      );
-    }
-
-    // Solicitação pendente — clicável para cancelar, ícone de relógio para UX clara
-    if (statusSolicitacao === 'pendente') {
-      return (
-        <button className="btn-cabecalho btn-cancelar" onClick={onCancelarSolicitacao}>
-          <span className="material-symbols-outlined">hourglass_empty</span>
-          <span className="btn-texto">Solicitação enviada</span>
-        </button>
-      );
-    }
-
+    // ── Já segue B ──
     if (isFollowing) {
       return (
         <>
           <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
             <span className="material-symbols-outlined">person_remove</span>
-            <span className="btn-texto">Deixar de seguir</span>
+            <span className="btn-texto">Seguindo</span>
           </button>
           {chatLiberado && (
             <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
@@ -120,6 +100,7 @@ export default function CabecalhoPerfil({
       );
     }
 
+    // ── Não segue B ──
     return (
       <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
         <span className="material-symbols-outlined">person_add</span>
