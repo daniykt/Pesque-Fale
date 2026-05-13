@@ -92,6 +92,7 @@ const handleCurtir = async () => {
       await addDoc(collection(db, "notificacoes"), {
         tipo: "curtida",
         de: user.displayName || "Pescador",
+        deId: user.uid,
         para: userId,
         postId: postId,
         createdAt: serverTimestamp(),
@@ -141,6 +142,7 @@ const handleCurtir = async () => {
       await addDoc(collection(db, "notificacoes"), {
         tipo: "comentario",
         de: user.displayName || "Pescador",
+        deId: user.uid,
         para: userId,
         texto: textoComentario,
         postId: postId,
