@@ -17,6 +17,10 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
 } from "firebase/firestore";
 
 import {
@@ -53,33 +57,28 @@ export default function Perfil() {
 
   const isOwnProfile = !id || id === user?.uid;
 
-  // =========================
-  // ⚡ CACHE + SKELETON ao trocar de perfil
-  // =========================
+  // ⚡ CACHE + SKELETON
   useEffect(() => {
     const targetId = id || user?.uid;
     if (!targetId) return;
 
-    // Tenta aplicar cache instantaneamente
     const cache = localStorage.getItem(`perfilCache_${targetId}`);
     if (cache) {
       try {
         const dados = JSON.parse(cache);
-        // Cache hit: aplica dados imediatamente e não mostra skeleton
         setUsuarioPerfil((prev) => ({ ...prev, ...dados }));
         setBio(dados.bio || "");
         setLocalizacao(dados.localizacao || "");
         setFotoPerfil(dados.fotoPerfil || "");
         setBanner(dados.banner || null);
         setPosts(dados.posts || []);
-        setCarregando(false); // tem cache → sem skeleton
+        setCarregando(false);
         return;
       } catch {
         localStorage.removeItem(`perfilCache_${targetId}`);
       }
     }
 
-    // Cache miss: mostra skeleton e limpa dados do perfil anterior
     setCarregando(true);
     setUsuarioPerfil(null);
     setFotoPerfil("");
@@ -90,67 +89,70 @@ export default function Perfil() {
     setIsFollowing(false);
   }, [id, user?.uid]);
 
-  // =========================
   // 🔥 FIRESTORE REALTIME
-  // =========================
   useEffect(() => {
     if (!user && !id) return;
-
     const userId = id || user?.uid;
     if (!userId) return;
 
     const docRef = doc(db, "usuarios", userId);
-
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-
         setUsuarioPerfil({ id: docSnap.id, ...data });
         setPosts(data.posts || []);
         setBio(data.bio || "");
         setLocalizacao(data.localizacao || "");
         setFotoPerfil(data.fotoPerfil || "");
         setBanner(data.banner || null);
-        setCarregando(false); // Firestore respondeu — esconde o skeleton
+        setCarregando(false);
 
-        // Salva cache por uid — na próxima visita carrega instantâneo sem skeleton
+        // Deriva isFollowing direto do snapshot — sem flash
+        if (user && docSnap.id !== user.uid) {
+          const seguidores = data.seguidores || [];
+          setIsFollowing(seguidores.includes(user.uid));
+        }
+
         localStorage.setItem(
           `perfilCache_${docSnap.id}`,
           JSON.stringify({ uid: docSnap.id, ...data })
         );
       }
     });
-
     return unsubscribe;
   }, [id, user]);
 
-  // 🔍 VER SE SEGUE
-  useEffect(() => {
-    if (!user || !usuarioPerfil) return;
-    const seguidores = usuarioPerfil.seguidores || [];
-    setIsFollowing(seguidores.includes(user.uid));
-  }, [user, usuarioPerfil]);
+  // ⭐ Chat liberado se A segue B OU B segue A
+  const chatLiberado = (() => {
+    if (!user || !usuarioPerfil || isOwnProfile) return false;
+    const bSegueA = (usuarioPerfil.seguidores || []).includes(user.uid);
+    return isFollowing || bSegueA;
+  })();
 
-  // ➕ SEGUIR
+  // ── SEGUIR (direto, sem solicitação) ──
   const seguir = async () => {
     if (!user || !usuarioPerfil) return;
 
+    // Adiciona B nos seguidores de A imediatamente
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayUnion(usuarioPerfil.id),
     });
+    // Adiciona A nos seguidores do perfil B
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayUnion(user.uid),
     });
+    // Notifica B — tipo "seguindo", com botão de seguir de volta
     await addDoc(collection(db, "notificacoes"), {
       tipo: "seguindo",
       de: user.displayName || "Pescador",
-      deId: user.uid,
+      de_id: user.uid,
       para: usuarioPerfil.id,
+      lida: false,
       createdAt: serverTimestamp(),
     });
   };
 
-  // ➖ DEIXAR DE SEGUIR
+  // ── DEIXAR DE SEGUIR ──
   const deixarDeSeguir = async () => {
     if (!user || !usuarioPerfil) return;
 
@@ -160,9 +162,19 @@ export default function Perfil() {
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayRemove(user.uid),
     });
+    // Remove notificação de "seguindo" que A enviou para B, se existir
+    const q = query(
+      collection(db, "notificacoes"),
+      where("tipo", "==", "seguindo"),
+      where("de_id", "==", user.uid),
+      where("para", "==", usuarioPerfil.id)
+    );
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+
+    setIsFollowing(false);
   };
 
-  // 💬 CHAT
   const gerarChatId = (id1, id2) => [id1, id2].sort().join("_");
 
   const irParaChat = async () => {
@@ -175,13 +187,11 @@ export default function Perfil() {
     navigate(`/chat/${chatId}`);
   };
 
-  // 💾 SALVAR POSTS
   const salvarPosts = async (novosPosts) => {
     if (!usuarioPerfil?.id) return;
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), { posts: novosPosts });
   };
 
-  // 🖼️ FOTO DE PERFIL
   const handleFotoChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
     const reader = new FileReader();
@@ -198,7 +208,6 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // 🌄 BANNER
   const handleBannerChange = async (file) => {
     if (!isOwnProfile || !usuarioPerfil?.id) return;
     const reader = new FileReader();
@@ -215,17 +224,13 @@ export default function Perfil() {
     reader.readAsDataURL(file);
   };
 
-  // 📸 NOVO POST
   const handlePostChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     let comentario = prompt("Descrição:");
     if (comentario === null) return;
-
     let local = prompt("Local:");
     if (local === null) return;
-
     const reader = new FileReader();
     reader.onload = () => {
       const novoPost = {
@@ -248,10 +253,7 @@ export default function Perfil() {
       <Layout>
         <div className="container2">
           <div className="perfil perfil-skeleton">
-            {/* Banner skeleton */}
             <div className="sk sk-banner" />
-
-            {/* Linha foto + botões */}
             <div className="sk-inferior">
               <div className="sk sk-avatar" />
               <div className="sk-botoes">
@@ -259,22 +261,16 @@ export default function Perfil() {
                 <div className="sk sk-btn" />
               </div>
             </div>
-
-            {/* Info skeleton */}
             <div className="sk-info">
               <div className="sk sk-nome" />
               <div className="sk sk-linha" />
               <div className="sk sk-linha sk-linha--curta" />
             </div>
-
-            {/* Stats skeleton */}
             <div className="sk-stats">
               <div className="sk sk-stat" />
               <div className="sk sk-stat" />
               <div className="sk sk-stat" />
             </div>
-
-            {/* Grid skeleton */}
             <div className="sk-grid">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="sk sk-grid-item" />
@@ -302,14 +298,18 @@ export default function Perfil() {
             onFotoChange={handleFotoChange}
             onBannerChange={handleBannerChange}
             isFollowing={isFollowing}
+            chatLiberado={chatLiberado}
             onSeguir={seguir}
             onDeixarDeSeguir={deixarDeSeguir}
             onMensagem={irParaChat}
+            currentUserId={user?.uid}
           />
 
           <EstatisticasPerfil
             totalPosts={posts.length}
             usuario={usuarioPerfil}
+            currentUserId={user?.uid}
+            isOwnProfile={isOwnProfile}
           />
 
           <input
@@ -324,31 +324,31 @@ export default function Perfil() {
             onTrocarAba={setAbaSelecionada}
           />
 
-{abaSelecionada === "Galeria" && (
-  <GaleriaPerfil
-    posts={posts}
-    user={user}
-    usuarioPerfil={usuarioPerfil}
-    salvarPosts={salvarPosts}
-    navigate={navigate}
-  />
-)}
+          {abaSelecionada === "Galeria" && (
+            <GaleriaPerfil
+              posts={posts}
+              user={user}
+              usuarioPerfil={usuarioPerfil}
+              salvarPosts={salvarPosts}
+              navigate={navigate}
+            />
+          )}
 
-{abaSelecionada === "Equipamentos" && (
-  <div className="aba-em-breve">
-    <span className="material-symbols-outlined">construction</span>
-    <p>Equipamentos</p>
-    <span>Recursos para gerenciar seus equipamentos de pesca estarão aqui.</span>
-  </div>
-)}
+          {abaSelecionada === "Equipamentos" && (
+            <div className="aba-em-breve">
+              <span className="material-symbols-outlined">construction</span>
+              <p>Equipamentos</p>
+              <span>Recursos para gerenciar seus equipamentos de pesca estarão aqui.</span>
+            </div>
+          )}
 
-{abaSelecionada === "Locais Salvos" && (
-  <div className="aba-em-breve">
-    <span className="material-symbols-outlined">bookmark</span>
-    <p>Locais Salvos</p>
-    <span>Seus pontos de pesca favoritos aparecerão nesta seção.</span>
-  </div>
-)}
+          {abaSelecionada === "Locais Salvos" && (
+            <div className="aba-em-breve">
+              <span className="material-symbols-outlined">bookmark</span>
+              <p>Locais Salvos</p>
+              <span>Seus pontos de pesca favoritos aparecerão nesta seção.</span>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

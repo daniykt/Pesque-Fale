@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Cabecalhoperfil.css';
 import './Profilemenu.css';
@@ -14,6 +14,7 @@ export default function CabecalhoPerfil({
   localizacao,
   isOwnProfile,
   isFollowing,
+  chatLiberado,
   onSeguir,
   onDeixarDeSeguir,
   onMensagem,
@@ -22,7 +23,6 @@ export default function CabecalhoPerfil({
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
 
-  // Estado do menu e dark mode
   const [menuAberto, setMenuAberto] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -65,9 +65,52 @@ export default function CabecalhoPerfil({
     if (typeof onBannerChange === 'function') onBannerChange(file);
   };
 
+  const renderizarBotoes = () => {
+    // ── Perfil próprio ──
+    if (isOwnProfile) {
+      return (
+        <>
+          <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
+            <span className="material-symbols-outlined">edit</span>
+            <span className="btn-texto">Editar Perfil</span>
+          </button>
+          <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
+            <span className="material-symbols-outlined">add</span>
+            <span className="btn-texto">Nova Publicação</span>
+          </button>
+        </>
+      );
+    }
+
+    // ── Já segue B ──
+    if (isFollowing) {
+      return (
+        <>
+          <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
+            <span className="material-symbols-outlined">person_remove</span>
+            <span className="btn-texto">Seguindo</span>
+          </button>
+          {chatLiberado && (
+            <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
+              <span className="material-symbols-outlined">chat</span>
+              <span className="btn-texto">Mensagem</span>
+            </button>
+          )}
+        </>
+      );
+    }
+
+    // ── Não segue B ──
+    return (
+      <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
+        <span className="material-symbols-outlined">person_add</span>
+        <span className="btn-texto">Seguir</span>
+      </button>
+    );
+  };
+
   return (
     <div className="cabecalho-perfil">
-
       {/* BANNER */}
       <div
         className="banner-perfil"
@@ -78,15 +121,12 @@ export default function CabecalhoPerfil({
         {!banner && isOwnProfile && (
           <span className="banner-icone material-symbols-outlined">add_photo_alternate</span>
         )}
-
         {isOwnProfile && (
           <div className="banner-overlay">
             <span className="material-symbols-outlined">photo_camera</span>
             <p>Trocar capa</p>
           </div>
         )}
-
-        {/* Botão 3 pontos — só aparece no próprio perfil, no mobile */}
         {isOwnProfile && (
           <button
             className="pmenu-trigger"
@@ -98,10 +138,8 @@ export default function CabecalhoPerfil({
         )}
       </div>
 
-      {/* LINHA INFERIOR: foto + botões desktop */}
+      {/* LINHA INFERIOR */}
       <div className="cabecalho-inferior">
-
-        {/* FOTO */}
         <div className="foto-perfil-wrapper">
           <img
             src={fotoPerfil || null}
@@ -117,107 +155,44 @@ export default function CabecalhoPerfil({
           )}
         </div>
 
-        {/* BOTÕES DESKTOP */}
+        {/* Botões desktop */}
         <div className="cabecalho-botoes">
-          {isOwnProfile ? (
-            <>
-              <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
-                <span className="material-symbols-outlined">edit</span>
-                <span className="btn-texto">Editar Perfil</span>
-              </button>
-              <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
-                <span className="material-symbols-outlined">add</span>
-                <span className="btn-texto">Nova Publicação</span>
-              </button>
-            </>
-          ) : (
-            <>
-{!isFollowing ? (
-  <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
-    <span className="material-symbols-outlined">person_add</span>
-    <span className="btn-texto">Seguir</span>
-  </button>
-) : (
-  <>
-    <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
-      <span className="material-symbols-outlined">person_remove</span>
-      <span className="btn-texto">Deixar de seguir</span>
-    </button>
-    <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
-      <span className="material-symbols-outlined">chat</span>
-      <span className="btn-texto">Mensagem</span>
-    </button>
-  </>
-)}
-            </>
-          )}
+          {renderizarBotoes()}
         </div>
       </div>
 
-      {/* INPUTS ocultos */}
+      {/* Inputs ocultos */}
       {isOwnProfile && (
         <>
           <input type="file" accept="image/*" ref={fileInputBannerRef} style={{ display: 'none' }} onChange={handleBannerChange} />
-          <input type="file" accept="image/*" ref={fileInputFotoRef}   style={{ display: 'none' }} onChange={handleFotoChange}   />
+          <input type="file" accept="image/*" ref={fileInputFotoRef} style={{ display: 'none' }} onChange={handleFotoChange} />
         </>
       )}
 
-      {/* INFO DO USUÁRIO */}
+      {/* INFO USUÁRIO */}
       <div className="usuario-data">
         <h2 className="usuario-nome">{usuario?.nome || 'Usuário'}</h2>
-
         {usuario?.email && (
           <div className="usuario-info-linha">
             <span className="material-symbols-outlined usuario-icone">mail</span>
             <span className="usuario-info-texto">{usuario.email}</span>
           </div>
         )}
-
         {localizacao && (
           <div className="usuario-info-linha">
             <span className="material-symbols-outlined usuario-icone">location_on</span>
             <span className="usuario-info-texto">{localizacao}</span>
           </div>
         )}
-
         {bio && <p className="usuario-bio">{bio}</p>}
       </div>
 
-      {/* BOTÕES MOBILE (Editar / Publicar / Seguir) */}
-<div className="cabecalho-botoes-mobile">
-  {isOwnProfile ? (
-    <>
-      <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
-        Editar Perfil
-      </button>
-      <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
-        Nova Publicação
-      </button>
-    </>
-  ) : (
-    <>
-      {!isFollowing ? (
-        <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
-          <span className="material-symbols-outlined">person_add</span>
-          <span>Seguir</span>
-        </button>
-      ) : (
-        <>
-          <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
-            <span className="material-symbols-outlined">person_remove</span>
-            <span>Deixar de seguir</span>
-          </button>
-          <button className="btn-cabecalho btn-mensagem" onClick={onMensagem}>
-            <span className="material-symbols-outlined">chat</span>
-            <span>Mensagem</span>
-          </button>
-        </>
-      )}
-    </>
-  )}
-</div>
+      {/* Botões mobile */}
+      <div className="cabecalho-botoes-mobile">
+        {renderizarBotoes()}
+      </div>
 
-      {/* BOTTOM SHEET MENU */}
+      {/* Menu */}
       <ProfileMenu
         isOpen={menuAberto}
         onClose={() => setMenuAberto(false)}

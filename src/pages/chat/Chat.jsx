@@ -145,7 +145,8 @@ export default function Chat() {
   }, [chatId]);
 
   // =========================
-  // 🔒 Permissão + Dados do Outro Usuário
+  // 🔒 Permissão + dados do outro usuário
+  // Chat liberado se A segue B ou B segue A
   // =========================
   useEffect(() => {
     if (!user || !chatId) {
@@ -155,26 +156,12 @@ export default function Chat() {
 
     setPermitido(null);
 
-    const verificar = async () => {
+    const ids = chatId.split("_");
+    const outroId = ids.find((id) => id !== user.uid);
+
+    // Carrega dados do outro usuário (one-shot)
+    const carregarOutroUsuario = async () => {
       try {
-        const ids = chatId.split("_");
-        const outroId = ids.find((id) => id !== user.uid);
-
-        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (!meuDoc.exists()) {
-          setPermitido(false);
-          setLoadingMessages(false);
-          return;
-        }
-
-        const dados = meuDoc.data();
-        const autorizado =
-          dados?.seguindo?.includes(outroId) ||
-          dados?.seguidores?.includes(outroId);
-
-        setPermitido(autorizado);
-        if (!autorizado) setLoadingMessages(false);
-
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
@@ -183,6 +170,34 @@ export default function Chat() {
             foto: outro?.fotoPerfil || "",
           });
         }
+      } catch (e) {
+        console.error("Erro ao carregar outro usuário:", e);
+      }
+    };
+
+    carregarOutroUsuario();
+
+    // Permissão: liberado se A segue B ou B segue A
+    // Sem chat_permissions — qualquer relacionamento de seguir libera o chat
+    const verificarPermissao = async () => {
+      try {
+        const meuDoc   = await getDoc(doc(db, "usuarios", user.uid));
+        const outroDoc = await getDoc(doc(db, "usuarios", outroId));
+
+        if (!meuDoc.exists() || !outroDoc.exists()) {
+          setPermitido(false);
+          setLoadingMessages(false);
+          return;
+        }
+
+        const meusDados   = meuDoc.data();
+        const outrosDados = outroDoc.data();
+
+        const euSigoEle  = (meusDados.seguindo   || []).includes(outroId);
+        const eleSegueEu = (outrosDados.seguindo  || []).includes(user.uid);
+
+        setPermitido(euSigoEle || eleSegueEu);
+        if (!euSigoEle && !eleSegueEu) setLoadingMessages(false);
       } catch (error) {
         console.error("Erro ao verificar permissão:", error);
         setPermitido(false);
@@ -190,7 +205,9 @@ export default function Chat() {
       }
     };
 
-    verificar();
+    verificarPermissao();
+
+    return () => {};
   }, [user, chatId]);
 
   // =========================
@@ -255,7 +272,7 @@ export default function Chat() {
   // ✉️ Enviar Mensagem
   // =========================
   const enviarMensagem = async () => {
-    if (!texto.trim() || enviando) return;
+    if (!texto.trim() || enviando || !permitido) return;
     setEnviando(true);
 
     try {
@@ -518,7 +535,9 @@ export default function Chat() {
                   🔒
                 </div>
                 <p>Chat bloqueado</p>
-                <span>Você precisa seguir este usuário para conversar.</span>
+                <span>
+                  Siga este pescador ou aguarde ele te seguir para conversar.
+                </span>
                 <button
                   className="btn-voltar-bloqueio"
                   onClick={() => navigate("/chat")}
