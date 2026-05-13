@@ -15,11 +15,11 @@ import {
   addDoc,
   collection,
   getDoc,
-  getDocs,
   setDoc,
   serverTimestamp,
   query,
   where,
+  getDocs,
   deleteDoc,
 } from "firebase/firestore";
 
@@ -46,9 +46,6 @@ export default function Perfil() {
 
   const [abaSelecionada, setAbaSelecionada] = useState("Galeria");
   const [isFollowing, setIsFollowing] = useState(false);
-  // null = ainda verificando | "nenhuma" | "pendente" | "aceito"
-  const [statusSolicitacao, setStatusSolicitacao] = useState(null);
-  const [chatLiberado, setChatLiberado] = useState(false); // ⭐ novo estado
 
   const postInputRef = useRef(null);
 
@@ -90,11 +87,9 @@ export default function Perfil() {
     setLocalizacao("");
     setPosts([]);
     setIsFollowing(false);
-    setStatusSolicitacao(null);
-    setChatLiberado(false);
   }, [id, user?.uid]);
 
-  // 🔥 FIRESTORE REALTIME — isFollowing derivado aqui, sem useEffect separado
+  // 🔥 FIRESTORE REALTIME
   useEffect(() => {
     if (!user && !id) return;
     const userId = id || user?.uid;
@@ -112,7 +107,7 @@ export default function Perfil() {
         setBanner(data.banner || null);
         setCarregando(false);
 
-        // Deriva isFollowing aqui — sem useEffect separado, sem flash
+        // Deriva isFollowing direto do snapshot — sem flash
         if (user && docSnap.id !== user.uid) {
           const seguidores = data.seguidores || [];
           setIsFollowing(seguidores.includes(user.uid));
@@ -127,101 +122,56 @@ export default function Perfil() {
     return unsubscribe;
   }, [id, user]);
 
-  // useEffect de isFollowing removido — agora derivado dentro do onSnapshot acima
-
-  // Escuta em tempo real o status da solicitação pendente
-  useEffect(() => {
-    if (!user || !usuarioPerfil || isOwnProfile) return;
-
-    // Se já é seguidor confirmado, status é aceito
-    if (isFollowing) {
-      setStatusSolicitacao("aceito");
-      return;
-    }
-
-    const q = query(
-      collection(db, "notificacoes"),
-      where("tipo",  "==", "solicitacao_seguir"),
-      where("de_id", "==", user.uid),
-      where("para",  "==", usuarioPerfil.id)
-    );
-
-    // onSnapshot: atualiza ao vivo quando B aceita, recusa ou A cancela
-    const unsub = onSnapshot(q, (snap) => {
-      const pendente = snap.docs.some((d) => d.data().status === "pendente");
-      setStatusSolicitacao(pendente ? "pendente" : "nenhuma");
-    });
-
-    return unsub;
-  }, [user, usuarioPerfil, isFollowing, isOwnProfile]);
-
-  // ⭐ Chat liberado se A segue B OU B segue A — sem chat_permissions
-  useEffect(() => {
-    if (!user || !usuarioPerfil || isOwnProfile) return;
-
-    // B segue A = B está nos seguidores de B (usuarioPerfil.seguidores contém user.uid)
+  // ⭐ Chat liberado se A segue B OU B segue A
+  const chatLiberado = (() => {
+    if (!user || !usuarioPerfil || isOwnProfile) return false;
     const bSegueA = (usuarioPerfil.seguidores || []).includes(user.uid);
-    // A segue B = isFollowing
-    setChatLiberado(isFollowing || bSegueA);
-  }, [user, usuarioPerfil, isOwnProfile, isFollowing]);
+    return isFollowing || bSegueA;
+  })();
 
-  const cancelarSolicitacao = async () => {
-    if (!user || !usuarioPerfil) return;
-    try {
-      // Remove B do array "seguindo" de A
-      await updateDoc(doc(db, "usuarios", user.uid), {
-        seguindo: arrayRemove(usuarioPerfil.id),
-      });
-      // Deleta a notificação pendente — o onSnapshot atualiza statusSolicitacao automaticamente
-      const q = query(
-        collection(db, "notificacoes"),
-        where("tipo",  "==", "solicitacao_seguir"),
-        where("de_id", "==", user.uid),
-        where("para",  "==", usuarioPerfil.id)
-      );
-      const snap = await getDocs(q);
-      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
-      // Estado local imediato — listener confirma em seguida
-      setStatusSolicitacao("nenhuma");
-    } catch (error) {
-      console.error("Erro ao cancelar solicitação:", error);
-    }
-  };
-
+  // ── SEGUIR (direto, sem solicitação) ──
   const seguir = async () => {
     if (!user || !usuarioPerfil) return;
+
+    // Adiciona B nos seguidores de A imediatamente
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayUnion(usuarioPerfil.id),
     });
+    // Adiciona A nos seguidores do perfil B
+    await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
+      seguidores: arrayUnion(user.uid),
+    });
+    // Notifica B — tipo "seguindo", com botão de seguir de volta
     await addDoc(collection(db, "notificacoes"), {
-      tipo: "solicitacao_seguir",
+      tipo: "seguindo",
       de: user.displayName || "Pescador",
       de_id: user.uid,
       para: usuarioPerfil.id,
-      status: "pendente",
       lida: false,
       createdAt: serverTimestamp(),
     });
-    setStatusSolicitacao("pendente");
   };
 
+  // ── DEIXAR DE SEGUIR ──
   const deixarDeSeguir = async () => {
     if (!user || !usuarioPerfil) return;
+
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayRemove(usuarioPerfil.id),
     });
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayRemove(user.uid),
     });
+    // Remove notificação de "seguindo" que A enviou para B, se existir
     const q = query(
       collection(db, "notificacoes"),
-      where("tipo", "==", "solicitacao_seguir"),
+      where("tipo", "==", "seguindo"),
       where("de_id", "==", user.uid),
       where("para", "==", usuarioPerfil.id)
     );
     const snap = await getDocs(q);
     await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
-    setStatusSolicitacao("nenhuma");
+
     setIsFollowing(false);
   };
 
@@ -348,17 +298,18 @@ export default function Perfil() {
             onFotoChange={handleFotoChange}
             onBannerChange={handleBannerChange}
             isFollowing={isFollowing}
-            statusSolicitacao={statusSolicitacao}
-            chatLiberado={chatLiberado}   // ⭐ novo prop
+            chatLiberado={chatLiberado}
             onSeguir={seguir}
             onDeixarDeSeguir={deixarDeSeguir}
-            onCancelarSolicitacao={cancelarSolicitacao}
             onMensagem={irParaChat}
+            currentUserId={user?.uid}
           />
 
           <EstatisticasPerfil
             totalPosts={posts.length}
             usuario={usuarioPerfil}
+            currentUserId={user?.uid}
+            isOwnProfile={isOwnProfile}
           />
 
           <input
