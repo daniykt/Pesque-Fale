@@ -394,3 +394,195 @@ body.dark-mode .btn-cancelar:hover {
   background-color: rgba(248, 113, 113, 0.15);
   color: #fca5a5;
 }
+
+/* ==============================================
+   BOTÃO SEGUIR DE VOLTA — MODAL DE SEGUIDORES
+   ============================================== */
+
+/* Item do modal */
+.modal-usuario-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+}
+
+.modal-usuario-item:hover {
+  background: #f8fafc;
+}
+
+.modal-usuario-foto {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.modal-usuario-foto-placeholder {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.modal-usuario-nome {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botão seguir/seguindo dentro do modal */
+.modal-btn-seguir {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #062A6C;
+  background: #062A6C;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Open Sans', Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+}
+
+.modal-btn-seguir .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.modal-btn-seguir:hover {
+  background: #0a3a8f;
+  border-color: #0a3a8f;
+  transform: scale(1.03);
+}
+
+.modal-btn-seguir:active {
+  transform: scale(0.97);
+}
+
+/* Estado "já seguindo" — contorno, fundo branco */
+.modal-btn-seguindo {
+  background: #ffffff;
+  color: #062A6C;
+  border-color: #062A6C;
+}
+
+.modal-btn-seguindo:hover {
+  background: #fef2f2;
+  color: #e53e3e;
+  border-color: #e53e3e;
+}
+
+/* Loading spinner no botão */
+.modal-btn-loading {
+  font-size: 14px;
+  animation: spin-notif 0.8s linear infinite;
+}
+
+@keyframes spin-notif {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ==============================================
+   BOTÃO "SEGUINDO" ATIVO — CARD DE NOTIFICAÇÃO
+   ============================================== */
+.notif-btn-seguindo-ativo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1.5px solid #062A6C;
+  background: #ffffff;
+  color: #062A6C;
+  font-size: 11.5px;
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.notif-btn-seguindo-ativo .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.notif-btn-seguindo-ativo:hover {
+  background: #fef2f2;
+  color: #e53e3e;
+  border-color: #e53e3e;
+}
+
+.notif-btn-seguindo-ativo:active {
+  transform: scale(0.96);
+}
+
+/* ==============================================
+   DARK MODE
+   ============================================== */
+body.dark-mode .modal-usuario-item:hover {
+  background: #1e293b;
+}
+
+body.dark-mode .modal-usuario-nome {
+  color: #e2e8f0;
+}
+
+body.dark-mode .modal-usuario-foto-placeholder {
+  background: #334155;
+  color: #64748b;
+}
+
+body.dark-mode .modal-btn-seguir {
+  background: #1a3a7c;
+  border-color: #93b4f0;
+  color: #ffffff;
+}
+
+body.dark-mode .modal-btn-seguir:hover {
+  background: #2451a8;
+  border-color: #93b4f0;
+}
+
+body.dark-mode .modal-btn-seguindo {
+  background: transparent;
+  color: #93b4f0;
+  border-color: #93b4f0;
+}
+
+body.dark-mode .modal-btn-seguindo:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border-color: #f87171;
+}
+
+body.dark-mode .notif-btn-seguindo-ativo {
+  background: transparent;
+  color: #93b4f0;
+  border-color: #93b4f0;
+}
+
+body.dark-mode .notif-btn-seguindo-ativo:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border-color: #f87171;
+}
