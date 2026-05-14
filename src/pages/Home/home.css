@@ -81,7 +81,6 @@ body.home-with-sidebar .main-content {
   padding: 0.75rem 1.25rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   flex: 1;
-  min-width: 200px;
 }
 
 .weather-widget-mini {
