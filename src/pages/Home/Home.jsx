@@ -454,7 +454,7 @@ const Home = () => {
 
           {/* sticky post bar */}
           <div className="sticky-post-bar">
-            <div className="btn-new-post" onClick={() => navigate("/registro")}>
+            <div className="btn-new-post" onClick={() => navigate("/publicar")}>
               <img
                 src={usuarioDados?.fotoPerfil || imgHomemPeixe}
                 alt="Você"

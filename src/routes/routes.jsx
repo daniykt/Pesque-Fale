@@ -8,7 +8,6 @@ import Index from "../pages/Index/Index";
 import Login from "../pages/Login/login";
 import Onboarding from "../pages/Onboarding/Onboarding";
 import Home from "../pages/Home/Home";
-import RegistroPost from "../pages/Registro/RegistroPost";
 import Perfil from "../pages/Perfil/perfil";
 import EditarPerfil from "../pages/Perfil/EditarPerfil/editarPerfil";
 import NovaPublicacao from "../pages/NovaPublicacao/novapublicacao";
@@ -51,15 +50,6 @@ function AppRoutes() {
             <ProtectedRoute user={user} loading={loading}>
               <Home />
             </ProtectedRoute>
-          }
-        />
-
-        <Route
-         path="/Registro" 
-         element={
-            <ProtectedRoute user={user} loading={loading}>
-         <RegistroPost />
-        </ProtectedRoute>
           }
         />
 
