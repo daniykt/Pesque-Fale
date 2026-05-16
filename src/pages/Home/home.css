@@ -832,6 +832,7 @@ body.home-with-sidebar .main-content {
     gap: 6px;
     padding-bottom: 4px;
     overflow-x: unset;
+    margin-top: 30px;
   }
 
   .feed-tab {
