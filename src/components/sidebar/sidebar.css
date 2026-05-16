@@ -92,7 +92,7 @@ body { margin: 0; padding: 0; }
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: #062A6c;
   color: var(--white);
   box-shadow: var(--shadow-lg);
 }
