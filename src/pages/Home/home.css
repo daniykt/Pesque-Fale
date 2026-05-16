@@ -946,18 +946,18 @@ body.dark-mode .weather-label { color: #b0b0b0; }
 body.dark-mode .tip-text { color: #d1d5db; }
 
 body.dark-mode .sticky-post-bar {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(18, 18, 18, 0.85);
   border-color: rgba(51, 65, 85, 0.5);
 }
 
 body.dark-mode .sticky-post-bar.scrolled {
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(18, 18, 18, 0.85);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
-body.dark-mode .btn-new-post {
-  background: rgba(30, 30, 30, 0.9);
-  border-color: rgba(0, 150, 199, 0.4);
+body.dark-mode .btn-new-post:hover {
+  background: rgba(40, 40, 40, 0.98);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 body.dark-mode .btn-new-post input { color: #aaa; }
