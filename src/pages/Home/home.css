@@ -91,6 +91,14 @@ body.home-with-sidebar .main-content {
   font-weight: 600;
   white-space: nowrap;
   letter-spacing: 0.01em;
+  flex-shrink: 0; /* chips fixos não encolhem */
+}
+
+.sticky-chip-tip {
+  flex-shrink: 1;  /* só o tip cede espaço */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sticky-chip-weather {
@@ -106,14 +114,13 @@ body.home-with-sidebar .main-content {
 }
 
 .sticky-chip-tip {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: rgba(245, 158, 11, 0.1);
   color: #92400e;
   border: 1px solid rgba(245, 158, 11, 0.2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 340px;
-  flex-shrink: 1;
-  min-width: 0;
 }
 
 .sticky-chip .material-symbols-outlined {
@@ -803,11 +810,6 @@ body.home-with-sidebar .main-content {
     justify-content: flex-start;
   }
 
-  /*
-   * No mobile a sidebar some completamente (display:none no sidebar.css).
-   * Não existe header fixo → sticky fica em top:0, largura total.
-   * O padding-top do main-content é calculado via ResizeObserver no Home.jsx.
-   */
   .sticky-post-bar {
     top: 0;
     left: 0;
@@ -816,30 +818,50 @@ body.home-with-sidebar .main-content {
     padding-right: 1rem;
   }
 
-  /* chip-tip: comprime com ellipsis em vez de sumir */
-  .sticky-chip-tip {
-    max-width: 150px;
-  }
-
-  /* main-content: padding-top vem do JS — só ajustamos lateral e bottom */
+  /* main-content: padding-top vem do ResizeObserver no JSX */
   .main-content {
     padding-left: 1rem;
     padding-right: 1rem;
     padding-bottom: 2rem;
   }
+
+  /* ── Tabs estilo pill (igual notificação) ── */
+  .feed-tabs {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    border-bottom: none;
+    gap: 6px;
+    padding-bottom: 4px;
+    overflow-x: unset;
+  }
+
+  .feed-tab {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    border: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+    border-radius: 50px;
+    background: #f8fafc;
+    color: var(--gray-600);
+    margin-bottom: 0;
+  }
+
+  .feed-tab:hover {
+    background: var(--gray-100);
+    transform: none;
+  }
+
+  .feed-tab.active {
+    background: var(--primary-theme);
+    color: #ffffff;
+    border-color: var(--primary-theme);
+    border-bottom-color: var(--primary-theme);
+    font-weight: 600;
+  }
 }
 
 @media (max-width: 768px) {
-  .sticky-post-bar {
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .sticky-chip-tip { max-width: 130px; }
-
+  .sticky-post-bar { top: 0; left: 0; width: 100%; padding-left: 1rem; padding-right: 1rem; }
   .main-content { padding-left: 1rem; padding-right: 1rem; padding-bottom: 2rem; }
 
   .context-bar { gap: 0.5rem; }
@@ -855,16 +877,7 @@ body.home-with-sidebar .main-content {
 }
 
 @media (max-width: 480px) {
-  .sticky-post-bar {
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .sticky-chip-tip { max-width: 110px; }
-
+  .sticky-post-bar { top: 0; left: 0; width: 100%; padding-left: 0.75rem; padding-right: 0.75rem; }
   .main-content { padding-left: 0.75rem; padding-right: 0.75rem; padding-bottom: 2rem; }
 
   .feed-tab { padding: 0.5rem 0.75rem; font-size: 0.82rem; }
@@ -956,6 +969,19 @@ body.dark-mode .feed-tab { color: #9ca3af; }
 body.dark-mode .feed-tab:hover { background: #1e1e1e; color: #90caf9; }
 body.dark-mode .feed-tab.active { color: #90caf9; border-bottom-color: #90caf9; }
 
+@media (max-width: 900px) {
+  body.dark-mode .feed-tab {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+  }
+  body.dark-mode .feed-tab.active {
+    background: #062A6C;
+    color: #ffffff;
+    border-color: #062A6C;
+  }
+}
+
 body.dark-mode .post-card,
 body.dark-mode .carousel-card,
 body.dark-mode .empty-tab-hint {
@@ -1039,5 +1065,123 @@ body.dark-mode .empty-tab-hint { border-color: #333; color: #9ca3af; }
 /* Dark mode para tags e curtido */
 body.dark-mode .post-tag {
   background: #1e3a5f;
+  color: #90caf9;
+}
+
+/* ================= ABA DICAS ================= */
+
+.dicas-container {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.clima-card, .dica-card {
+  background: var(--white);
+  border-radius: 20px;
+  border: 1px solid var(--gray-200);
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clima-card:hover, .dica-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.clima-header, .dica-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.clima-header .material-symbols-outlined,
+.dica-header .material-symbols-outlined {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.clima-header h3, .dica-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-theme);
+  margin: 0;
+}
+
+.clima-temp {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.clima-desc {
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin-bottom: 0.75rem;
+}
+
+.clima-detalhes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  padding: 0.75rem;
+  border-radius: 16px;
+}
+
+.dica-texto {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--gray-800);
+  margin: 0.5rem 0 1rem;
+}
+
+.btn-proxima-dica {
+  background: var(--gray-100);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-proxima-dica:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-proxima-dica .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+/* Dark mode */
+body.dark-mode .clima-card,
+body.dark-mode .dica-card {
+  background: #1e1e2a;
+  border-color: #2a2a3a;
+}
+
+body.dark-mode .clima-detalhes {
+  background: #2a2a3a;
+  color: #cbd5e1;
+}
+
+body.dark-mode .btn-proxima-dica {
+  background: #2a2a3a;
   color: #90caf9;
 }

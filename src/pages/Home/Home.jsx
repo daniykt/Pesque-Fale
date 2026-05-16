@@ -299,6 +299,7 @@ const Home = () => {
     { id: "seguindo",  label: "Seguindo",  icon: "group"    },
     { id: "eventos",   label: "Eventos",   icon: "event"    },
     { id: "locais",    label: "Locais",    icon: "pin_drop" },
+    { id: "dicas",     label: "Dicas",     icon: "lightbulb" },
   ];
 
   /* ── render post ── */
@@ -452,18 +453,6 @@ const Home = () => {
 
         {/* sticky post bar — fora do main para não ser afetado pelo overflow */}
         <div className="sticky-post-bar" ref={stickyRef}>
-          {/* chips: clima+condições juntos · dica do dia */}
-          <div className="sticky-chips">
-            <span className="sticky-chip sticky-chip-condition">
-              ☀️ 28°C · Ensolarado &nbsp;·&nbsp;
-              <span className="material-symbols-outlined">phishing</span>
-              Condições ótimas
-            </span>
-            <span className="sticky-chip sticky-chip-tip">
-              <span className="material-symbols-outlined">lightbulb</span>
-              Tucunaré ataca melhor com isca artificial de manhã 🎣
-            </span>
-          </div>
 
           <div className="btn-new-post" onClick={() => navigate("/publicar", { state: { from: "/home" } })}>
             <img
@@ -665,6 +654,35 @@ const Home = () => {
                 </div>
               </div>
             )}
+            {activeTab === "dicas" && (
+  <div className="content-layout">
+    <div className="dicas-container">
+      <div className="clima-card">
+        <div className="clima-header">
+          <span className="material-symbols-outlined">wb_sunny</span>
+          <h3>Clima Agora</h3>
+        </div>
+        <div className="clima-temp">28°C</div>
+        <div className="clima-desc">Ensolarado · Condições ótimas para pesca</div>
+        <div className="clima-detalhes">
+          <span>🌬️ Vento: 12 km/h</span>
+          <span>💧 Umidade: 65%</span>
+          <span>🎣 Melhor período: 06h - 10h</span>
+        </div>
+      </div>
+
+      <div className="dica-card">
+        <div className="dica-header">
+          <span className="material-symbols-outlined">Phishing</span>
+          <h3>Dica do dia</h3>
+        </div>
+        <p className="dica-texto">
+          Tucunaré ataca melhor com isca artificial de manhã. Use cores vibrantes em dias ensolarados.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
           </div>
         </main>
