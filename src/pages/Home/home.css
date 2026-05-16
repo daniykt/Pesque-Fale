@@ -77,7 +77,8 @@ body.home-with-sidebar .main-content {
   max-width: 680px;
   width: 100%;
   margin: 0 auto 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .sticky-chip {
@@ -108,10 +109,11 @@ body.home-with-sidebar .main-content {
   background: rgba(245, 158, 11, 0.1);
   color: #92400e;
   border: 1px solid rgba(245, 158, 11, 0.2);
-  /* tip some em telas menores */
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 340px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .sticky-chip .material-symbols-outlined {
@@ -128,22 +130,25 @@ body.home-with-sidebar .main-content {
 /* ================= STICKY POST BAR — glassmorphism moderno ================= */
 
 .sticky-post-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
-  /* glassmorphism */
+  left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  z-index: 999;
+
   background: rgba(248, 250, 252, 0.75);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
+
   padding: 0.65rem 2rem 0.75rem;
-  margin: 0 -2rem;
+
   border-bottom: 1px solid rgba(203, 213, 225, 0.5);
-  /* sombra suave que aparece ao scrollar via JS */
+
   box-shadow: none;
   transition: box-shadow 0.3s ease, background 0.3s ease;
 }
 
-/* classe adicionada via JS quando há scroll */
+/* sombra ao scroll */
 .sticky-post-bar.scrolled {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   background: rgba(248, 250, 252, 0.92);
@@ -798,24 +803,47 @@ body.home-with-sidebar .main-content {
     justify-content: flex-start;
   }
 
+  /*
+   * No mobile a sidebar some completamente (display:none no sidebar.css).
+   * Não existe header fixo → sticky fica em top:0, largura total.
+   * O padding-top do main-content é calculado via ResizeObserver no Home.jsx.
+   */
   .sticky-post-bar {
-    top: var(--header-height);
+    top: 0;
+    left: 0;
+    width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
-    margin: 0 -1rem;
   }
 
-  .sticky-chip-tip { display: none; } /* tip some no mobile horizontal */
+  /* chip-tip: comprime com ellipsis em vez de sumir */
+  .sticky-chip-tip {
+    max-width: 150px;
+  }
+
+  /* main-content: padding-top vem do JS — só ajustamos lateral e bottom */
+  .main-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 2rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .main-content { padding: 0.75rem 1rem; }
-  .sticky-post-bar { margin: 0 -1rem; padding-left: 1rem; padding-right: 1rem; }
+  .sticky-post-bar {
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .sticky-chip-tip { max-width: 130px; }
+
+  .main-content { padding-left: 1rem; padding-right: 1rem; padding-bottom: 2rem; }
 
   .context-bar { gap: 0.5rem; }
   .context-widget { min-width: 100%; }
-
-  .sticky-chip-tip { max-width: 200px; }
 
   .post-header { padding: 10px; }
   .post-content { padding: 0 10px 10px 10px; }
@@ -827,8 +855,17 @@ body.home-with-sidebar .main-content {
 }
 
 @media (max-width: 480px) {
-  .main-content { padding: 0.5rem 0.75rem; }
-  .sticky-post-bar { margin: 0 -0.75rem; padding-left: 0.75rem; padding-right: 0.75rem; }
+  .sticky-post-bar {
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .sticky-chip-tip { max-width: 110px; }
+
+  .main-content { padding-left: 0.75rem; padding-right: 0.75rem; padding-bottom: 2rem; }
 
   .feed-tab { padding: 0.5rem 0.75rem; font-size: 0.82rem; }
   .feed-tab .material-symbols-outlined { font-size: 1rem; }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./home.css";
@@ -37,6 +37,22 @@ const Home = () => {
   const [activeTab,   setActiveTab]   = useState("para-voce");
   const [eventoIndex, setEventoIndex] = useState(0);
   const [localIndex,  setLocalIndex]  = useState(0);
+
+  /* ── altura real da sticky bar (position:fixed sai do fluxo normal) ──
+   * ResizeObserver garante que o padding-top do main-content sempre bata
+   * com o tamanho atual da barra, em qualquer viewport, sem hardcode.
+   */
+  const stickyRef = useRef(null);
+  const [stickyHeight, setStickyHeight] = useState(0);
+  useEffect(() => {
+    const el = stickyRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setStickyHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   /* ── dados estáticos ── */
   const eventos = [
@@ -435,7 +451,7 @@ const Home = () => {
       <div className="column">
 
         {/* sticky post bar — fora do main para não ser afetado pelo overflow */}
-        <div className="sticky-post-bar">
+        <div className="sticky-post-bar" ref={stickyRef}>
           {/* chips: clima+condições juntos · dica do dia */}
           <div className="sticky-chips">
             <span className="sticky-chip sticky-chip-condition">
@@ -466,7 +482,7 @@ const Home = () => {
           </div>
         </div>
 
-        <main className="main-content">
+        <main className="main-content" style={{ paddingTop: stickyHeight ? `${stickyHeight + 8}px` : undefined }}>
 
           {/* tabs */}
           <nav className="feed-tabs">
