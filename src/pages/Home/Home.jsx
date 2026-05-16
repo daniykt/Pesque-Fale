@@ -454,7 +454,7 @@ const Home = () => {
 
           {/* sticky post bar */}
           <div className="sticky-post-bar">
-            <div className="btn-new-post" onClick={() => navigate("/publicar")}>
+            <div className="btn-new-post" onClick={() => navigate("/publicar", { state: { from: "/home" } })}>
               <img
                 src={usuarioDados?.fotoPerfil || imgHomemPeixe}
                 alt="Você"
