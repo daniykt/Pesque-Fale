@@ -138,6 +138,10 @@ const Home = () => {
     const handle = () => {
       const sb = document.querySelector("._Sidebar");
       if (sb) sb.style.boxShadow = window.scrollY > 10 ? "0 4px 20px rgba(0,0,0,0.1)" : "none";
+
+      // classe scrolled na sticky bar para glassmorphism mais opaco
+      const stickyBar = document.querySelector(".sticky-post-bar");
+      if (stickyBar) stickyBar.classList.toggle("scrolled", window.scrollY > 10);
     };
     window.addEventListener("scroll", handle);
     return () => window.removeEventListener("scroll", handle);
@@ -429,47 +433,40 @@ const Home = () => {
   return (
     <Layout>
       <div className="column">
+
+        {/* sticky post bar — fora do main para não ser afetado pelo overflow */}
+        <div className="sticky-post-bar">
+          {/* chips: clima+condições juntos · dica do dia */}
+          <div className="sticky-chips">
+            <span className="sticky-chip sticky-chip-condition">
+              ☀️ 28°C · Ensolarado &nbsp;·&nbsp;
+              <span className="material-symbols-outlined">phishing</span>
+              Condições ótimas
+            </span>
+            <span className="sticky-chip sticky-chip-tip">
+              <span className="material-symbols-outlined">lightbulb</span>
+              Tucunaré ataca melhor com isca artificial de manhã 🎣
+            </span>
+          </div>
+
+          <div className="btn-new-post" onClick={() => navigate("/publicar", { state: { from: "/home" } })}>
+            <img
+              src={usuarioDados?.fotoPerfil || imgHomemPeixe}
+              alt="Você"
+              className="post-author-img"
+            />
+            <input
+              type="text"
+              placeholder="O que você deseja publicar hoje?"
+              readOnly
+            />
+            <button className="post-btn" title="Nova publicação">
+              <span className="material-symbols-outlined">add_photo_alternate</span>
+            </button>
+          </div>
+        </div>
+
         <main className="main-content">
-
-          {/* widget bar */}
-          <div className="context-bar">
-            <div className="context-widget weather-widget-mini">
-              <span className="weather-icon-mini">☀️</span>
-              <div className="weather-text">
-                <span className="weather-temp">28°C</span>
-                <span className="weather-label">Ensolarado • Matão - SP</span>
-              </div>
-              <div className="fishing-badge">
-                <span className="material-symbols-outlined">phishing</span>
-                Condições ótimas
-              </div>
-            </div>
-            <div className="context-widget tip-widget-mini">
-              <span className="material-symbols-outlined tip-icon">lightbulb</span>
-              <p className="tip-text">
-                <strong>Dica do dia:</strong> Tucunaré ataca melhor com isca artificial no começo da manhã. 🎣
-              </p>
-            </div>
-          </div>
-
-          {/* sticky post bar */}
-          <div className="sticky-post-bar">
-            <div className="btn-new-post" onClick={() => navigate("/publicar", { state: { from: "/home" } })}>
-              <img
-                src={usuarioDados?.fotoPerfil || imgHomemPeixe}
-                alt="Você"
-                className="post-author-img"
-              />
-              <input
-                type="text"
-                placeholder="O que você deseja publicar hoje?"
-                readOnly
-              />
-              <button className="post-btn" title="Nova publicação">
-                <span className="material-symbols-outlined">add_photo_alternate</span>
-              </button>
-            </div>
-          </div>
 
           {/* tabs */}
           <nav className="feed-tabs">
