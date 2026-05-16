@@ -364,15 +364,16 @@ body.home-with-sidebar .main-content {
 
 .post-main-image-container {
   width: 100%;
-  background: #f0f0f0;
+  background: #000;
 }
 
 .post-main-image {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
-  max-height: 500px;
+  object-fit: contain;
+  max-height: 600px;
+  background: #000;
 }
 
 .post-interact-bar {
@@ -937,13 +938,13 @@ body.dark-mode .empty-tab-hint { border-color: #333; color: #9ca3af; }
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  padding: 0 12px 10px;
+  padding: 8px 12px 10px;
 }
 .post-tag {
   display: inline-flex;
   align-items: center;
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(6, 42, 108, 0.08);
+  color: #062A6C;
   border-radius: 50px;
   padding: 0.2rem 0.65rem;
   font-size: 0.75rem;
