@@ -19,12 +19,48 @@ import imgEvento3         from "../../assets/image/eventos/evento3.jpg";
 import imgPesqueiro311    from "../../assets/image/eventos/pesqueiro_311.jpg";
 import imgRecantoPescador from "../../assets/image/eventos/recanto_pescador.jpg";
 
+
+function PostCardSkeleton() {
+  return (
+    <article className="post-card post-card-skeleton" aria-hidden="true">
+      {/* Cabeçalho */}
+      <div className="post-header">
+        <div className="skeleton-avatar" />
+        <div className="skeleton-author-info">
+          <div className="skeleton-line skeleton-line--name" />
+          <div className="skeleton-line skeleton-line--meta" />
+        </div>
+      </div>
+
+      {/* Imagem */}
+      <div className="skeleton-image" />
+
+      {/* Separador */}
+      <div className="post-interact-bar" />
+
+      {/* Stats */}
+      <div className="post-stats-row">
+        <div className="skeleton-line skeleton-line--stat" />
+        <div className="skeleton-line skeleton-line--stat" />
+      </div>
+
+      {/* Ações */}
+      <div className="post-actions-row">
+        <div className="skeleton-action" />
+        <div className="skeleton-action" />
+        <div className="skeleton-action" />
+      </div>
+    </article>
+  );
+}
+
+/* ─────────────────────────────────────────
+   PostCard real
+───────────────────────────────────────── */
 function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil, onVerPost }) {
-  const [linkCopiado, setLinkCopiado] = useState(false);
-
-
-  const [comentAberto,   setComentAberto]   = useState(false);
-  const [inputComentario, setInputComentario] = useState("");
+  const [linkCopiado,      setLinkCopiado]      = useState(false);
+  const [comentAberto,     setComentAberto]     = useState(false);
+  const [inputComentario,  setInputComentario]  = useState("");
   const [fotosComentarios, setFotosComentarios] = useState({});
   const inputRef = useRef(null);
 
@@ -32,14 +68,10 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
   const comentarios = post.comentarios || [];
   const jaCurtiu    = user && curtidas.includes(user.uid);
 
-  /* Abre seção de comentários e foca no input */
   const toggleComentarios = () => {
     setComentAberto((prev) => {
       const next = !prev;
-      if (next) {
-        // aguarda render para focar
-        setTimeout(() => inputRef.current?.focus(), 50);
-      }
+      if (next) setTimeout(() => inputRef.current?.focus(), 50);
       return next;
     });
   };
@@ -50,74 +82,58 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
     setInputComentario("");
   };
 
-  /* Copia apenas o link direto da publicação */
-const copiarLink = async () => {
-  const url = `${window.location.origin}/post/${post.autorId}/${post.id}`;
-  try {
-    await navigator.clipboard.writeText(url);
-    setLinkCopiado(true);
-    setTimeout(() => setLinkCopiado(false), 2000);
-  } catch {
-    // fallback silencioso
-  }
-};
-useEffect(() => {
-  const carregarFotosComentarios = async () => {
-    const comentariosSemFoto = comentarios.filter(
-      (c) => c.autorId && !c.autorFoto
-    );
-
-    if (comentariosSemFoto.length === 0) return;
-
-    const novasFotos = {};
-
-    await Promise.all(
-      comentariosSemFoto.map(async (comentario) => {
-        try {
-          const usuarioRef = doc(db, "usuarios", comentario.autorId);
-          const usuarioSnap = await getDoc(usuarioRef);
-
-          if (usuarioSnap.exists()) {
-            novasFotos[comentario.autorId] =
-              usuarioSnap.data().fotoPerfil || "";
-          }
-        } catch (error) {
-          console.error("Erro ao carregar foto do comentário:", error);
-        }
-      })
-    );
-
-    setFotosComentarios((prev) => ({
-      ...prev,
-      ...novasFotos,
-    }));
+  const copiarLink = async () => {
+    const url = `${window.location.origin}/post/${post.autorId}/${post.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopiado(true);
+      setTimeout(() => setLinkCopiado(false), 2000);
+    } catch {
+      // fallback silencioso
+    }
   };
 
-  carregarFotosComentarios();
-}, [comentarios]);
+  useEffect(() => {
+    const carregarFotosComentarios = async () => {
+      const semFoto = comentarios.filter((c) => c.autorId && !c.autorFoto);
+      if (semFoto.length === 0) return;
+
+      const novasFotos = {};
+      await Promise.all(
+        semFoto.map(async (c) => {
+          try {
+            const snap = await getDoc(doc(db, "usuarios", c.autorId));
+            if (snap.exists()) novasFotos[c.autorId] = snap.data().fotoPerfil || "";
+          } catch (error) {
+            console.error("Erro ao carregar foto do comentário:", error);
+          }
+        })
+      );
+      setFotosComentarios((prev) => ({ ...prev, ...novasFotos }));
+    };
+
+    carregarFotosComentarios();
+  }, [comentarios]);
 
   return (
     <article className="post-card">
 
       {/* ── Cabeçalho ── */}
       <div className="post-header">
-{post.autorFoto ? (
-  <img
-    src={post.autorFoto}
-    alt={post.autorNome}
-    className="post-author-img post-author-img--clickable"
-    onClick={() => onVerPerfil(post.autorId)}
-  />
-) : (
-  <div className="avatar-skeleton">
-    <span className="material-symbols-outlined">person</span>
-  </div>
-)}
-        <div className="post-author-info">
-          <h3
-            className="post-author post-author--link"
+        {post.autorFoto ? (
+          <img
+            src={post.autorFoto}
+            alt={post.autorNome}
+            className="post-author-img post-author-img--clickable"
             onClick={() => onVerPerfil(post.autorId)}
-          >
+          />
+        ) : (
+          <div className="avatar-skeleton">
+            <span className="material-symbols-outlined">person</span>
+          </div>
+        )}
+        <div className="post-author-info">
+          <h3 className="post-author post-author--link" onClick={() => onVerPerfil(post.autorId)}>
             {post.autorNome}
           </h3>
           <p className="post-meta">
@@ -136,7 +152,7 @@ useEffect(() => {
         </div>
       )}
 
-      {/* ── Imagem — clica para ver o post completo ── */}
+      {/* ── Imagem ── */}
       {post.imagem && (
         <div
           className="post-main-image-container post-main-image-container--clickable"
@@ -197,63 +213,56 @@ useEffect(() => {
           <span className="action-btn-label">Comentar</span>
         </button>
 
-<button className="action-btn" onClick={copiarLink}>
-  <span className="material-symbols-outlined">share</span>
-  <span className="action-btn-label">
-    {linkCopiado ? "Link copiado!" : "Compartilhar"}
-  </span>
-</button>
+        <button className="action-btn" onClick={copiarLink}>
+          <span className="material-symbols-outlined">share</span>
+          <span className="action-btn-label">
+            {linkCopiado ? "Link copiado!" : "Compartilhar"}
+          </span>
+        </button>
       </div>
 
-      {/* ── Área de comentários — expande/recolhe ── */}
+      {/* ── Área de comentários ── */}
       {comentAberto && (
         <div className="post-comments-area">
+          {comentarios.length > 0 ? (
+            comentarios.map((c) => (
+              <div key={c.id ?? c.data} className="comment-item">
+                {c.autorFoto || fotosComentarios[c.autorId] ? (
+                  <img
+                    src={c.autorFoto || fotosComentarios[c.autorId]}
+                    alt={c.autorNome}
+                    className="comment-avatar-img comment-avatar-img--clickable"
+                    onClick={() => c.autorId && onVerPerfil(c.autorId)}
+                  />
+                ) : (
+                  <div className="comment-avatar-skeleton">
+                    <span className="material-symbols-outlined">person</span>
+                  </div>
+                )}
+                <div className="comment-content-bubble">
+                  <span
+                    className="comment-author-name comment-author-name--clickable"
+                    onClick={() => c.autorId && onVerPerfil(c.autorId)}
+                  >
+                    {c.autorNome}
+                  </span>
+                  <p>{c.texto}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="comment-empty">Nenhum comentário ainda. Seja o primeiro!</p>
+          )}
 
-          {/* Lista de comentários existentes */}
-{comentarios.length > 0 ? (
-  comentarios.map((c) => (
-    <div key={c.id ?? c.data} className="comment-item">
-{c.autorFoto || fotosComentarios[c.autorId] ? (
-  <img
-    src={c.autorFoto || fotosComentarios[c.autorId]}
-    alt={c.autorNome}
-    className="comment-avatar-img comment-avatar-img--clickable"
-    onClick={() => c.autorId && onVerPerfil(c.autorId)}
-  />
-) : (
-  <div className="comment-avatar-skeleton">
-    <span className="material-symbols-outlined">person</span>
-  </div>
-)}
-      <div className="comment-content-bubble">
-        <span
-          className="comment-author-name comment-author-name--clickable"
-          onClick={() => c.autorId && onVerPerfil(c.autorId)}
-        >
-          {c.autorNome}
-        </span>
-        <p>{c.texto}</p>
-      </div>
-    </div>
-  ))
-) : (
-  <p className="comment-empty">Nenhum comentário ainda. Seja o primeiro!</p>
-)}
-
-          {/* Input para novo comentário */}
           {user && (
             <div className="comment-input">
-{usuarioDados?.fotoPerfil ? (
-  <img
-    src={usuarioDados.fotoPerfil}
-    alt="Você"
-    className="comment-avatar"
-  />
-) : (
-  <div className="comment-avatar-skeleton">
-    <span className="material-symbols-outlined">person</span>
-  </div>
-)}
+              {usuarioDados?.fotoPerfil ? (
+                <img src={usuarioDados.fotoPerfil} alt="Você" className="comment-avatar" />
+              ) : (
+                <div className="comment-avatar-skeleton">
+                  <span className="material-symbols-outlined">person</span>
+                </div>
+              )}
               <input
                 ref={inputRef}
                 type="text"
@@ -261,10 +270,7 @@ useEffect(() => {
                 value={inputComentario}
                 onChange={(e) => setInputComentario(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    enviarComentario();
-                  }
+                  if (e.key === "Enter") { e.preventDefault(); enviarComentario(); }
                 }}
                 maxLength={200}
                 aria-label="Campo de comentário"
@@ -292,7 +298,7 @@ const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* ── Estado de autenticação ── */
+  /* ── Autenticação ── */
   const [user,         setUser]         = useState(null);
   const [usuarioDados, setUsuarioDados] = useState(null);
 
@@ -300,16 +306,19 @@ const Home = () => {
   const [feedPosts,   setFeedPosts]   = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
 
+  const [feedPronto, setFeedPronto] = useState(false);
+
   /* ── UI ── */
   const [activeTab,   setActiveTab]   = useState("para-voce");
   const [eventoIndex, setEventoIndex] = useState(0);
   const [localIndex,  setLocalIndex]  = useState(0);
 
-  /* ── Sticky bar: altura calculada por ResizeObserver ── */
-  const stickyRef    = useRef(null);
+  /* ── Refs ── */
+  const stickyRef       = useRef(null);
   const scrollRestorado = useRef(false);
   const [stickyHeight, setStickyHeight] = useState(0);
 
+  /* ── Sticky bar resize observer ── */
   useEffect(() => {
     const el = stickyRef.current;
     if (!el) return;
@@ -412,21 +421,28 @@ const Home = () => {
     }
   }, []);
 
-  /* ── Restaurar scroll ao voltar do post ── */
-useEffect(() => {
-  if (feedLoading) return;
-  if (scrollRestorado.current) return;
+  useEffect(() => {
+    if (feedLoading) return;
+    if (scrollRestorado.current) return;
 
-  const savedScroll = sessionStorage.getItem("home_scroll");
-  if (!savedScroll) return;
+    scrollRestorado.current = true;
 
-  scrollRestorado.current = true;
-  sessionStorage.removeItem("home_scroll");
+    const savedScroll = sessionStorage.getItem("home_scroll");
 
-  setTimeout(() => {
-    window.scrollTo({ top: Number(savedScroll), behavior: "instant" });
-  }, 50);
-}, [feedLoading, feedPosts]);
+    if (!savedScroll) {
+      setFeedPronto(true);
+      return;
+    }
+
+    sessionStorage.removeItem("home_scroll");
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: Number(savedScroll), behavior: "instant" });
+        setFeedPronto(true);
+      });
+    });
+  }, [feedLoading, feedPosts]);
 
   /* ── Shadow na sticky bar ao scroll ── */
   useEffect(() => {
@@ -442,13 +458,11 @@ useEffect(() => {
      Ações do feed
   ───────────────────────────────────────── */
 
-  /* Curtir — atualização otimista + transação Firestore */
   const curtirPost = useCallback(async (post) => {
     if (!user || !post.autorId) return;
 
     const jaCurtiu = (post.curtidas || []).includes(user.uid);
 
-    /* Otimista */
     setFeedPosts((prev) =>
       prev.map((p) => {
         if (p.id !== post.id || p.autorId !== post.autorId) return p;
@@ -466,8 +480,7 @@ useEffect(() => {
       await runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if (!snap.exists()) return;
-        const posts      = snap.data().posts || [];
-        const atualizados = posts.map((p) => {
+        const atualizados = snap.data().posts.map((p) => {
           if (p.id !== post.id) return p;
           const curtidas = p.curtidas || [];
           return {
@@ -481,7 +494,6 @@ useEffect(() => {
       });
     } catch (e) {
       console.error("Erro ao curtir:", e);
-      /* Reverte otimismo */
       setFeedPosts((prev) =>
         prev.map((p) => {
           if (p.id !== post.id || p.autorId !== post.autorId) return p;
@@ -496,23 +508,18 @@ useEffect(() => {
     }
   }, [user]);
 
-  /* Comentar — atualização otimista + transação Firestore */
   const adicionarComentario = useCallback(async (post, texto) => {
     if (!texto?.trim() || !user || !post.autorId) return;
 
     const novoComentario = {
-      id:        Date.now(),           // id único para key estável no React
+      id:        Date.now(),
       autorId:   user.uid,
       autorNome: usuarioDados?.nome || user.displayName || "Você",
-      autorFoto:
-        usuarioDados?.fotoPerfil ||
-        user.photoURL ||
-        "",
+      autorFoto: usuarioDados?.fotoPerfil || user.photoURL || "",
       texto:     texto.trim(),
       data:      new Date().toLocaleString("pt-BR"),
     };
 
-    /* Otimista */
     setFeedPosts((prev) =>
       prev.map((p) => {
         if (p.id !== post.id || p.autorId !== post.autorId) return p;
@@ -525,8 +532,7 @@ useEffect(() => {
       await runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         if (!snap.exists()) return;
-        const posts      = snap.data().posts || [];
-        const atualizados = posts.map((p) => {
+        const atualizados = snap.data().posts.map((p) => {
           if (p.id !== post.id) return p;
           return { ...p, comentarios: [...(p.comentarios || []), novoComentario] };
         });
@@ -534,7 +540,6 @@ useEffect(() => {
       });
     } catch (e) {
       console.error("Erro ao comentar:", e);
-      /* Reverte otimismo usando o id gerado */
       setFeedPosts((prev) =>
         prev.map((p) => {
           if (p.id !== post.id || p.autorId !== post.autorId) return p;
@@ -547,16 +552,12 @@ useEffect(() => {
     }
   }, [user, usuarioDados]);
 
-  /* Navegação para perfil de outro usuário */
-  const verPerfil = useCallback((autorId) => {
-    navigate(`/perfil/${autorId}`);
-  }, [navigate]);
+  const verPerfil = useCallback((autorId) => navigate(`/perfil/${autorId}`), [navigate]);
 
-  /* Navegação para VisualizacaoPost */
-const verPost = useCallback((autorId, postId) => {
-  sessionStorage.setItem("home_scroll", String(window.scrollY));
-  navigate(`/post/${autorId}/${postId}`);
-}, [navigate]);
+  const verPost = useCallback((autorId, postId) => {
+    sessionStorage.setItem("home_scroll", String(window.scrollY));
+    navigate(`/post/${autorId}/${postId}`);
+  }, [navigate]);
 
   /* ── Carrossel ── */
   const prevEvento = () => setEventoIndex((i) => (i - 1 + eventos.length) % eventos.length);
@@ -572,7 +573,6 @@ const verPost = useCallback((autorId, postId) => {
     { id: "dicas",     label: "Dicas",     icon: "lightbulb" },
   ];
 
-  /* ── Render do feed ── */
   const renderFeed = (posts) =>
     posts.map((post) => (
       <PostCard
@@ -586,6 +586,16 @@ const verPost = useCallback((autorId, postId) => {
         onVerPost={verPost}
       />
     ));
+
+  /*
+   * feedStyle: mantém o feed invisível (opacity 0) até feedPronto.
+   * O skeleton já ocupa o espaço físico correto no DOM,
+   * então não há layout shift — só uma transição suave de reveal.
+   */
+  const feedStyle = {
+    opacity:    feedPronto ? 1 : 0,
+    transition: feedPronto ? "opacity 0.15s ease" : "none",
+  };
 
   /* ── JSX principal ── */
   return (
@@ -602,17 +612,13 @@ const verPost = useCallback((autorId, postId) => {
             onKeyDown={(e) => e.key === "Enter" && navigate("/publicar", { state: { from: "/home" } })}
             aria-label="Nova publicação"
           >
-{usuarioDados?.fotoPerfil ? (
-  <img
-    src={usuarioDados.fotoPerfil}
-    alt="Você"
-    className="post-author-img"
-  />
-) : (
-  <div className="avatar-skeleton">
-    <span className="material-symbols-outlined">person</span>
-  </div>
-)}
+            {usuarioDados?.fotoPerfil ? (
+              <img src={usuarioDados.fotoPerfil} alt="Você" className="post-author-img" />
+            ) : (
+              <div className="avatar-skeleton">
+                <span className="material-symbols-outlined">person</span>
+              </div>
+            )}
             <input
               type="text"
               placeholder="O que você deseja publicar hoje?"
@@ -651,12 +657,13 @@ const verPost = useCallback((autorId, postId) => {
             {/* Para você */}
             {activeTab === "para-voce" && (
               <div className="content-layout">
-                <section className="feed" aria-label="Feed para você">
+                <section className="feed" aria-label="Feed para você" style={feedStyle}>
                   {feedLoading ? (
-                    <div className="feed-loading">
-                      <span className="material-symbols-outlined spin">progress_activity</span>
-                      <p>Carregando feed...</p>
-                    </div>
+                    <>
+                      <PostCardSkeleton />
+                      <PostCardSkeleton />
+                      <PostCardSkeleton />
+                    </>
                   ) : feedPosts.length === 0 ? (
                     <div className="empty-tab-hint">
                       <span className="material-symbols-outlined">water</span>
@@ -672,12 +679,13 @@ const verPost = useCallback((autorId, postId) => {
             {/* Seguindo */}
             {activeTab === "seguindo" && (
               <div className="content-layout">
-                <section className="feed" aria-label="Feed seguindo">
+                <section className="feed" aria-label="Feed seguindo" style={feedStyle}>
                   {feedLoading ? (
-                    <div className="feed-loading">
-                      <span className="material-symbols-outlined spin">progress_activity</span>
-                      <p>Carregando...</p>
-                    </div>
+                    <>
+                      <PostCardSkeleton />
+                      <PostCardSkeleton />
+                      <PostCardSkeleton />
+                    </>
                   ) : (() => {
                     const seguindo      = usuarioDados?.seguindo || [];
                     const postsSeguindo = feedPosts.filter(
