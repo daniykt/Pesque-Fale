@@ -293,14 +293,13 @@ body.home-with-sidebar .main-content {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  /* cursor removido: apenas elementos interativos internos têm pointer */
+  transition: box-shadow 0.2s;
   width: 100%;
 }
 
 .post-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .post-header {
@@ -316,6 +315,24 @@ body.home-with-sidebar .main-content {
   object-fit: cover;
   margin-right: 12px;
   flex-shrink: 0;
+}
+
+/* Foto e nome do autor são clicáveis → perfil */
+.post-author-img--clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.post-author-img--clickable:hover {
+  opacity: 0.8;
+}
+
+.post-author--link {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.post-author--link:hover {
+  color: #062A6C;
+  text-decoration: underline;
 }
 
 .post-author-info {
@@ -364,6 +381,19 @@ body.home-with-sidebar .main-content {
   background: #000;
 }
 
+/* Torna a imagem clicável para abrir o post completo */
+.post-main-image-container--clickable {
+  cursor: pointer;
+  position: relative;
+}
+.post-main-image-container--clickable:hover .post-main-image {
+  opacity: 0.92;
+}
+.post-main-image-container--clickable:focus-visible {
+  outline: 3px solid #062A6C;
+  outline-offset: -3px;
+}
+
 .post-main-image {
   width: 100%;
   height: auto;
@@ -383,6 +413,22 @@ body.home-with-sidebar .main-content {
   padding: 10px 12px;
   font-size: 12px;
   color: #8e8e8e;
+}
+
+/* Contador de comentários é clicável para expandir a seção */
+.post-stats-comentarios-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: #8e8e8e;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+.post-stats-comentarios-btn:hover {
+  color: #062A6C;
+  text-decoration: underline;
 }
 
 .post-actions-row {
@@ -421,6 +467,14 @@ body.home-with-sidebar .main-content {
   background-color: #fafafa;
   border-top: 1px solid #efefef;
   padding: 12px;
+}
+
+/* Texto "Nenhum comentário" dentro da área de comentários */
+.comment-empty {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
 }
 
 .comment-item {
@@ -912,9 +966,15 @@ body.home-with-sidebar .main-content {
     flex: 1;
     justify-content: center;
     padding: 10px 4px;
-    gap: 0;
-    font-size: 0;
+    gap: 4px;
     min-width: 0;
+  }
+
+  /* Em mobile esconde apenas o texto, mantém ícone visível */
+  .action-btn .action-btn-label {
+    font-size: 0;
+    width: 0;
+    overflow: hidden;
   }
 
   .action-btn .material-symbols-outlined {
@@ -1051,11 +1111,24 @@ body.dark-mode .empty-tab-hint { border-color: #333; color: #9ca3af; }
   font-weight: 600;
 }
 
-/* Botão curtido */
-.action-btn-ativo .material-symbols-outlined {
-  color: #e11d48 !important;
-  font-variation-settings: 'FILL' 1;
+/* Label de texto nos botões de ação (some em mobile via font-size: 0) */
+.action-btn-label {
+  font-size: 14px;
 }
+
+/* Dark mode para o contador de comentários */
+body.dark-mode .post-stats-comentarios-btn {
+  color: #b0b0b0;
+}
+body.dark-mode .post-stats-comentarios-btn:hover {
+  color: #90caf9;
+}
+
+/* Dark mode para o empty state */
+body.dark-mode .comment-empty {
+  color: #666;
+}
+
 .action-btn-ativo {
   color: #e11d48 !important;
 }
@@ -1229,4 +1302,3 @@ body.dark-mode .clima-header .material-symbols-outlined {
 body.dark-mode .dica-header .material-symbols-outlined {
   color: #60a5fa; 
 }
-
