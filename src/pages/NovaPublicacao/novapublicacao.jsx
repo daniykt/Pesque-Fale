@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./novapublicacao.css";
 
@@ -14,6 +14,8 @@ const TAGS_FIXAS = [
 
 export default function NovaPublicacao() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const voltarPara = location.state?.from || "/perfil";
 
   const [user, setUser] = useState(null);
   const [foto, setFoto] = useState(null);
@@ -98,7 +100,7 @@ export default function NovaPublicacao() {
       setPublicando(false);
       setPublicado(true);
 
-      setTimeout(() => navigate("/perfil"), 1200);
+      setTimeout(() => navigate(voltarPara), 1200);
     } catch (error) {
       console.error("Erro ao publicar:", error);
       setPublicando(false);
@@ -112,7 +114,7 @@ export default function NovaPublicacao() {
 
         {/* CABEÇALHO */}
         <div className="nova-pub-header">
-          <button className="nova-pub-voltar" onClick={() => navigate("/perfil")}>
+          <button className="nova-pub-voltar" onClick={() => navigate(voltarPara)}>
             <span className="material-symbols-outlined">arrow_back</span>
             Voltar
           </button>

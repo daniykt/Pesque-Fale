@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./home.css";
@@ -37,6 +37,22 @@ const Home = () => {
   const [activeTab,   setActiveTab]   = useState("para-voce");
   const [eventoIndex, setEventoIndex] = useState(0);
   const [localIndex,  setLocalIndex]  = useState(0);
+
+  /* ── altura real da sticky bar (position:fixed sai do fluxo normal) ──
+   * ResizeObserver garante que o padding-top do main-content sempre bata
+   * com o tamanho atual da barra, em qualquer viewport, sem hardcode.
+   */
+  const stickyRef = useRef(null);
+  const [stickyHeight, setStickyHeight] = useState(0);
+  useEffect(() => {
+    const el = stickyRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setStickyHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   /* ── dados estáticos ── */
   const eventos = [
@@ -138,6 +154,10 @@ const Home = () => {
     const handle = () => {
       const sb = document.querySelector("._Sidebar");
       if (sb) sb.style.boxShadow = window.scrollY > 10 ? "0 4px 20px rgba(0,0,0,0.1)" : "none";
+
+      // classe scrolled na sticky bar para glassmorphism mais opaco
+      const stickyBar = document.querySelector(".sticky-post-bar");
+      if (stickyBar) stickyBar.classList.toggle("scrolled", window.scrollY > 10);
     };
     window.addEventListener("scroll", handle);
     return () => window.removeEventListener("scroll", handle);
@@ -279,6 +299,7 @@ const Home = () => {
     { id: "seguindo",  label: "Seguindo",  icon: "group"    },
     { id: "eventos",   label: "Eventos",   icon: "event"    },
     { id: "locais",    label: "Locais",    icon: "pin_drop" },
+    { id: "dicas",     label: "Dicas",     icon: "lightbulb" },
   ];
 
   /* ── render post ── */
@@ -429,47 +450,28 @@ const Home = () => {
   return (
     <Layout>
       <div className="column">
-        <main className="main-content">
 
-          {/* widget bar */}
-          <div className="context-bar">
-            <div className="context-widget weather-widget-mini">
-              <span className="weather-icon-mini">☀️</span>
-              <div className="weather-text">
-                <span className="weather-temp">28°C</span>
-                <span className="weather-label">Ensolarado • Matão - SP</span>
-              </div>
-              <div className="fishing-badge">
-                <span className="material-symbols-outlined">phishing</span>
-                Condições ótimas
-              </div>
-            </div>
-            <div className="context-widget tip-widget-mini">
-              <span className="material-symbols-outlined tip-icon">lightbulb</span>
-              <p className="tip-text">
-                <strong>Dica do dia:</strong> Tucunaré ataca melhor com isca artificial no começo da manhã. 🎣
-              </p>
-            </div>
-          </div>
+        {/* sticky post bar — fora do main para não ser afetado pelo overflow */}
+        <div className="sticky-post-bar" ref={stickyRef}>
 
-          {/* sticky post bar */}
-          <div className="sticky-post-bar">
-            <div className="btn-new-post" onClick={() => navigate("/registro")}>
-              <img
-                src={usuarioDados?.fotoPerfil || imgHomemPeixe}
-                alt="Você"
-                className="post-author-img"
-              />
-              <input
-                type="text"
-                placeholder="O que você deseja publicar hoje?"
-                readOnly
-              />
-              <button className="post-btn" title="Nova publicação">
-                <span className="material-symbols-outlined">add_photo_alternate</span>
-              </button>
-            </div>
+          <div className="btn-new-post" onClick={() => navigate("/publicar", { state: { from: "/home" } })}>
+            <img
+              src={usuarioDados?.fotoPerfil || imgHomemPeixe}
+              alt="Você"
+              className="post-author-img"
+            />
+            <input
+              type="text"
+              placeholder="O que você deseja publicar hoje?"
+              readOnly
+            />
+            <button className="post-btn" title="Nova publicação">
+              <span className="material-symbols-outlined">add_photo_alternate</span>
+            </button>
           </div>
+        </div>
+
+        <main className="main-content" style={{ paddingTop: stickyHeight ? `${stickyHeight + 8}px` : undefined }}>
 
           {/* tabs */}
           <nav className="feed-tabs">
@@ -652,6 +654,35 @@ const Home = () => {
                 </div>
               </div>
             )}
+            {activeTab === "dicas" && (
+  <div className="content-layout">
+    <div className="dicas-container">
+      <div className="clima-card">
+        <div className="clima-header">
+          <span className="material-symbols-outlined">wb_sunny</span>
+          <h3>Clima Agora</h3>
+        </div>
+        <div className="clima-temp">28°C</div>
+        <div className="clima-desc">Ensolarado · Condições ótimas para pesca</div>
+        <div className="clima-detalhes">
+          <span>🌬️ Vento: 12 km/h</span>
+          <span>💧 Umidade: 65%</span>
+          <span>🎣 Melhor período: 06h - 10h</span>
+        </div>
+      </div>
+
+      <div className="dica-card">
+        <div className="dica-header">
+          <span className="material-symbols-outlined">Phishing</span>
+          <h3>Dica do dia</h3>
+        </div>
+        <p className="dica-texto">
+          Tucunaré ataca melhor com isca artificial de manhã. Use cores vibrantes em dias ensolarados.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
           </div>
         </main>
