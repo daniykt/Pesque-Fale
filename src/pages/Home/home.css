@@ -558,6 +558,26 @@ body.home-with-sidebar .main-content {
   background: var(--primary-dark);
 }
 
+.comment-avatar-img--clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.comment-avatar-img--clickable:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.comment-author-name--clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.comment-author-name--clickable:hover {
+  color: #062A6C;
+  text-decoration: underline;
+}
+
 /* ================= EMPTY STATE ================= */
 
 .empty-tab-hint {

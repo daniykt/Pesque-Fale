@@ -164,23 +164,29 @@ const copiarLink = async () => {
         <div className="post-comments-area">
 
           {/* Lista de comentários existentes */}
-          {comentarios.length > 0 ? (
-            comentarios.map((c) => (
-              <div key={c.id ?? c.data} className="comment-item">
-                <img
-                  src={c.autorFoto || imgHomemPeixe}
-                  alt={c.autorNome}
-                  className="comment-avatar-img"
-                />
-                <div className="comment-content-bubble">
-                  <span className="comment-author-name">{c.autorNome}</span>
-                  <p>{c.texto}</p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="comment-empty">Nenhum comentário ainda. Seja o primeiro!</p>
-          )}
+{comentarios.length > 0 ? (
+  comentarios.map((c) => (
+    <div key={c.id ?? c.data} className="comment-item">
+      <img
+        src={c.autorFoto || imgHomemPeixe}
+        alt={c.autorNome}
+        className="comment-avatar-img comment-avatar-img--clickable"
+        onClick={() => c.autorId && onVerPerfil(c.autorId)}
+      />
+      <div className="comment-content-bubble">
+        <span
+          className="comment-author-name comment-author-name--clickable"
+          onClick={() => c.autorId && onVerPerfil(c.autorId)}
+        >
+          {c.autorNome}
+        </span>
+        <p>{c.texto}</p>
+      </div>
+    </div>
+  ))
+) : (
+  <p className="comment-empty">Nenhum comentário ainda. Seja o primeiro!</p>
+)}
 
           {/* Input para novo comentário */}
           {user && (
