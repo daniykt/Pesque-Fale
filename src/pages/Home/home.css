@@ -742,7 +742,7 @@ body.home-with-sidebar .main-content {
 }
 
 /* ================= RESPONSIVIDADE ================= */
-@media (max-width: 910px) {
+@media (max-width: 970px) {
     .feed-tabs {
     flex-wrap: wrap;
     justify-content: flex-start;
