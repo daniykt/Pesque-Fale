@@ -215,11 +215,7 @@ body.home-with-sidebar .main-content {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-}
-
-.post-btn:hover {
-  background-color: rgba(0, 150, 199, 0.1);
-  transform: scale(1.1);
+  color: #062A6c;
 }
 
 /* ================= TABS DE NAVEGAÇÃO ================= */
