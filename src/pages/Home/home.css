@@ -1099,7 +1099,7 @@ body.dark-mode .post-tag {
 .clima-header .material-symbols-outlined,
 .dica-header .material-symbols-outlined {
   font-size: 1.8rem;
-  color: var(--primary);
+  color: var(--primary-theme);
 }
 
 .clima-header h3, .dica-header h3 {
@@ -1112,7 +1112,7 @@ body.dark-mode .post-tag {
 .clima-temp {
   font-size: 2.5rem;
   font-weight: 800;
-  color: var(--primary-dark);
+  color: var(--primary-theme);
   line-height: 1;
   margin-bottom: 0.25rem;
 }
