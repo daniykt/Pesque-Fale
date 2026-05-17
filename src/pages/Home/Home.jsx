@@ -307,6 +307,7 @@ const Home = () => {
 
   /* ── Sticky bar: altura calculada por ResizeObserver ── */
   const stickyRef    = useRef(null);
+  const scrollRestorado = useRef(false);
   const [stickyHeight, setStickyHeight] = useState(0);
 
   useEffect(() => {
@@ -410,6 +411,22 @@ const Home = () => {
       document.body.classList.add("dark-mode");
     }
   }, []);
+
+  /* ── Restaurar scroll ao voltar do post ── */
+useEffect(() => {
+  if (feedLoading) return;
+  if (scrollRestorado.current) return;
+
+  const savedScroll = sessionStorage.getItem("home_scroll");
+  if (!savedScroll) return;
+
+  scrollRestorado.current = true;
+  sessionStorage.removeItem("home_scroll");
+
+  setTimeout(() => {
+    window.scrollTo({ top: Number(savedScroll), behavior: "instant" });
+  }, 50);
+}, [feedLoading, feedPosts]);
 
   /* ── Shadow na sticky bar ao scroll ── */
   useEffect(() => {
@@ -536,9 +553,10 @@ const Home = () => {
   }, [navigate]);
 
   /* Navegação para VisualizacaoPost */
-  const verPost = useCallback((autorId, postId) => {
-    navigate(`/post/${autorId}/${postId}`);
-  }, [navigate]);
+const verPost = useCallback((autorId, postId) => {
+  sessionStorage.setItem("home_scroll", String(window.scrollY));
+  navigate(`/post/${autorId}/${postId}`);
+}, [navigate]);
 
   /* ── Carrossel ── */
   const prevEvento = () => setEventoIndex((i) => (i - 1 + eventos.length) % eventos.length);
