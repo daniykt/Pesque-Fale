@@ -4,7 +4,13 @@ import Layout from "../../components/sidebar/layout";
 import "./home.css";
 
 import { db } from "../../firebase";
-import { doc, onSnapshot, updateDoc, runTransaction } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  runTransaction,
+  getDoc,
+} from "firebase/firestore";
 import { observeAuthState } from "../../auth";
 
 import imgEvento1         from "../../assets/image/eventos/evento1.jpg";
@@ -20,6 +26,7 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
 
   const [comentAberto,   setComentAberto]   = useState(false);
   const [inputComentario, setInputComentario] = useState("");
+  const [fotosComentarios, setFotosComentarios] = useState({});
   const inputRef = useRef(null);
 
   const curtidas    = post.curtidas    || [];
@@ -55,6 +62,40 @@ const copiarLink = async () => {
     // fallback silencioso
   }
 };
+useEffect(() => {
+  const carregarFotosComentarios = async () => {
+    const comentariosSemFoto = comentarios.filter(
+      (c) => c.autorId && !c.autorFoto
+    );
+
+    if (comentariosSemFoto.length === 0) return;
+
+    const novasFotos = {};
+
+    await Promise.all(
+      comentariosSemFoto.map(async (comentario) => {
+        try {
+          const usuarioRef = doc(db, "usuarios", comentario.autorId);
+          const usuarioSnap = await getDoc(usuarioRef);
+
+          if (usuarioSnap.exists()) {
+            novasFotos[comentario.autorId] =
+              usuarioSnap.data().fotoPerfil || "";
+          }
+        } catch (error) {
+          console.error("Erro ao carregar foto do comentário:", error);
+        }
+      })
+    );
+
+    setFotosComentarios((prev) => ({
+      ...prev,
+      ...novasFotos,
+    }));
+  };
+
+  carregarFotosComentarios();
+}, [comentarios]);
 
   return (
     <article className="post-card">
@@ -168,7 +209,11 @@ const copiarLink = async () => {
   comentarios.map((c) => (
     <div key={c.id ?? c.data} className="comment-item">
       <img
-        src={c.autorFoto || imgHomemPeixe}
+src={
+  c.autorFoto ||
+  fotosComentarios[c.autorId] ||
+  imgHomemPeixe
+}
         alt={c.autorNome}
         className="comment-avatar-img comment-avatar-img--clickable"
         onClick={() => c.autorId && onVerPerfil(c.autorId)}
