@@ -1096,7 +1096,11 @@ body.dark-mode .post-tag {
   margin-bottom: 1rem;
 }
 
-.clima-header .material-symbols-outlined,
+.clima-header .material-symbols-outlined{
+  font-size: 1.8rem;
+  color: #fbbf24;
+}
+
 .dica-header .material-symbols-outlined {
   font-size: 1.8rem;
   color: var(--primary-theme);
@@ -1168,8 +1172,8 @@ body.dark-mode .post-tag {
 /* Dark mode */
 body.dark-mode .clima-card,
 body.dark-mode .dica-card {
-  background: #1e1e2a;
-  border-color: #2a2a3a;
+  background: #000;
+  border-color: #000;
 }
 
 body.dark-mode .clima-detalhes {
@@ -1177,7 +1181,22 @@ body.dark-mode .clima-detalhes {
   color: #cbd5e1;
 }
 
-body.dark-mode .btn-proxima-dica {
-  background: #2a2a3a;
-  color: #90caf9;
+body.dark-mode .clima-desc {
+  color: #cbd5e1;
+}
+
+body.dark-mode .dica-texto {
+  color: #cbd5e1;
+}
+
+body.dark-mode .clima-temp, .clima-header h3, .dica-header h3 {
+  color: #cbcbcb;
+}
+
+body.dark-mode .clima-header .material-symbols-outlined {
+  color: #fbbf24;
+}
+
+body.dark-mode .dica-header .material-symbols-outlined {
+  color: #60a5fa; 
 }
