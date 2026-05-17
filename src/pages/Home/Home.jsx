@@ -429,7 +429,10 @@ const Home = () => {
       id:        Date.now(),           // id único para key estável no React
       autorId:   user.uid,
       autorNome: usuarioDados?.nome || user.displayName || "Você",
-      autorFoto: usuarioDados?.fotoPerfil || "",
+      autorFoto:
+        usuarioDados?.fotoPerfil ||
+        user.photoURL ||
+        "",
       texto:     texto.trim(),
       data:      new Date().toLocaleString("pt-BR"),
     };
