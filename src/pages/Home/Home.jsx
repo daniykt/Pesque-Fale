@@ -14,12 +14,10 @@ import imgPesqueiro311    from "../../assets/image/eventos/pesqueiro_311.jpg";
 import imgRecantoPescador from "../../assets/image/eventos/recanto_pescador.jpg";
 import imgHomemPeixe      from "../../assets/image/eventos/400x300imagem-01.jpg";
 
-/* ─────────────────────────────────────────
-   Sub-componente: PostCard
-   Isolado para facilitar manutenção e evitar
-   re-renders desnecessários no feed inteiro.
-───────────────────────────────────────── */
 function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil, onVerPost }) {
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
+
   const [comentAberto,   setComentAberto]   = useState(false);
   const [inputComentario, setInputComentario] = useState("");
   const inputRef = useRef(null);
@@ -47,14 +45,16 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
   };
 
   /* Copia apenas o link direto da publicação */
-  const copiarLink = async () => {
-    const url = `${window.location.origin}/post/${post.autorId}/${post.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      /* fallback silencioso — browser antigo ou sem permissão */
-    }
-  };
+const copiarLink = async () => {
+  const url = `${window.location.origin}/post/${post.autorId}/${post.id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    setLinkCopiado(true);
+    setTimeout(() => setLinkCopiado(false), 2000);
+  } catch {
+    // fallback silencioso
+  }
+};
 
   return (
     <article className="post-card">
@@ -151,14 +151,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
           <span className="action-btn-label">Comentar</span>
         </button>
 
-        <button
-          className="action-btn"
-          onClick={copiarLink}
-          aria-label="Copiar link da publicação"
-        >
-          <span className="material-symbols-outlined">share</span>
-          <span className="action-btn-label">Compartilhar</span>
-        </button>
+<button className="action-btn" onClick={copiarLink}>
+  <span className="material-symbols-outlined">share</span>
+  <span className="action-btn-label">
+    {linkCopiado ? "Link copiado!" : "Compartilhar"}
+  </span>
+</button>
       </div>
 
       {/* ── Área de comentários — expande/recolhe ── */}
