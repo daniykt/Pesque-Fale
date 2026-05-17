@@ -18,7 +18,6 @@ import imgEvento2         from "../../assets/image/eventos/evento2.jpg";
 import imgEvento3         from "../../assets/image/eventos/evento3.jpg";
 import imgPesqueiro311    from "../../assets/image/eventos/pesqueiro_311.jpg";
 import imgRecantoPescador from "../../assets/image/eventos/recanto_pescador.jpg";
-import imgHomemPeixe      from "../../assets/image/eventos/400x300imagem-01.jpg";
 
 function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil, onVerPost }) {
   const [linkCopiado, setLinkCopiado] = useState(false);
@@ -102,12 +101,18 @@ useEffect(() => {
 
       {/* ── Cabeçalho ── */}
       <div className="post-header">
-        <img
-          src={post.autorFoto || imgHomemPeixe}
-          alt={post.autorNome}
-          className="post-author-img post-author-img--clickable"
-          onClick={() => onVerPerfil(post.autorId)}
-        />
+{post.autorFoto ? (
+  <img
+    src={post.autorFoto}
+    alt={post.autorNome}
+    className="post-author-img post-author-img--clickable"
+    onClick={() => onVerPerfil(post.autorId)}
+  />
+) : (
+  <div className="avatar-skeleton">
+    <span className="material-symbols-outlined">person</span>
+  </div>
+)}
         <div className="post-author-info">
           <h3
             className="post-author post-author--link"
@@ -208,16 +213,18 @@ useEffect(() => {
 {comentarios.length > 0 ? (
   comentarios.map((c) => (
     <div key={c.id ?? c.data} className="comment-item">
-      <img
-src={
-  c.autorFoto ||
-  fotosComentarios[c.autorId] ||
-  imgHomemPeixe
-}
-        alt={c.autorNome}
-        className="comment-avatar-img comment-avatar-img--clickable"
-        onClick={() => c.autorId && onVerPerfil(c.autorId)}
-      />
+{c.autorFoto || fotosComentarios[c.autorId] ? (
+  <img
+    src={c.autorFoto || fotosComentarios[c.autorId]}
+    alt={c.autorNome}
+    className="comment-avatar-img comment-avatar-img--clickable"
+    onClick={() => c.autorId && onVerPerfil(c.autorId)}
+  />
+) : (
+  <div className="comment-avatar-skeleton">
+    <span className="material-symbols-outlined">person</span>
+  </div>
+)}
       <div className="comment-content-bubble">
         <span
           className="comment-author-name comment-author-name--clickable"
@@ -236,11 +243,17 @@ src={
           {/* Input para novo comentário */}
           {user && (
             <div className="comment-input">
-              <img
-                src={usuarioDados?.fotoPerfil || imgHomemPeixe}
-                alt="Você"
-                className="comment-avatar"
-              />
+{usuarioDados?.fotoPerfil ? (
+  <img
+    src={usuarioDados.fotoPerfil}
+    alt="Você"
+    className="comment-avatar"
+  />
+) : (
+  <div className="comment-avatar-skeleton">
+    <span className="material-symbols-outlined">person</span>
+  </div>
+)}
               <input
                 ref={inputRef}
                 type="text"
@@ -571,11 +584,17 @@ const Home = () => {
             onKeyDown={(e) => e.key === "Enter" && navigate("/publicar", { state: { from: "/home" } })}
             aria-label="Nova publicação"
           >
-            <img
-              src={usuarioDados?.fotoPerfil || imgHomemPeixe}
-              alt="Você"
-              className="post-author-img"
-            />
+{usuarioDados?.fotoPerfil ? (
+  <img
+    src={usuarioDados.fotoPerfil}
+    alt="Você"
+    className="post-author-img"
+  />
+) : (
+  <div className="avatar-skeleton">
+    <span className="material-symbols-outlined">person</span>
+  </div>
+)}
             <input
               type="text"
               placeholder="O que você deseja publicar hoje?"
