@@ -870,6 +870,16 @@ body.home-with-sidebar .main-content {
 
   .carousel-track { height: 300px; }
   .carousel-card-image { height: 150px; }
+
+    .feed-tabs {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    border-bottom: none;
+    gap: 6px;
+    padding-bottom: 4px;
+    overflow-x: unset;
+    margin-top: 30px;
+  }
 }
 
 @media (max-width: 480px) {
