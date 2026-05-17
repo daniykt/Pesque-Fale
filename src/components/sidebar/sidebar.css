@@ -146,7 +146,7 @@ body { margin: 0; padding: 0; }
 
 .theme-btn:hover {
   background: var(--gray-100);
-  color: var(--primary);
+  color: #062A6c;
 }
 
 .theme-btn .material-symbols-outlined {
