@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./home.css";
@@ -421,28 +421,35 @@ const Home = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (feedLoading) return;
-    if (scrollRestorado.current) return;
+useEffect(() => {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+}, []);
 
-    scrollRestorado.current = true;
+useLayoutEffect(() => {
+  if (feedLoading) return;
+  if (scrollRestorado.current) return;
 
-    const savedScroll = sessionStorage.getItem("home_scroll");
+  scrollRestorado.current = true;
 
-    if (!savedScroll) {
-      setFeedPronto(true);
-      return;
-    }
+  const savedScroll = sessionStorage.getItem("home_scroll");
+  if (!savedScroll) {
+    setFeedPronto(true);
+    return;
+  }
 
-    sessionStorage.removeItem("home_scroll");
+  sessionStorage.removeItem("home_scroll");
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: Number(savedScroll), behavior: "instant" });
-        setFeedPronto(true);
-      });
+  // Garante que o scroll aconteça após qualquer pintura pendente
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: Number(savedScroll),
+      behavior: "instant", // ← força imediato, sem animação
     });
-  }, [feedLoading, feedPosts]);
+    setFeedPronto(true);
+  });
+}, [feedLoading, feedPosts])
 
   /* ── Shadow na sticky bar ao scroll ── */
   useEffect(() => {
