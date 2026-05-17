@@ -1172,8 +1172,8 @@ body.dark-mode .post-tag {
 /* Dark mode */
 body.dark-mode .clima-card,
 body.dark-mode .dica-card {
-  background: #000;
-  border-color: #000;
+  background: #1e1e1e;
+  border-color: #333;
 }
 
 body.dark-mode .clima-detalhes {
@@ -1208,3 +1208,4 @@ body.dark-mode .clima-header .material-symbols-outlined {
 body.dark-mode .dica-header .material-symbols-outlined {
   color: #60a5fa; 
 }
+
