@@ -204,7 +204,7 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
 </button>
 
         <button
-          className={`action-btn ${comentAberto ? "action-btn-ativo" : ""}`}
+          className={`action-comentario-btn ${comentAberto ? "action-btn-comentario-ativo" : ""}`}
           onClick={toggleComentarios}
           aria-label="Comentar"
           aria-expanded={comentAberto}
@@ -212,12 +212,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
           <span className="material-symbols-outlined">
             {comentAberto ? "chat_bubble" : "chat_bubble_outline"}
           </span>
-          <span className="action-btn-label">Comentar</span>
+          <span className="action-btn-comentario-label">Comentar</span>
         </button>
 
-        <button className="action-btn" onClick={copiarLink}>
+        <button className="action-compartilhar-btn" onClick={copiarLink}>
           <span className="material-symbols-outlined">share</span>
-          <span className="action-btn-label">
+          <span className="action-compartilhar-btn-label">
             {linkCopiado ? "Link copiado!" : "Compartilhar"}
           </span>
         </button>

@@ -1166,6 +1166,121 @@ body.dark-mode .comment-empty {
   background-color: #fff0f3;
 }
 
+/* Botão de comentário tem estilo parecido mas cor diferente, para não conflitar com curtida */
+
+.action-comentario-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #003366;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.action-comentario-btn:hover {
+  background-color: #f0f2f5;
+}
+
+.action-btn-comentario-ativo {
+  color: #003366 !important;
+  background-color: rgba(0, 51, 102, 0.08);
+}
+
+.action-btn-comentario-ativo .material-symbols-outlined {
+  color: #003366 !important;
+}
+
+body.dark-mode .action-btn-comentario-ativo {
+  color: #90caf9 !important;
+  background-color: rgba(144, 202, 249, 0.15);
+}
+
+body.dark-mode .action-btn-comentario-ativo .material-symbols-outlined {
+  color: #90caf9 !important;
+}
+
+body.dark-mode .action-comentario-btn:hover {
+  background-color: rgba(144, 202, 249, 0.25);
+  color: #90caf9;
+}
+
+body.dark-mode .action-comentario-btn.action-btn-comentario-ativo {
+  color: #90caf9 !important;
+}
+
+body.dark-mode .action-comentario-btn:hover {
+  background-color: rgba(144, 202, 249, 0.25);
+  color: #90caf9;
+}
+
+body.dark-mode .action-comentario-btn {
+  color: white!important;
+}
+
+/*botão do compartilhamento tem estilo parecido com comentário, mas cor diferente para não conflitar com curtida e comentário */
+
+.action-compartilhar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #003366;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+
+.action-compartilhar-btn:hover {
+  background-color: #f0f2f5;
+}
+
+.action-btn-compartilhar-ativo {
+  color: #003366 !important;
+  background-color: rgba(0, 51, 102, 0.08);
+}
+
+.action-btn-compartilhar-ativo .material-symbols-outlined {
+  color: #003366 !important;
+}
+
+body.dark-mode .action-btn-compartilhar-ativo {
+  color: #90caf9 !important;
+  background-color: rgba(144, 202, 249, 0.15);
+}
+
+body.dark-mode .action-btn-compartilhar-ativo .material-symbols-outlined {
+  color: #90caf9 !important;
+}
+
+body.dark-mode .action-compartilhar-btn:hover {
+  background-color: rgba(144, 202, 249, 0.25);
+  color: #90caf9;
+}
+
+body.dark-mode .action-compartilhar-btn.action-compartilhar-btn-label {
+  color: #90caf9 !important;
+}
+
+body.dark-mode .action-compartilhar-btn:hover {
+  background-color: rgba(144, 202, 249, 0.25);
+  color: #90caf9;
+}
+
+body.dark-mode .action-compartilhar-btn {
+  color: white;
+}
+
 /* Loading do feed */
 .feed-loading {
   display: flex;
