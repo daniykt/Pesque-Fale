@@ -6,6 +6,7 @@ import "./home.css";
 import { db } from "../../firebase";
 import {
   doc,
+  collection,
   onSnapshot,
   updateDoc,
   runTransaction,
@@ -387,13 +388,12 @@ const Home = () => {
     return unsub;
   }, []);
 
-  /* ── Feed em tempo real (usuário + quem ele segue) ── */
+  /* ── Feed em tempo real (TODOS os usuários da plataforma) ── */
   useEffect(() => {
     if (!user) return;
 
     const secondaryUnsubs = {};
     const postsMap        = {};
-    let   mainUnsub;
 
     const recalcFeed = () => {
       const todos = Object.values(postsMap).flat();
@@ -402,15 +402,16 @@ const Home = () => {
       setFeedLoading(false);
     };
 
-    const subscribeToUser = (uid) => {
+    const subscribeToUser = (uid, data) => {
+      // Se já está inscrito, só atualiza os posts com os dados recebidos
       if (secondaryUnsubs[uid]) return;
       secondaryUnsubs[uid] = onSnapshot(doc(db, "usuarios", uid), (snap) => {
         if (snap.exists()) {
-          const data = snap.data();
-          postsMap[uid] = (data.posts || []).map((p) => ({
+          const d = snap.data();
+          postsMap[uid] = (d.posts || []).map((p) => ({
             autorId:   uid,
-            autorNome: data.nome || data.displayName || "Pescador",
-            autorFoto: data.fotoPerfil || "",
+            autorNome: d.nome || d.displayName || "Pescador",
+            autorFoto: d.fotoPerfil || "",
             ...p,
           }));
         } else {
@@ -420,28 +421,22 @@ const Home = () => {
       });
     };
 
-    const unsubscribeFromUser = (uid) => {
-      secondaryUnsubs[uid]?.();
-      delete secondaryUnsubs[uid];
-      delete postsMap[uid];
-    };
-
-    mainUnsub = onSnapshot(doc(db, "usuarios", user.uid), (snap) => {
+    // Assina o próprio usuário para manter usuarioDados atualizado
+    const mainUnsub = onSnapshot(doc(db, "usuarios", user.uid), (snap) => {
       if (!snap.exists()) return;
-      const data    = snap.data();
-      setUsuarioDados(data);
+      setUsuarioDados(snap.data());
+    });
 
-      const seguindo = data.seguindo || [];
-      const uidsAlvo = [user.uid, ...seguindo];
-
-      Object.keys(secondaryUnsubs).forEach((uid) => {
-        if (!uidsAlvo.includes(uid)) unsubscribeFromUser(uid);
+    // Assina a coleção inteira de usuários para capturar todos os posts
+    const colUnsub = onSnapshot(collection(db, "usuarios"), (snapshot) => {
+      snapshot.docs.forEach((docSnap) => {
+        subscribeToUser(docSnap.id, docSnap.data());
       });
-      uidsAlvo.forEach(subscribeToUser);
     });
 
     return () => {
       mainUnsub?.();
+      colUnsub?.();
       Object.values(secondaryUnsubs).forEach((fn) => fn());
     };
   }, [user]);
