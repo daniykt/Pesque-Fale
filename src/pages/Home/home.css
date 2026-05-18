@@ -1444,3 +1444,50 @@ body.dark-mode .skeleton-action {
   background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
   background-size: 400px 100%;
 }
+
+/* Scroll dos comentários */
+.post-comments-area {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Scroll bonito */
+.post-comments-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.post-comments-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+}
+
+/* Aviso */
+.comment-disabled-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 12px;
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  background: rgba(255, 191, 0, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.18);
+
+  font-size: 13px;
+}
+
+/* Input desativado */
+.comment-input-disabled {
+  opacity: 0.7;
+}
+
+.comment-input-disabled input {
+  cursor: not-allowed;
+}
+
+.comment-input-disabled button {
+  cursor: not-allowed;
+}

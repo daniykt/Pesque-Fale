@@ -254,37 +254,39 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
             <p className="comment-empty">Nenhum comentário ainda. Seja o primeiro!</p>
           )}
 
-          {user && (
-            <div className="comment-input">
-              {usuarioDados?.fotoPerfil ? (
-                <img src={usuarioDados.fotoPerfil} alt="Você" className="comment-avatar" />
-              ) : (
-                <div className="comment-avatar-skeleton">
-                  <span className="material-symbols-outlined">person</span>
-                </div>
-              )}
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Escreva um comentário..."
-                value={inputComentario}
-                onChange={(e) => setInputComentario(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); enviarComentario(); }
-                }}
-                maxLength={200}
-                aria-label="Campo de comentário"
-              />
-              <button
-                className="comment-btn"
-                onClick={enviarComentario}
-                disabled={!inputComentario.trim()}
-                aria-label="Enviar comentário"
-              >
-                <span className="material-symbols-outlined">send</span>
-              </button>
-            </div>
-          )}
+{user && (
+  <div className="comment-input-wrapper-disabled">
+
+    <div className="comment-disabled-message">
+      <span className="material-symbols-outlined">info</span>
+      Comentários temporariamente indisponíveis nesta versão na página Home.
+    </div>
+
+    <div className="comment-input comment-input-disabled">
+      {usuarioDados?.fotoPerfil ? (
+        <img src={usuarioDados.fotoPerfil} alt="Você" className="comment-avatar" />
+      ) : (
+        <div className="comment-avatar-skeleton">
+          <span className="material-symbols-outlined">person</span>
+        </div>
+      )}
+
+      <input
+        type="text"
+        placeholder="Comentários desativados"
+        disabled
+      />
+
+      <button
+        className="comment-btn"
+        disabled
+      >
+        <span className="material-symbols-outlined">send</span>
+      </button>
+    </div>
+
+  </div>
+)}
         </div>
       )}
     </article>
