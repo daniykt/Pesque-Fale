@@ -541,7 +541,7 @@ body.home-with-sidebar .main-content {
 }
 
 .comment-btn {
-  background: var(--primary);
+  background: var(--primary-theme);
   border: none;
   color: white;
   padding: 0.5rem;
