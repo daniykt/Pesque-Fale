@@ -408,6 +408,7 @@ const handleComentar = async () => {
             {/* COMENTÁRIOS */}
             <div className="vp-comentarios">
 <p className="vp-comentarios-aviso">
+   <span className="material-symbols-outlined">info</span>
   Alguns posts podem parar de aceitar novos comentários devido ao limite de armazenamento do Firebase.
 </p>
 
