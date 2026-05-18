@@ -189,17 +189,19 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
 
       {/* ── Botões de ação ── */}
       <div className="post-actions-row">
-        <button
-          className={`action-btn ${jaCurtiu ? "action-btn-ativo" : ""}`}
-          onClick={() => onCurtir(post)}
-          aria-label={jaCurtiu ? "Descurtir" : "Curtir"}
-          aria-pressed={jaCurtiu}
-        >
-          <span className="material-symbols-outlined">
-            {jaCurtiu ? "favorite" : "favorite_border"}
-          </span>
-          <span className="action-btn-label">{jaCurtiu ? "Curtido" : "Curtir"}</span>
-        </button>
+<button
+  className={`action-btn ${jaCurtiu ? "action-btn-ativo" : ""}`}
+  onClick={() => onCurtir(post)}
+  aria-label={jaCurtiu ? "Descurtir" : "Curtir"}
+  aria-pressed={jaCurtiu}
+>
+  <span
+    className={`material-symbols-outlined like-icon ${jaCurtiu ? "like-icon--ativo" : ""}`}
+  >
+    {jaCurtiu ? "favorite" : "favorite_border"}
+  </span>
+  <span className="action-btn-label">{jaCurtiu ? "Curtido" : "Curtir"}</span>
+</button>
 
         <button
           className={`action-btn ${comentAberto ? "action-btn-ativo" : ""}`}

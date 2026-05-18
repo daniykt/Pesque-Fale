@@ -459,8 +459,10 @@ body.home-with-sidebar .main-content {
 }
 
 .action-btn .material-symbols-outlined {
-  color: #003366;
+  color: inherit;
   font-size: 20px;
+  transition: color 0.2s ease, transform 0.2s ease, font-variation-settings 0.2s ease;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .post-comments-area {
@@ -1151,6 +1153,17 @@ body.dark-mode .comment-empty {
 
 .action-btn-ativo {
   color: #e11d48 !important;
+}
+
+.action-btn-ativo .material-symbols-outlined,
+.like-icon--ativo {
+  color: #e11d48 !important;
+  font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+  transform: scale(1.08);
+}
+
+.action-btn-ativo:hover {
+  background-color: #fff0f3;
 }
 
 /* Loading do feed */
