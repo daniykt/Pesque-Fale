@@ -54,6 +54,18 @@ function PostCardSkeleton() {
   );
 }
 
+/* Hook simples para detectar mobile (≤ 480px) */
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 480);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 480px)");
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
 /* ─────────────────────────────────────────
    PostCard real
 ───────────────────────────────────────── */
@@ -62,7 +74,8 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
   const [comentAberto,     setComentAberto]     = useState(false);
   const [inputComentario,  setInputComentario]  = useState("");
   const [fotosComentarios, setFotosComentarios] = useState({});
-  const inputRef = useRef(null);
+  const inputRef  = useRef(null);
+  const isMobile  = useIsMobile();
 
   const curtidas    = post.curtidas    || [];
   const comentarios = post.comentarios || [];
@@ -190,7 +203,6 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
       {/* ── Botões de ação ── */}
       <div className="post-actions-row">
 
-        {/* Curtir — ícone + contador */}
         <button
           className={`action-btn ${jaCurtiu ? "action-btn-ativo" : ""}`}
           onClick={() => onCurtir(post)}
@@ -201,11 +213,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
             {jaCurtiu ? "favorite" : "favorite_border"}
           </span>
           <span className="action-btn-label">
-            {curtidas.length > 0 ? curtidas.length : "Curtir"}
+            {isMobile
+              ? (curtidas.length > 0 ? curtidas.length : "")
+              : (jaCurtiu ? "Curtido" : "Curtir")}
           </span>
         </button>
 
-        {/* Comentar — ícone + contador */}
         <button
           className={`action-comentario-btn ${comentAberto ? "action-btn-comentario-ativo" : ""}`}
           onClick={toggleComentarios}
@@ -216,21 +229,23 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
             {comentAberto ? "chat_bubble" : "chat_bubble_outline"}
           </span>
           <span className="action-btn-comentario-label">
-            {comentarios.length > 0 ? comentarios.length : "Comentar"}
+            {isMobile
+              ? (comentarios.length > 0 ? comentarios.length : "")
+              : "Comentar"}
           </span>
         </button>
 
-        {/* Compartilhar — ícone + feedback de texto curto */}
         <button
           className={`action-compartilhar-btn ${linkCopiado ? "action-btn-compartilhar-ativo" : ""}`}
           onClick={copiarLink}
-          aria-label="Copiar link"
         >
           <span className="material-symbols-outlined">
-            {linkCopiado ? "check" : "link"}
+            {linkCopiado ? "check" : "share"}
           </span>
           <span className="action-compartilhar-btn-label">
-            {linkCopiado ? "Copiado!" : "Copiar"}
+            {isMobile
+              ? (linkCopiado ? "Copiado!" : "Copiar")
+              : (linkCopiado ? "Link copiado!" : "Compartilhar")}
           </span>
         </button>
 

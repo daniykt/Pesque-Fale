@@ -1040,12 +1040,20 @@ body.home-with-sidebar .main-content {
     display: block;
     width: auto;
     overflow: visible;
+    /* Se vazio (sem curtidas/comentários), não ocupa espaço */
+    min-width: 0;
+  }
+
+  /* Quando vazio, remove o gap */
+  .action-btn-label:empty,
+  .action-btn-comentario-label:empty {
+    display: none;
   }
 
   .action-btn .material-symbols-outlined,
   .action-comentario-btn .material-symbols-outlined,
   .action-compartilhar-btn .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 22px;
     flex-shrink: 0;
   }
 }
