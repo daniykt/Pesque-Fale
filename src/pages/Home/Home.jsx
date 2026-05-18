@@ -189,20 +189,23 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
 
       {/* ── Botões de ação ── */}
       <div className="post-actions-row">
-<button
-  className={`action-btn ${jaCurtiu ? "action-btn-ativo" : ""}`}
-  onClick={() => onCurtir(post)}
-  aria-label={jaCurtiu ? "Descurtir" : "Curtir"}
-  aria-pressed={jaCurtiu}
->
-  <span
-    className={`material-symbols-outlined like-icon ${jaCurtiu ? "like-icon--ativo" : ""}`}
-  >
-    {jaCurtiu ? "favorite" : "favorite_border"}
-  </span>
-  <span className="action-btn-label">{jaCurtiu ? "Curtido" : "Curtir"}</span>
-</button>
 
+        {/* Curtir — ícone + contador */}
+        <button
+          className={`action-btn ${jaCurtiu ? "action-btn-ativo" : ""}`}
+          onClick={() => onCurtir(post)}
+          aria-label={jaCurtiu ? "Descurtir" : "Curtir"}
+          aria-pressed={jaCurtiu}
+        >
+          <span className={`material-symbols-outlined like-icon ${jaCurtiu ? "like-icon--ativo" : ""}`}>
+            {jaCurtiu ? "favorite" : "favorite_border"}
+          </span>
+          <span className="action-btn-label">
+            {curtidas.length > 0 ? curtidas.length : "Curtir"}
+          </span>
+        </button>
+
+        {/* Comentar — ícone + contador */}
         <button
           className={`action-comentario-btn ${comentAberto ? "action-btn-comentario-ativo" : ""}`}
           onClick={toggleComentarios}
@@ -212,15 +215,25 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
           <span className="material-symbols-outlined">
             {comentAberto ? "chat_bubble" : "chat_bubble_outline"}
           </span>
-          <span className="action-btn-comentario-label">Comentar</span>
-        </button>
-
-        <button className="action-compartilhar-btn" onClick={copiarLink}>
-          <span className="material-symbols-outlined">share</span>
-          <span className="action-compartilhar-btn-label">
-            {linkCopiado ? "Link copiado!" : "Compartilhar"}
+          <span className="action-btn-comentario-label">
+            {comentarios.length > 0 ? comentarios.length : "Comentar"}
           </span>
         </button>
+
+        {/* Compartilhar — ícone + feedback de texto curto */}
+        <button
+          className={`action-compartilhar-btn ${linkCopiado ? "action-btn-compartilhar-ativo" : ""}`}
+          onClick={copiarLink}
+          aria-label="Copiar link"
+        >
+          <span className="material-symbols-outlined">
+            {linkCopiado ? "check" : "link"}
+          </span>
+          <span className="action-compartilhar-btn-label">
+            {linkCopiado ? "Copiado!" : "Copiar"}
+          </span>
+        </button>
+
       </div>
 
       {/* ── Área de comentários ── */}
