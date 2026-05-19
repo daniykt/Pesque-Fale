@@ -165,7 +165,13 @@ export default function OnboardingTour({ onFinalizar }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [stepIndex, setStepIndex] = useState(() => {
     const saved = localStorage.getItem('tourCurrentStep');
-    return saved ? parseInt(saved, 10) : 0;
+    if (saved) return parseInt(saved, 10);
+    const startStep = localStorage.getItem('tourStartStep');
+    if (startStep) {
+      localStorage.removeItem('tourStartStep');
+      return parseInt(startStep, 10);
+    }
+    return 0;
   });
   const [rect, setRect] = useState(null);
   const [tooltipStyle, setTooltipStyle] = useState({});
@@ -190,7 +196,7 @@ export default function OnboardingTour({ onFinalizar }) {
     localStorage.setItem('tourCurrentStep', String(stepIndex));
   }, [stepIndex]);
 
-  // Navega para /perfil se necessário (menu-perfil)
+  // Navega para /perfil se necessário (menu-perfil no mobile)
   useEffect(() => {
     if (isMobile && step.id === 'menu-perfil' && location.pathname !== '/perfil') {
       setIsWaitingForTarget(true);

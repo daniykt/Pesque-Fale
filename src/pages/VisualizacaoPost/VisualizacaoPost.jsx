@@ -92,6 +92,7 @@ const handleCurtir = async () => {
       await addDoc(collection(db, "notificacoes"), {
         tipo: "curtida",
         de: user.displayName || "Pescador",
+        deId: user.uid,
         para: userId,
         postId: postId,
         createdAt: serverTimestamp(),
@@ -152,23 +153,21 @@ const handleComentar = async () => {
       }
     }
 
-  } catch (error) {
-    console.error("Erro ao comentar:", error);
-
-    // 🔥 LIMITE DO FIREBASE
-    if (
-      error.code === "invalid-argument" ||
-      error.message.includes("maximum allowed size")
-    ) {
-      mostrarFeedback(
-        "Este post atingiu o limite de comentários do Firebase.",
-        "erro"
-      );
-    } else {
-      mostrarFeedback(
-        "Não foi possível enviar o comentário. Tente novamente.",
-        "erro"
-      );
+  // 🔥 NOTIFICAÇÃO
+  if (user.uid !== userId) {
+    try {
+      await addDoc(collection(db, "notificacoes"), {
+        tipo: "comentario",
+        de: user.displayName || "Pescador",
+        deId: user.uid,
+        para: userId,
+        texto: textoComentario,
+        postId: postId,
+        createdAt: serverTimestamp(),
+        lida: false,
+      });
+    } catch (error) {
+      console.error("Erro ao notificar comentário:", error);
     }
   } finally {
     setEnviando(false);
