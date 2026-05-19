@@ -76,7 +76,7 @@ export default function Chat() {
         const q = query(
           collection(db, "chats", cid, "mensagens"),
           orderBy("createdAt", "desc"),
-          limit(1)
+          limit(1),
         );
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -91,11 +91,11 @@ export default function Chat() {
 
           const qNaoLidas = query(
             collection(db, "chats", cid, "mensagens"),
-            where("userId", "!=", user.uid)
+            where("userId", "!=", user.uid),
           );
           const snapNaoLidas = await getDocs(qNaoLidas);
           const naoLidas = snapNaoLidas.docs.filter(
-            (d) => d.data().status !== "visto"
+            (d) => d.data().status !== "visto",
           ).length;
 
           const userDoc = await getDoc(doc(db, "usuarios", id));
@@ -167,7 +167,7 @@ export default function Chat() {
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
           setOutroUsuario({
-            id: outroId,               // ✅ agora tem o id
+            id: outroId, // ✅ agora tem o id
             nome: outro?.nome || "Usuário",
             foto: outro?.fotoPerfil || "",
           });
@@ -182,7 +182,7 @@ export default function Chat() {
     // Permissão: liberado se A segue B ou B segue A
     const verificarPermissao = async () => {
       try {
-        const meuDoc   = await getDoc(doc(db, "usuarios", user.uid));
+        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
 
         if (!meuDoc.exists() || !outroDoc.exists()) {
@@ -191,11 +191,11 @@ export default function Chat() {
           return;
         }
 
-        const meusDados   = meuDoc.data();
+        const meusDados = meuDoc.data();
         const outrosDados = outroDoc.data();
 
-        const euSigoEle  = (meusDados.seguindo   || []).includes(outroId);
-        const eleSegueEu = (outrosDados.seguindo  || []).includes(user.uid);
+        const euSigoEle = (meusDados.seguindo || []).includes(outroId);
+        const eleSegueEu = (outrosDados.seguindo || []).includes(user.uid);
 
         setPermitido(euSigoEle || eleSegueEu);
         if (!euSigoEle && !eleSegueEu) setLoadingMessages(false);
@@ -219,7 +219,7 @@ export default function Chat() {
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -243,7 +243,7 @@ export default function Chat() {
             } catch (e) {
               console.log("Erro ao marcar como visto:", e);
             }
-          })
+          }),
         );
       }
     });
@@ -372,12 +372,15 @@ export default function Chat() {
     if (diff < 3600) return `${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
-    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    return data.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    });
   };
 
   const conversasFiltradas = conversas
     ? conversas.filter((c) =>
-        c.nome.toLowerCase().includes(busca.toLowerCase())
+        c.nome.toLowerCase().includes(busca.toLowerCase()),
       )
     : [];
 
@@ -462,11 +465,13 @@ export default function Chat() {
                   <div className="conversa-vazia">
                     {busca ? (
                       <>
-                        😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"
+                        😕 Nenhuma conversa encontrada para "
+                        <strong>{busca}</strong>"
                       </>
                     ) : (
                       <>
-                        🎣 Você ainda não segue ninguém.<br />
+                        🎣 Você ainda não segue ninguém.
+                        <br />
                         Descubra pescadores na pesquisa!
                       </>
                     )}
@@ -476,48 +481,41 @@ export default function Chat() {
                     <div
                       key={c.chatId}
                       className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
-                    >
+                      onClick={() => navigate(`/chat/${c.chatId}`)}
+                    >                          
+
                       {/* CLIQUE NO CONTAINER PRINCIPAL → ABRE O CHAT */}
                       <div
                         className="conversation-item__chat-area"
                         onClick={() => navigate(`/chat/${c.chatId}`)}
-                        style={{ display: 'flex', flex: 1, alignItems: 'center', gap: '12px' }}
+                        style={{
+                          display: "flex",
+                          flex: 1,
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
                       >
                         {/* AVATAR: navega para perfil com stopPropagation */}
-                        <div
-                          className="conv-avatar"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/perfil/${c.outroId}`);
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {c.foto ? (
-                            <img src={c.foto} alt={c.nome} />
-                          ) : (
-                            <div className="fallback">
-                              {c.nome.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
+                      <div className="conv-avatar">
+                        {c.foto ? (
+                          <img src={c.foto} alt={c.nome} />
+                        ) : (
+                          <div className="fallback">
+                            {c.nome.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
 
                         <div className="conv-info">
                           <div className="conv-top">
                             {/* NOME: navega para perfil com stopPropagation */}
-                            <span
-                              className="conv-name"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/perfil/${c.outroId}`);
-                              }}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {c.nome}
-                            </span>
-                            <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
+<span className="conv-name">{c.nome}</span>
+<span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
                           </div>
                           <div className="conv-bottom">
-                            <span className="conv-preview">{c.ultimaMensagem}</span>
+                            <span className="conv-preview">
+                              {c.ultimaMensagem}
+                            </span>
                             {c.naoLidas > 0 && (
                               <span className="conv-badge">{c.naoLidas}</span>
                             )}
@@ -544,7 +542,7 @@ export default function Chat() {
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`skeleton-message ${i % 2 === 0 ? 'skeleton--mine' : 'skeleton--theirs'}`}
+                    className={`skeleton-message ${i % 2 === 0 ? "skeleton--mine" : "skeleton--theirs"}`}
                   >
                     <div className="skeleton-avatar" />
                     <div className="skeleton-bubble">
@@ -580,7 +578,9 @@ export default function Chat() {
                       onClick={() => navigate("/chat")}
                       title="Voltar"
                     >
-                      <span className="material-symbols-outlined">arrow_back</span>
+                      <span className="material-symbols-outlined">
+                        arrow_back
+                      </span>
                     </button>
                   )}
                   <div className="chat-header-left" key={chatId}>
@@ -588,7 +588,7 @@ export default function Chat() {
                     <div
                       className="chat-header-avatar"
                       onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                     >
                       {outroUsuario?.foto ? (
                         <img src={outroUsuario.foto} alt={outroUsuario.nome} />
@@ -602,7 +602,7 @@ export default function Chat() {
                       {/* NOME CLICÁVEL */}
                       <h3
                         onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
                         {outroUsuario?.nome || "Pescador"}
                       </h3>
@@ -621,10 +621,14 @@ export default function Chat() {
                       <span className="material-symbols-outlined">call</span>
                     </button>
                     <button className="icon-btn" title="Vídeo">
-                      <span className="material-symbols-outlined">videocam</span>
+                      <span className="material-symbols-outlined">
+                        videocam
+                      </span>
                     </button>
                     <button className="icon-btn" title="Mais opções">
-                      <span className="material-symbols-outlined">more_vert</span>
+                      <span className="material-symbols-outlined">
+                        more_vert
+                      </span>
                     </button>
                   </div>
                 </header>
@@ -663,7 +667,9 @@ export default function Chat() {
                     onClick={scrollToBottom}
                     title="Rolar para baixo"
                   >
-                    <span className="material-symbols-outlined">arrow_downward</span>
+                    <span className="material-symbols-outlined">
+                      arrow_downward
+                    </span>
                   </button>
                 )}
 
@@ -681,7 +687,9 @@ export default function Chat() {
                         }
                       }}
                       placeholder="Digite uma mensagem..."
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && !e.shiftKey && enviarMensagem()
+                      }
                       maxLength={500}
                     />
                     <button className="btn-attach" title="Emoji">
