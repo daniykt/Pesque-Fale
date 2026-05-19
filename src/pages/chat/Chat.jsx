@@ -112,6 +112,7 @@ export default function Chat() {
               ultimaMensagem: ultimaMsg,
               ultimaData: ultimaData,
               naoLidas,
+              outroId: id, // ✅ guarda o ID do outro usuário para navegação
             };
 
             return [nova, ...outras].sort((a, b) => {
@@ -145,7 +146,7 @@ export default function Chat() {
   }, [chatId]);
 
   // =========================
-  // 🔒 Permissão + dados do outro usuário
+  // 🔒 Permissão + dados do outro usuário (inclui ID)
   // Chat liberado se A segue B ou B segue A
   // =========================
   useEffect(() => {
@@ -159,13 +160,14 @@ export default function Chat() {
     const ids = chatId.split("_");
     const outroId = ids.find((id) => id !== user.uid);
 
-    // Carrega dados do outro usuário (one-shot)
+    // Carrega dados do outro usuário (one-shot) – INCLUI O ID
     const carregarOutroUsuario = async () => {
       try {
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
           setOutroUsuario({
+            id: outroId,               // ✅ agora tem o id
             nome: outro?.nome || "Usuário",
             foto: outro?.fotoPerfil || "",
           });
@@ -178,7 +180,6 @@ export default function Chat() {
     carregarOutroUsuario();
 
     // Permissão: liberado se A segue B ou B segue A
-    // Sem chat_permissions — qualquer relacionamento de seguir libera o chat
     const verificarPermissao = async () => {
       try {
         const meuDoc   = await getDoc(doc(db, "usuarios", user.uid));
@@ -227,7 +228,7 @@ export default function Chat() {
         ...doc.data(),
       }));
       setMensagens(msgs);
-      setLoadingMessages(false); // desliga skeleton
+      setLoadingMessages(false);
 
       const mensagensParaAtualizar = snapshot.docs.filter((d) => {
         const m = d.data();
@@ -475,27 +476,52 @@ export default function Chat() {
                     <div
                       key={c.chatId}
                       className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
-                      onClick={() => navigate(`/chat/${c.chatId}`)}
                     >
-                      <div className="conv-avatar">
-                        {c.foto ? (
-                          <img src={c.foto} alt={c.nome} />
-                        ) : (
-                          <div className="fallback">
-                            {c.nome.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div className="conv-info">
-                        <div className="conv-top">
-                          <span className="conv-name">{c.nome}</span>
-                          <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
-                        </div>
-                        <div className="conv-bottom">
-                          <span className="conv-preview">{c.ultimaMensagem}</span>
-                          {c.naoLidas > 0 && (
-                            <span className="conv-badge">{c.naoLidas}</span>
+                      {/* CLIQUE NO CONTAINER PRINCIPAL → ABRE O CHAT */}
+                      <div
+                        className="conversation-item__chat-area"
+                        onClick={() => navigate(`/chat/${c.chatId}`)}
+                        style={{ display: 'flex', flex: 1, alignItems: 'center', gap: '12px' }}
+                      >
+                        {/* AVATAR: navega para perfil com stopPropagation */}
+                        <div
+                          className="conv-avatar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/perfil/${c.outroId}`);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {c.foto ? (
+                            <img src={c.foto} alt={c.nome} />
+                          ) : (
+                            <div className="fallback">
+                              {c.nome.charAt(0).toUpperCase()}
+                            </div>
                           )}
+                        </div>
+
+                        <div className="conv-info">
+                          <div className="conv-top">
+                            {/* NOME: navega para perfil com stopPropagation */}
+                            <span
+                              className="conv-name"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/perfil/${c.outroId}`);
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              {c.nome}
+                            </span>
+                            <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
+                          </div>
+                          <div className="conv-bottom">
+                            <span className="conv-preview">{c.ultimaMensagem}</span>
+                            {c.naoLidas > 0 && (
+                              <span className="conv-badge">{c.naoLidas}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -514,7 +540,6 @@ export default function Chat() {
                 <span>Escolha um pescador para começar a conversar</span>
               </div>
             ) : permitido === null || loadingMessages ? (
-              // 🔄 Skeleton shimmer enquanto carrega
               <div className="chat-messages chat-messages--loading">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div
@@ -558,9 +583,13 @@ export default function Chat() {
                       <span className="material-symbols-outlined">arrow_back</span>
                     </button>
                   )}
-                   <div className="chat-header-left" key={chatId}>
-                  <div className="chat-header-left">
-                    <div className="chat-header-avatar">
+                  <div className="chat-header-left" key={chatId}>
+                    {/* AVATAR CLICÁVEL */}
+                    <div
+                      className="chat-header-avatar"
+                      onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       {outroUsuario?.foto ? (
                         <img src={outroUsuario.foto} alt={outroUsuario.nome} />
                       ) : (
@@ -570,7 +599,13 @@ export default function Chat() {
                       )}
                     </div>
                     <div className="chat-header-info">
-                      <h3>{outroUsuario?.nome || "Pescador"}</h3>
+                      {/* NOME CLICÁVEL */}
+                      <h3
+                        onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {outroUsuario?.nome || "Pescador"}
+                      </h3>
                       {digitando ? (
                         <span className="digitando">digitando...</span>
                       ) : (
@@ -580,7 +615,6 @@ export default function Chat() {
                         </span>
                       )}
                     </div>
-                  </div>
                   </div>
                   <div className="chat-header-actions">
                     <button className="icon-btn" title="Ligar">
