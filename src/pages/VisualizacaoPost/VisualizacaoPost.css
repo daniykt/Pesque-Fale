@@ -693,3 +693,23 @@ body.dark-mode .vp-btn-curtido:hover {
     padding-right: 10vw;
   }
 }
+
+.vp-comentarios-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 12px;
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  background: rgba(255, 191, 0, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.18);
+
+  font-size: 13px;
+}
+
+body.dark-mode .vp-comentarios-aviso {
+  background: rgba(255, 191, 0, 0.08);
+}

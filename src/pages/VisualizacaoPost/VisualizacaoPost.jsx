@@ -104,7 +104,7 @@ const handleCurtir = async () => {
   }
 };
 
-  const handleComentar = async () => {
+const handleComentar = async () => {
   if (!user || !comentario.trim() || !post) return;
 
   setEnviando(true);
@@ -120,21 +120,38 @@ const handleCurtir = async () => {
     data: new Date().toLocaleString(),
   };
 
-  const postsAtuais = usuarioPerfil.posts || [];
+  try {
+    const postsAtuais = usuarioPerfil.posts || [];
 
-  const postsAtualizados = postsAtuais.map((p) => {
-    if (String(p.id) !== String(postId)) return p;
+    const postsAtualizados = postsAtuais.map((p) => {
+      if (String(p.id) !== String(postId)) return p;
 
-    return {
-      ...p,
-      comentarios: [...(p.comentarios || []), novoComentario],
-    };
-  });
+      return {
+        ...p,
+        comentarios: [...(p.comentarios || []), novoComentario],
+      };
+    });
 
-  await atualizarPosts(postsAtualizados);
+    await atualizarPosts(postsAtualizados);
 
-  setComentario("");
-  setEnviando(false);
+    setComentario("");
+
+    // 🔥 NOTIFICAÇÃO
+    if (user.uid !== userId) {
+      try {
+        await addDoc(collection(db, "notificacoes"), {
+          tipo: "comentario",
+          de: user.displayName || "Pescador",
+          para: userId,
+          texto: textoComentario,
+          postId: postId,
+          createdAt: serverTimestamp(),
+          lida: false,
+        });
+      } catch (error) {
+        console.error("Erro ao notificar comentário:", error);
+      }
+    }
 
   // 🔥 NOTIFICAÇÃO
   if (user.uid !== userId) {
@@ -152,6 +169,8 @@ const handleCurtir = async () => {
     } catch (error) {
       console.error("Erro ao notificar comentário:", error);
     }
+  } finally {
+    setEnviando(false);
   }
 };
 
@@ -387,9 +406,10 @@ const handleCurtir = async () => {
 
             {/* COMENTÁRIOS */}
             <div className="vp-comentarios">
-              <h3 className="vp-comentarios-titulo">
-                Comentários ({post.comentarios?.length || 0})
-              </h3>
+<p className="vp-comentarios-aviso">
+   <span className="material-symbols-outlined">info</span>
+  Alguns posts podem parar de aceitar novos comentários devido ao limite de armazenamento do Firebase.
+</p>
 
               {post.comentarios?.length > 0 ? (
                 <div className="vp-comentarios-lista">

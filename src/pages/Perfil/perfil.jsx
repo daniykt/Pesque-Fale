@@ -244,9 +244,11 @@ export default function Perfil() {
       };
       salvarPosts([novoPost, ...posts]);
     };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    salvarPosts([novoPost, ...posts]);
   };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+};
 
   if (carregando) {
     return (
