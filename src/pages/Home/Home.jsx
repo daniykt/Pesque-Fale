@@ -21,6 +21,37 @@ import imgPesqueiro311    from "../../assets/image/eventos/pesqueiro_311.jpg";
 import imgRecantoPescador from "../../assets/image/eventos/recanto_pescador.jpg";
 
 
+/* ─────────────────────────────────────────
+   Utilitário: extrai até 2 iniciais do nome
+   Ex: "João Pedro" → "JP" | "Danilo" → "D"
+───────────────────────────────────────── */
+function gerarIniciais(nome) {
+  if (!nome) return "?";
+  return nome
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
+}
+
+function AvatarInicial({ nome, size = "md", className = "", onClick }) {
+  const iniciais = gerarIniciais(nome);
+  return (
+    <div
+      className={`avatar-inicial avatar-inicial--${size} ${className}`}
+      aria-label={`Avatar de ${nome || "usuário"}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+    >
+      {iniciais}
+    </div>
+  );
+}
+
 function PostCardSkeleton() {
   return (
     <article className="post-card post-card-skeleton" aria-hidden="true">
@@ -142,9 +173,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
             onClick={() => onVerPerfil(post.autorId)}
           />
         ) : (
-          <div className="avatar-skeleton">
-            <span className="material-symbols-outlined">person</span>
-          </div>
+          <AvatarInicial
+            nome={post.autorNome}
+            size="md"
+            className="post-author-img--clickable"
+            onClick={() => onVerPerfil(post.autorId)}
+          />
         )}
         <div className="post-author-info">
           <h3 className="post-author post-author--link" onClick={() => onVerPerfil(post.autorId)}>
@@ -266,9 +300,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
                     onClick={() => c.autorId && onVerPerfil(c.autorId)}
                   />
                 ) : (
-                  <div className="comment-avatar-skeleton">
-                    <span className="material-symbols-outlined">person</span>
-                  </div>
+                  <AvatarInicial
+                    nome={c.autorNome}
+                    size="sm"
+                    className="comment-avatar-img--clickable"
+                    onClick={() => c.autorId && onVerPerfil(c.autorId)}
+                  />
                 )}
                 <div className="comment-content-bubble">
                   <span
@@ -297,9 +334,7 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
       {usuarioDados?.fotoPerfil ? (
         <img src={usuarioDados.fotoPerfil} alt="Você" className="comment-avatar" />
       ) : (
-        <div className="comment-avatar-skeleton">
-          <span className="material-symbols-outlined">person</span>
-        </div>
+        <AvatarInicial nome={usuarioDados?.nome} size="sm" />
       )}
 
       <input
@@ -621,11 +656,6 @@ useLayoutEffect(() => {
       />
     ));
 
-  /*
-   * feedStyle: mantém o feed invisível (opacity 0) até feedPronto.
-   * O skeleton já ocupa o espaço físico correto no DOM,
-   * então não há layout shift — só uma transição suave de reveal.
-   */
   const feedStyle = {
     opacity:    feedPronto ? 1 : 0,
     transition: feedPronto ? "opacity 0.15s ease" : "none",
@@ -649,9 +679,7 @@ useLayoutEffect(() => {
             {usuarioDados?.fotoPerfil ? (
               <img src={usuarioDados.fotoPerfil} alt="Você" className="post-author-img" />
             ) : (
-              <div className="avatar-skeleton">
-                <span className="material-symbols-outlined">person</span>
-              </div>
+              <AvatarInicial nome={usuarioDados?.nome} size="md" />
             )}
             <input
               type="text"
