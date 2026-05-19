@@ -264,11 +264,13 @@ export default function Pesquisar() {
           filtroTipo === "todos" || local.tipo === filtroTipo;
 
         const avNum = Number(local.avaliacao ?? 0);
-        const matchAvaliacao =
-          filtroAvaliacao === "todas" ||
-          (filtroAvaliacao === "4+" && avNum >= 4) ||
-          (filtroAvaliacao === "3+" && avNum >= 3) ||
-          (filtroAvaliacao === "2+" && avNum >= 2);
+const matchAvaliacao =
+  filtroAvaliacao === "todas" ||
+  (filtroAvaliacao === "5+" && avNum >= 5) ||
+  (filtroAvaliacao === "4+" && avNum >= 4 && avNum < 5) ||
+  (filtroAvaliacao === "3+" && avNum >= 3 && avNum < 4) ||
+  (filtroAvaliacao === "2+" && avNum >= 2 && avNum < 3) ||
+  (filtroAvaliacao === "1+" && avNum >= 1 && avNum < 2);
 
         return matchTermo && matchTipo && matchAvaliacao;
       });
@@ -321,9 +323,11 @@ export default function Pesquisar() {
                 onChange={(e) => setFiltroAvaliacao(e.target.value)}
               >
                 <option value="todas">Todas</option>
+                <option value="5+">5+ estrelas</option>
                 <option value="4+">4+ estrelas</option>
                 <option value="3+">3+ estrelas</option>
                 <option value="2+">2+ estrelas</option>
+                <option value="1+">1+ estrelas</option>                
               </select>
             </div>
           </div>
