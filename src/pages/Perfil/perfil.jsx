@@ -62,7 +62,13 @@ export default function Perfil() {
     const targetId = id || user?.uid;
     if (!targetId) return;
 
-    const cache = localStorage.getItem(`perfilCache_${targetId}`);
+    const cacheKey = `perfilCache_${targetId}`;
+    const cacheRaw = localStorage.getItem(cacheKey);
+    if (cacheRaw && cacheRaw.includes("data:image")) {
+      localStorage.removeItem(cacheKey);
+    }
+
+    const cache = localStorage.getItem(cacheKey);
     if (cache) {
       try {
         const dados = JSON.parse(cache);
@@ -75,7 +81,7 @@ export default function Perfil() {
         setCarregando(false);
         return;
       } catch {
-        localStorage.removeItem(`perfilCache_${targetId}`);
+        localStorage.removeItem(cacheKey);
       }
     }
 
@@ -113,10 +119,21 @@ export default function Perfil() {
           setIsFollowing(seguidores.includes(user.uid));
         }
 
-        localStorage.setItem(
-          `perfilCache_${docSnap.id}`,
-          JSON.stringify({ uid: docSnap.id, ...data })
-        );
+        // ⚠️ Não cachear campos binários (base64) para não estourar o localStorage (~5MB).
+        // Cache serve apenas para dados textuais: nome, bio, contadores etc.
+        // Imagens sempre virão do Firestore em tempo real.
+        const { fotoPerfil: _fp, banner: _bn, posts: postsRaw, ...dadosLeves } = data;
+        const postsSemImagem = (postsRaw || []).map(({ imagem: _img, ...resto }) => resto);
+        try {
+          localStorage.setItem(
+            `perfilCache_${docSnap.id}`,
+            JSON.stringify({ uid: docSnap.id, ...dadosLeves, posts: postsSemImagem })
+          );
+        } catch (quotaError) {
+          // Se mesmo assim estourar (muitos perfis em cache), limpa e ignora silenciosamente
+          console.warn("Cache de perfil ignorado por quota:", quotaError.message);
+          localStorage.removeItem(`perfilCache_${docSnap.id}`);
+        }
       }
     });
     return unsubscribe;
@@ -244,11 +261,9 @@ export default function Perfil() {
       };
       salvarPosts([novoPost, ...posts]);
     };
-    salvarPosts([novoPost, ...posts]);
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
-  reader.readAsDataURL(file);
-  e.target.value = "";
-};
 
   if (carregando) {
     return (

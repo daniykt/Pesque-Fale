@@ -138,24 +138,6 @@ const handleComentar = async () => {
 
     // 🔥 NOTIFICAÇÃO
     if (user.uid !== userId) {
-      try {
-        await addDoc(collection(db, "notificacoes"), {
-          tipo: "comentario",
-          de: user.displayName || "Pescador",
-          para: userId,
-          texto: textoComentario,
-          postId: postId,
-          createdAt: serverTimestamp(),
-          lida: false,
-        });
-      } catch (error) {
-        console.error("Erro ao notificar comentário:", error);
-      }
-    }
-
-  // 🔥 NOTIFICAÇÃO
-  if (user.uid !== userId) {
-    try {
       await addDoc(collection(db, "notificacoes"), {
         tipo: "comentario",
         de: user.displayName || "Pescador",
@@ -166,9 +148,9 @@ const handleComentar = async () => {
         createdAt: serverTimestamp(),
         lida: false,
       });
-    } catch (error) {
-      console.error("Erro ao notificar comentário:", error);
     }
+  } catch (error) {
+    console.error("Erro ao comentar:", error);
   } finally {
     setEnviando(false);
   }
