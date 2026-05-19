@@ -76,7 +76,7 @@ export default function Chat() {
         const q = query(
           collection(db, "chats", cid, "mensagens"),
           orderBy("createdAt", "desc"),
-          limit(1)
+          limit(1),
         );
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -91,11 +91,11 @@ export default function Chat() {
 
           const qNaoLidas = query(
             collection(db, "chats", cid, "mensagens"),
-            where("userId", "!=", user.uid)
+            where("userId", "!=", user.uid),
           );
           const snapNaoLidas = await getDocs(qNaoLidas);
           const naoLidas = snapNaoLidas.docs.filter(
-            (d) => d.data().status !== "visto"
+            (d) => d.data().status !== "visto",
           ).length;
 
           const userDoc = await getDoc(doc(db, "usuarios", id));
@@ -112,6 +112,7 @@ export default function Chat() {
               ultimaMensagem: ultimaMsg,
               ultimaData: ultimaData,
               naoLidas,
+              outroId: id, // ✅ guarda o ID do outro usuário para navegação
             };
 
             return [nova, ...outras].sort((a, b) => {
@@ -145,7 +146,7 @@ export default function Chat() {
   }, [chatId]);
 
   // =========================
-  // 🔒 Permissão + dados do outro usuário
+  // 🔒 Permissão + dados do outro usuário (inclui ID)
   // Chat liberado se A segue B ou B segue A
   // =========================
   useEffect(() => {
@@ -159,13 +160,14 @@ export default function Chat() {
     const ids = chatId.split("_");
     const outroId = ids.find((id) => id !== user.uid);
 
-    // Carrega dados do outro usuário (one-shot)
+    // Carrega dados do outro usuário (one-shot) – INCLUI O ID
     const carregarOutroUsuario = async () => {
       try {
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
         if (outroDoc.exists()) {
           const outro = outroDoc.data();
           setOutroUsuario({
+            id: outroId, // ✅ agora tem o id
             nome: outro?.nome || "Usuário",
             foto: outro?.fotoPerfil || "",
           });
@@ -178,10 +180,9 @@ export default function Chat() {
     carregarOutroUsuario();
 
     // Permissão: liberado se A segue B ou B segue A
-    // Sem chat_permissions — qualquer relacionamento de seguir libera o chat
     const verificarPermissao = async () => {
       try {
-        const meuDoc   = await getDoc(doc(db, "usuarios", user.uid));
+        const meuDoc = await getDoc(doc(db, "usuarios", user.uid));
         const outroDoc = await getDoc(doc(db, "usuarios", outroId));
 
         if (!meuDoc.exists() || !outroDoc.exists()) {
@@ -190,11 +191,11 @@ export default function Chat() {
           return;
         }
 
-        const meusDados   = meuDoc.data();
+        const meusDados = meuDoc.data();
         const outrosDados = outroDoc.data();
 
-        const euSigoEle  = (meusDados.seguindo   || []).includes(outroId);
-        const eleSegueEu = (outrosDados.seguindo  || []).includes(user.uid);
+        const euSigoEle = (meusDados.seguindo || []).includes(outroId);
+        const eleSegueEu = (outrosDados.seguindo || []).includes(user.uid);
 
         setPermitido(euSigoEle || eleSegueEu);
         if (!euSigoEle && !eleSegueEu) setLoadingMessages(false);
@@ -218,7 +219,7 @@ export default function Chat() {
 
     const q = query(
       collection(db, "chats", chatId, "mensagens"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -227,7 +228,7 @@ export default function Chat() {
         ...doc.data(),
       }));
       setMensagens(msgs);
-      setLoadingMessages(false); // desliga skeleton
+      setLoadingMessages(false);
 
       const mensagensParaAtualizar = snapshot.docs.filter((d) => {
         const m = d.data();
@@ -242,7 +243,7 @@ export default function Chat() {
             } catch (e) {
               console.log("Erro ao marcar como visto:", e);
             }
-          })
+          }),
         );
       }
     });
@@ -371,12 +372,15 @@ export default function Chat() {
     if (diff < 3600) return `${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
-    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    return data.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    });
   };
 
   const conversasFiltradas = conversas
     ? conversas.filter((c) =>
-        c.nome.toLowerCase().includes(busca.toLowerCase())
+        c.nome.toLowerCase().includes(busca.toLowerCase()),
       )
     : [];
 
@@ -461,11 +465,13 @@ export default function Chat() {
                   <div className="conversa-vazia">
                     {busca ? (
                       <>
-                        😕 Nenhuma conversa encontrada para "<strong>{busca}</strong>"
+                        😕 Nenhuma conversa encontrada para "
+                        <strong>{busca}</strong>"
                       </>
                     ) : (
                       <>
-                        🎣 Você ainda não segue ninguém.<br />
+                        🎣 Você ainda não segue ninguém.
+                        <br />
                         Descubra pescadores na pesquisa!
                       </>
                     )}
@@ -476,7 +482,20 @@ export default function Chat() {
                       key={c.chatId}
                       className={`conversation-item ${chatId === c.chatId ? "active" : ""}`}
                       onClick={() => navigate(`/chat/${c.chatId}`)}
-                    >
+                    >                          
+
+                      {/* CLIQUE NO CONTAINER PRINCIPAL → ABRE O CHAT */}
+                      <div
+                        className="conversation-item__chat-area"
+                        onClick={() => navigate(`/chat/${c.chatId}`)}
+                        style={{
+                          display: "flex",
+                          flex: 1,
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        {/* AVATAR: navega para perfil com stopPropagation */}
                       <div className="conv-avatar">
                         {c.foto ? (
                           <img src={c.foto} alt={c.nome} />
@@ -486,16 +505,21 @@ export default function Chat() {
                           </div>
                         )}
                       </div>
-                      <div className="conv-info">
-                        <div className="conv-top">
-                          <span className="conv-name">{c.nome}</span>
-                          <span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
-                        </div>
-                        <div className="conv-bottom">
-                          <span className="conv-preview">{c.ultimaMensagem}</span>
-                          {c.naoLidas > 0 && (
-                            <span className="conv-badge">{c.naoLidas}</span>
-                          )}
+
+                        <div className="conv-info">
+                          <div className="conv-top">
+                            {/* NOME: navega para perfil com stopPropagation */}
+<span className="conv-name">{c.nome}</span>
+<span className="conv-time">{tempoRelativo(c.ultimaData)}</span>
+                          </div>
+                          <div className="conv-bottom">
+                            <span className="conv-preview">
+                              {c.ultimaMensagem}
+                            </span>
+                            {c.naoLidas > 0 && (
+                              <span className="conv-badge">{c.naoLidas}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -514,12 +538,11 @@ export default function Chat() {
                 <span>Escolha um pescador para começar a conversar</span>
               </div>
             ) : permitido === null || loadingMessages ? (
-              // 🔄 Skeleton shimmer enquanto carrega
               <div className="chat-messages chat-messages--loading">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`skeleton-message ${i % 2 === 0 ? 'skeleton--mine' : 'skeleton--theirs'}`}
+                    className={`skeleton-message ${i % 2 === 0 ? "skeleton--mine" : "skeleton--theirs"}`}
                   >
                     <div className="skeleton-avatar" />
                     <div className="skeleton-bubble">
@@ -555,12 +578,18 @@ export default function Chat() {
                       onClick={() => navigate("/chat")}
                       title="Voltar"
                     >
-                      <span className="material-symbols-outlined">arrow_back</span>
+                      <span className="material-symbols-outlined">
+                        arrow_back
+                      </span>
                     </button>
                   )}
-                   <div className="chat-header-left" key={chatId}>
-                  <div className="chat-header-left">
-                    <div className="chat-header-avatar">
+                  <div className="chat-header-left" key={chatId}>
+                    {/* AVATAR CLICÁVEL */}
+                    <div
+                      className="chat-header-avatar"
+                      onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
+                      style={{ cursor: "pointer" }}
+                    >
                       {outroUsuario?.foto ? (
                         <img src={outroUsuario.foto} alt={outroUsuario.nome} />
                       ) : (
@@ -570,7 +599,13 @@ export default function Chat() {
                       )}
                     </div>
                     <div className="chat-header-info">
-                      <h3>{outroUsuario?.nome || "Pescador"}</h3>
+                      {/* NOME CLICÁVEL */}
+                      <h3
+                        onClick={() => navigate(`/perfil/${outroUsuario?.id}`)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {outroUsuario?.nome || "Pescador"}
+                      </h3>
                       {digitando ? (
                         <span className="digitando">digitando...</span>
                       ) : (
@@ -581,16 +616,19 @@ export default function Chat() {
                       )}
                     </div>
                   </div>
-                  </div>
                   <div className="chat-header-actions">
                     <button className="icon-btn" title="Ligar">
                       <span className="material-symbols-outlined">call</span>
                     </button>
                     <button className="icon-btn" title="Vídeo">
-                      <span className="material-symbols-outlined">videocam</span>
+                      <span className="material-symbols-outlined">
+                        videocam
+                      </span>
                     </button>
                     <button className="icon-btn" title="Mais opções">
-                      <span className="material-symbols-outlined">more_vert</span>
+                      <span className="material-symbols-outlined">
+                        more_vert
+                      </span>
                     </button>
                   </div>
                 </header>
@@ -629,7 +667,9 @@ export default function Chat() {
                     onClick={scrollToBottom}
                     title="Rolar para baixo"
                   >
-                    <span className="material-symbols-outlined">arrow_downward</span>
+                    <span className="material-symbols-outlined">
+                      arrow_downward
+                    </span>
                   </button>
                 )}
 
@@ -647,7 +687,9 @@ export default function Chat() {
                         }
                       }}
                       placeholder="Digite uma mensagem..."
-                      onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && enviarMensagem()}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && !e.shiftKey && enviarMensagem()
+                      }
                       maxLength={500}
                     />
                     <button className="btn-attach" title="Emoji">

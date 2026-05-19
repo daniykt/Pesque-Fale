@@ -1255,3 +1255,19 @@ body.dark-mode .skeleton-line {
     opacity: 1;
   }
 }
+
+/* ── Cursor pointer para elementos clicáveis do perfil ── */
+.chat-header-avatar,
+.chat-header-info h3,
+.conv-avatar,
+.conv-name {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.chat-header-avatar:hover,
+.chat-header-info h3:hover,
+.conv-avatar:hover,
+.conv-name:hover {
+  opacity: 0.85;
+}
