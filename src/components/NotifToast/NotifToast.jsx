@@ -6,6 +6,8 @@ import {
   query,
   where,
   onSnapshot,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { observeAuthState } from '../../auth';
 import './NotifToast.css';
@@ -65,6 +67,24 @@ export default function NotifToast() {
   const seenIdsRef      = useRef(new Set());
   const timersRef       = useRef({});
   const toastCounterRef = useRef(0);
+  // Cache uid → fotoPerfil em memória: evita buscas repetidas para o mesmo remetente
+  const fotoCacheRef    = useRef({});
+
+  // Busca a foto do remetente com cache em memória.
+  // Retorna null se não tiver foto ou se falhar — nunca bloqueia o toast.
+  const fetchFoto = useCallback(async (uid) => {
+    if (!uid) return null;
+    if (uid in fotoCacheRef.current) return fotoCacheRef.current[uid];
+    try {
+      const snap = await getDoc(doc(db, 'usuarios', uid));
+      const foto = snap.exists() ? snap.data().fotoPerfil || null : null;
+      fotoCacheRef.current[uid] = foto;
+      return foto;
+    } catch {
+      fotoCacheRef.current[uid] = null;
+      return null;
+    }
+  }, []);
 
   // 🔐 Auth
   useEffect(() => {
@@ -130,21 +150,28 @@ export default function NotifToast() {
         seenIdsRef.current.add(notifId);
 
         const notif = { id: notifId, ...change.doc.data() };
+        // Normaliza: aceita tanto de_id (padrão) quanto deId (legado)
+        const remetenteId = notif.de_id ?? notif.deId ?? null;
 
         // ── Suprime o toast se o usuário já estiver na tela de notificações ──
         if (location.pathname.startsWith('/notificacao')) return;
 
         const toastId = ++toastCounterRef.current;
-        setToasts((prev) => {
-          const base = prev.length >= 3 ? prev.slice(1) : prev;
-          return [...base, { toastId, notif, saindo: false }];
+
+        // Busca a foto e só então enfileira o toast — a espera é rápida
+        // pois o cache em memória evita round-trips repetidos.
+        fetchFoto(remetenteId).then((fotoPerfil) => {
+          setToasts((prev) => {
+            const base = prev.length >= 3 ? prev.slice(1) : prev;
+            return [...base, { toastId, notif, fotoPerfil, saindo: false }];
+          });
+          setTimeout(() => agendarFechamento(toastId), 50);
         });
-        setTimeout(() => agendarFechamento(toastId), 50);
       });
     });
 
     return unsub;
-  }, [user, location.pathname, agendarFechamento]);
+  }, [user, location.pathname, agendarFechamento, fetchFoto]);
 
   // ── Clique no corpo: vai para /notificacao ──
   const handleClickCorpo = useCallback((toastId) => {
@@ -195,7 +222,7 @@ export default function NotifToast() {
 
   return (
     <div className="notif-toast-stack" aria-live="polite" aria-label="Notificações">
-      {toasts.map(({ toastId, notif, saindo }) => {
+      {toasts.map(({ toastId, notif, fotoPerfil, saindo }) => {
         const cfg   = TIPO_CONFIG[notif.tipo] || TIPO_CONFIG.seguindo;
         const acoes = ACOES_RAPIDAS[notif.tipo] || [];
 
@@ -216,7 +243,15 @@ export default function NotifToast() {
 
             {/* Avatar */}
             <div className={`notif-toast__avatar ${cfg.avatarClass}`}>
-              {iniciais(notif.de)}
+              {fotoPerfil ? (
+                <img
+                  src={fotoPerfil}
+                  alt={notif.de}
+                  className="notif-toast__avatar-img"
+                />
+              ) : (
+                <span className="notif-toast__avatar-iniciais">{iniciais(notif.de)}</span>
+              )}
               <span className={`notif-toast__tipo-icon ${cfg.tipoClass}`}>
                 <span className="material-symbols-outlined">{cfg.icon}</span>
               </span>

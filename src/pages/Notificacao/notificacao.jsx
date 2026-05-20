@@ -22,6 +22,71 @@ import {
 
 import { observeAuthState } from "../../auth";
 
+// ── Hook: busca fotos de perfil em batch para os remetentes ──
+// Recebe a lista de notificações e devolve um mapa uid → fotoPerfil (string | null).
+// Re-busca apenas quando aparecem UIDs ainda não conhecidos — sem N+1.
+function useUserPhotos(notificacoes) {
+  const [fotoMap, setFotoMap] = useState({});
+
+  useEffect(() => {
+    const uidsNovos = [
+      ...new Set(notificacoes.map((n) => n.de_id ?? n.deId).filter(Boolean)),
+    ].filter((uid) => !(uid in fotoMap));
+
+    if (uidsNovos.length === 0) return;
+
+    const buscarFotos = async () => {
+      const promessas = uidsNovos.map((uid) =>
+        getDoc(doc(db, "usuarios", uid))
+          .then((snap) => [uid, snap.exists() ? snap.data().fotoPerfil || null : null])
+          .catch(() => [uid, null])
+      );
+      const resultados = await Promise.all(promessas);
+      setFotoMap((prev) => ({
+        ...prev,
+        ...Object.fromEntries(resultados),
+      }));
+    };
+
+    buscarFotos();
+    // fotoMap intencionalmente fora das deps para não criar loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificacoes]);
+
+  return fotoMap;
+}
+
+// ── AvatarNotif: foto real ou placeholder com iniciais (mesmo padrão da pesquisa) ──
+function AvatarNotif({ nome = "", fotoPerfil, tipoClass, icone }) {
+  const [imgError, setImgError] = useState(false);
+
+  const iniciais = nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+
+  const temFoto = fotoPerfil && !imgError;
+
+  return (
+    <div className={`notif-avatar ${tipoClass}`}>
+      {temFoto ? (
+        <img
+          src={fotoPerfil}
+          alt={nome}
+          className="notif-avatar-img"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span className="notif-avatar-iniciais">{iniciais}</span>
+      )}
+      <span className={`tipo-icon ${tipoClass}`}>
+        <span className="material-symbols-outlined">{icone}</span>
+      </span>
+    </div>
+  );
+}
+
 const TEMPO_ARQUIVAR_MS = 5 * 60 * 1000;
 
 const TIPOS = [
@@ -40,6 +105,9 @@ export default function Notificacao() {
   const [filtro, setFiltro] = useState("todas");
   // Mapa uid → bool: currentUser já segue aquela pessoa?
   const [seguindoMap, setSeguindoMap] = useState({});
+
+  // Mapa uid → fotoPerfil: fotos dos remetentes buscadas em batch
+  const fotoMap = useUserPhotos(notificacoes);
 
   const timersRef = useRef({});
 
@@ -355,6 +423,7 @@ export default function Notificacao() {
                         jaSeguindo={seguindoMap[n.de_id] || false}
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
+                        fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
                       />
                     ))}
                   </div>
@@ -379,6 +448,7 @@ export default function Notificacao() {
                         jaSeguindo={seguindoMap[n.de_id] || false}
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
+                        fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
                       />
                     ))}
                   </div>
@@ -412,6 +482,7 @@ export default function Notificacao() {
                       onLida={() => {}}
                       onExcluir={excluirArquivada}
                       isArquivada
+                      fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
                     />
                   ))}
                 </div>
@@ -440,7 +511,6 @@ export default function Notificacao() {
 function CardNotificacao({
   n,
   avatarClass,
-  iniciais,
   renderTexto,
   tempoRelativo,
   onLida,
@@ -451,6 +521,7 @@ function CardNotificacao({
   jaSeguindo = false,
   onSeguirDeVolta,
   onDeixarDeSeguir,
+  fotoPerfil = null,
 }) {
   const tipoClass = avatarClass(n.tipo);
   const [segundosRestantes, setSegundosRestantes] = useState(null);
@@ -499,12 +570,12 @@ function CardNotificacao({
       className={`notif-card ${n.lida ? "lida" : "nao-lida"} ${isArquivada ? "arquivada" : ""}`}
       onClick={() => onLida(n.id, n.lida)}
     >
-      <div className={`notif-avatar ${tipoClass}`}>
-        {iniciais(n.de)}
-        <span className={`tipo-icon ${tipoClass}`}>
-          <span className="material-symbols-outlined">{tipoIcone(n.tipo)}</span>
-        </span>
-      </div>
+      <AvatarNotif
+        nome={n.de}
+        fotoPerfil={fotoPerfil}
+        tipoClass={tipoClass}
+        icone={tipoIcone(n.tipo)}
+      />
 
       <div className="notif-content">
         <p className="notif-text">{renderTexto(n)}</p>
