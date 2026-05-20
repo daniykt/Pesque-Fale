@@ -201,6 +201,14 @@ body {
 .notif-avatar.comentario { background: #E1F5EE; color: #085041; }
 .notif-avatar.mensagem   { background: #FAEEDA; color: #633806; }
 
+.notif-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 /* ================= ÍCONE DE TIPO ================= */
 .tipo-icon {
   position: absolute;
