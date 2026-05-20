@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./notificacao.css";
 
@@ -99,6 +100,7 @@ const TIPOS = [
 ];
 
 export default function Notificacao() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [notificacoes, setNotificacoes] = useState([]);
   const [arquivadas, setArquivadas] = useState([]);
@@ -424,6 +426,8 @@ export default function Notificacao() {
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
                         fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
+                        navigate={navigate}
+                        currentUserId={user?.uid}
                       />
                     ))}
                   </div>
@@ -449,6 +453,8 @@ export default function Notificacao() {
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
                         fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
+                        navigate={navigate}
+                        currentUserId={user?.uid}
                       />
                     ))}
                   </div>
@@ -507,7 +513,6 @@ export default function Notificacao() {
   );
 }
 
-// ── Card de Notificação ──
 function CardNotificacao({
   n,
   avatarClass,
@@ -522,6 +527,8 @@ function CardNotificacao({
   onSeguirDeVolta,
   onDeixarDeSeguir,
   fotoPerfil = null,
+  navigate,
+  currentUserId,
 }) {
   const tipoClass = avatarClass(n.tipo);
   const [segundosRestantes, setSegundosRestantes] = useState(null);
@@ -565,6 +572,73 @@ function CardNotificacao({
     }
   };
 
+  // ── Ações contextuais por tipo (igual ao NotifToast) ──
+  const handleAcao = (e, acao) => {
+    e.stopPropagation();
+    if (!navigate) return;
+    // Marca como lida ao interagir com qualquer ação contextual
+    onLida(n.id, n.lida);
+    switch (acao) {
+      case "perfil":
+        navigate(n.de_id ? `/perfil/${n.de_id}` : "/notificacao");
+        break;
+      case "post":
+        if (n.postId) {
+          navigate(`/post/${n.para}/${n.postId}`);
+        } else {
+          navigate("/notificacao");
+        }
+        break;
+      case "chat":
+        if (n.chatId) {
+          navigate(`/chat/${n.chatId}`);
+        } else if (n.de_id && currentUserId) {
+          const chatId = [n.de_id, currentUserId].sort().join("_");
+          navigate(`/chat/${chatId}`);
+        } else {
+          navigate("/chat");
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const renderAcoes = () => {
+    if (isArquivada) return null;
+    switch (n.tipo) {
+      case "curtida":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao curtida" onClick={(e) => handleAcao(e, "post")}>
+              <span className="material-symbols-outlined">open_in_new</span>
+              Ver post
+            </button>
+          </div>
+        );
+      case "comentario":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao comentario" onClick={(e) => handleAcao(e, "post")}>
+              <span className="material-symbols-outlined">reply</span>
+              Responder
+            </button>
+          </div>
+        );
+      case "mensagem":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao mensagem" onClick={(e) => handleAcao(e, "chat")}>
+              <span className="material-symbols-outlined">reply</span>
+              Responder
+            </button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       className={`notif-card ${n.lida ? "lida" : "nao-lida"} ${isArquivada ? "arquivada" : ""}`}
@@ -590,11 +664,11 @@ function CardNotificacao({
           )}
         </div>
 
-        {/* Botão "Seguir de volta" — apenas em notificações do tipo seguindo, não arquivadas */}
+        {/* Botão "Seguir de volta" — tipo seguindo */}
         {ehSeguindo && !isArquivada && (
-          <div className="notif-toast__acoes" style={{ marginTop: 8 }}>
+          <div className="notif-acoes">
             <button
-              className={`notif-toast__btn ${jaSeguindo ? "notif-btn-seguindo-ativo" : "notif-toast__btn--seguindo"}`}
+              className={`notif-btn-acao ${jaSeguindo ? "notif-btn-seguindo-ativo" : "seguindo"}`}
               onClick={handleFollow}
               disabled={loadingFollow}
             >
@@ -614,6 +688,9 @@ function CardNotificacao({
             </button>
           </div>
         )}
+
+        {/* Botões de ação: Ver post / Responder */}
+        {renderAcoes()}
       </div>
 
       <div className="notif-actions">
