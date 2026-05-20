@@ -50,6 +50,18 @@ body {
   transition: all 0.15s ease;
 }
 
+.notif-tab:not(.active):hover {
+  background: #e8eef8;
+  border-color: #93aee8;
+  color: #062A6C;
+}
+
+.notif-tab.tab-arquivadas:not(.active):hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
 .notif-tab.active {
   background: #062A6C;
   color: #ffffff;
@@ -358,31 +370,42 @@ body {
 
 /* ================= DARK MODE ================= */
 body.dark-mode .notif-header {
-  background: #0f172a;
+  background: #1e1e1e;
   border-bottom-color: #334155;
 }
 
 body.dark-mode .notif-tab { color: #94a3b8; }
 
-body.dark-mode .notif-tab.active {
+body.dark-mode .notif-tab:not(.active):hover {
+  background: #1e2d45;
+  border-color: #93b4f0;
   color: #93b4f0;
-  border-bottom-color: #93b4f0;
+}
+
+body.dark-mode .notif-tab.tab-arquivadas:not(.active):hover {
+  background: #1e293b;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+body.dark-mode .notif-tab.active {
+  color: #ffffff;
 }
 
 body.dark-mode .notif-tab.tab-arquivadas.active {
-  color: #64748b;
+  color: #ffffff;
   border-bottom-color: #64748b;
 }
 
 body.dark-mode .notif-tab.active .tab-badge { background: #062A6C; }
 
-body.dark-mode .container-notificacoes { background: #0f172a; }
+body.dark-mode .container-notificacoes { background: #1e1e1e; }
 body.dark-mode .section-label { color: #64748b; }
 
 body.dark-mode .arquivo-aviso {
-  background: #1e293b;
-  border-color: #334155;
-  color: #64748b;
+  background: #ffffff;
+  border-color: #ffffff;
+
 }
 
 body.dark-mode .notif-card {
@@ -533,69 +556,3 @@ body.dark-mode .notif-loading {
     bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
   }
 }
-/* ================= FOTO DO AVATAR — CIRCULAR ================= */
-.notif-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
-}
-
-.notif-avatar-iniciais {
-  line-height: 1;
-  user-select: none;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* ================= BOTÕES DE AÇÃO CONTEXTUAL ================= */
-.notif-acoes {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.notif-btn-acao {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1.5px solid;
-  font-size: 11.5px;
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.12s;
-  white-space: nowrap;
-  background: transparent;
-}
-
-.notif-btn-acao:active { transform: scale(0.96); }
-.notif-btn-acao .material-symbols-outlined { font-size: 13px; }
-
-.notif-btn-acao.seguindo   { background: #E6F1FB; border-color: #185FA5; color: #0C447C; }
-.notif-btn-acao.seguindo:hover { background: #185FA5; color: #fff; }
-
-.notif-btn-acao.curtida    { background: #FBEAF0; border-color: #993556; color: #72243E; }
-.notif-btn-acao.curtida:hover { background: #993556; color: #fff; }
-
-.notif-btn-acao.comentario { background: #E1F5EE; border-color: #0F6E56; color: #085041; }
-.notif-btn-acao.comentario:hover { background: #0F6E56; color: #fff; }
-
-.notif-btn-acao.mensagem   { background: #FAEEDA; border-color: #854F0B; color: #633806; }
-.notif-btn-acao.mensagem:hover { background: #854F0B; color: #fff; }
-
-body.dark-mode .notif-btn-acao.seguindo   { background: #0d2240; border-color: #93b4f0; color: #93b4f0; }
-body.dark-mode .notif-btn-acao.seguindo:hover { background: #93b4f0; color: #0f172a; }
-
-body.dark-mode .notif-btn-acao.curtida    { background: #2d1020; border-color: #f0a3be; color: #f0a3be; }
-body.dark-mode .notif-btn-acao.curtida:hover { background: #f0a3be; color: #0f172a; }
-
-body.dark-mode .notif-btn-acao.comentario { background: #0b2a22; border-color: #6ed9ba; color: #6ed9ba; }
-body.dark-mode .notif-btn-acao.comentario:hover { background: #6ed9ba; color: #0f172a; }
-
-body.dark-mode .notif-btn-acao.mensagem   { background: #2b1d06; border-color: #f0c98a; color: #f0c98a; }
-body.dark-mode .notif-btn-acao.mensagem:hover { background: #f0c98a; color: #0f172a; }
