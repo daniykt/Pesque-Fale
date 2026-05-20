@@ -533,24 +533,6 @@ body.dark-mode .notif-loading {
 
 /* dark mode chips mobile */
 @media (max-width: 900px) {
-  body.dark-mode .notif-tab {
-    background: #1e293b;
-    border-color: #334155;
-    color: #94a3b8;
-  }
-
-  body.dark-mode .notif-tab.active {
-    background: #062A6C;
-    color: #ffffff;
-    border-color: #062A6C;
-  }
-
-  body.dark-mode .notif-tab.tab-arquivadas.active {
-    background: #334155;
-    color: #e2e8f0;
-    border-color: #475569;
-  }
-
     .fab-marcar {
     left: 16px;
     bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
