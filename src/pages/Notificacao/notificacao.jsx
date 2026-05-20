@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/sidebar/layout";
 import "./notificacao.css";
 
@@ -22,6 +23,71 @@ import {
 
 import { observeAuthState } from "../../auth";
 
+// ── Hook: busca fotos de perfil em batch para os remetentes ──
+// Recebe a lista de notificações e devolve um mapa uid → fotoPerfil (string | null).
+// Re-busca apenas quando aparecem UIDs ainda não conhecidos — sem N+1.
+function useUserPhotos(notificacoes) {
+  const [fotoMap, setFotoMap] = useState({});
+
+  useEffect(() => {
+    const uidsNovos = [
+      ...new Set(notificacoes.map((n) => n.de_id ?? n.deId).filter(Boolean)),
+    ].filter((uid) => !(uid in fotoMap));
+
+    if (uidsNovos.length === 0) return;
+
+    const buscarFotos = async () => {
+      const promessas = uidsNovos.map((uid) =>
+        getDoc(doc(db, "usuarios", uid))
+          .then((snap) => [uid, snap.exists() ? snap.data().fotoPerfil || null : null])
+          .catch(() => [uid, null])
+      );
+      const resultados = await Promise.all(promessas);
+      setFotoMap((prev) => ({
+        ...prev,
+        ...Object.fromEntries(resultados),
+      }));
+    };
+
+    buscarFotos();
+    // fotoMap intencionalmente fora das deps para não criar loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notificacoes]);
+
+  return fotoMap;
+}
+
+// ── AvatarNotif: foto real ou placeholder com iniciais (mesmo padrão da pesquisa) ──
+function AvatarNotif({ nome = "", fotoPerfil, tipoClass, icone }) {
+  const [imgError, setImgError] = useState(false);
+
+  const iniciais = nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+
+  const temFoto = fotoPerfil && !imgError;
+
+  return (
+    <div className={`notif-avatar ${tipoClass}`}>
+      {temFoto ? (
+        <img
+          src={fotoPerfil}
+          alt={nome}
+          className="notif-avatar-img"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <span className="notif-avatar-iniciais">{iniciais}</span>
+      )}
+      <span className={`tipo-icon ${tipoClass}`}>
+        <span className="material-symbols-outlined">{icone}</span>
+      </span>
+    </div>
+  );
+}
+
 const TEMPO_ARQUIVAR_MS = 5 * 60 * 1000;
 
 const TIPOS = [
@@ -34,12 +100,16 @@ const TIPOS = [
 ];
 
 export default function Notificacao() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [notificacoes, setNotificacoes] = useState([]);
   const [arquivadas, setArquivadas] = useState([]);
   const [filtro, setFiltro] = useState("todas");
   // Mapa uid → bool: currentUser já segue aquela pessoa?
   const [seguindoMap, setSeguindoMap] = useState({});
+
+  // Mapa uid → fotoPerfil: fotos dos remetentes buscadas em batch
+  const fotoMap = useUserPhotos(notificacoes);
 
   const timersRef = useRef({});
 
@@ -355,6 +425,9 @@ export default function Notificacao() {
                         jaSeguindo={seguindoMap[n.de_id] || false}
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
+                        fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
+                        navigate={navigate}
+                        currentUserId={user?.uid}
                       />
                     ))}
                   </div>
@@ -379,6 +452,9 @@ export default function Notificacao() {
                         jaSeguindo={seguindoMap[n.de_id] || false}
                         onSeguirDeVolta={seguirDeVolta}
                         onDeixarDeSeguir={deixarDeSeguirNotif}
+                        fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
+                        navigate={navigate}
+                        currentUserId={user?.uid}
                       />
                     ))}
                   </div>
@@ -412,6 +488,7 @@ export default function Notificacao() {
                       onLida={() => {}}
                       onExcluir={excluirArquivada}
                       isArquivada
+                      fotoPerfil={fotoMap[n.de_id ?? n.deId] ?? null}
                     />
                   ))}
                 </div>
@@ -436,11 +513,9 @@ export default function Notificacao() {
   );
 }
 
-// ── Card de Notificação ──
 function CardNotificacao({
   n,
   avatarClass,
-  iniciais,
   renderTexto,
   tempoRelativo,
   onLida,
@@ -451,6 +526,9 @@ function CardNotificacao({
   jaSeguindo = false,
   onSeguirDeVolta,
   onDeixarDeSeguir,
+  fotoPerfil = null,
+  navigate,
+  currentUserId,
 }) {
   const tipoClass = avatarClass(n.tipo);
   const [segundosRestantes, setSegundosRestantes] = useState(null);
@@ -494,17 +572,84 @@ function CardNotificacao({
     }
   };
 
+  // ── Ações contextuais por tipo (igual ao NotifToast) ──
+  const handleAcao = (e, acao) => {
+    e.stopPropagation();
+    if (!navigate) return;
+    // Marca como lida ao interagir com qualquer ação contextual
+    onLida(n.id, n.lida);
+    switch (acao) {
+      case "perfil":
+        navigate(n.de_id ? `/perfil/${n.de_id}` : "/notificacao");
+        break;
+      case "post":
+        if (n.postId) {
+          navigate(`/post/${n.para}/${n.postId}`);
+        } else {
+          navigate("/notificacao");
+        }
+        break;
+      case "chat":
+        if (n.chatId) {
+          navigate(`/chat/${n.chatId}`);
+        } else if (n.de_id && currentUserId) {
+          const chatId = [n.de_id, currentUserId].sort().join("_");
+          navigate(`/chat/${chatId}`);
+        } else {
+          navigate("/chat");
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const renderAcoes = () => {
+    if (isArquivada) return null;
+    switch (n.tipo) {
+      case "curtida":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao curtida" onClick={(e) => handleAcao(e, "post")}>
+              <span className="material-symbols-outlined">open_in_new</span>
+              Ver post
+            </button>
+          </div>
+        );
+      case "comentario":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao comentario" onClick={(e) => handleAcao(e, "post")}>
+              <span className="material-symbols-outlined">reply</span>
+              Responder
+            </button>
+          </div>
+        );
+      case "mensagem":
+        return (
+          <div className="notif-acoes">
+            <button className="notif-btn-acao mensagem" onClick={(e) => handleAcao(e, "chat")}>
+              <span className="material-symbols-outlined">reply</span>
+              Responder
+            </button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       className={`notif-card ${n.lida ? "lida" : "nao-lida"} ${isArquivada ? "arquivada" : ""}`}
       onClick={() => onLida(n.id, n.lida)}
     >
-      <div className={`notif-avatar ${tipoClass}`}>
-        {iniciais(n.de)}
-        <span className={`tipo-icon ${tipoClass}`}>
-          <span className="material-symbols-outlined">{tipoIcone(n.tipo)}</span>
-        </span>
-      </div>
+      <AvatarNotif
+        nome={n.de}
+        fotoPerfil={fotoPerfil}
+        tipoClass={tipoClass}
+        icone={tipoIcone(n.tipo)}
+      />
 
       <div className="notif-content">
         <p className="notif-text">{renderTexto(n)}</p>
@@ -519,11 +664,11 @@ function CardNotificacao({
           )}
         </div>
 
-        {/* Botão "Seguir de volta" — apenas em notificações do tipo seguindo, não arquivadas */}
+        {/* Botão "Seguir de volta" — tipo seguindo */}
         {ehSeguindo && !isArquivada && (
-          <div className="notif-toast__acoes" style={{ marginTop: 8 }}>
+          <div className="notif-acoes">
             <button
-              className={`notif-toast__btn ${jaSeguindo ? "notif-btn-seguindo-ativo" : "notif-toast__btn--seguindo"}`}
+              className={`notif-btn-acao ${jaSeguindo ? "notif-btn-seguindo-ativo" : "seguindo"}`}
               onClick={handleFollow}
               disabled={loadingFollow}
             >
@@ -543,6 +688,9 @@ function CardNotificacao({
             </button>
           </div>
         )}
+
+        {/* Botões de ação: Ver post / Responder */}
+        {renderAcoes()}
       </div>
 
       <div className="notif-actions">
