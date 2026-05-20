@@ -439,7 +439,7 @@ body.dark-mode .notif-loading {
 }
 
 /* ================= MOBILE ================= */
-@media (max-width: 900px) {
+@media (max-width: 1098px) {
   .notif-wrapper {
     height: 100vh;
     height: 100dvh;
@@ -502,11 +502,6 @@ body.dark-mode .notif-loading {
     padding-bottom: calc(72px + 16px);
   }
 
-  .fab-marcar {
-    left: 16px;
-    bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
-  }
-
   .notif-card { padding: 12px; }
   .notif-text { font-size: 13px; }
 }
@@ -529,5 +524,10 @@ body.dark-mode .notif-loading {
     background: #334155;
     color: #e2e8f0;
     border-color: #475569;
+  }
+
+    .fab-marcar {
+    left: 16px;
+    bottom: calc(64px + env(safe-area-inset-bottom) + 12px);
   }
 }
