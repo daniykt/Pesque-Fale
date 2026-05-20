@@ -123,6 +123,22 @@
   flex-shrink: 0;
   position: relative;
   letter-spacing: 0.5px;
+  overflow: hidden; /* garante que a foto não vaze do círculo */
+}
+
+/* Foto real */
+.notif-toast__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Placeholder com iniciais */
+.notif-toast__avatar-iniciais {
+  line-height: 1;
+  user-select: none;
 }
 
 .notif-toast__avatar.seguidor   { background: #E6F1FB; color: #0C447C; }
