@@ -278,7 +278,6 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #007bff;
   display: block;
   aspect-ratio: 1; /* garante círculo */
 }
@@ -447,6 +446,8 @@
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-xs);
+  padding-left: 05px;
+  padding-top: 05px;
 }
 
 /* Avatar do comentário */
@@ -459,8 +460,6 @@
   flex-shrink: 0;
   aspect-ratio: 1;
 }
-
-.vp-comentario-foto { border: 2px solid #e0e0e0; }
 
 .vp-comentario-foto-placeholder {
   background-color: #f0f4ff;
@@ -712,4 +711,72 @@ body.dark-mode .vp-btn-curtido:hover {
 
 body.dark-mode .vp-comentarios-aviso {
   background: rgba(255, 191, 0, 0.08);
+}
+
+/* =========================================
+   SCROLL NA LISTA DE COMENTÁRIOS
+   ========================================= */
+.vp-comentarios-lista {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Scroll personalizado */
+.vp-comentarios-lista::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vp-comentarios-lista::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.vp-comentarios-lista::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.vp-comentarios-lista::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Dark mode scroll */
+body.dark-mode .vp-comentarios-lista::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+body.dark-mode .vp-comentarios-lista::-webkit-scrollbar-thumb {
+  background: #555;
+}
+
+body.dark-mode .vp-comentarios-lista::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* =========================================
+   COMENTÁRIOS CLICÁVEIS
+   ========================================= */
+.vp-comentario-foto--clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.vp-comentario-foto--clickable:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.vp-comentario-autor--clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.vp-comentario-autor--clickable:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+body.dark-mode .vp-comentario-autor--clickable:hover {
+  color: #90caf9;
 }
