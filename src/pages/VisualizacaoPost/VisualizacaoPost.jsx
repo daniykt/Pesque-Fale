@@ -323,23 +323,15 @@ export default function VisualizacaoPost() {
 
             {/* AUTOR */}
             <div className="vp-autor">
-              <div
-                className="vp-autor-clicavel"
-                onClick={() => navigate(`/perfil/${userId}`)}
-                title={`Ver perfil de ${usuarioPerfil?.nome || "Pescador"}`}
-              >
-                {usuarioPerfil?.fotoPerfil ? (
-                  <img
-                    src={usuarioPerfil.fotoPerfil}
-                    alt={usuarioPerfil?.nome}
-                    className="vp-autor-foto"
-                  />
-                ) : (
-                  <div className="vp-autor-foto-placeholder">
-                    <span className="material-symbols-outlined">person</span>
-                  </div>
-                )}
-              </div>
+<div className="vp-autor-clicavel" onClick={() => navigate(`/perfil/${userId}`)} title={`Ver perfil de ${usuarioPerfil?.nome}`}>
+  {usuarioPerfil?.fotoPerfil ? (
+    <img src={usuarioPerfil.fotoPerfil} alt={usuarioPerfil?.nome} className="vp-autor-foto" />
+  ) : (
+    <div className="vp-autor-foto-placeholder fallback">
+      {usuarioPerfil?.nome ? usuarioPerfil.nome.charAt(0).toUpperCase() : "P"}
+    </div>
+  )}
+</div>
 
               <div className="vp-autor-dados">
                 <span
@@ -438,11 +430,11 @@ export default function VisualizacaoPost() {
                           />
                         ) : (
                           <div
-                            className="vp-comentario-foto-placeholder vp-comentario-foto--clickable"
-                            onClick={() => c.autorId && navigate(`/perfil/${c.autorId}`)}
-                            title={`Ver perfil de ${c.autorNome}`}
+className="vp-comentario-foto-placeholder fallback vp-comentario-foto--clickable"
+          onClick={() => c.autorId && navigate(`/perfil/${c.autorId}`)}
+          title={`Ver perfil de ${c.autorNome}`}
                           >
-                            <span className="material-symbols-outlined">person</span>
+                           {c.autorNome ? c.autorNome.charAt(0).toUpperCase() : "P"}                           
                           </div>
                         )}
                         <div className="vp-comentario-conteudo">
@@ -470,7 +462,7 @@ export default function VisualizacaoPost() {
                     <img src={usuarioLogado.fotoPerfil} alt="Você" className="vp-comentario-foto" />
                   ) : (
                     <div className="vp-comentario-foto-placeholder">
-                      <span className="material-symbols-outlined">person</span>
+                      {usuarioLogado?.nome ? usuarioLogado.nome.charAt(0).toUpperCase() : "P"}
                     </div>
                   )}
                   <div className="vp-comentario-input-wrapper">
