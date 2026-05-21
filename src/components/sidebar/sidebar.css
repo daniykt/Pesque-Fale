@@ -240,10 +240,28 @@ body.dark-mode .nav-item:hover {
   color: var(--white);
 }
 
+body.dark-mode .nav-menu {
+  background: #1e1e1e;
+}
+
+body.dark-mode .nav-text {
+  color: white;
+}
+
+body.dark-mode .nav-item.active {
+  color: white;
+}
+
+body.dark-mode .sidebar-header {
+  background-color: #1e1e1e;
+
+}
+
 body.dark-mode .sidebar-footer {
   border-top-color: var(--gray-700);
-  background: var(--gray-900);
+  background: #1e1e1e;
 }
+
 
 body.dark-mode .sidebar-header { border-bottom-color: var(--gray-700); }
 
