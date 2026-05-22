@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Cabecalhoperfil.css';
-import './Profilemenu.css';
-import ProfileMenu from './Profilemenu';
+import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Cabecalhoperfil.css";
+import "./Profilemenu.css";
+import ProfileMenu from "./Profilemenu";
 
 export default function CabecalhoPerfil({
   fotoPerfil,
@@ -25,19 +25,19 @@ export default function CabecalhoPerfil({
 
   const [menuAberto, setMenuAberto] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
+    return localStorage.getItem("theme") === "dark";
   });
   const [mostrarLogout, setMostrarLogout] = useState(false);
 
   const toggleDark = () => {
-    setIsDarkMode(prev => {
+    setIsDarkMode((prev) => {
       const next = !prev;
       if (next) {
-        document.body.classList.add('dark-mode');
-        localStorage.setItem('theme', 'dark');
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("theme", "dark");
       } else {
-        document.body.classList.remove('dark-mode');
-        localStorage.setItem('theme', 'light');
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("theme", "light");
       }
       return next;
     });
@@ -56,24 +56,30 @@ export default function CabecalhoPerfil({
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (typeof onFotoChange === 'function') onFotoChange(file);
+    if (typeof onFotoChange === "function") onFotoChange(file);
   };
 
   const handleBannerChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (typeof onBannerChange === 'function') onBannerChange(file);
+    if (typeof onBannerChange === "function") onBannerChange(file);
   };
 
   const renderizarBotoes = () => {
     if (isOwnProfile) {
       return (
         <>
-          <button className="btn-cabecalho btn-editar" onClick={() => navigate('/perfil/editar')}>
+          <button
+            className="btn-cabecalho btn-editar"
+            onClick={() => navigate("/perfil/editar")}
+          >
             <span className="material-symbols-outlined">edit</span>
             <span className="btn-texto">Editar Perfil</span>
           </button>
-          <button className="btn-cabecalho btn-publicar" onClick={() => navigate('/publicar')}>
+          <button
+            className="btn-cabecalho btn-publicar"
+            onClick={() => navigate("/publicar")}
+          >
             <span className="material-symbols-outlined">add</span>
             <span className="btn-texto">Nova Publicação</span>
           </button>
@@ -84,7 +90,10 @@ export default function CabecalhoPerfil({
     if (isFollowing) {
       return (
         <>
-          <button className="btn-cabecalho btn-deixar-seguir" onClick={onDeixarDeSeguir}>
+          <button
+            className="btn-cabecalho btn-deixar-seguir"
+            onClick={onDeixarDeSeguir}
+          >
             <span className="material-symbols-outlined">person_remove</span>
             <span className="btn-texto">Seguindo</span>
           </button>
@@ -112,11 +121,13 @@ export default function CabecalhoPerfil({
       <div
         className="banner-perfil"
         onClick={handleBannerClick}
-        title={isOwnProfile ? 'Clique para trocar a capa' : ''}
+        title={isOwnProfile ? "Clique para trocar a capa" : ""}
         style={{ backgroundImage: banner ? `url(${banner})` : undefined }}
       >
         {!banner && isOwnProfile && (
-          <span className="banner-icone material-symbols-outlined">add_photo_alternate</span>
+          <span className="banner-icone material-symbols-outlined">
+            add_photo_alternate
+          </span>
         )}
         {isOwnProfile && (
           <div className="banner-overlay">
@@ -127,7 +138,10 @@ export default function CabecalhoPerfil({
         {isOwnProfile && (
           <button
             className="pmenu-trigger"
-            onClick={(e) => { e.stopPropagation(); setMenuAberto(true); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuAberto(true);
+            }}
             aria-label="Abrir menu de opções"
           >
             <span className="material-symbols-outlined">more_horiz</span>
@@ -143,7 +157,7 @@ export default function CabecalhoPerfil({
             alt="Foto de Perfil"
             className="foto-perfil"
             onClick={handleFotoClick}
-            title={isOwnProfile ? 'Clique para trocar a foto' : ''}
+            title={isOwnProfile ? "Clique para trocar a foto" : ""}
           />
           {isOwnProfile && (
             <div className="foto-perfil-overlay" onClick={handleFotoClick}>
@@ -153,36 +167,43 @@ export default function CabecalhoPerfil({
         </div>
 
         {/* Botões desktop */}
-        <div className="cabecalho-botoes">
-          {renderizarBotoes()}
-        </div>
+        <div className="cabecalho-botoes">{renderizarBotoes()}</div>
       </div>
 
       {/* Inputs ocultos */}
       {isOwnProfile && (
         <>
-          <input type="file" accept="image/*" ref={fileInputBannerRef} style={{ display: 'none' }} onChange={handleBannerChange} />
-          <input type="file" accept="image/*" ref={fileInputFotoRef} style={{ display: 'none' }} onChange={handleFotoChange} />
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputBannerRef}
+            style={{ display: "none" }}
+            onChange={handleBannerChange}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputFotoRef}
+            style={{ display: "none" }}
+            onChange={handleFotoChange}
+          />
         </>
       )}
 
       {/* INFO USUÁRIO – NOME + USERNAME */}
       <div className="usuario-data">
-        <h2 className="usuario-nome">
-          {usuario?.nome || 'Usuário'}
-          {usuario?.username && (
-            <span className="usuario-username"> @{usuario.username}</span>
-          )}
-        </h2>
-        {usuario?.email && (
-          <div className="usuario-info-linha">
-            <span className="material-symbols-outlined usuario-icone">mail</span>
-            <span className="usuario-info-texto">{usuario.email}</span>
+        <h2 className="usuario-nome">{usuario?.nome || "Usuário"}</h2>
+
+        {usuario?.username && (
+          <div className="usuario-username-container">
+            <span className="usuario-username">@{usuario.username}</span>
           </div>
         )}
         {localizacao && (
           <div className="usuario-info-linha">
-            <span className="material-symbols-outlined usuario-icone">location_on</span>
+            <span className="material-symbols-outlined usuario-icone">
+              location_on
+            </span>
             <span className="usuario-info-texto">{localizacao}</span>
           </div>
         )}
@@ -190,9 +211,7 @@ export default function CabecalhoPerfil({
       </div>
 
       {/* Botões mobile */}
-      <div className="cabecalho-botoes-mobile">
-        {renderizarBotoes()}
-      </div>
+      <div className="cabecalho-botoes-mobile">{renderizarBotoes()}</div>
 
       {/* Menu */}
       <ProfileMenu
