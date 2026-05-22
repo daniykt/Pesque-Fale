@@ -325,28 +325,6 @@ export default function Perfil() {
             currentUserId={user?.uid}
           />
 
-          {/* ========== BANNER PARA USUÁRIOS SEM USERNAME (apenas próprio perfil) ========== */}
-          {isOwnProfile && !usuarioPerfil?.username && (
-            <div className="aviso-username-banner">
-              <div className="aviso-username-conteudo">
-                <span className="material-symbols-outlined aviso-username-icone">
-                  alternate_email
-                </span>
-                <div className="aviso-username-texto">
-                  <strong>Você ainda não tem um username!</strong>
-                  <p>Defina um username único para aparecer em posts, comentários e menções.</p>
-                </div>
-                <button
-                  className="aviso-username-botao"
-                  onClick={() => navigate("/perfil/editar")}
-                >
-                  Definir username
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           <EstatisticasPerfil
             totalPosts={posts.length}
             usuario={usuarioPerfil}
