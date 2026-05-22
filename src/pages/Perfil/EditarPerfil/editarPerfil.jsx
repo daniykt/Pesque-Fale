@@ -38,6 +38,24 @@ export default function EditarPerfil() {
   const fotoInputRef = useRef(null);
   const bannerInputRef = useRef(null);
 
+  const handleResetUsername = () => {
+  setUsername(usernameOriginal);
+  // Reseta o status para o valor original válido
+  if (usernameOriginal) {
+    setUsernameStatus({
+      disponivel: true,
+      mensagem: "✅ Username atual",
+      verificando: false,
+    });
+  } else {
+    setUsernameStatus({
+      disponivel: false,
+      mensagem: "",
+      verificando: false,
+    });
+  }
+};
+
   // 🔐 pega usuário logado
   useEffect(() => {
     const unsubscribe = observeAuthState((currentUser) => {
@@ -312,48 +330,55 @@ export default function EditarPerfil() {
           </div>
 
           {/* ========== NOVO CAMPO USERNAME ========== */}
-          <div className="editar-secao">
-            <label className="editar-label">
-              Username
-            </label>
-            <div className="editar-input-icone">
-              <span className="material-symbols-outlined editar-input-icone-symbol">
-                alternate_email
-              </span>
-              <input
-                className={`editar-input editar-input-com-icone ${
-                  usernameStatus.mensagem.includes("❌") ||
-                  (usernameStatus.mensagem.includes("inválido") &&
-                    !usernameStatus.verificando)
-                    ? "editar-input-erro"
-                    : ""
-                }`}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="ex: joao_pescador"
-              />
-            </div>
-            {usernameStatus.verificando && (
-              <p className="editar-dica" style={{ color: "#888" }}>
-                Verificando...
-              </p>
-            )}
-            {usernameStatus.mensagem && !usernameStatus.verificando && (
-              <p
-                className="editar-dica"
-                style={{
-                  color: usernameStatus.mensagem.includes("✅")
-                    ? "#2e7d32"
-                    : "#d32f2f",
-                }}
-              >
-                {usernameStatus.mensagem}
-              </p>
-            )}
-            <p className="editar-dica">
-              Seu username único será usado no link do perfil e em menções.
-            </p>
-          </div>
+<div className="editar-secao">
+  <label className="editar-label">Username</label>
+  <div className="editar-input-icone">
+    <span className="material-symbols-outlined editar-input-icone-symbol">
+      alternate_email
+    </span>
+    <input
+      className={`editar-input editar-input-com-icone ${
+        (usernameStatus.mensagem.includes("❌") ||
+          (usernameStatus.mensagem.includes("inválido") &&
+            !usernameStatus.verificando))
+          ? "editar-input-erro"
+          : ""
+      }`}
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      placeholder="ex: joao_pescador"
+    />
+    {username !== usernameOriginal && (
+      <button
+        type="button"
+        className="editar-username-reset"
+        onClick={handleResetUsername}
+        title="Voltar ao original"
+      >
+        <span className="material-symbols-outlined">undo</span>
+      </button>
+    )}
+  </div>
+  {/* status e dicas permanecem iguais */}
+  {usernameStatus.verificando && (
+    <p className="editar-dica" style={{ color: "#888" }}>
+      Verificando...
+    </p>
+  )}
+  {usernameStatus.mensagem && !usernameStatus.verificando && (
+    <p
+      className="editar-dica"
+      style={{
+        color: usernameStatus.mensagem.includes("✅") ? "#2e7d32" : "#d32f2f",
+      }}
+    >
+      {usernameStatus.mensagem}
+    </p>
+  )}
+  <p className="editar-dica">
+    Seu username único será usado no link do perfil e em menções.
+  </p>
+</div>
 
           {/* LOCAL */}
           <div className="editar-secao">
