@@ -31,8 +31,9 @@ export default function VisualizacaoPost() {
   const [modalExclusao, setModalExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
-  // Mapa para armazenar fotos de comentários faltantes
+  // Mapas para armazenar dados faltantes de comentários (foto e username)
   const [fotosComentarios, setFotosComentarios] = useState({});
+  const [usernamesComentarios, setUsernamesComentarios] = useState({});
 
   // Auth
   useEffect(() => {
@@ -68,33 +69,49 @@ export default function VisualizacaoPost() {
     return unsubscribe;
   }, [userId, postId]);
 
-  // Carregar fotos faltantes dos comentários (quando não têm autorFoto)
+  // Carregar dados faltantes dos comentários (foto e username) quando não tiverem
   useEffect(() => {
     if (!post?.comentarios) return;
 
     const comentariosSemFoto = post.comentarios.filter(
       (c) => c.autorId && !c.autorFoto,
     );
-    if (comentariosSemFoto.length === 0) return;
+    const comentariosSemUsername = post.comentarios.filter(
+      (c) => c.autorId && !c.autorUsername,
+    );
 
-    const carregarFotos = async () => {
+    if (comentariosSemFoto.length === 0 && comentariosSemUsername.length === 0) return;
+
+    const carregarDados = async () => {
       const novasFotos = {};
+      const novosUsernames = {};
+
+      // IDs únicos para buscar uma única vez por autor
+      const idsUnicos = new Set([
+        ...comentariosSemFoto.map(c => c.autorId),
+        ...comentariosSemUsername.map(c => c.autorId)
+      ]);
+
       await Promise.all(
-        comentariosSemFoto.map(async (c) => {
+        Array.from(idsUnicos).map(async (autorId) => {
           try {
-            const snap = await getDoc(doc(db, "usuarios", c.autorId));
+            const snap = await getDoc(doc(db, "usuarios", autorId));
             if (snap.exists()) {
-              novasFotos[c.autorId] = snap.data().fotoPerfil || "";
+              const data = snap.data();
+              if (data.fotoPerfil) novasFotos[autorId] = data.fotoPerfil;
+              if (data.username) novosUsernames[autorId] = data.username;
             }
           } catch (error) {
-            console.error("Erro ao carregar foto do comentário:", error);
+            console.error("Erro ao carregar dados do autor do comentário:", error);
           }
-        }),
+        })
       );
+
       setFotosComentarios((prev) => ({ ...prev, ...novasFotos }));
+      setUsernamesComentarios((prev) => ({ ...prev, ...novosUsernames }));
     };
 
-    carregarFotos();
+    carregarDados();
   }, [post]);
 
   const mostrarFeedback = (msg, tipo = "sucesso") => {
@@ -135,6 +152,7 @@ export default function VisualizacaoPost() {
           tipo: "curtida",
           de: user.displayName || "Pescador",
           de_id: user.uid,
+          de_username: usuarioLogado?.username || "",
           para: userId,
           postId: postId,
           createdAt: serverTimestamp(),
@@ -146,21 +164,24 @@ export default function VisualizacaoPost() {
     }
   };
 
+  // 🔥 NOVO: handleComentar agora salva autorUsername
   const handleComentar = async () => {
     if (!user || !comentario.trim() || !post) return;
 
     setEnviando(true);
     const textoComentario = comentario.trim();
 
-    // Usa a foto do usuário logado (Firestore) ou fallback do Auth
     const fotoAutor = usuarioLogado?.fotoPerfil || user.photoURL || "";
+    const nomeAutor = usuarioLogado?.nome || user.displayName || "Pescador";
+    const usernameAutor = usuarioLogado?.username || ""; // 🔥 novo
 
     const novoComentario = {
       id: Date.now(),
       texto: textoComentario,
-      autorNome: usuarioLogado?.nome || user.displayName || "Pescador",
+      autorNome: nomeAutor,
       autorFoto: fotoAutor,
       autorId: user.uid,
+      autorUsername: usernameAutor, // 🔥 novo campo
       data: new Date().toLocaleString(),
     };
 
@@ -180,8 +201,9 @@ export default function VisualizacaoPost() {
       if (user.uid !== userId) {
         await addDoc(collection(db, "notificacoes"), {
           tipo: "comentario",
-          de: usuarioLogado?.nome || user.displayName || "Pescador",
+          de: nomeAutor,
           de_id: user.uid,
+          de_username: usuarioLogado?.username || "",
           para: userId,
           texto: textoComentario,
           postId: postId,
@@ -340,7 +362,7 @@ export default function VisualizacaoPost() {
           </div>
 
           <div className="vp-info">
-            {/* AUTOR */}
+            {/* AUTOR - com username 🔥 */}
             <div className="vp-autor">
               <div
                 className="vp-autor-clicavel"
@@ -369,6 +391,10 @@ export default function VisualizacaoPost() {
                   title={`Ver perfil de ${usuarioPerfil?.nome || "Pescador"}`}
                 >
                   {usuarioPerfil?.nome || "Pescador"}
+                  {/* 🔥 NOVO: username do autor do post */}
+                  {usuarioPerfil?.username && (
+                    <span className="vp-autor-username"> @{usuarioPerfil.username}</span>
+                  )}
                 </span>
                 <span className="vp-data">{post.data}</span>
               </div>
@@ -468,8 +494,8 @@ export default function VisualizacaoPost() {
               {post.comentarios?.length > 0 ? (
                 <div className="vp-comentarios-lista">
                   {post.comentarios.map((c) => {
-                    const fotoExibir =
-                      c.autorFoto || fotosComentarios[c.autorId];
+                    const fotoExibir = c.autorFoto || fotosComentarios[c.autorId];
+                    const usernameExibir = c.autorUsername || usernamesComentarios[c.autorId];
                     return (
                       <div key={c.id || c.data} className="vp-comentario-item">
                         {/* Foto clicável */}
@@ -504,6 +530,10 @@ export default function VisualizacaoPost() {
                             }
                           >
                             {c.autorNome || "Pescador"}
+                            {/* 🔥 NOVO: username do autor do comentário */}
+                            {usernameExibir && (
+                              <span className="vp-comentario-username"> @{usernameExibir}</span>
+                            )}
                           </span>
                           <p className="vp-comentario-texto">{c.texto}</p>
                           <span className="vp-comentario-data">{c.data}</span>
@@ -518,7 +548,7 @@ export default function VisualizacaoPost() {
                 </p>
               )}
 
-              {/* NOVO COMENTÁRIO COM FOTO DO USUÁRIO LOGADO */}
+              {/* NOVO COMENTÁRIO COM FOTO E USERNAME DO USUÁRIO LOGADO */}
               {user && (
                 <div className="vp-novo-comentario">
                   {usuarioLogado?.fotoPerfil ? (
