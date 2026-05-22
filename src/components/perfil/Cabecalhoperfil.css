@@ -194,12 +194,6 @@
   line-height: 1.2;
 }
 
-.usuario-info-linha {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .usuario-icone {
   font-size: 15px;
   color: var(--cor-texto-claro);
@@ -500,6 +494,58 @@ body.dark-mode .btn-cancelar:hover {
 @keyframes spin-notif {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/* =========================================
+   USERNAME (handle)
+   ========================================= */
+.usuario-nome {
+  margin: 0 0 4px 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--cor-secundaria);
+  line-height: 1.2;
+}
+
+.usuario-username-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.usuario-username-icone {
+  font-size: 18px;
+  color: var(--cor-texto-claro);
+}
+
+.usuario-username {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-texto-claro);
+  letter-spacing: -0.2px;
+}
+
+/* Ajuste para mobile */
+@media (max-width: 600px) {
+  .usuario-username-container {
+    margin-bottom: 6px;
+  }
+  .usuario-username {
+    font-size: 0.8rem;
+  }
+  .usuario-username-icone {
+    font-size: 16px;
+  }
+}
+
+/* Dark mode */
+body.dark-mode .usuario-username {
+  color: #a0aab5;
+}
+
+body.dark-mode .usuario-username-icone {
+  color: #7f8c8d;
 }
 
 /* ==============================================
