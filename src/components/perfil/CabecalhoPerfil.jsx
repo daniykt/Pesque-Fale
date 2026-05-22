@@ -19,6 +19,25 @@ export default function CabecalhoPerfil({
   onDeixarDeSeguir,
   onMensagem,
 }) {
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef(null);
+
+  const handleCopyUsername = () => {
+    if (!usuario?.username) return;
+
+    const usernameToCopy = `${usuario.username}`;
+    navigator.clipboard
+      .writeText(usernameToCopy)
+      .then(() => {
+        setCopied(true);
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500);
+      })
+      .catch((err) => {
+        console.error("Erro ao copiar:", err);
+      });
+  };
+
   const navigate = useNavigate();
   const fileInputFotoRef = useRef(null);
   const fileInputBannerRef = useRef(null);
@@ -195,8 +214,16 @@ export default function CabecalhoPerfil({
         <h2 className="usuario-nome">{usuario?.nome || "Usuário"}</h2>
 
         {usuario?.username && (
-          <div className="usuario-username-container">
+          <div
+            className="usuario-username-container"
+            onClick={handleCopyUsername}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleCopyUsername()}
+            title="Clique para copiar username"
+          >
             <span className="usuario-username">@{usuario.username}</span>
+            {copied && <span className="copy-tooltip">Copiado!</span>}
           </div>
         )}
         {localizacao && (

@@ -632,3 +632,79 @@ body.dark-mode .notif-btn-seguindo-ativo:hover {
   color: #f87171;
   border-color: #f87171;
 }
+
+/* =========================================
+   USERNAME CLICÁVEL E TOOLTIP
+   ========================================= */
+.usuario-username-container {
+  display: inline-flex;       /* muda de flex para inline-flex */
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border-radius: 20px;
+  padding: 2px 8px 2px 4px;  /* espaço extra para o tooltip */
+  transition: background 0.2s ease, transform 0.1s ease;
+  width: fit-content;
+  position: relative;
+}
+
+.usuario-username-container:hover {
+  background: rgba(0, 123, 255, 0.08);
+}
+
+.usuario-username-container:active {
+  transform: scale(0.98);
+}
+
+.copy-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translate(8px, -50%);
+  background: #1e293b;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: fadeInOut 1.5s ease forwards;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(12px, -50%); }
+  15% { opacity: 1; transform: translate(8px, -50%); }
+  85% { opacity: 1; transform: translate(8px, -50%); }
+  100% { opacity: 0; transform: translate(12px, -50%); }
+}
+
+/* Dark mode */
+body.dark-mode .usuario-username-container:hover {
+  background: rgba(168, 192, 240, 0.12);
+}
+
+body.dark-mode .copy-tooltip {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+/* Mobile: ajuste para não invadir tela */
+@media (max-width: 600px) {
+  .copy-tooltip {
+    left: auto;
+    right: 0;
+    transform: translate(0, -100%);
+    top: -8px;
+    font-size: 0.65rem;
+  }
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(0, -90%); }
+    15% { opacity: 1; transform: translate(0, -100%); }
+    85% { opacity: 1; transform: translate(0, -100%); }
+    100% { opacity: 0; transform: translate(0, -110%); }
+  }
+}
