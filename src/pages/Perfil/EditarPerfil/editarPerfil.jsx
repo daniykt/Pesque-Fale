@@ -314,7 +314,7 @@ export default function EditarPerfil() {
           {/* ========== NOVO CAMPO USERNAME ========== */}
           <div className="editar-secao">
             <label className="editar-label">
-              Username <span className="editar-obrigatorio">(opcional, mas recomendado)</span>
+              Username
             </label>
             <div className="editar-input-icone">
               <span className="material-symbols-outlined editar-input-icone-symbol">

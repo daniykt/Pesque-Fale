@@ -79,11 +79,6 @@
   color: var(--cor-secundaria);
 }
 
-.editar-obrigatorio {
-  color: #e74c3c;
-  margin-left: 2px;
-}
-
 .editar-dica {
   margin: 0;
   font-size: 0.8rem;
@@ -162,7 +157,6 @@
   height: 110px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #007bff;
   box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
   display: block;
 }
@@ -171,7 +165,6 @@
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  border: 4px solid #007bff;
   background-color: #f0f4ff;
   display: flex;
   align-items: center;
