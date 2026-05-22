@@ -753,7 +753,6 @@ body.home-with-sidebar .main-content {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.85rem;
-  color: var(--gray-600);
 }
 
 .carousel-local .material-symbols-outlined {
@@ -763,13 +762,12 @@ body.home-with-sidebar .main-content {
 
 .carousel-desc {
   font-size: 0.85rem;
-  color: var(--gray-600);
 }
 
 .event-btn {
   align-self: flex-start;
   margin-top: auto;
-  background: var(--primary);
+  background: #062A6c;
   color: white;
   border: none;
   padding: 0.5rem 1.2rem;
@@ -791,7 +789,7 @@ body.home-with-sidebar .main-content {
 }
 
 .stars { font-size: 0.95rem; }
-.rating-num { font-weight: 700; color: var(--primary-theme); }
+.rating-num { font-weight: 700; }
 .rating-count { font-size: 0.8rem; color: var(--gray-600); }
 
 .carousel-dots {
