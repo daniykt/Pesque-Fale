@@ -66,7 +66,6 @@ export default function CabecalhoPerfil({
   };
 
   const renderizarBotoes = () => {
-    // ── Perfil próprio ──
     if (isOwnProfile) {
       return (
         <>
@@ -82,7 +81,6 @@ export default function CabecalhoPerfil({
       );
     }
 
-    // ── Já segue B ──
     if (isFollowing) {
       return (
         <>
@@ -100,7 +98,6 @@ export default function CabecalhoPerfil({
       );
     }
 
-    // ── Não segue B ──
     return (
       <button className="btn-cabecalho btn-seguir" onClick={onSeguir}>
         <span className="material-symbols-outlined">person_add</span>
@@ -169,9 +166,14 @@ export default function CabecalhoPerfil({
         </>
       )}
 
-      {/* INFO USUÁRIO */}
+      {/* INFO USUÁRIO – NOME + USERNAME */}
       <div className="usuario-data">
-        <h2 className="usuario-nome">{usuario?.nome || 'Usuário'}</h2>
+        <h2 className="usuario-nome">
+          {usuario?.nome || 'Usuário'}
+          {usuario?.username && (
+            <span className="usuario-username"> @{usuario.username}</span>
+          )}
+        </h2>
         {usuario?.email && (
           <div className="usuario-info-linha">
             <span className="material-symbols-outlined usuario-icone">mail</span>
