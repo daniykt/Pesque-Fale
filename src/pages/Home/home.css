@@ -1725,3 +1725,26 @@ body.dark-mode .skeleton-action {
 .comment-input-disabled button {
   cursor: not-allowed;
 }
+
+/* =========================================
+   USERNAME NO POST DA HOME
+========================================= */
+.post-author-username {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #8e8e8e;
+  margin-left: 6px;
+}
+
+.comment-author-username {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #9e9e9e;
+  margin-left: 5px;
+}
+
+/* Dark mode */
+body.dark-mode .post-author-username,
+body.dark-mode .comment-author-username {
+  color: #aaa;
+}

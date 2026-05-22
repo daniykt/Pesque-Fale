@@ -181,9 +181,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
           />
         )}
         <div className="post-author-info">
-          <h3 className="post-author post-author--link" onClick={() => onVerPerfil(post.autorId)}>
-            {post.autorNome}
-          </h3>
+<h3 className="post-author post-author--link" onClick={() => onVerPerfil(post.autorId)}>
+  {post.autorNome}
+  {post.autorUsername && (
+    <span className="post-author-username"> @{post.autorUsername}</span>
+  )}
+</h3>
           <p className="post-meta">
             {post.local && `${post.local} · `}{post.data}
           </p>
@@ -308,12 +311,12 @@ function PostCard({ post, user, usuarioDados, onCurtir, onComentar, onVerPerfil,
                   />
                 )}
                 <div className="comment-content-bubble">
-                  <span
-                    className="comment-author-name comment-author-name--clickable"
-                    onClick={() => c.autorId && onVerPerfil(c.autorId)}
-                  >
-                    {c.autorNome}
-                  </span>
+<span className="comment-author-name comment-author-name--clickable">
+  {c.autorNome}
+  {c.autorUsername && (
+    <span className="comment-author-username"> @{c.autorUsername}</span>
+  )}
+</span>
                   <p>{c.texto}</p>
                 </div>
               </div>
@@ -447,6 +450,7 @@ const Home = () => {
             autorId:   uid,
             autorNome: d.nome || d.displayName || "Pescador",
             autorFoto: d.fotoPerfil || "",
+            autorUsername: d.username || "",
             ...p,
           }));
         } else {
