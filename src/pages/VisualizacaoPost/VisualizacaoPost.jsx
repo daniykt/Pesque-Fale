@@ -80,7 +80,8 @@ export default function VisualizacaoPost() {
       (c) => c.autorId && !c.autorUsername,
     );
 
-    if (comentariosSemFoto.length === 0 && comentariosSemUsername.length === 0) return;
+    if (comentariosSemFoto.length === 0 && comentariosSemUsername.length === 0)
+      return;
 
     const carregarDados = async () => {
       const novasFotos = {};
@@ -88,8 +89,8 @@ export default function VisualizacaoPost() {
 
       // IDs únicos para buscar uma única vez por autor
       const idsUnicos = new Set([
-        ...comentariosSemFoto.map(c => c.autorId),
-        ...comentariosSemUsername.map(c => c.autorId)
+        ...comentariosSemFoto.map((c) => c.autorId),
+        ...comentariosSemUsername.map((c) => c.autorId),
       ]);
 
       await Promise.all(
@@ -102,9 +103,12 @@ export default function VisualizacaoPost() {
               if (data.username) novosUsernames[autorId] = data.username;
             }
           } catch (error) {
-            console.error("Erro ao carregar dados do autor do comentário:", error);
+            console.error(
+              "Erro ao carregar dados do autor do comentário:",
+              error,
+            );
           }
-        })
+        }),
       );
 
       setFotosComentarios((prev) => ({ ...prev, ...novasFotos }));
@@ -385,17 +389,21 @@ export default function VisualizacaoPost() {
               </div>
 
               <div className="vp-autor-dados">
-                <span
-                  className="vp-autor-nome"
-                  onClick={() => navigate(`/perfil/${userId}`)}
-                  title={`Ver perfil de ${usuarioPerfil?.nome || "Pescador"}`}
-                >
-                  {usuarioPerfil?.nome || "Pescador"}
-                  {/* 🔥 NOVO: username do autor do post */}
+                <div className="vp-autor-nome-wrapper">
+                  <span
+                    className="vp-autor-nome"
+                    onClick={() => navigate(`/perfil/${userId}`)}
+                  >
+                    {usuarioPerfil?.nome || "Pescador"}
+                  </span>
                   {usuarioPerfil?.username && (
-                    <span className="vp-autor-username"> @{usuarioPerfil.username}</span>
+                    <div className="vp-autor-username-container">
+                      <span className="vp-autor-username">
+                        @{usuarioPerfil.username}
+                      </span>
+                    </div>
                   )}
-                </span>
+                </div>
                 <span className="vp-data">{post.data}</span>
               </div>
 
@@ -494,8 +502,10 @@ export default function VisualizacaoPost() {
               {post.comentarios?.length > 0 ? (
                 <div className="vp-comentarios-lista">
                   {post.comentarios.map((c) => {
-                    const fotoExibir = c.autorFoto || fotosComentarios[c.autorId];
-                    const usernameExibir = c.autorUsername || usernamesComentarios[c.autorId];
+                    const fotoExibir =
+                      c.autorFoto || fotosComentarios[c.autorId];
+                    const usernameExibir =
+                      c.autorUsername || usernamesComentarios[c.autorId];
                     return (
                       <div key={c.id || c.data} className="vp-comentario-item">
                         {/* Foto clicável */}
@@ -523,18 +533,18 @@ export default function VisualizacaoPost() {
                           </div>
                         )}
                         <div className="vp-comentario-conteudo">
-                          <span
-                            className="vp-comentario-autor vp-comentario-autor--clickable"
-                            onClick={() =>
-                              c.autorId && navigate(`/perfil/${c.autorId}`)
-                            }
-                          >
-                            {c.autorNome || "Pescador"}
-                            {/* 🔥 NOVO: username do autor do comentário */}
+                          <div className="vp-comentario-autor-wrapper">
+                            <span className="vp-comentario-autor ...">
+                              {c.autorNome || "Pescador"}
+                            </span>
                             {usernameExibir && (
-                              <span className="vp-comentario-username"> @{usernameExibir}</span>
+                              <div className="vp-comentario-username-container">
+                                <span className="vp-comentario-username">
+                                  @{usernameExibir}
+                                </span>
+                              </div>
                             )}
-                          </span>
+                          </div>
                           <p className="vp-comentario-texto">{c.texto}</p>
                           <span className="vp-comentario-data">{c.data}</span>
                         </div>
