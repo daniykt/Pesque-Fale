@@ -1517,14 +1517,13 @@ body.dark-mode .dica-header .material-symbols-outlined {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background-color: rgba(6, 42, 108, 0.1);
-    border: 2px solid #062A6C;
+    background: linear-gradient(135deg, var(--chat-primary), var(--chat-primary-dark));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.3rem;
     font-weight: 700;
-    color: #062A6C;
+    color: white;
     flex-shrink: 0;
 }
 
@@ -1550,13 +1549,6 @@ body.dark-mode .dica-header .material-symbols-outlined {
 }
 .avatar-inicial[role="button"]:hover {
   opacity: 0.8;
-}
-
-/* Dark mode */
-body.dark-mode .avatar-inicial {
-  background-color: rgba(144, 202, 249, 0.15);
-  color: #90caf9;
-  border-color: rgba(144, 202, 249, 0.3);
 }
 
 /* =========================================
