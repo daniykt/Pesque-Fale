@@ -24,7 +24,7 @@ const DESKTOP_STEPS = [
     selector: 'a[href="/pesquisar"]',
     titulo: 'Pesquisa 🔍',
     descricao:
-      'Encontre os melhores rios, lagos e pesqueiros perto de você. Veja avaliações de outros pescadores.',
+      'Pesquise usuarios que tem conta no Pesque & Fale. Encontre os melhores rios, lagos e pesqueiros perto de você.',
     posicao: 'direita',
   },
   {
