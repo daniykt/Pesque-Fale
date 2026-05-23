@@ -171,20 +171,27 @@ export default function CabecalhoPerfil({
       {/* LINHA INFERIOR */}
       <div className="cabecalho-inferior">
         <div className="foto-perfil-wrapper">
-          <img
-            src={fotoPerfil || null}
-            alt="Foto de Perfil"
-            className="foto-perfil"
-            onClick={handleFotoClick}
-            title={isOwnProfile ? "Clique para trocar a foto" : ""}
-          />
+          {fotoPerfil ? (
+            <img
+              src={fotoPerfil}
+              alt="Foto de Perfil"
+              className="foto-perfil"
+              onClick={handleFotoClick}
+              title={isOwnProfile ? "Clique para trocar a foto" : ""}
+            />
+          ) : (
+            <div className="foto-perfil-placeholder" onClick={handleFotoClick}>
+              <span className="placeholder-iniciais">
+                {usuario?.nome?.charAt(0).toUpperCase() || "?"}
+              </span>
+            </div>
+          )}
           {isOwnProfile && (
             <div className="foto-perfil-overlay" onClick={handleFotoClick}>
               <span className="material-symbols-outlined">photo_camera</span>
             </div>
           )}
         </div>
-
         {/* Botões desktop */}
         <div className="cabecalho-botoes">{renderizarBotoes()}</div>
       </div>
