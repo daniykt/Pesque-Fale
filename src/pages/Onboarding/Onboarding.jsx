@@ -17,6 +17,7 @@ const TOTAL_ETAPAS = 7; // ← agora são 7 etapas
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [usernameErro, setUsernameErro] = useState("");
 
   /* ─── Estados ─── */
   const [user, setUser] = useState(null);
@@ -181,14 +182,13 @@ export default function Onboarding() {
   const handleSalvarUsername = async () => {
     if (!user) return;
 
-    // Obrigatório: não pode avançar sem username
     if (!username.trim()) {
-      alert("O username é obrigatório para continuar.");
+      setUsernameErro("O username é obrigatório para continuar.");
       return;
     }
 
     if (!usernameDisponivel) {
-      alert("Username inválido ou indisponível. Escolha outro.");
+      setUsernameErro("Username inválido ou indisponível. Escolha outro.");
       return;
     }
 
@@ -196,9 +196,10 @@ export default function Onboarding() {
       await updateDoc(doc(db, "usuarios", user.uid), {
         username: username.trim(),
       });
+      setUsernameErro("");
     } catch (error) {
       console.error("Erro ao salvar username:", error);
-      alert("Erro ao salvar username. Tente novamente.");
+      setUsernameErro("Erro ao salvar username. Tente novamente.");
       return;
     }
 
@@ -475,7 +476,10 @@ export default function Onboarding() {
               className="onboarding-input"
               placeholder="seu_username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setUsernameErro("");
+              }}
             />
           </div>
 
@@ -493,6 +497,15 @@ export default function Onboarding() {
               }}
             >
               {usernameMensagem}
+            </p>
+          )}
+
+          {usernameErro && (
+            <p
+              className="onboarding-dica"
+              style={{ color: "#d32f2f", fontWeight: 500 }}
+            >
+              {usernameErro}
             </p>
           )}
 
