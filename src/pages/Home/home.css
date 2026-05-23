@@ -753,7 +753,6 @@ body.home-with-sidebar .main-content {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.85rem;
-  color: var(--gray-600);
 }
 
 .carousel-local .material-symbols-outlined {
@@ -763,13 +762,12 @@ body.home-with-sidebar .main-content {
 
 .carousel-desc {
   font-size: 0.85rem;
-  color: var(--gray-600);
 }
 
 .event-btn {
   align-self: flex-start;
   margin-top: auto;
-  background: var(--primary);
+  background: #062A6c;
   color: white;
   border: none;
   padding: 0.5rem 1.2rem;
@@ -791,7 +789,7 @@ body.home-with-sidebar .main-content {
 }
 
 .stars { font-size: 0.95rem; }
-.rating-num { font-weight: 700; color: var(--primary-theme); }
+.rating-num { font-weight: 700; }
 .rating-count { font-size: 0.8rem; color: var(--gray-600); }
 
 .carousel-dots {
@@ -1219,6 +1217,10 @@ body.dark-mode .comment-empty {
   background-color: #fff0f3;
 }
 
+body.dark-mode .action-btn:hover {
+  color: white;
+}
+
 /* Botão de comentário tem estilo parecido mas cor diferente, para não conflitar com curtida */
 
 .action-comentario-btn {
@@ -1515,14 +1517,13 @@ body.dark-mode .dica-header .material-symbols-outlined {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background-color: rgba(6, 42, 108, 0.1);
-    border: 2px solid #062A6C;
+    background: linear-gradient(135deg, var(--chat-primary), var(--chat-primary-dark));
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.3rem;
     font-weight: 700;
-    color: #062A6C;
+    color: white;
     flex-shrink: 0;
 }
 
@@ -1548,13 +1549,6 @@ body.dark-mode .dica-header .material-symbols-outlined {
 }
 .avatar-inicial[role="button"]:hover {
   opacity: 0.8;
-}
-
-/* Dark mode */
-body.dark-mode .avatar-inicial {
-  background-color: rgba(144, 202, 249, 0.15);
-  color: #90caf9;
-  border-color: rgba(144, 202, 249, 0.3);
 }
 
 /* =========================================
@@ -1724,4 +1718,97 @@ body.dark-mode .skeleton-action {
 
 .comment-input-disabled button {
   cursor: not-allowed;
+}
+
+/* =========================================
+   USERNAME NO POST DA HOME
+========================================= */
+.post-author-username {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #8e8e8e;
+  margin-left: 6px;
+}
+
+.comment-author-username {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #9e9e9e;
+  margin-left: 5px;
+}
+
+/* Dark mode */
+body.dark-mode .post-author-username,
+body.dark-mode .comment-author-username {
+  color: #aaa;
+}
+
+/* =========================================
+   USERNAME ABAIXO DO NOME (post e comentário)
+   ========================================= */
+.post-author-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.post-author {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 1.3;
+}
+
+.post-author-username-container {
+  display: flex;
+  align-items: center;
+}
+
+.post-author-username {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #8e8e8e;
+  letter-spacing: -0.2px;
+}
+
+.comment-author-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.comment-author-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #003366;
+  line-height: 1.3;
+}
+
+.comment-author-username-container {
+  display: flex;
+  align-items: center;
+}
+
+.comment-author-username {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: #9e9e9e;
+  letter-spacing: -0.2px;
+}
+
+/* Dark mode */
+body.dark-mode .post-author {
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-author-username,
+body.dark-mode .comment-author-username {
+  color: #aaa;
+}
+
+body.dark-mode .comment-author-name {
+  color: #90caf9;
 }

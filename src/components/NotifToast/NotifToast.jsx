@@ -259,9 +259,16 @@ export default function NotifToast() {
 
             {/* Corpo */}
             <div className="notif-toast__body">
-              <p className="notif-toast__text">
-                <strong>{notif.de}</strong> {gerarTexto(notif)}
-              </p>
+<p className="notif-toast__text">
+  <strong>
+    {notif.de}
+    {notif.de_username && (
+      <span style={{ fontWeight: 400, fontSize: "0.85em", marginLeft: "5px" }}>
+        @{notif.de_username}
+      </span>
+    )}
+  </strong> {gerarTexto(notif)}
+</p>
               {notif.texto && (
                 <span className="notif-toast__quote">{notif.texto}</span>
               )}

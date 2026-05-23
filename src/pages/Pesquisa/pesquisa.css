@@ -132,7 +132,6 @@ h1 {
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #062A6C;
 }
 
 .user-info {
@@ -179,6 +178,101 @@ h1 {
 
 .user-action-btn:hover {
     background-color: #0a3a8a;
+}
+
+/* ===== SKELETON LOADING (cards) ===== */
+.skeleton-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  animation: shimmer 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  border-radius: 8px;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeleton-name {
+  width: 70%;
+  height: 18px;
+  margin-bottom: 8px;
+}
+
+.skeleton-username {
+  width: 50%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-bio {
+  width: 90%;
+  height: 12px;
+}
+
+.skeleton-btn {
+  width: 90px;
+  height: 34px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Skeletons para locais */
+.skeleton-location .skeleton-image {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.skeleton-location .skeleton-title {
+  width: 80%;
+  height: 20px;
+  margin-bottom: 12px;
+}
+
+.skeleton-location .skeleton-rating {
+  width: 60%;
+  height: 16px;
+  margin-bottom: 12px;
+}
+
+.skeleton-location .skeleton-address {
+  width: 90%;
+  height: 14px;
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+/* Dark mode para skeletons */
+body.dark-mode .skeleton-avatar,
+body.dark-mode .skeleton-line,
+body.dark-mode .skeleton-btn,
+body.dark-mode .skeleton-location .skeleton-image {
+  background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+}
+
+/* Placeholder de avatar com iniciais (já existente, melhorado) */
+.user-avatar-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--chat-primary), var(--chat-primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
 }
 
 /* ===== CARD DE LOCAL (NOVO ESTILO) ===== */
@@ -469,22 +563,6 @@ h1 {
     font-size: 0.8rem;
     margin-left: 4px;
     vertical-align: middle;
-}
-
-/* Placeholder de avatar quando não há foto */
-.user-avatar-placeholder {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: rgba(6, 42, 108, 0.1);
-    border: 2px solid #062A6C;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #062A6C;
-    flex-shrink: 0;
 }
 
 /* ===== ANIMAÇÕES ===== */
