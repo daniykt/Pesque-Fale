@@ -363,8 +363,7 @@ const matchAvaliacao =
           {loading ? (
             <div className="results-grid">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton-card">
-                  activeTab === "users" ? <SkeletonUserCard key={i} /> : <SkeletonLocationCard key={i} />
+                <div key={i} className="skeleton-card"><SkeletonUserCard key={i} /> : <SkeletonLocationCard key={i} />
                 </div>
               ))}
             </div>
