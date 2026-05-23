@@ -77,7 +77,8 @@ export default function Onboarding() {
           // Se já existir username (caso raro de reedição) preenche
           if (data.username) setUsername(data.username);
 
-          const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
+          const nomeCompleto =
+            data.nome || currentUser.displayName || "Pescador";
           setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
       } catch (e) {
@@ -100,9 +101,7 @@ export default function Onboarding() {
 
       if (!validarUsername(username)) {
         setUsernameDisponivel(false);
-        setUsernameMensagem(
-          "3-20 caracteres. Use letras, números, _ ou ."
-        );
+        setUsernameMensagem("3-20 caracteres. Use letras, números, _ ou .");
         return;
       }
 
@@ -144,7 +143,9 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { fotoPerfil: fotoPreview });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        fotoPerfil: fotoPreview,
+      });
     } catch (e) {
       console.error("Erro ao salvar foto:", e);
     }
@@ -178,15 +179,14 @@ export default function Onboarding() {
 
   // Etapa 4: Username (NOVA)
   const handleSalvarUsername = async () => {
-    if (!user) return avancar();
+    if (!user) return;
 
-    // Se o usuário não digitou nada OU pulou, apenas avança sem salvar
+    // Obrigatório: não pode avançar sem username
     if (!username.trim()) {
-      avancar();
+      alert("O username é obrigatório para continuar.");
       return;
     }
 
-    // Se digitou mas não está disponível, não avança
     if (!usernameDisponivel) {
       alert("Username inválido ou indisponível. Escolha outro.");
       return;
@@ -235,7 +235,9 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { banner: fotoCapaPreview });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        banner: fotoCapaPreview,
+      });
     } catch (e) {
       console.error("Erro ao salvar capa:", e);
     }
@@ -247,7 +249,9 @@ export default function Onboarding() {
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { onboardingConcluido: true });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        onboardingConcluido: true,
+      });
     } catch (e) {
       console.error("Erro ao finalizar onboarding:", e);
     }
@@ -268,11 +272,15 @@ export default function Onboarding() {
           const ativa = numero <= etapa;
           return (
             <React.Fragment key={i}>
-              <div className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}>
+              <div
+                className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}
+              >
                 <span className="onboarding-progresso-numero">{numero}</span>
               </div>
               {i < TOTAL_ETAPAS - 1 && (
-                <div className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`} />
+                <div
+                  className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`}
+                />
               )}
             </React.Fragment>
           );
@@ -289,29 +297,39 @@ export default function Onboarding() {
           </h1>
 
           <p className="onboarding-descricao">
-            Vamos montar o seu perfil para que outros pescadores possam te conhecer.
-            Vai levar menos de 2 minutos!
+            Vamos montar o seu perfil para que outros pescadores possam te
+            conhecer. Vai levar menos de 2 minutos!
           </p>
 
           <div className="onboarding-passos">
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">photo_camera</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                photo_camera
+              </span>
               <span>Foto de perfil</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">person</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                person
+              </span>
               <span>Nome e localização</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">alternate_email</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                alternate_email
+              </span>
               <span>Username único</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">edit_note</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                edit_note
+              </span>
               <span>Bio</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">image</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                image
+              </span>
               <span>Foto de capa</span>
             </div>
           </div>
@@ -332,7 +350,8 @@ export default function Onboarding() {
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Adicione sua foto de perfil</h1>
           <p className="onboarding-descricao">
-            Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
+            Uma boa foto ajuda outros pescadores a te reconhecerem na
+            comunidade.
           </p>
 
           <div
@@ -342,16 +361,26 @@ export default function Onboarding() {
           >
             {fotoPreview ? (
               <>
-                <img src={fotoPreview} alt="Foto de perfil" className="onboarding-foto-preview" />
+                <img
+                  src={fotoPreview}
+                  alt="Foto de perfil"
+                  className="onboarding-foto-preview"
+                />
                 <div className="onboarding-foto-overlay">
-                  <span className="material-symbols-outlined">photo_camera</span>
+                  <span className="material-symbols-outlined">
+                    photo_camera
+                  </span>
                   <span>Trocar foto</span>
                 </div>
               </>
             ) : (
               <div className="onboarding-foto-vazio">
-                <span className="material-symbols-outlined onboarding-foto-icone">add_a_photo</span>
-                <span className="onboarding-foto-texto">Clique para adicionar</span>
+                <span className="material-symbols-outlined onboarding-foto-icone">
+                  add_a_photo
+                </span>
+                <span className="onboarding-foto-texto">
+                  Clique para adicionar
+                </span>
               </div>
             )}
           </div>
@@ -378,13 +407,18 @@ export default function Onboarding() {
       {/* ── Etapa 3: Nome e localização ── */}
       {etapa === 3 && (
         <div className="onboarding-tela onboarding-tela-animada">
-          <h1 className="onboarding-titulo">Qual é o seu nome e onde você pesca?</h1>
+          <h1 className="onboarding-titulo">
+            Qual é o seu nome e onde você pesca?
+          </h1>
           <p className="onboarding-descricao">
-            Essas informações ajudam a personalizar sua experiência e a conectar você com pescadores da sua região.
+            Essas informações ajudam a personalizar sua experiência e a conectar
+            você com pescadores da sua região.
           </p>
 
           <div className="onboarding-input-wrapper">
-            <span className="material-symbols-outlined onboarding-input-icone">person</span>
+            <span className="material-symbols-outlined onboarding-input-icone">
+              person
+            </span>
             <input
               type="text"
               className="onboarding-input"
@@ -395,7 +429,9 @@ export default function Onboarding() {
           </div>
 
           <div className="onboarding-input-wrapper">
-            <span className="material-symbols-outlined onboarding-input-icone">location_on</span>
+            <span className="material-symbols-outlined onboarding-input-icone">
+              location_on
+            </span>
             <input
               type="text"
               className="onboarding-input"
@@ -405,7 +441,10 @@ export default function Onboarding() {
             />
           </div>
 
-          <button className="onboarding-btn-primary" onClick={handleSalvarNomeLocalizacao}>
+          <button
+            className="onboarding-btn-primary"
+            onClick={handleSalvarNomeLocalizacao}
+          >
             Continuar
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
@@ -421,13 +460,16 @@ export default function Onboarding() {
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Escolha seu username único</h1>
           <p className="onboarding-descricao">
-            Será usado no link do seu perfil e para te marcarem em posts e comentários.
+            Será usado no link do seu perfil e para te marcarem em posts e
+            comentários.
             <br />
             <small>Ex: joao_pescador, maria.2024</small>
           </p>
 
           <div className="onboarding-input-wrapper">
-            <span className="material-symbols-outlined onboarding-input-icone">alternate_email</span>
+            <span className="material-symbols-outlined onboarding-input-icone">
+              alternate_email
+            </span>
             <input
               type="text"
               className="onboarding-input"
@@ -462,10 +504,6 @@ export default function Onboarding() {
             Continuar
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
-
-          <button className="onboarding-btn-pular" onClick={pular}>
-            Pular (definir depois)
-          </button>
         </div>
       )}
 
@@ -474,7 +512,8 @@ export default function Onboarding() {
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
           <p className="onboarding-descricao">
-            Uma boa bio ajuda outros pescadores a te conhecerem e a se conectarem com você.
+            Uma boa bio ajuda outros pescadores a te conhecerem e a se
+            conectarem com você.
           </p>
 
           <div className="onboarding-input-wrapper onboarding-input-wrapper-bio">
@@ -518,7 +557,11 @@ export default function Onboarding() {
           >
             {fotoCapaPreview ? (
               <>
-                <img src={fotoCapaPreview} alt="Foto de capa" className="onboarding-capa-preview" />
+                <img
+                  src={fotoCapaPreview}
+                  alt="Foto de capa"
+                  className="onboarding-capa-preview"
+                />
                 <div className="onboarding-capa-overlay">
                   <span className="material-symbols-outlined">image</span>
                   <span>Trocar capa</span>
@@ -526,8 +569,12 @@ export default function Onboarding() {
               </>
             ) : (
               <div className="onboarding-capa-vazio">
-                <span className="material-symbols-outlined onboarding-capa-icone">add_photo_alternate</span>
-                <span className="onboarding-capa-texto">Clique para adicionar uma capa</span>
+                <span className="material-symbols-outlined onboarding-capa-icone">
+                  add_photo_alternate
+                </span>
+                <span className="onboarding-capa-texto">
+                  Clique para adicionar uma capa
+                </span>
               </div>
             )}
           </div>
@@ -560,8 +607,9 @@ export default function Onboarding() {
 
           <h1 className="onboarding-titulo">Perfil completo, bora pescar!</h1>
           <p className="onboarding-descricao">
-            Seu perfil foi configurado com sucesso. Agora você pode explorar locais de pesca,
-            conectar-se com outros pescadores e compartilhar suas aventuras.
+            Seu perfil foi configurado com sucesso. Agora você pode explorar
+            locais de pesca, conectar-se com outros pescadores e compartilhar
+            suas aventuras.
           </p>
 
           <button className="onboarding-btn-primary" onClick={handleConcluir}>
