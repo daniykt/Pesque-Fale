@@ -1742,3 +1742,73 @@ body.dark-mode .post-author-username,
 body.dark-mode .comment-author-username {
   color: #aaa;
 }
+
+/* =========================================
+   USERNAME ABAIXO DO NOME (post e comentário)
+   ========================================= */
+.post-author-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.post-author {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 1.3;
+}
+
+.post-author-username-container {
+  display: flex;
+  align-items: center;
+}
+
+.post-author-username {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #8e8e8e;
+  letter-spacing: -0.2px;
+}
+
+.comment-author-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.comment-author-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #003366;
+  line-height: 1.3;
+}
+
+.comment-author-username-container {
+  display: flex;
+  align-items: center;
+}
+
+.comment-author-username {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: #9e9e9e;
+  letter-spacing: -0.2px;
+}
+
+/* Dark mode */
+body.dark-mode .post-author {
+  color: #f1f1f1;
+}
+
+body.dark-mode .post-author-username,
+body.dark-mode .comment-author-username {
+  color: #aaa;
+}
+
+body.dark-mode .comment-author-name {
+  color: #90caf9;
+}
