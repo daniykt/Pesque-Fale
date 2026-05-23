@@ -41,6 +41,31 @@ const SearchBar = ({ placeholder, value, onChange }) => {
   );
 };
 
+// Skeleton para card de usuário
+const SkeletonUserCard = () => (
+  <div className="user-card skeleton-user">
+    <div className="skeleton-avatar"></div>
+    <div className="user-info">
+      <div className="skeleton-line skeleton-name"></div>
+      <div className="skeleton-line skeleton-username"></div>
+      <div className="skeleton-line skeleton-bio"></div>
+    </div>
+    <div className="skeleton-btn"></div>
+  </div>
+);
+
+// Skeleton para card de local
+const SkeletonLocationCard = () => (
+  <div className="location-card-new skeleton-location">
+    <div className="skeleton-image"></div>
+    <div className="location-card-content">
+      <div className="skeleton-line skeleton-title"></div>
+      <div className="skeleton-line skeleton-rating"></div>
+      <div className="skeleton-line skeleton-address"></div>
+    </div>
+  </div>
+);
+
 // Card de Usuário
 const UserCard = ({ user, onClick }) => {
   const [imgError, setImgError] = useState(false);
@@ -336,9 +361,12 @@ const matchAvaliacao =
         {/* Resultados */}
         <div className="results-section">
           {loading ? (
-            <div className="loading-state">
-              <i className="fas fa-spinner fa-pulse"></i>
-              <p>Carregando...</p>
+            <div className="results-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="skeleton-card">
+                  activeTab === "users" ? <SkeletonUserCard key={i} /> : <SkeletonLocationCard key={i} />
+                </div>
+              ))}
             </div>
           ) : filteredResults.length === 0 ? (
             <div className="empty-state">
