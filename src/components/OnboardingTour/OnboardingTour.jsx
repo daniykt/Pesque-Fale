@@ -6,7 +6,7 @@ const DESKTOP_STEPS = [
   {
     id: 'boas-vindas',
     selector: null,
-    titulo: 'Bem-vindo ao Pesque & Fale! 🎣',
+    titulo: 'Bem-vindo ao Pesque & Fale!',
     descricao:
       'Que bom ter você aqui! Deixa a gente te mostrar rapidinho as principais seções da plataforma.',
     posicao: 'centro',
@@ -14,7 +14,7 @@ const DESKTOP_STEPS = [
   {
     id: 'home',
     selector: 'a[href="/home"]',
-    titulo: 'Página Inicial 🏠',
+    titulo: 'Página Inicial',
     descricao:
       'Aqui você acompanha as publicações da comunidade, eventos de pesca e dicas do dia. É o coração da plataforma!',
     posicao: 'direita',
@@ -22,15 +22,15 @@ const DESKTOP_STEPS = [
   {
     id: 'pesquisa',
     selector: 'a[href="/pesquisar"]',
-    titulo: 'Pesquisa 🔍',
+    titulo: 'Pesquisa',
     descricao:
-      'Encontre os melhores rios, lagos e pesqueiros perto de você. Veja avaliações de outros pescadores.',
+      'Pesquise usuarios que tem conta no Pesque & Fale. Encontre os melhores rios, lagos e pesqueiros perto de você.',
     posicao: 'direita',
   },
   {
     id: 'chat',
     selector: 'a[href="/chat"]',
-    titulo: 'Chat 💬',
+    titulo: 'Chat',
     descricao:
       'Converse diretamente com outros pescadores! Troque dicas, combine pescarias e faça novas amizades.',
     posicao: 'direita',
@@ -38,7 +38,7 @@ const DESKTOP_STEPS = [
   {
     id: 'notificacoes',
     selector: 'a[href="/notificacao"]',
-    titulo: 'Notificações 🔔',
+    titulo: 'Notificações',
     descricao:
       'Fique por dentro das novidades! Veja quando alguém curtir ou comentar nas suas publicações.',
     posicao: 'direita',
@@ -46,7 +46,7 @@ const DESKTOP_STEPS = [
   {
     id: 'sobre',
     selector: 'a[href="/sobre"]',
-    titulo: 'Sobre Nós 🎓',
+    titulo: 'Sobre Nós',
     descricao:
       'Conheça a equipe por trás do Pesque & Fale e saiba mais sobre o projeto desenvolvido na FATEC.',
     posicao: 'direita',
@@ -54,7 +54,7 @@ const DESKTOP_STEPS = [
   {
     id: 'perfil',
     selector: 'a[href="/perfil"]',
-    titulo: 'Seu Perfil 👤',
+    titulo: 'Seu Perfil',
     descricao:
       'Aqui você personaliza sua conta, vê suas publicações e gerencia suas informações de pescador.',
     posicao: 'direita',
@@ -62,7 +62,7 @@ const DESKTOP_STEPS = [
   {
     id: 'logout',
     selector: '[data-tour="logout"]',
-    titulo: 'Sair da Conta 🚪',
+    titulo: 'Sair da Conta',
     descricao:
       'Aqui você pode sair da sua conta com segurança. Use quando estiver em um dispositivo compartilhado.',
     posicao: 'direita',
@@ -70,7 +70,7 @@ const DESKTOP_STEPS = [
   {
     id: 'tema',
     selector: '[data-tour="theme"]',
-    titulo: 'Modo Escuro 🌙',
+    titulo: 'Modo Escuro',
     descricao:
       'Prefere um visual mais confortável à noite? Ative o modo escuro com um clique!',
     posicao: 'direita',
@@ -89,7 +89,7 @@ const MOBILE_STEPS = [
   {
     id: 'home',
     selector: '.bottom-nav a[href="/home"]',
-    titulo: 'Página Inicial 🏠',
+    titulo: 'Página Inicial',
     descricao:
       'Acompanhe as publicações, eventos e dicas do dia. É o coração da plataforma!',
     posicao: 'cima',
@@ -97,15 +97,15 @@ const MOBILE_STEPS = [
   {
     id: 'pesquisa',
     selector: '.bottom-nav a[href="/pesquisar"]',
-    titulo: 'Pesquisa 🔍',
+    titulo: 'Pesquisa',
     descricao:
-      'Encontre os melhores rios, lagos e pesqueiros perto de você.',
+      'Pesquise usuarios que tem conta no Pesque & Fale. Encontre os melhores rios, lagos e pesqueiros perto de você.',
     posicao: 'cima',
   },
   {
     id: 'chat',
     selector: '.bottom-nav a[href="/chat"]',
-    titulo: 'Chat 💬',
+    titulo: 'Chat',
     descricao:
       'Converse com outros pescadores, troque dicas e combine pescarias.',
     posicao: 'cima',
@@ -113,7 +113,7 @@ const MOBILE_STEPS = [
   {
     id: 'notificacoes',
     selector: '.bottom-nav a[href="/notificacao"]',
-    titulo: 'Notificações 🔔',
+    titulo: 'Notificações',
     descricao:
       'Fique por dentro de curtidas e comentários nas suas publicações.',
     posicao: 'cima',
@@ -121,7 +121,7 @@ const MOBILE_STEPS = [
   {
     id: 'perfil',
     selector: '.bottom-nav a[href="/perfil"]',
-    titulo: 'Seu Perfil 👤',
+    titulo: 'Seu Perfil',
     descricao:
       'Personalize sua conta, veja suas publicações e gerencie suas informações.',
     posicao: 'cima',
@@ -129,7 +129,7 @@ const MOBILE_STEPS = [
   {
     id: 'menu-perfil',
     selector: '.pmenu-trigger',
-    titulo: 'Menu de Opções ⚙️',
+    titulo: 'Menu de Opções',
     descricao:
       'Aqui você encontra o "Sobre Nós", pode alternar entre Modo Claro e Escuro, e também sair da sua conta com segurança.',
     posicao: 'baixo',

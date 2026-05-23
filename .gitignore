@@ -37,3 +37,6 @@ src/firebase.js
 
 # 🔹 Vite
 vite.svg
+
+# 🔹 Dist
+dist/

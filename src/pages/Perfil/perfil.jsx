@@ -48,6 +48,15 @@ export default function Perfil() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   const postInputRef = useRef(null);
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  useEffect(() => {
+  if (!user?.uid) return;
+  const unsub = onSnapshot(doc(db, "usuarios", user.uid), (docSnap) => {
+    if (docSnap.exists()) setUsuarioLogado(docSnap.data());
+  });
+  return unsub;
+}, [user]);
 
   // 🔐 AUTH
   useEffect(() => {
@@ -119,9 +128,7 @@ export default function Perfil() {
           setIsFollowing(seguidores.includes(user.uid));
         }
 
-        // ⚠️ Não cachear campos binários (base64) para não estourar o localStorage (~5MB).
-        // Cache serve apenas para dados textuais: nome, bio, contadores etc.
-        // Imagens sempre virão do Firestore em tempo real.
+        // Cache apenas dados textuais (username incluso)
         const { fotoPerfil: _fp, banner: _bn, posts: postsRaw, ...dadosLeves } = data;
         const postsSemImagem = (postsRaw || []).map(({ imagem: _img, ...resto }) => resto);
         try {
@@ -130,7 +137,6 @@ export default function Perfil() {
             JSON.stringify({ uid: docSnap.id, ...dadosLeves, posts: postsSemImagem })
           );
         } catch (quotaError) {
-          // Se mesmo assim estourar (muitos perfis em cache), limpa e ignora silenciosamente
           console.warn("Cache de perfil ignorado por quota:", quotaError.message);
           localStorage.removeItem(`perfilCache_${docSnap.id}`);
         }
@@ -150,19 +156,17 @@ export default function Perfil() {
   const seguir = async () => {
     if (!user || !usuarioPerfil) return;
 
-    // Adiciona B nos seguidores de A imediatamente
     await updateDoc(doc(db, "usuarios", user.uid), {
       seguindo: arrayUnion(usuarioPerfil.id),
     });
-    // Adiciona A nos seguidores do perfil B
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayUnion(user.uid),
     });
-    // Notifica B — tipo "seguindo", com botão de seguir de volta
     await addDoc(collection(db, "notificacoes"), {
       tipo: "seguindo",
       de: user.displayName || "Pescador",
       de_id: user.uid,
+      de_username: usuarioLogado?.username || "",
       para: usuarioPerfil.id,
       lida: false,
       createdAt: serverTimestamp(),
@@ -179,7 +183,6 @@ export default function Perfil() {
     await updateDoc(doc(db, "usuarios", usuarioPerfil.id), {
       seguidores: arrayRemove(user.uid),
     });
-    // Remove notificação de "seguindo" que A enviou para B, se existir
     const q = query(
       collection(db, "notificacoes"),
       where("tipo", "==", "seguindo"),

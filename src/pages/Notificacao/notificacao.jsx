@@ -311,22 +311,27 @@ export default function Notificacao() {
   };
 
   const renderTexto = (n) => {
+
+  const nomeUsuario = n.de;
+  const username = n.de_username ? ` @${n.de_username}` : "";
+  const nomeCompleto = username ? `${nomeUsuario}${username}` : nomeUsuario;
+
     switch (n.tipo) {
       case "seguindo":
-        return <><strong>{n.de}</strong> começou a seguir você</>;
+        return <><strong>{nomeCompleto}</strong> começou a seguir você</>;
       case "curtida":
-        return <><strong>{n.de}</strong> curtiu sua publicação</>;
+        return <><strong>{nomeCompleto}</strong> curtiu sua publicação</>;
       case "comentario":
         return (
           <>
-            <strong>{n.de}</strong> comentou na sua publicação
+            <strong>{nomeCompleto}</strong> comentou na sua publicação
             {n.texto && <span className="notif-quote">"{n.texto}"</span>}
           </>
         );
       case "mensagem":
         return (
           <>
-            <strong>{n.de}</strong> te enviou uma mensagem
+            <strong>{nomeCompleto}</strong> te enviou uma mensagem
             {n.texto && <span className="notif-quote">"{n.texto}"</span>}
           </>
         );

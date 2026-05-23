@@ -5,13 +5,19 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 import { db, auth } from "../../firebase";
 import { observeAuthState } from "../../auth";
+import {
+  validarUsername,
+  verificarDisponibilidade,
+  gerarSugestao,
+} from "../../utils/usernameUtils";
 
 import "./Onboarding.css";
 
-const TOTAL_ETAPAS = 6;
+const TOTAL_ETAPAS = 7; // ← agora são 7 etapas
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [usernameErro, setUsernameErro] = useState("");
 
   /* ─── Estados ─── */
   const [user, setUser] = useState(null);
@@ -27,6 +33,12 @@ export default function Onboarding() {
   const [localizacao, setLocalizacao] = useState("");
   const [bio, setBio] = useState("");
 
+  // ========== NOVO: estados do username ==========
+  const [username, setUsername] = useState("");
+  const [usernameDisponivel, setUsernameDisponivel] = useState(false);
+  const [usernameVerificando, setUsernameVerificando] = useState(false);
+  const [usernameMensagem, setUsernameMensagem] = useState("");
+
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
@@ -35,8 +47,6 @@ export default function Onboarding() {
   const capaInputRef = useRef(null);
 
   /* ─── Efeitos ─── */
-
-  // Aplica tema escuro/claro no body
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add("dark-mode");
@@ -47,7 +57,7 @@ export default function Onboarding() {
     }
   }, [darkMode]);
 
-  // Observa estado de autenticação e carrega dados do usuário
+  // Observa autenticação e carrega dados do usuário
   useEffect(() => {
     const unsubscribe = observeAuthState(async (currentUser) => {
       if (!currentUser) {
@@ -65,8 +75,11 @@ export default function Onboarding() {
           setBio(data.bio || "");
           setFotoCapaPreview(data.banner || null);
           setFotoPreview(data.fotoPerfil || null);
+          // Se já existir username (caso raro de reedição) preenche
+          if (data.username) setUsername(data.username);
 
-          const nomeCompleto = data.nome || currentUser.displayName || "Pescador";
+          const nomeCompleto =
+            data.nome || currentUser.displayName || "Pescador";
           setNomeUsuario(nomeCompleto.split(" ")[0]);
         }
       } catch (e) {
@@ -78,8 +91,32 @@ export default function Onboarding() {
     return unsubscribe;
   }, [navigate]);
 
-  /* ─── Handlers ─── */
+  // ========== DEBOUNCE para verificar username ==========
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!username || username.trim() === "") {
+        setUsernameDisponivel(false);
+        setUsernameMensagem("");
+        return;
+      }
 
+      if (!validarUsername(username)) {
+        setUsernameDisponivel(false);
+        setUsernameMensagem("3-20 caracteres. Use letras, números, _ ou .");
+        return;
+      }
+
+      setUsernameVerificando(true);
+      const disponivel = await verificarDisponibilidade(username);
+      setUsernameVerificando(false);
+      setUsernameDisponivel(disponivel);
+      setUsernameMensagem(disponivel ? "✅ Disponível" : "❌ Indisponível");
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  /* ─── Handlers ─── */
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   const avancar = () => {
@@ -90,7 +127,7 @@ export default function Onboarding() {
     if (etapa < TOTAL_ETAPAS) setEtapa((e) => e + 1);
   };
 
-  // ── Etapa 2: Foto de perfil ──
+  // Etapa 2: Foto de perfil
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -107,14 +144,16 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { fotoPerfil: fotoPreview });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        fotoPerfil: fotoPreview,
+      });
     } catch (e) {
       console.error("Erro ao salvar foto:", e);
     }
     avancar();
   };
 
-  // ── Etapa 3: Nome e localização ──
+  // Etapa 3: Nome e localização
   const handleSalvarNomeLocalizacao = async () => {
     if (!user) return avancar();
 
@@ -139,7 +178,35 @@ export default function Onboarding() {
     avancar();
   };
 
-  // ── Etapa 4: Bio ──
+  // Etapa 4: Username (NOVA)
+  const handleSalvarUsername = async () => {
+    if (!user) return;
+
+    if (!username.trim()) {
+      setUsernameErro("O username é obrigatório para continuar.");
+      return;
+    }
+
+    if (!usernameDisponivel) {
+      setUsernameErro("Username inválido ou indisponível. Escolha outro.");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        username: username.trim(),
+      });
+      setUsernameErro("");
+    } catch (error) {
+      console.error("Erro ao salvar username:", error);
+      setUsernameErro("Erro ao salvar username. Tente novamente.");
+      return;
+    }
+
+    avancar();
+  };
+
+  // Etapa 5: Bio (antiga etapa 4)
   const handleSalvarBio = async () => {
     if (!user) return avancar();
 
@@ -152,7 +219,7 @@ export default function Onboarding() {
     avancar();
   };
 
-  // ── Etapa 5: Foto de capa ──
+  // Etapa 6: Foto de capa (antiga etapa 5)
   const handleCapaChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -169,47 +236,52 @@ export default function Onboarding() {
       return;
     }
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { banner: fotoCapaPreview });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        banner: fotoCapaPreview,
+      });
     } catch (e) {
       console.error("Erro ao salvar capa:", e);
     }
     avancar();
   };
 
-  // ── Etapa 6: Conclusão ──
+  // Etapa 7: Conclusão
   const handleConcluir = async () => {
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, "usuarios", user.uid), { onboardingConcluido: true });
+      await updateDoc(doc(db, "usuarios", user.uid), {
+        onboardingConcluido: true,
+      });
     } catch (e) {
       console.error("Erro ao finalizar onboarding:", e);
     }
 
-navigate("/home", {
-  state: {
-    showTour: true,
-  },
-  replace: true,
-});
+    navigate("/home", {
+      state: { showTour: true },
+      replace: true,
+    });
   };
 
   /* ─── Render ─── */
-
   return (
     <div className="onboarding-container">
-      {/* ── Barra de progresso ── */}
+      {/* Barra de progresso */}
       <div className="onboarding-progresso">
         {Array.from({ length: TOTAL_ETAPAS }).map((_, i) => {
           const numero = i + 1;
           const ativa = numero <= etapa;
           return (
             <React.Fragment key={i}>
-              <div className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}>
+              <div
+                className={`onboarding-progresso-circulo ${ativa ? "ativa" : ""}`}
+              >
                 <span className="onboarding-progresso-numero">{numero}</span>
               </div>
               {i < TOTAL_ETAPAS - 1 && (
-                <div className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`} />
+                <div
+                  className={`onboarding-progresso-linha ${numero < etapa ? "preenchida" : ""}`}
+                />
               )}
             </React.Fragment>
           );
@@ -219,7 +291,6 @@ navigate("/home", {
       {/* ── Etapa 1: Boas-vindas ── */}
       {etapa === 1 && (
         <div className="onboarding-tela onboarding-tela-animada">
-
           <h1 className="onboarding-titulo">
             Bem-vindo ao Pesque &amp; Fale,
             <br />
@@ -227,25 +298,39 @@ navigate("/home", {
           </h1>
 
           <p className="onboarding-descricao">
-            Vamos montar o seu perfil para que outros pescadores possam te conhecer.
-            Vai levar menos de 2 minutos!
+            Vamos montar o seu perfil para que outros pescadores possam te
+            conhecer. Vai levar menos de 2 minutos!
           </p>
 
           <div className="onboarding-passos">
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">photo_camera</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                photo_camera
+              </span>
               <span>Foto de perfil</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">person</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                person
+              </span>
               <span>Nome e localização</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">edit_note</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                alternate_email
+              </span>
+              <span>Username único</span>
+            </div>
+            <div className="onboarding-passo">
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                edit_note
+              </span>
               <span>Bio</span>
             </div>
             <div className="onboarding-passo">
-              <span className="material-symbols-outlined onboarding-passo-icone">image</span>
+              <span className="material-symbols-outlined onboarding-passo-icone">
+                image
+              </span>
               <span>Foto de capa</span>
             </div>
           </div>
@@ -265,9 +350,9 @@ navigate("/home", {
       {etapa === 2 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Adicione sua foto de perfil</h1>
-
           <p className="onboarding-descricao">
-            Uma boa foto ajuda outros pescadores a te reconhecerem na comunidade.
+            Uma boa foto ajuda outros pescadores a te reconhecerem na
+            comunidade.
           </p>
 
           <div
@@ -277,16 +362,26 @@ navigate("/home", {
           >
             {fotoPreview ? (
               <>
-                <img src={fotoPreview} alt="Foto de perfil" className="onboarding-foto-preview" />
+                <img
+                  src={fotoPreview}
+                  alt="Foto de perfil"
+                  className="onboarding-foto-preview"
+                />
                 <div className="onboarding-foto-overlay">
-                  <span className="material-symbols-outlined">photo_camera</span>
+                  <span className="material-symbols-outlined">
+                    photo_camera
+                  </span>
                   <span>Trocar foto</span>
                 </div>
               </>
             ) : (
               <div className="onboarding-foto-vazio">
-                <span className="material-symbols-outlined onboarding-foto-icone">add_a_photo</span>
-                <span className="onboarding-foto-texto">Clique para adicionar</span>
+                <span className="material-symbols-outlined onboarding-foto-icone">
+                  add_a_photo
+                </span>
+                <span className="onboarding-foto-texto">
+                  Clique para adicionar
+                </span>
               </div>
             )}
           </div>
@@ -313,14 +408,18 @@ navigate("/home", {
       {/* ── Etapa 3: Nome e localização ── */}
       {etapa === 3 && (
         <div className="onboarding-tela onboarding-tela-animada">
-          <h1 className="onboarding-titulo">Qual é o seu nome e onde você pesca?</h1>
-
+          <h1 className="onboarding-titulo">
+            Qual é o seu nome e onde você pesca?
+          </h1>
           <p className="onboarding-descricao">
-            Essas informações ajudam a personalizar sua experiência e a conectar você com pescadores da sua região.
+            Essas informações ajudam a personalizar sua experiência e a conectar
+            você com pescadores da sua região.
           </p>
 
           <div className="onboarding-input-wrapper">
-            <span className="material-symbols-outlined onboarding-input-icone">person</span>
+            <span className="material-symbols-outlined onboarding-input-icone">
+              person
+            </span>
             <input
               type="text"
               className="onboarding-input"
@@ -331,7 +430,9 @@ navigate("/home", {
           </div>
 
           <div className="onboarding-input-wrapper">
-            <span className="material-symbols-outlined onboarding-input-icone">location_on</span>
+            <span className="material-symbols-outlined onboarding-input-icone">
+              location_on
+            </span>
             <input
               type="text"
               className="onboarding-input"
@@ -341,7 +442,10 @@ navigate("/home", {
             />
           </div>
 
-          <button className="onboarding-btn-primary" onClick={handleSalvarNomeLocalizacao}>
+          <button
+            className="onboarding-btn-primary"
+            onClick={handleSalvarNomeLocalizacao}
+          >
             Continuar
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
@@ -352,13 +456,77 @@ navigate("/home", {
         </div>
       )}
 
-      {/* ── Etapa 4: Bio ── */}
+      {/* ── Etapa 4: Username (NOVA) ── */}
       {etapa === 4 && (
         <div className="onboarding-tela onboarding-tela-animada">
-          <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
-
+          <h1 className="onboarding-titulo">Escolha seu username único</h1>
           <p className="onboarding-descricao">
-            Uma boa bio ajuda outros pescadores a te conhecerem e a se conectarem com você.
+            Será usado no link do seu perfil e para te marcarem em posts e
+            comentários.
+            <br />
+            <small>Ex: joao_pescador, maria.2024</small>
+          </p>
+
+          <div className="onboarding-input-wrapper">
+            <span className="material-symbols-outlined onboarding-input-icone">
+              alternate_email
+            </span>
+            <input
+              type="text"
+              className="onboarding-input"
+              placeholder="seu_username"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setUsernameErro("");
+              }}
+            />
+          </div>
+
+          {usernameVerificando && (
+            <p className="onboarding-dica" style={{ color: "#888" }}>
+              Verificando disponibilidade...
+            </p>
+          )}
+          {usernameMensagem && !usernameVerificando && (
+            <p
+              className={`onboarding-dica`}
+              style={{
+                color: usernameMensagem.includes("✅") ? "#2e7d32" : "#d32f2f",
+                fontWeight: 500,
+              }}
+            >
+              {usernameMensagem}
+            </p>
+          )}
+
+          {usernameErro && (
+            <p
+              className="onboarding-dica"
+              style={{ color: "#d32f2f", fontWeight: 500 }}
+            >
+              {usernameErro}
+            </p>
+          )}
+
+          <button
+            className="onboarding-btn-primary"
+            onClick={handleSalvarUsername}
+            disabled={username && !usernameDisponivel}
+          >
+            Continuar
+            <span className="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── Etapa 5: Bio (antiga etapa 4) ── */}
+      {etapa === 5 && (
+        <div className="onboarding-tela onboarding-tela-animada">
+          <h1 className="onboarding-titulo">Conte um pouco sobre você</h1>
+          <p className="onboarding-descricao">
+            Uma boa bio ajuda outros pescadores a te conhecerem e a se
+            conectarem com você.
           </p>
 
           <div className="onboarding-input-wrapper onboarding-input-wrapper-bio">
@@ -387,11 +555,10 @@ navigate("/home", {
         </div>
       )}
 
-      {/* ── Etapa 5: Foto de capa ── */}
-      {etapa === 5 && (
+      {/* ── Etapa 6: Foto de capa (antiga etapa 5) ── */}
+      {etapa === 6 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <h1 className="onboarding-titulo">Adicione uma foto de capa</h1>
-
           <p className="onboarding-descricao">
             Dê um toque pessoal ao seu perfil com uma imagem de fundo.
           </p>
@@ -403,7 +570,11 @@ navigate("/home", {
           >
             {fotoCapaPreview ? (
               <>
-                <img src={fotoCapaPreview} alt="Foto de capa" className="onboarding-capa-preview" />
+                <img
+                  src={fotoCapaPreview}
+                  alt="Foto de capa"
+                  className="onboarding-capa-preview"
+                />
                 <div className="onboarding-capa-overlay">
                   <span className="material-symbols-outlined">image</span>
                   <span>Trocar capa</span>
@@ -411,8 +582,12 @@ navigate("/home", {
               </>
             ) : (
               <div className="onboarding-capa-vazio">
-                <span className="material-symbols-outlined onboarding-capa-icone">add_photo_alternate</span>
-                <span className="onboarding-capa-texto">Clique para adicionar uma capa</span>
+                <span className="material-symbols-outlined onboarding-capa-icone">
+                  add_photo_alternate
+                </span>
+                <span className="onboarding-capa-texto">
+                  Clique para adicionar uma capa
+                </span>
               </div>
             )}
           </div>
@@ -436,18 +611,18 @@ navigate("/home", {
         </div>
       )}
 
-      {/* ── Etapa 6: Conclusão ── */}
-      {etapa === 6 && (
+      {/* ── Etapa 7: Conclusão ── */}
+      {etapa === 7 && (
         <div className="onboarding-tela onboarding-tela-animada">
           <div className="onboarding-icone-wrapper">
             <span className="onboarding-emoji">🎉</span>
           </div>
 
           <h1 className="onboarding-titulo">Perfil completo, bora pescar!</h1>
-
           <p className="onboarding-descricao">
-            Seu perfil foi configurado com sucesso. Agora você pode explorar locais de pesca,
-            conectar-se com outros pescadores e compartilhar suas aventuras.
+            Seu perfil foi configurado com sucesso. Agora você pode explorar
+            locais de pesca, conectar-se com outros pescadores e compartilhar
+            suas aventuras.
           </p>
 
           <button className="onboarding-btn-primary" onClick={handleConcluir}>

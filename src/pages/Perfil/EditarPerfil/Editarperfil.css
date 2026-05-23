@@ -65,6 +65,60 @@
 }
 
 /* =========================================
+   BOTÃO RESET USERNAME (undo)
+   ========================================= */
+.editar-username-reset {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--cor-texto-claro);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.editar-username-reset .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.editar-username-reset:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.editar-username-reset:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Dark mode */
+body.dark-mode .editar-username-reset {
+  color: #a0aab5;
+}
+
+body.dark-mode .editar-username-reset:hover {
+  background-color: rgba(168, 192, 240, 0.15);
+  color: #93b4f0;
+}
+
+/* Responsivo: garantir que não sobreponha texto em telas pequenas */
+@media (max-width: 480px) {
+  .editar-input-com-icone {
+    padding-right: 40px; /* espaço para o botão */
+  }
+  .editar-username-reset .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+/* =========================================
    SEÇÕES
    ========================================= */
 .editar-secao {
@@ -77,11 +131,6 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--cor-secundaria);
-}
-
-.editar-obrigatorio {
-  color: #e74c3c;
-  margin-left: 2px;
 }
 
 .editar-dica {
@@ -162,7 +211,6 @@
   height: 110px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #007bff;
   box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
   display: block;
 }
@@ -171,7 +219,6 @@
   width: 110px;
   height: 110px;
   border-radius: 50%;
-  border: 4px solid #007bff;
   background-color: #f0f4ff;
   display: flex;
   align-items: center;

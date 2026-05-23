@@ -810,12 +810,6 @@ body.dark-mode .user-verified {
   color: #90caf9;
 }
 
-body.dark-mode .user-avatar-placeholder {
-  background-color: rgba(144, 202, 249, 0.1);
-  border-color: #90caf9;
-  color: #90caf9;
-}
-
 /* Card de local */
 body.dark-mode .location-card-new {
   background-color: #1e1e1e;
