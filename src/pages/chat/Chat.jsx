@@ -246,6 +246,25 @@ export default function Chat() {
           }),
         );
       }
+
+      // ── Marca como lidas as notificações de mensagem deste chat
+      // para que o contador e a página de notificações reflitam corretamente
+      // enquanto o usuário está dentro da conversa ──
+      try {
+        const qNotif = query(
+          collection(db, "notificacoes"),
+          where("para", "==", user.uid),
+          where("tipo", "==", "mensagem"),
+          where("chatId", "==", chatId),
+          where("lida", "==", false),
+        );
+        const snapNotif = await getDocs(qNotif);
+        await Promise.all(
+          snapNotif.docs.map((d) => updateDoc(d.ref, { lida: true })),
+        );
+      } catch (e) {
+        console.log("Erro ao marcar notificações como lidas:", e);
+      }
     });
 
     return unsubscribe;
