@@ -82,7 +82,7 @@ const UserCard = ({ user, onClick }) => {
   const temFoto = user.fotoPerfil && !imgError;
 
   return (
-    <div className="user-card" onClick={onClick}>
+    <div className="user-card">
       {/* Avatar com fallback de iniciais — sem via.placeholder.com */}
       {temFoto ? (
         <img
@@ -136,7 +136,7 @@ const UserCard = ({ user, onClick }) => {
         )}
       </div>
 
-      <button className="user-action-btn">Ver perfil</button>
+      <button className="user-action-btn" onClick={onClick}>Ver perfil</button>
     </div>
   );
 };
