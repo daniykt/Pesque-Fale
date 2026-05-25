@@ -69,6 +69,9 @@ export default function NotifToast() {
   const toastCounterRef = useRef(0);
   // Cache uid → fotoPerfil em memória: evita buscas repetidas para o mesmo remetente
   const fotoCacheRef    = useRef({});
+  // Ref do pathname — permite ler a rota atual dentro do listener
+  // sem recriar o listener a cada navegação (o que limparia os toasts ativos)
+  const locationRef     = useRef(location.pathname);
 
   // Busca a foto do remetente com cache em memória.
   // Retorna null se não tiver foto ou se falhar — nunca bloqueia o toast.
@@ -120,6 +123,11 @@ export default function NotifToast() {
   const pausar  = useCallback((toastId) => clearTimeout(timersRef.current[toastId]), []);
   const retomar = useCallback((toastId) => agendarFechamento(toastId), [agendarFechamento]);
 
+  // 🔄 Mantém o ref de rota sempre atualizado sem recriar o listener
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  }, [location.pathname]);
+
   // 🔔 Listener Firestore — apenas notificações novas
   useEffect(() => {
     if (!user) return;
@@ -154,12 +162,12 @@ export default function NotifToast() {
         const remetenteId = notif.de_id ?? notif.deId ?? null;
 
         // ── Suprime o toast se o usuário já estiver na tela de notificações ──
-        if (location.pathname.startsWith('/notificacao')) return;
+        if (locationRef.current.startsWith('/notificacao')) return;
 
         // ── Suprime o toast se o usuário já estiver na conversa que gerou a notificação ──
         if (notif.tipo === 'mensagem') {
-          const chatAtual = location.pathname.startsWith('/chat/')
-            ? location.pathname.split('/chat/')[1]
+          const chatAtual = locationRef.current.startsWith('/chat/')
+            ? locationRef.current.split('/chat/')[1]
             : null;
           const chatDaNotif =
             notif.chatId ||
@@ -182,7 +190,7 @@ export default function NotifToast() {
     });
 
     return unsub;
-  }, [user, location.pathname, agendarFechamento, fetchFoto]);
+  }, [user, agendarFechamento, fetchFoto]);
 
   // ── Clique no corpo: vai para /notificacao ──
   const handleClickCorpo = useCallback((toastId) => {
