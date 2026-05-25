@@ -136,6 +136,16 @@ h1 {
 
 .user-info {
     flex: 1;
+    min-width: 0;      /* Permite que o item encolha abaixo do conteúdo */
+    overflow: hidden;  /* Garante que não vaze */
+}
+
+.user-name,
+.user-username,
+.user-bio,
+.user-cidade {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .user-name {
@@ -146,10 +156,14 @@ h1 {
 }
 
 .user-username {
-    display: block;
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 6px;
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .user-bio {
@@ -174,6 +188,8 @@ h1 {
     cursor: pointer;
     transition: background-color 0.2s;
     white-space: nowrap;
+    flex-shrink: 0;      
+    white-space: nowrap; 
 }
 
 .user-action-btn:hover {
