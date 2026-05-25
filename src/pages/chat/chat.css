@@ -115,9 +115,7 @@
 }
 
 .conversation-item {
-  display: flex;
   align-items: center;
-  gap: 12px;
   padding: 12px;
   border-radius: var(--chat-radius);
   cursor: pointer;
