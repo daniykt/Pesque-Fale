@@ -156,6 +156,17 @@ export default function NotifToast() {
         // ── Suprime o toast se o usuário já estiver na tela de notificações ──
         if (location.pathname.startsWith('/notificacao')) return;
 
+        // ── Suprime o toast se o usuário já estiver na conversa que gerou a notificação ──
+        if (notif.tipo === 'mensagem') {
+          const chatAtual = location.pathname.startsWith('/chat/')
+            ? location.pathname.split('/chat/')[1]
+            : null;
+          const chatDaNotif =
+            notif.chatId ||
+            [notif.deId ?? notif.de_id, user.uid].sort().join('_');
+          if (chatAtual && chatAtual === chatDaNotif) return;
+        }
+
         const toastId = ++toastCounterRef.current;
 
         // Busca a foto e só então enfileira o toast — a espera é rápida
