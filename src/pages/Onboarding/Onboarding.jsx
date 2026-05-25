@@ -257,10 +257,12 @@ export default function Onboarding() {
       console.error("Erro ao finalizar onboarding:", e);
     }
 
-    navigate("/home", {
-      state: { showTour: true },
-      replace: true,
-    });
+    // Ativa o tour via localStorage — é o que o layout.jsx lê para exibir o OnboardingTour
+    localStorage.setItem('tourAtivo', 'true');
+    localStorage.removeItem('tourConcluido');
+    localStorage.removeItem('tourCurrentStep'); // garante início sempre do step 0
+
+    navigate("/home", { replace: true });
   };
 
   /* ─── Render ─── */
