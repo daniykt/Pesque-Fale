@@ -1,145 +1,124 @@
----
-
 # 🎣 Pesque & Fale
 
-<p align="center">
-<img src="https://img.shields.io/badge/status-polimento-blue" />
-  <img src="https://img.shields.io/badge/frontend-completo-success" />
-  <img src="https://img.shields.io/badge/backend-completo-success" />
-  <img src="https://img.shields.io/badge/melhorias-opcionais-blue" />
-  <img src="https://img.shields.io/badge/responsive-yes-green" />
-  <img src="https://img.shields.io/badge/licença-acadêmica-lightgrey" />
-</p>
+![Status](https://img.shields.io/badge/status-3º%20semestre%20concluído-success)
+![Site](https://img.shields.io/badge/site-online-062A6C)
 
----
+## 🔗 Acesse o projeto
+
+🌐 **[pesqueefaledb.web.app](https://pesqueefaledb.web.app/)**
+
+> Branch de referência deste README: `3-semestre`
 
 ## 🌊 Sobre o Projeto
 
 O **Pesque & Fale** é uma plataforma web inspirada em redes sociais, criada para conectar pescadores e facilitar o compartilhamento de experiências, avaliações e recomendações de locais de pesca.
 
-A proposta é centralizar informações úteis e ajudar usuários a encontrarem os melhores ambientes para pesca, promovendo também o lazer e a sustentabilidade.
-
----
+A proposta é centralizar informações úteis e ajudar usuários a encontrarem os melhores ambientes para pesca, promovendo o lazer, o trabalho decente e a pesca sustentável.
 
 ## 🎯 Objetivos
 
-* 🎣 Conectar pescadores
-* 📍 Ajudar na descoberta de novos pontos de pesca
-* ⭐ Permitir avaliações de locais
-* 💬 Compartilhar experiências
-* 🌱 Incentivar práticas sustentáveis
-
----
+- 🎣 Conectar pescadores
+- 📍 Ajudar na descoberta de novos pontos de pesca
+- ⭐ Permitir avaliações de locais
+- 💬 Compartilhar experiências
+- 🌱 Incentivar práticas sustentáveis
 
 ## ❗ Problema
 
 Encontrar bons locais para pesca nem sempre é fácil. Falta informação centralizada, confiável e acessível para pescadores iniciantes e experientes.
 
----
-
 ## 💡 Solução
 
-Criar uma plataforma onde usuários possam:
+Uma plataforma onde usuários possam:
 
-✔ Avaliar locais
-✔ Publicar experiências
-✔ Interagir com outros pescadores
-✔ Descobrir novos pontos recomendados
+- ✔ Avaliar locais
+- ✔ Publicar experiências
+- ✔ Interagir com outros pescadores
+- ✔ Descobrir novos pontos recomendados
 
 ---
 
 ## ⚙️ Funcionalidades
 
 ### 🔹 Principais
-
-* 🔐 Cadastro e Login
-* 🔎 Pesquisa de locais de pesca
-* ⭐ Avaliação de pontos
-* 🔔 Sistema de notificações
-* 👤 Perfil do usuário
-* 📰 Feed de publicações
+- 🔐 Cadastro e Login
+- 🔎 Pesquisa de locais de pesca
+- ⭐ Avaliação de pontos
+- 🔔 Sistema de notificações
+- 👤 Perfil do usuário
+- 📰 Feed de publicações e eventos
 
 ### 🔹 Extras
+- 🌙 Modo Dark
+- 📱 Responsividade (Mobile + Desktop)
+- 🧭 Navegação intuitiva
 
-* 🌙 Modo Dark
-* 📱 Responsividade (Mobile + Desktop)
-* 🧭 Navegação intuitiva
+> ℹ️ O RF 03 (recomendações baseadas em localização) não foi implementado nesta fase do projeto.
 
 ---
 
 ## 🖥️ Tecnologias
 
-<p>
-  <img src="https://skillicons.dev/icons?i=react,js,html,css,firebase" />
-</p>
-
-* React
-* JavaScript
-* HTML5
-* CSS3
-* Firebase (Authentication e banco de dados)
+- React
+- JavaScript
+- HTML5
+- CSS3
+- Firebase (Authentication e Hosting)
 
 ---
 
 ## 🧱 Estrutura do Projeto
 
-```bash
+```
 src/
  ├── pages/        # Telas principais
  ├── components/   # Componentes reutilizáveis
  ├── routes/       # Gerenciamento de rotas
 ```
 
-✔ Estrutura organizada
-✔ Escalável
-✔ Ideal para trabalho em equipe
+✔ Estrutura organizada · ✔ Escalável · ✔ Ideal para trabalho em equipe
 
 ---
 
 ## 📱 Telas
 
-* 📌 Sobre o Projeto
-* 🏠 Home
-* 🔐 Login / Cadastro
-* 👤 Perfil
-* 🔎 Pesquisa
-* 📍 Locais Avaliados
-* 🔔 Notificações
-* ℹ️ Sobre Nós
+📌 Sobre o Projeto · 🏠 Home · 🔐 Login / Cadastro · 👤 Perfil · 🔎 Pesquisa · 📍 Locais Avaliados · 🔔 Notificações · ℹ️ Sobre Nós
 
 ---
 
 ## 🎨 Design
 
-* 🎯 Foco em simplicidade e usabilidade
-* 🌊 Identidade visual baseada no universo da pesca
-* 🔵 Cor principal: **Azul escuro (#062A6C)**
-* ✍️ Tipografia moderna e legível
-* 📐 Interface limpa e intuitiva
+- 🎯 Foco em simplicidade e usabilidade
+- 🌊 Identidade visual baseada no universo da pesca
+- 🔵 Cor principal: Azul escuro `#062A6C`
+- ⚪ Branco `#FFFFFF` para contraste e legibilidade
+- ⚫ Preto `#000000` como cor secundária
+- ✍️ Tipografia: Open Sans, Anton, Anton Didone
+- 📐 Interface limpa e intuitiva
 
 ---
 
 ## 👥 Equipe
 
-| Nome       | Função                  |
-| ---------- | ----------------------- |
-| Danilo     | Testes / Front-End      |
-| Henrique   | Back-End / Documentação |
-| João Pedro | Front-End               |
-| Lucas      | Designer / Back-End     |
-| Vinicius   | Designer / Front-End    |
-| Rebeca     | Documentação            |
+| Nome | Função |
+|---|---|
+| Danilo | Testes / Front-End |
+| Henrique | Back-End / Documentação |
+| João Pedro | Front-End |
+| Lucas | Designer / Back-End |
+| Vinicius | Designer / Front-End |
+| Rebeca | Documentação |
 
 ---
 
-## 🚧 Status do Projeto
+## 🚧 Status do Projeto (3º Semestre)
 
-```diff
-+ Front-end estruturado em React
-+ Back-end implementado
-+ Sistema de autenticação funcional
-- Ajustes e melhorias em andamento
-```
+- [x] Levantamento de requisitos funcionais e não funcionais
+- [x] Identidade visual definida (paleta, tipografia, logotipo)
+- [x] Front-end estruturado em React
+- [x] Sistema de autenticação funcional (Firebase)
+- [x] Telas principais implementadas
+- [x] Deploy em produção ([pesqueefaledb.web.app](https://pesqueefaledb.web.app/))
 
 ---
 
@@ -161,8 +140,6 @@ npm install firebase
 # Rode o projeto
 npm start
 ```
-
----
 
 ## 📄 Licença
 
