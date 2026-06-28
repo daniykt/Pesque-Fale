@@ -1,0 +1,93 @@
+name: CI
+
+# Roda em PRs pra dev/main (valida antes do merge) e em push direto na dev
+# (rede de segurança, ainda que o fluxo combinado seja sempre via PR).
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Detecta o que mudou no PR/push, pra só rodar o job relevante.
+  # Hoje só existe código em pesque_fale_app/ — o filtro "api" já vem
+  # pronto pra quando a Task 1.1 começar a colocar código em api/.
+  # ---------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            mobile:
+              - 'pesque_fale_app/**'
+            api:
+              - 'api/**'
+
+  # ---------------------------------------------------------------------
+  # Flutter — formatação, análise estática, testes e build de debug.
+  # Versão do Flutter fixada igual ao que o time usa local (3.44.4) pra
+  # evitar "passou aqui, falhou no CI" por divergência de SDK. Quando o
+  # time atualizar o Flutter localmente, atualizar aqui também.
+  # ---------------------------------------------------------------------
+  mobile-ci:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pesque_fale_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Formatação (dart format)
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Análise estática (flutter analyze)
+        run: flutter analyze
+
+      - name: Testes (flutter test)
+        run: flutter test
+
+      - name: Build de debug (APK)
+        run: flutter build apk --debug
+
+      - name: Publicar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: pesque_fale_app/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
+  # ---------------------------------------------------------------------
+  # API — ESQUELETO. Sem stack de backend definida ainda (ver Task 0.1/
+  # 0.3 — só documentam contrato/banco, não código). Preencher quando a
+  # Task 1.1 começar e a linguagem/framework for decidida.
+  # ---------------------------------------------------------------------
+  api-ci:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder
+        run: |
+          echo "TODO (Task 1.1): job da API ainda não implementado."
+          echo "Preencher com setup da linguagem/framework escolhida,"
+          echo "lint, testes e (futuramente) deploy quando a hospedagem"
+          echo "(Railway/Supabase/Render — ver Task 0.1) for decidida."
