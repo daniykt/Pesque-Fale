@@ -8,8 +8,6 @@ import 'package:pesque_fale_app/main.dart';
 
 void main() {
   setUp(() {
-    // Evita erro de plugin nativo: SharedPreferences não tem
-    // implementação de plataforma disponível durante os testes.
     SharedPreferences.setMockInitialValues({});
   });
 

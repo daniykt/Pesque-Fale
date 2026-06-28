@@ -15,20 +15,33 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.danger,
     required this.warning,
     required this.action,
+    required this.navInactive,
+    required this.badge,
   });
 
   final Color primary;
+
   final Color primaryAccent;
+
   final Color background;
   final Color surface;
+
+  /// Superfície secundária (cards de comentário, inputs, hover states).
   final Color surfaceVariant;
+
   final Color border;
   final Color textPrimary;
   final Color textSecondary;
+
   final Color success;
   final Color danger;
   final Color warning;
+
   final Color action;
+
+  final Color navInactive;
+
+  final Color badge;
 
   static const light = AppColors(
     primary: Color(0xFF062A6C),
@@ -43,6 +56,8 @@ class AppColors extends ThemeExtension<AppColors> {
     danger: Color(0xFFF44336),
     warning: Color(0xFFF5B342),
     action: Color(0xFF062A6C),
+    navInactive: Color(0xFFB0B0B0),
+    badge: Color(0xFFE3001B),
   );
 
   static const dark = AppColors(
@@ -58,6 +73,8 @@ class AppColors extends ThemeExtension<AppColors> {
     danger: Color(0xFFF08080),
     warning: Color(0xFFF5B342),
     action: Color(0xFF2563EB),
+    navInactive: Color(0xFF4A4A4A),
+    badge: Color(0xFFE3001B),
   );
 
   @override
@@ -74,6 +91,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? danger,
     Color? warning,
     Color? action,
+    Color? navInactive,
+    Color? badge,
   }) {
     return AppColors(
       primary: primary ?? this.primary,
@@ -88,6 +107,8 @@ class AppColors extends ThemeExtension<AppColors> {
       danger: danger ?? this.danger,
       warning: warning ?? this.warning,
       action: action ?? this.action,
+      navInactive: navInactive ?? this.navInactive,
+      badge: badge ?? this.badge,
     );
   }
 
@@ -107,6 +128,8 @@ class AppColors extends ThemeExtension<AppColors> {
       danger: Color.lerp(danger, other.danger, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       action: Color.lerp(action, other.action, t)!,
+      navInactive: Color.lerp(navInactive, other.navInactive, t)!,
+      badge: Color.lerp(badge, other.badge, t)!,
     );
   }
 }
