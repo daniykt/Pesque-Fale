@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_typography.dart';
-
 class AppTheme {
   AppTheme._();
 
@@ -46,6 +45,22 @@ class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: colors.primary,
         foregroundColor: Colors.white,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colors.surface,
+        indicatorColor: Colors.transparent,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(color: selected ? colors.primaryAccent : colors.navInactive);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 10,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? colors.primaryAccent : colors.navInactive,
+          );
+        }),
       ),
       extensions: [colors],
     );
