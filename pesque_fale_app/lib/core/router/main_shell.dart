@@ -31,10 +31,7 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       appBar: AppBar(title: Text(_titles[_currentIndex])),
       drawer: const AppDrawer(),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _placeholderScreens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _placeholderScreens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         notifCount: _notifCount,

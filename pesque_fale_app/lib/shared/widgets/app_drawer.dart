@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/theme_provider.dart';
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -35,9 +36,13 @@ class AppDrawer extends StatelessWidget {
             const Divider(),
             SwitchListTile(
               secondary: Icon(
-                themeProvider.isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                themeProvider.isDarkMode
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
               ),
-              title: Text(themeProvider.isDarkMode ? 'Modo Escuro' : 'Modo Claro'),
+              title: Text(
+                themeProvider.isDarkMode ? 'Modo Escuro' : 'Modo Claro',
+              ),
               value: themeProvider.isDarkMode,
               onChanged: (_) => themeProvider.toggleTheme(),
             ),
@@ -47,7 +52,9 @@ class AppDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tour de onboarding ainda não implementado.')),
+                  const SnackBar(
+                    content: Text('Tour de onboarding ainda não implementado.'),
+                  ),
                 );
               },
             ),
@@ -59,7 +66,9 @@ class AppDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logout ainda não implementado.')),
+                  const SnackBar(
+                    content: Text('Logout ainda não implementado.'),
+                  ),
                 );
               },
             ),

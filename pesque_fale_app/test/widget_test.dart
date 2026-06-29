@@ -11,7 +11,9 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('App sobe sem erros e usa MaterialApp', (WidgetTester tester) async {
+  testWidgets('App sobe sem erros e usa MaterialApp', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ChangeNotifierProvider(
         create: (_) => ThemeProvider(),
