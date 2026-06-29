@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_typography.dart';
+
 class AppTheme {
   AppTheme._();
 
@@ -51,7 +52,9 @@ class AppTheme {
         indicatorColor: Colors.transparent,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return IconThemeData(color: selected ? colors.primaryAccent : colors.navInactive);
+          return IconThemeData(
+            color: selected ? colors.primaryAccent : colors.navInactive,
+          );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
