@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:pesque_fale_app/core/theme/theme_provider.dart';
+import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
+import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
+import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/main.dart';
 
 void main() {
@@ -15,8 +18,15 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => ThemeProvider(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(
+            create: (_) => AuthProvider(
+              repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+            ),
+          ),
+        ],
         child: const PesqueFaleApp(),
       ),
     );
