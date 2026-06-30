@@ -1,0 +1,10 @@
+class AppConfig {
+  AppConfig._();
+
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3333/v1',
+  );
+
+  static const bool useMock = bool.fromEnvironment('USE_MOCK', defaultValue: false);
+}
