@@ -7,9 +7,9 @@ import '../domain/usuario.dart';
 enum AuthStatus { idle, loading, success, error }
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider({required AuthRepository repository}) : _repository = repository;
+  AuthProvider({required this.repository});
 
-  final AuthRepository _repository;
+  final AuthRepository repository;
 
   AuthStatus _status = AuthStatus.idle;
   String? _errorMessage;
@@ -33,7 +33,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _repository.cadastrar(
+      final result = await repository.cadastrar(
         nome: nome,
         email: email,
         senha: senha,

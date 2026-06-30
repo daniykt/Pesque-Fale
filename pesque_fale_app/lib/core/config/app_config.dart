@@ -6,5 +6,8 @@ class AppConfig {
     defaultValue: 'http://10.0.2.2:3333/v1',
   );
 
-  static const bool useMock = bool.fromEnvironment('USE_MOCK', defaultValue: false);
+  static const bool useMock = bool.fromEnvironment(
+    'USE_MOCK',
+    defaultValue: false,
+  );
 }

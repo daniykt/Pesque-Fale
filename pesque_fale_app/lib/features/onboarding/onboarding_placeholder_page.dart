@@ -24,7 +24,8 @@ class OnboardingPlaceholderPage extends StatelessWidget {
                 SizedBox(
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pushReplacementNamed('/home'),
+                    onPressed: () =>
+                        Navigator.of(context).pushReplacementNamed('/home'),
                     child: const Text('Continuar para o app'),
                   ),
                 ),

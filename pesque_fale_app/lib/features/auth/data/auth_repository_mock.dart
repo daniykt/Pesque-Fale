@@ -44,7 +44,10 @@ class AuthRepositoryMock implements AuthRepository {
   }
 
   @override
-  Future<AuthResult> login({required String email, required String senha}) async {
+  Future<AuthResult> login({
+    required String email,
+    required String senha,
+  }) async {
     await Future.delayed(_delay);
 
     if (email == _emailErro) {

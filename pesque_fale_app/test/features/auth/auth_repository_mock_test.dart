@@ -12,26 +12,24 @@ void main() {
 
   setUp(() {
     storedValues.clear();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      (call) async {
-        switch (call.method) {
-          case 'write':
-            final args = call.arguments as Map;
-            storedValues[args['key'] as String] = args['value'] as String?;
-            return null;
-          case 'read':
-            final args = call.arguments as Map;
-            return storedValues[args['key'] as String];
-          case 'delete':
-            final args = call.arguments as Map;
-            storedValues.remove(args['key'] as String);
-            return null;
-          default:
-            return null;
-        }
-      },
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          switch (call.method) {
+            case 'write':
+              final args = call.arguments as Map;
+              storedValues[args['key'] as String] = args['value'] as String?;
+              return null;
+            case 'read':
+              final args = call.arguments as Map;
+              return storedValues[args['key'] as String];
+            case 'delete':
+              final args = call.arguments as Map;
+              storedValues.remove(args['key'] as String);
+              return null;
+            default:
+              return null;
+          }
+        });
   });
 
   late AuthRepositoryMock repository;
