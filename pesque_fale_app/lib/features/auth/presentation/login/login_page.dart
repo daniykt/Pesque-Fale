@@ -81,7 +81,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: AppSpacing.md),
               TextButton(
-                onPressed: () => Navigator.of(context).pushReplacementNamed('/cadastro'),
+                onPressed: () =>
+                    Navigator.of(context).pushReplacementNamed('/cadastro'),
                 child: const Text('Criar conta'),
               ),
             ],

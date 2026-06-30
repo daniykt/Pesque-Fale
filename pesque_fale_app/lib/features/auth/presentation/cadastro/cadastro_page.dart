@@ -85,11 +85,15 @@ class _CadastroPageState extends State<CadastroPage> {
         if (!mounted) return;
         Navigator.of(context).pushReplacementNamed('/onboarding');
       });
-    } else if (novoStatus == AuthStatus.error && auth.fieldErrors.isEmpty && auth.errorMessage != null) {
+    } else if (novoStatus == AuthStatus.error &&
+        auth.fieldErrors.isEmpty &&
+        auth.errorMessage != null) {
       final mensagem = auth.errorMessage!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensagem)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagem)));
       });
     }
   }
@@ -174,14 +178,18 @@ class _CadastroPageState extends State<CadastroPage> {
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Text('Criar conta'),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
+                  onPressed: () =>
+                      Navigator.of(context).pushReplacementNamed('/login'),
                   child: const Text('Já tem uma conta? Entrar'),
                 ),
               ],

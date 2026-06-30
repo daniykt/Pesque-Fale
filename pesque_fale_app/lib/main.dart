@@ -28,7 +28,9 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider(repository: authRepository)),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(repository: authRepository),
+        ),
       ],
       child: const PesqueFaleApp(),
     ),

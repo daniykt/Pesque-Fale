@@ -27,7 +27,10 @@ class AuthRepositoryHttp implements AuthRepository {
   }
 
   @override
-  Future<AuthResult> login({required String email, required String senha}) async {
+  Future<AuthResult> login({
+    required String email,
+    required String senha,
+  }) async {
     final result = await apiClient.login(email: email, senha: senha);
     await tokenStorage.saveToken(result.accessToken);
     return result;

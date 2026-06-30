@@ -8,7 +8,8 @@ import '../domain/auth_result.dart';
 import 'auth_exceptions.dart';
 
 class AuthApiClient {
-  AuthApiClient({required this.baseUrl, http.Client? client}) : _client = client ?? http.Client();
+  AuthApiClient({required this.baseUrl, http.Client? client})
+    : _client = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _client;
@@ -56,7 +57,9 @@ class AuthApiClient {
         : jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return AuthResult.fromJson((json['data'] as Map<String, dynamic>?) ?? const {});
+      return AuthResult.fromJson(
+        (json['data'] as Map<String, dynamic>?) ?? const {},
+      );
     }
 
     throw _mapError(response.statusCode, json);
@@ -69,7 +72,9 @@ class AuthApiClient {
       case 'VALIDATION_ERROR':
         final details = (json['details'] as List<dynamic>?) ?? const [];
         return ValidationException(
-          details.map((e) => FieldError.fromJson(e as Map<String, dynamic>)).toList(),
+          details
+              .map((e) => FieldError.fromJson(e as Map<String, dynamic>))
+              .toList(),
         );
       case 'EMAIL_JA_CADASTRADO':
         return const EmailJaCadastradoException();

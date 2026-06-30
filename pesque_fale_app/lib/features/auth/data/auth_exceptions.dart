@@ -22,7 +22,8 @@ abstract class AuthException implements Exception {
 }
 
 class ValidationException extends AuthException {
-  const ValidationException(this.errors) : super('Verifique os campos e tente novamente.');
+  const ValidationException(this.errors)
+    : super('Verifique os campos e tente novamente.');
 
   final List<FieldError> errors;
 }
