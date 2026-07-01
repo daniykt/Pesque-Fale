@@ -77,8 +77,9 @@ class _LoginPageState extends State<LoginPage> {
                     AuthSwitchLink(
                       question: 'Não tem conta? ',
                       actionLabel: 'Cadastre-se',
-                      onTap: () =>
-                          Navigator.of(context).pushReplacementNamed('/cadastro'),
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushReplacementNamed('/cadastro'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
