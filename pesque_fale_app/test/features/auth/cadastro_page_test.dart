@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
 import 'package:pesque_fale_app/features/auth/presentation/cadastro/cadastro_page.dart';
@@ -10,6 +12,7 @@ import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
   final storedValues = <String, String?>{};
@@ -46,6 +49,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
+        theme: AppTheme.light,
         routes: {
           '/cadastro': (_) => const CadastroPage(),
           '/login': (_) => const Scaffold(),
@@ -70,19 +74,25 @@ void main() {
       '123456',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Confirmar senha'),
+      find.widgetWithText(TextFormField, 'Confirmar Senha'),
       '123456',
     );
+  }
+
+  Future<void> tapBotao(WidgetTester tester) async {
+    await tester.ensureVisible(find.byType(OutlinedButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OutlinedButton));
   }
 
   testWidgets('botao fica desabilitado durante loading', (tester) async {
     await tester.pumpWidget(buildApp());
     await preencherCamposValidos(tester);
 
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Criar conta'));
+    await tapBotao(tester);
     await tester.pump();
 
-    final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+    final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
     expect(button.onPressed, isNull);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
@@ -97,7 +107,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Email'),
       'email-invalido',
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Criar conta'));
+    await tapBotao(tester);
     await tester.pump();
 
     expect(find.text('Informe um email válido.'), findsOneWidget);
@@ -121,12 +131,25 @@ void main() {
       '123456',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Confirmar senha'),
+      find.widgetWithText(TextFormField, 'Confirmar Senha'),
       'outraSenha',
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Criar conta'));
+    await tapBotao(tester);
     await tester.pump();
 
     expect(find.text('As senhas não conferem.'), findsOneWidget);
+  });
+
+  testWidgets('email ja cadastrado mostra snackbar de erro', (tester) async {
+    await tester.pumpWidget(buildApp());
+    await preencherCamposValidos(tester, email: 'existente@teste.com');
+
+    await tapBotao(tester);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(); // rebuild Consumer + addPostFrameCallback
+    await tester.pump(); // postFrameCallback executa → showSnackBar
+
+    expect(find.text('Este email já está em uso.'), findsOneWidget);
   });
 }
