@@ -18,8 +18,7 @@ class AppSnackbar {
         action: SnackBarAction(
           label: 'X',
           textColor: Colors.white,
-          onPressed: () =>
-              ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
     );
@@ -37,8 +36,7 @@ class AppSnackbar {
         action: SnackBarAction(
           label: 'X',
           textColor: Colors.white,
-          onPressed: () =>
-              ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
     );
