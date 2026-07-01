@@ -39,14 +39,18 @@ class _CadastroPageState extends State<CadastroPage> {
     super.dispose();
   }
 
-  String? _validarNome(String? v) =>
-      (v == null || v.trim().length < 2) ? 'O nome deve ter pelo menos 2 caracteres.' : null;
+  String? _validarNome(String? v) => (v == null || v.trim().length < 2)
+      ? 'O nome deve ter pelo menos 2 caracteres.'
+      : null;
 
   String? _validarEmail(String? v) =>
-      (v == null || !_emailRegex.hasMatch(v.trim())) ? 'Informe um email válido.' : null;
+      (v == null || !_emailRegex.hasMatch(v.trim()))
+      ? 'Informe um email válido.'
+      : null;
 
-  String? _validarSenha(String? v) =>
-      (v == null || v.length < 6) ? 'A senha deve ter pelo menos 6 caracteres.' : null;
+  String? _validarSenha(String? v) => (v == null || v.length < 6)
+      ? 'A senha deve ter pelo menos 6 caracteres.'
+      : null;
 
   String? _validarConfirmarSenha(String? v) =>
       v != _senhaController.text ? 'As senhas não conferem.' : null;
@@ -146,8 +150,7 @@ class _CadastroPageState extends State<CadastroPage> {
                             label: 'Confirmar Senha',
                             textInputAction: TextInputAction.done,
                             validator: _validarConfirmarSenha,
-                            serverErrorText:
-                                auth.fieldErrors['confirmarSenha'],
+                            serverErrorText: auth.fieldErrors['confirmarSenha'],
                             onChanged: (_) => auth.clearError(),
                           ),
                           const SizedBox(height: AppSpacing.lg),

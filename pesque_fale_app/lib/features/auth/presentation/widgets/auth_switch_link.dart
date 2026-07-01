@@ -21,10 +21,7 @@ class AuthSwitchLink extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          question,
-          style: bodyMedium.copyWith(color: colors.textSecondary),
-        ),
+        Text(question, style: bodyMedium.copyWith(color: colors.textSecondary)),
         GestureDetector(
           onTap: onTap,
           child: Text(
