@@ -39,7 +39,9 @@ class AuthPrimaryButton extends StatelessWidget {
             if (states.contains(WidgetState.pressed)) return Colors.white;
             return colors.primary;
           }),
-          overlayColor: WidgetStateProperty.all(colors.primary.withValues(alpha: 0.08)),
+          overlayColor: WidgetStateProperty.all(
+            colors.primary.withValues(alpha: 0.08),
+          ),
           textStyle: WidgetStateProperty.all(
             GoogleFonts.poppins(
               fontSize: 14,
