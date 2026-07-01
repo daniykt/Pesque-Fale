@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../widgets/auth_text_field.dart';
-import '../widgets/senha_field.dart';
+import '../widgets/auth_hero.dart';
+import '../widgets/auth_logo_title.dart';
+import '../widgets/auth_password_field.dart';
+import '../widgets/auth_primary_button.dart';
+import '../widgets/auth_switch_link.dart';
+import '../widgets/auth_underline_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,68 +27,62 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _entrar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Login será implementado na Task 1.4.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Pesque & Fale',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.displayMedium,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Entre na sua conta',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AuthTextField(
-                controller: _emailController,
-                labelText: 'Email',
-                prefixIcon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              SenhaField(
-                controller: _senhaController,
-                labelText: 'Senha',
-                textInputAction: TextInputAction.done,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: null,
-                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
-                  child: const Text('Esqueci minha senha'),
+              AuthHero(collapsed: keyboardOpen),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const AuthLogoTitle(title: 'Entrar'),
+                    AuthUnderlineField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.alternate_email,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AuthPasswordField(
+                      controller: _senhaController,
+                      label: 'Senha',
+                      textInputAction: TextInputAction.done,
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: null,
+                        child: Text(
+                          'Esqueci minha senha',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.textSecondary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AuthPrimaryButton(label: 'Entrar', onPressed: () {}),
+                    const SizedBox(height: AppSpacing.sm),
+                    AuthSwitchLink(
+                      question: 'Não tem conta? ',
+                      actionLabel: 'Cadastre-se',
+                      onTap: () =>
+                          Navigator.of(context).pushReplacementNamed('/cadastro'),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _entrar,
-                  child: const Text('Entrar'),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pushReplacementNamed('/cadastro'),
-                child: const Text('Criar conta'),
               ),
             ],
           ),
