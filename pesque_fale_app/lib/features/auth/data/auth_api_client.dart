@@ -71,11 +71,13 @@ class AuthApiClient {
     switch (code) {
       case 'VALIDATION_ERROR':
         final details = (json['details'] as List<dynamic>?) ?? const [];
-        return ValidationException(
-          details
-              .map((e) => FieldError.fromJson(e as Map<String, dynamic>))
-              .toList(),
-        );
+        final fieldErrors = <String, String>{};
+        for (final d in details) {
+          final m = d as Map<String, dynamic>;
+          fieldErrors[m['campo']?.toString() ?? 'geral'] =
+              m['mensagem']?.toString() ?? '';
+        }
+        return ValidationException(fieldErrors);
       case 'EMAIL_JA_CADASTRADO':
         return const EmailJaCadastradoException();
       case 'CREDENCIAIS_INVALIDAS':

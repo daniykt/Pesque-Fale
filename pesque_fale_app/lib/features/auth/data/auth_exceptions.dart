@@ -1,17 +1,3 @@
-class FieldError {
-  const FieldError({required this.campo, required this.mensagem});
-
-  final String campo;
-  final String mensagem;
-
-  factory FieldError.fromJson(Map<String, dynamic> json) {
-    return FieldError(
-      campo: json['campo']?.toString() ?? 'geral',
-      mensagem: json['mensagem']?.toString() ?? '',
-    );
-  }
-}
-
 abstract class AuthException implements Exception {
   const AuthException(this.message);
 
@@ -22,10 +8,10 @@ abstract class AuthException implements Exception {
 }
 
 class ValidationException extends AuthException {
-  const ValidationException(this.errors)
+  ValidationException(this.fieldErrors)
     : super('Verifique os campos e tente novamente.');
 
-  final List<FieldError> errors;
+  final Map<String, String> fieldErrors;
 }
 
 class EmailJaCadastradoException extends AuthException {
