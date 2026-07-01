@@ -27,11 +27,7 @@ class AuthProvider extends ChangeNotifier {
     required String senha,
     required String confirmarSenha,
   }) async {
-    _status = AuthStatus.loading;
-    _errorMessage = null;
-    _fieldErrors = const {};
-    notifyListeners();
-
+    _setLoading();
     try {
       final result = await repository.cadastrar(
         nome: nome,
@@ -39,27 +35,56 @@ class AuthProvider extends ChangeNotifier {
         senha: senha,
         confirmarSenha: confirmarSenha,
       );
-      _usuario = result.usuario;
-      _status = AuthStatus.success;
-      notifyListeners();
+      _setSuccess(result.usuario);
     } on ValidationException catch (e) {
-      _fieldErrors = {for (final erro in e.errors) erro.campo: erro.mensagem};
-      _errorMessage = e.message;
-      _status = AuthStatus.error;
-      notifyListeners();
+      _setValidationError(e);
     } on AuthException catch (e) {
-      _errorMessage = e.message;
-      _status = AuthStatus.error;
-      notifyListeners();
+      _setError(e.message);
+    }
+  }
+
+  Future<void> login({required String email, required String senha}) async {
+    _setLoading();
+    try {
+      final result = await repository.login(email: email, senha: senha);
+      _setSuccess(result.usuario);
+    } on ValidationException catch (e) {
+      _setValidationError(e);
+    } on AuthException catch (e) {
+      _setError(e.message);
     }
   }
 
   void clearError() {
     _errorMessage = null;
     _fieldErrors = const {};
-    if (_status == AuthStatus.error) {
-      _status = AuthStatus.idle;
-    }
+    if (_status == AuthStatus.error) _status = AuthStatus.idle;
+    notifyListeners();
+  }
+
+  void _setLoading() {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    _fieldErrors = const {};
+    notifyListeners();
+  }
+
+  void _setSuccess(Usuario usuario) {
+    _usuario = usuario;
+    _status = AuthStatus.success;
+    notifyListeners();
+  }
+
+  void _setValidationError(ValidationException e) {
+    _fieldErrors = e.fieldErrors;
+    _errorMessage = e.message;
+    _status = AuthStatus.error;
+    notifyListeners();
+  }
+
+  void _setError(String message) {
+    _errorMessage = message;
+    _status = AuthStatus.error;
     notifyListeners();
   }
 }
