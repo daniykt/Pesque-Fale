@@ -108,7 +108,7 @@ Pesque-Fale/
 
 | Nome | Função |
 | --- | --- |
-| Danilo | Testes / Front-End |
+| Danilo | Testes / Front-End Principal |
 | Henrique | Back-End / Documentação |
 | João Pedro | Front-End |
 | Lucas | Designer / Back-End |
