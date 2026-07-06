@@ -70,7 +70,10 @@ class PerfilRepositoryMock implements PerfilRepository {
   final _seguindoPorMim = <String>{'mock-2'};
 
   @override
-  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) async {
+  Future<PerfilCompleto> buscarPerfil(
+    String id, {
+    required String meuId,
+  }) async {
     await Future.delayed(_delay);
 
     final usuario = _usuarios[id];

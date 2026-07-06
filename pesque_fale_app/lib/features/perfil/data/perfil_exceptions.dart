@@ -12,8 +12,7 @@ class PerfilNaoEncontradoException extends PerfilException {
 }
 
 class FotoMuitoGrandeException extends PerfilException {
-  const FotoMuitoGrandeException()
-    : super('A imagem deve ter no máximo 5MB.');
+  const FotoMuitoGrandeException() : super('A imagem deve ter no máximo 5MB.');
 }
 
 class FormatoInvalidoException extends PerfilException {
@@ -32,6 +31,5 @@ class NetworkException extends PerfilException {
 }
 
 class InternalServerException extends PerfilException {
-  const InternalServerException()
-    : super('Erro no servidor. Tente novamente.');
+  const InternalServerException() : super('Erro no servidor. Tente novamente.');
 }

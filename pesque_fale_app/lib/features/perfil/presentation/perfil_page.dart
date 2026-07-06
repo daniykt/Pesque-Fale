@@ -37,7 +37,10 @@ class _PerfilPageState extends State<PerfilPage> {
 
     return SafeArea(
       bottom: false,
-      child: RefreshIndicator(onRefresh: _carregar, child: _buildBody(provider)),
+      child: RefreshIndicator(
+        onRefresh: _carregar,
+        child: _buildBody(provider),
+      ),
     );
   }
 

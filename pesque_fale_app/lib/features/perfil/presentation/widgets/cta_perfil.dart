@@ -69,7 +69,9 @@ class _CtaPerfilState extends State<CtaPerfil> {
           Expanded(
             child: OutlinedButton(
               onPressed: _carregando ? null : () => _deixarDeSeguir(provider),
-              child: _carregando ? const _BotaoSpinner() : const Text('Seguindo'),
+              child: _carregando
+                  ? const _BotaoSpinner()
+                  : const Text('Seguindo'),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -87,7 +89,9 @@ class _CtaPerfilState extends State<CtaPerfil> {
       width: double.infinity,
       child: FilledButton(
         onPressed: _carregando ? null : () => _seguir(provider),
-        child: _carregando ? const _BotaoSpinner(branco: true) : const Text('Seguir'),
+        child: _carregando
+            ? const _BotaoSpinner(branco: true)
+            : const Text('Seguir'),
       ),
     );
   }

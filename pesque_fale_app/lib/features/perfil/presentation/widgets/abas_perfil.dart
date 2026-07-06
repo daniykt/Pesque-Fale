@@ -21,10 +21,7 @@ class AbasPerfil extends StatefulWidget {
 
 class _AbasPerfilState extends State<AbasPerfil>
     with SingleTickerProviderStateMixin {
-  late final TabController _controller = TabController(
-    length: 3,
-    vsync: this,
-  );
+  late final TabController _controller = TabController(length: 3, vsync: this);
 
   @override
   void dispose() {

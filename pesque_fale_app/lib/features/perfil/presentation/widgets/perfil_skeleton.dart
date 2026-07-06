@@ -74,10 +74,18 @@ class _PerfilSkeletonState extends State<PerfilSkeleton>
     );
   }
 
-  Widget _bar(AppColors colors, {required double width, required double height}) {
+  Widget _bar(
+    AppColors colors, {
+    required double width,
+    required double height,
+  }) {
     return ClipRRect(
       borderRadius: AppRadius.smRadius,
-      child: Container(width: width, height: height, color: colors.surfaceVariant),
+      child: Container(
+        width: width,
+        height: height,
+        color: colors.surfaceVariant,
+      ),
     );
   }
 }

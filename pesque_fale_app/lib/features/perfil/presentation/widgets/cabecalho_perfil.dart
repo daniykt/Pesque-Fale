@@ -134,7 +134,9 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
                 ),
               ),
             ),
-            if (widget.isOwnProfile && widget.onEditar != null && widget.onMenu != null)
+            if (widget.isOwnProfile &&
+                widget.onEditar != null &&
+                widget.onMenu != null)
               AcoesHeaderPerfil(
                 onEditar: widget.onEditar!,
                 onMenu: widget.onMenu!,

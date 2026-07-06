@@ -49,7 +49,8 @@ class PerfilApiClient {
     }
   }
 
-  Future<String> atualizarFoto(File arquivo) => _upload('/usuarios/me/foto', arquivo);
+  Future<String> atualizarFoto(File arquivo) =>
+      _upload('/usuarios/me/foto', arquivo);
 
   Future<String> atualizarBanner(File arquivo) =>
       _upload('/usuarios/me/banner', arquivo);

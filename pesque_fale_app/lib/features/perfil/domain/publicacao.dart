@@ -26,9 +26,7 @@ class Publicacao {
       imagemUrl: json['imagemUrl']?.toString() ?? '',
       legenda: json['legenda'] as String?,
       tags:
-          (json['tags'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
+          (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           const [],
       curtidasCount: json['curtidasCount'] as int? ?? 0,
       comentariosCount: json['comentariosCount'] as int? ?? 0,

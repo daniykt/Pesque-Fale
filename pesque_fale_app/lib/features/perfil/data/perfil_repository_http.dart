@@ -35,7 +35,8 @@ class PerfilRepositoryHttp implements PerfilRepository {
   Future<void> deixarDeSeguir(String id) => apiClient.deixarDeSeguir(id);
 
   @override
-  Future<String> atualizarFoto(File arquivo) => apiClient.atualizarFoto(arquivo);
+  Future<String> atualizarFoto(File arquivo) =>
+      apiClient.atualizarFoto(arquivo);
 
   @override
   Future<String> atualizarBanner(File arquivo) =>

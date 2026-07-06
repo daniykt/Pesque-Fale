@@ -32,8 +32,7 @@ class PerfilProvider extends ChangeNotifier {
   bool get isOwnProfile =>
       _perfil != null && _perfil!.id == authProvider.usuario?.id;
 
-  bool get chatLiberado =>
-      !isOwnProfile && (_isFollowing || _seguidoPeloOutro);
+  bool get chatLiberado => !isOwnProfile && (_isFollowing || _seguidoPeloOutro);
 
   int get totalPublicacoes => _publicacoes.length;
 

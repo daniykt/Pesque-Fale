@@ -11,10 +11,7 @@ void main() {
 
   group('PerfilRepositoryMock.buscarPerfil', () {
     test('retorna perfil com publicacoes para usuario com posts', () async {
-      final perfil = await repository.buscarPerfil(
-        'mock-id',
-        meuId: 'mock-id',
-      );
+      final perfil = await repository.buscarPerfil('mock-id', meuId: 'mock-id');
 
       expect(perfil.usuario.id, 'mock-id');
       expect(perfil.publicacoes, hasLength(5));

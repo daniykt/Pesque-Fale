@@ -31,7 +31,10 @@ class PerfilOpcoesSheet extends StatelessWidget {
 
   void _reiniciarTour(BuildContext context) {
     Navigator.pop(context);
-    AppSnackbar.showError(context, 'Tour de onboarding ainda não implementado.');
+    AppSnackbar.showError(
+      context,
+      'Tour de onboarding ainda não implementado.',
+    );
   }
 
   void _sobreNos(BuildContext context) {

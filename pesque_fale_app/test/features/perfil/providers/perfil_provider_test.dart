@@ -117,20 +117,23 @@ void main() {
       expect(provider.perfil?.seguidores, 11);
     });
 
-    test('faz rollback do estado e do contador quando a chamada falha', () async {
-      final provider = PerfilProvider(
-        repository: _FakePerfilRepository(falharAoSeguir: true),
-        authProvider: authProvider,
-      );
-      await provider.carregarPerfil('outro');
+    test(
+      'faz rollback do estado e do contador quando a chamada falha',
+      () async {
+        final provider = PerfilProvider(
+          repository: _FakePerfilRepository(falharAoSeguir: true),
+          authProvider: authProvider,
+        );
+        await provider.carregarPerfil('outro');
 
-      final ok = await provider.seguir();
+        final ok = await provider.seguir();
 
-      expect(ok, isFalse);
-      expect(provider.isFollowing, isFalse);
-      expect(provider.perfil?.seguidores, 10);
-      expect(provider.errorMessage, isNotNull);
-    });
+        expect(ok, isFalse);
+        expect(provider.isFollowing, isFalse);
+        expect(provider.perfil?.seguidores, 10);
+        expect(provider.errorMessage, isNotNull);
+      },
+    );
   });
 
   group('PerfilProvider.abrirChat', () {

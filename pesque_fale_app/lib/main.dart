@@ -52,8 +52,7 @@ void main() {
             repository: perfilRepository,
             authProvider: context.read<AuthProvider>(),
           ),
-          update: (context, auth, previous) =>
-              previous!..authProvider = auth,
+          update: (context, auth, previous) => previous!..authProvider = auth,
         ),
       ],
       child: const PesqueFaleApp(),
