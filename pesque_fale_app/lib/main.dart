@@ -18,6 +18,7 @@ import 'features/perfil/data/perfil_api_client.dart';
 import 'features/perfil/data/perfil_repository.dart';
 import 'features/perfil/data/perfil_repository_http.dart';
 import 'features/perfil/data/perfil_repository_mock.dart';
+import 'features/perfil/presentation/editar_perfil/editar_perfil_page.dart';
 import 'features/perfil/presentation/perfil_de_outro_page.dart';
 import 'features/perfil/providers/perfil_provider.dart';
 import 'shared/widgets/app_em_construcao_page.dart';
@@ -77,8 +78,7 @@ class PesqueFaleApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/onboarding': (_) => const OnboardingPlaceholderPage(),
         '/home': (_) => const MainShell(),
-        '/perfil/editar': (_) =>
-            const AppEmConstrucaoPage(titulo: 'Editar perfil'),
+        '/perfil/editar': (_) => const EditarPerfilPage(),
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
         '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),

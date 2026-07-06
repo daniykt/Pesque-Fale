@@ -50,4 +50,43 @@ void main() {
       expect(perfil.isFollowing, isFalse);
     });
   });
+
+  group('PerfilRepositoryMock.editarPerfil', () {
+    test(
+      'atualiza apenas os campos enviados e persiste entre chamadas',
+      () async {
+        final atualizado = await repository.editarPerfil({
+          'nome': 'Ana Editada',
+          'bio': 'Nova bio',
+        });
+
+        expect(atualizado.nome, 'Ana Editada');
+        expect(atualizado.bio, 'Nova bio');
+        expect(atualizado.username, 'ana_pesca');
+
+        final perfil = await repository.buscarPerfil(
+          'mock-id',
+          meuId: 'mock-id',
+        );
+        expect(perfil.usuario.nome, 'Ana Editada');
+      },
+    );
+  });
+
+  group('PerfilRepositoryMock.verificarUsername', () {
+    test('retorna false para username "existente"', () async {
+      expect(await repository.verificarUsername('existente'), isFalse);
+    });
+
+    test('retorna true para username livre', () async {
+      expect(await repository.verificarUsername('livre123'), isTrue);
+    });
+
+    test('lanca excecao para username "erro"', () {
+      expect(
+        () => repository.verificarUsername('erro'),
+        throwsA(isA<InternalServerException>()),
+      );
+    });
+  });
 }

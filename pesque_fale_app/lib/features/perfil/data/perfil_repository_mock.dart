@@ -8,8 +8,10 @@ import 'perfil_repository.dart';
 
 class PerfilRepositoryMock implements PerfilRepository {
   static const _delay = Duration(milliseconds: 800);
+  static const _delayUsername = Duration(milliseconds: 400);
+  static const _meuId = 'mock-id';
 
-  static const _usuarios = <String, Usuario>{
+  static const _usuariosIniciais = <String, Usuario>{
     'mock-id': Usuario(
       id: 'mock-id',
       nome: 'Ana Pescadora',
@@ -67,6 +69,7 @@ class PerfilRepositoryMock implements PerfilRepository {
     'mock-3': const [],
   };
 
+  final Map<String, Usuario> _usuarios = Map.of(_usuariosIniciais);
   final _seguindoPorMim = <String>{'mock-2'};
 
   @override
@@ -111,5 +114,30 @@ class PerfilRepositoryMock implements PerfilRepository {
   Future<String> atualizarBanner(File arquivo) async {
     await Future.delayed(_delay);
     return 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/800/450';
+  }
+
+  @override
+  Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async {
+    await Future.delayed(_delay);
+
+    final atual = _usuarios[_meuId]!;
+    final atualizado = atual.copyWith(
+      nome: camposAlterados['nome'] as String?,
+      bio: camposAlterados['bio'] as String?,
+      localizacao: camposAlterados['localizacao'] as String?,
+      username: camposAlterados['username'] as String?,
+      fotoPerfil: camposAlterados['fotoPerfil'] as String?,
+      banner: camposAlterados['banner'] as String?,
+    );
+    _usuarios[_meuId] = atualizado;
+    return atualizado;
+  }
+
+  @override
+  Future<bool> verificarUsername(String username) async {
+    await Future.delayed(_delayUsername);
+    if (username == 'existente') return false;
+    if (username == 'erro') throw const InternalServerException();
+    return true;
   }
 }

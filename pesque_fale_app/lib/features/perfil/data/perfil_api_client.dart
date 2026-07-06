@@ -55,6 +55,16 @@ class PerfilApiClient {
   Future<String> atualizarBanner(File arquivo) =>
       _upload('/usuarios/me/banner', arquivo);
 
+  Future<Usuario> editarPerfil(Map<String, dynamic> campos) async {
+    final json = await _request('PATCH', '/usuarios/me', body: campos);
+    return Usuario.fromJson(json);
+  }
+
+  Future<bool> verificarUsername(String username) async {
+    final json = await _request('GET', '/usuarios/username/$username');
+    return json['disponivel'] as bool? ?? false;
+  }
+
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {
@@ -131,6 +141,18 @@ class PerfilApiClient {
       case 'USUARIO_NAO_ENCONTRADO':
         return const PerfilNaoEncontradoException();
       case 'VALIDATION_ERROR':
+        final details = (json['details'] as List<dynamic>?) ?? const [];
+        final fieldErrors = <String, String>{};
+        for (final d in details) {
+          final m = d as Map<String, dynamic>;
+          fieldErrors[m['campo']?.toString() ?? 'geral'] =
+              m['mensagem']?.toString() ?? '';
+        }
+        if (fieldErrors.length == 1 && fieldErrors.containsKey('username')) {
+          return const UsernameJaCadastradoException();
+        }
+        if (fieldErrors.isNotEmpty)
+          return PerfilValidationException(fieldErrors);
         return const FormatoInvalidoException();
       default:
         if (statusCode == 404) return const RecursoNaoDisponivelException();

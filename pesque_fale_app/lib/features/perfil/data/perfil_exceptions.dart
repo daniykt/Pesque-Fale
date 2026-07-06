@@ -19,6 +19,20 @@ class FormatoInvalidoException extends PerfilException {
   const FormatoInvalidoException() : super('Formato de imagem inválido.');
 }
 
+class UsernameJaCadastradoException extends PerfilException {
+  const UsernameJaCadastradoException()
+    : super('Este username já está em uso.');
+}
+
+/// Erro de validação genérico do backend (ex.: nome curto demais), com o
+/// mapa de campo -> mensagem para hidratar o formulário.
+class PerfilValidationException extends PerfilException {
+  PerfilValidationException(this.fieldErrors)
+    : super('Verifique os campos e tente novamente.');
+
+  final Map<String, String> fieldErrors;
+}
+
 /// Lançada quando o endpoint chamado ainda não existe no backend
 /// (gap de contrato — ver issue de continuação da Fase 2).
 class RecursoNaoDisponivelException extends PerfilException {
