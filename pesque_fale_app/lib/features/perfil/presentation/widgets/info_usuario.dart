@@ -20,7 +20,11 @@ class _InfoUsuarioState extends State<InfoUsuario> {
 
   void _copiarUsername(BuildContext context, String username) {
     Clipboard.setData(ClipboardData(text: '@$username'));
-    AppSnackbar.showSuccess(context, 'Username copiado!');
+    AppSnackbar.showSuccess(
+      context,
+      'Username copiado!',
+      duration: const Duration(milliseconds: 1500),
+    );
   }
 
   @override
