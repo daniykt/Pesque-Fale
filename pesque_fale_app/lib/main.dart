@@ -18,6 +18,7 @@ import 'features/perfil/data/perfil_api_client.dart';
 import 'features/perfil/data/perfil_repository.dart';
 import 'features/perfil/data/perfil_repository_http.dart';
 import 'features/perfil/data/perfil_repository_mock.dart';
+import 'features/perfil/presentation/perfil_de_outro_page.dart';
 import 'features/perfil/providers/perfil_provider.dart';
 import 'shared/widgets/app_em_construcao_page.dart';
 
@@ -83,6 +84,21 @@ class PesqueFaleApp extends StatelessWidget {
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
         '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/perfil') {
+          final usuarioId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider<PerfilProvider>(
+              create: (ctx) => PerfilProvider(
+                repository: ctx.read<PerfilProvider>().repository,
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+              child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        return null;
       },
     );
   }
