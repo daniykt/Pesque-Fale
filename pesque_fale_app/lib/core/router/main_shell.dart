@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/perfil/presentation/perfil_page.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 
@@ -23,7 +24,7 @@ class _MainShellState extends State<MainShell> {
     _PlaceholderScreen(label: 'Pesquisa', icon: Icons.search),
     _PlaceholderScreen(label: 'Chat', icon: Icons.chat_bubble_outline),
     _PlaceholderScreen(label: 'Alertas', icon: Icons.notifications_outlined),
-    _PlaceholderScreen(label: 'Perfil', icon: Icons.person_outline),
+    PerfilPage(),
   ];
 
   @override

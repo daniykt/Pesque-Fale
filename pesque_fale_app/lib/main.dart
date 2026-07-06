@@ -19,6 +19,7 @@ import 'features/perfil/data/perfil_repository.dart';
 import 'features/perfil/data/perfil_repository_http.dart';
 import 'features/perfil/data/perfil_repository_mock.dart';
 import 'features/perfil/providers/perfil_provider.dart';
+import 'shared/widgets/app_em_construcao_page.dart';
 
 void main() {
   final tokenStorage = TokenStorage();
@@ -76,6 +77,10 @@ class PesqueFaleApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/onboarding': (_) => const OnboardingPlaceholderPage(),
         '/home': (_) => const MainShell(),
+        '/perfil/editar': (_) =>
+            const AppEmConstrucaoPage(titulo: 'Editar perfil'),
+        '/publicar': (_) =>
+            const AppEmConstrucaoPage(titulo: 'Nova publicação'),
       },
     );
   }
