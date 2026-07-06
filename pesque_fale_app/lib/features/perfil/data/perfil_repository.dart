@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
 
 abstract class PerfilRepository {
@@ -16,4 +17,11 @@ abstract class PerfilRepository {
 
   /// Retorna a nova URL do banner.
   Future<String> atualizarBanner(File arquivo);
+
+  /// Envia apenas os [camposAlterados] (PATCH parcial) e retorna o Usuario
+  /// atualizado.
+  Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados);
+
+  /// Verifica se [username] está disponível para uso.
+  Future<bool> verificarUsername(String username);
 }

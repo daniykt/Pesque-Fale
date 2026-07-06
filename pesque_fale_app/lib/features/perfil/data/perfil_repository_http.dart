@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
 import 'perfil_api_client.dart';
 import 'perfil_repository.dart';
@@ -41,4 +42,12 @@ class PerfilRepositoryHttp implements PerfilRepository {
   @override
   Future<String> atualizarBanner(File arquivo) =>
       apiClient.atualizarBanner(arquivo);
+
+  @override
+  Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) =>
+      apiClient.editarPerfil(camposAlterados);
+
+  @override
+  Future<bool> verificarUsername(String username) =>
+      apiClient.verificarUsername(username);
 }

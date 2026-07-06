@@ -77,6 +77,14 @@ class _FakePerfilRepository implements PerfilRepository {
 
   @override
   Future<String> atualizarBanner(File arquivo) async => 'https://x/banner.png';
+
+  @override
+  Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async {
+    return _outro;
+  }
+
+  @override
+  Future<bool> verificarUsername(String username) async => true;
 }
 
 void main() {
