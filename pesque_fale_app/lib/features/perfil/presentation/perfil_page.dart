@@ -8,6 +8,7 @@ import 'widgets/abas_perfil.dart';
 import 'widgets/cabecalho_perfil.dart';
 import 'widgets/cta_perfil.dart';
 import 'widgets/estatisticas_perfil.dart';
+import 'widgets/perfil_opcoes_sheet.dart';
 import 'widgets/perfil_skeleton.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -85,7 +86,7 @@ class _PerfilPageState extends State<PerfilPage> {
             usuario: usuario,
             isOwnProfile: provider.isOwnProfile,
             onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
-            onMenu: () {},
+            onMenu: () => PerfilOpcoesSheet.show(context),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(

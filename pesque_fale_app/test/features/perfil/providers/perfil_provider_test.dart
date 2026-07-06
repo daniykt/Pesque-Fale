@@ -36,6 +36,9 @@ class _FakeAuthRepository implements AuthRepository {
       ),
     );
   }
+
+  @override
+  Future<void> logout() async {}
 }
 
 class _FakePerfilRepository implements PerfilRepository {

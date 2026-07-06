@@ -82,6 +82,7 @@ class PesqueFaleApp extends StatelessWidget {
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
         '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
+        '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
     );
   }
