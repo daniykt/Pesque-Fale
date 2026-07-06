@@ -64,6 +64,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Atualiza o usuário compartilhado após uma edição bem-sucedida em
+  /// outra tela (ex.: editar perfil), sem precisar de refetch.
+  void atualizarUsuario(Usuario novo) {
+    _usuario = novo;
+    notifyListeners();
+  }
+
   void clearError() {
     _errorMessage = null;
     _fieldErrors = const {};
