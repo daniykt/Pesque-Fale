@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import '../../auth/domain/usuario.dart';
@@ -99,6 +101,32 @@ class PerfilProvider extends ChangeNotifier {
     } on PerfilException catch (e) {
       _isFollowing = seguindoAnterior;
       _perfil = perfilAnterior;
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> atualizarFoto(File arquivo) async {
+    try {
+      final url = await repository.atualizarFoto(arquivo);
+      _perfil = _perfil?.copyWith(fotoPerfil: url);
+      notifyListeners();
+      return true;
+    } on PerfilException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> atualizarBanner(File arquivo) async {
+    try {
+      final url = await repository.atualizarBanner(arquivo);
+      _perfil = _perfil?.copyWith(banner: url);
+      notifyListeners();
+      return true;
+    } on PerfilException catch (e) {
       _errorMessage = e.message;
       notifyListeners();
       return false;
