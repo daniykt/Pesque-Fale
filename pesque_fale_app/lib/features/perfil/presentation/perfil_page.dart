@@ -5,6 +5,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/perfil_provider.dart';
 import 'widgets/cabecalho_perfil.dart';
+import 'widgets/cta_perfil.dart';
+import 'widgets/estatisticas_perfil.dart';
 import 'widgets/perfil_skeleton.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -75,11 +77,32 @@ class _PerfilPageState extends State<PerfilPage> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      child: CabecalhoPerfil(
-        usuario: usuario,
-        isOwnProfile: provider.isOwnProfile,
-        onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
-        onMenu: () {},
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CabecalhoPerfil(
+            usuario: usuario,
+            isOwnProfile: provider.isOwnProfile,
+            onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
+            onMenu: () {},
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: EstatisticasPerfil(
+              usuario: usuario,
+              totalPublicacoes: provider.totalPublicacoes,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: const CtaPerfil(),
+          ),
+        ],
       ),
     );
   }
