@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/perfil_provider.dart';
+import 'widgets/abas_perfil.dart';
 import 'widgets/cabecalho_perfil.dart';
 import 'widgets/cta_perfil.dart';
 import 'widgets/estatisticas_perfil.dart';
@@ -101,6 +102,10 @@ class _PerfilPageState extends State<PerfilPage> {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: const CtaPerfil(),
+          ),
+          AbasPerfil(
+            publicacoes: provider.publicacoes,
+            isOwnProfile: provider.isOwnProfile,
           ),
         ],
       ),
