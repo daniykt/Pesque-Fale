@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/editar_perfil_provider.dart';
@@ -56,69 +57,102 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
     super.dispose();
   }
 
+  Future<bool?> _mostrarDialogDescartar(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Descartar alterações?'),
+        content: const Text('As mudanças serão perdidas.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: colors.danger),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Descartar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<EditarPerfilProvider>();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Editar perfil')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const CampoBanner(),
-                  Positioned(
-                    left: AppSpacing.sm,
-                    bottom: -32,
-                    child: const CampoFoto(),
+    return PopScope(
+      canPop: !provider.temAlteracoes,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final descartar = await _mostrarDialogDescartar(context);
+        if (descartar == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Editar perfil')),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const CampoBanner(),
+                    Positioned(
+                      left: AppSpacing.sm,
+                      bottom: -32,
+                      child: const CampoFoto(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32 + AppSpacing.md),
+                EditarSecao(
+                  label: 'Nome',
+                  dica: 'Mínimo de 2 caracteres.',
+                  child: TextField(
+                    controller: _nomeController,
+                    onChanged: provider.onNomeChanged,
+                    decoration: InputDecoration(
+                      errorText: provider.fieldErrors['nome'],
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 32 + AppSpacing.md),
-              EditarSecao(
-                label: 'Nome',
-                dica: 'Mínimo de 2 caracteres.',
-                child: TextField(
-                  controller: _nomeController,
-                  onChanged: provider.onNomeChanged,
-                  decoration: InputDecoration(
-                    errorText: provider.fieldErrors['nome'],
+                ),
+                const CampoUsername(),
+                EditarSecao(
+                  label: 'Localização',
+                  child: TextField(
+                    controller: _localizacaoController,
+                    onChanged: provider.onLocalizacaoChanged,
                   ),
                 ),
-              ),
-              const CampoUsername(),
-              EditarSecao(
-                label: 'Localização',
-                child: TextField(
-                  controller: _localizacaoController,
-                  onChanged: provider.onLocalizacaoChanged,
+                EditarSecao(
+                  label: 'Bio',
+                  child: TextField(
+                    controller: _bioController,
+                    onChanged: provider.onBioChanged,
+                    maxLines: 4,
+                    maxLength: 300,
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                  ),
                 ),
-              ),
-              EditarSecao(
-                label: 'Bio',
-                child: TextField(
-                  controller: _bioController,
-                  onChanged: provider.onBioChanged,
-                  maxLines: 4,
-                  maxLength: 300,
-                  buildCounter:
-                      (
-                        context, {
-                        required currentLength,
-                        required isFocused,
-                        maxLength,
-                      }) => null,
-                ),
-              ),
-              ContadorBio(tamanhoAtual: provider.bio.length),
-              const SizedBox(height: AppSpacing.lg),
-              const BotaoSalvar(),
-            ],
+                ContadorBio(tamanhoAtual: provider.bio.length),
+                const SizedBox(height: AppSpacing.lg),
+                const BotaoSalvar(),
+              ],
+            ),
           ),
         ),
       ),
