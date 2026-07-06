@@ -14,6 +14,13 @@ import 'features/auth/presentation/cadastro/cadastro_page.dart';
 import 'features/auth/presentation/login/login_page.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/onboarding/onboarding_placeholder_page.dart';
+import 'features/perfil/data/perfil_api_client.dart';
+import 'features/perfil/data/perfil_repository.dart';
+import 'features/perfil/data/perfil_repository_http.dart';
+import 'features/perfil/data/perfil_repository_mock.dart';
+import 'features/perfil/presentation/perfil_de_outro_page.dart';
+import 'features/perfil/providers/perfil_provider.dart';
+import 'shared/widgets/app_em_construcao_page.dart';
 
 void main() {
   final tokenStorage = TokenStorage();
@@ -24,12 +31,28 @@ void main() {
           tokenStorage: tokenStorage,
         );
 
+  final PerfilRepository perfilRepository = AppConfig.useMock
+      ? PerfilRepositoryMock()
+      : PerfilRepositoryHttp(
+          apiClient: PerfilApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, PerfilProvider>(
+          create: (context) => PerfilProvider(
+            repository: perfilRepository,
+            authProvider: context.read<AuthProvider>(),
+          ),
+          update: (context, auth, previous) => previous!..authProvider = auth,
         ),
       ],
       child: const PesqueFaleApp(),
@@ -54,6 +77,27 @@ class PesqueFaleApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/onboarding': (_) => const OnboardingPlaceholderPage(),
         '/home': (_) => const MainShell(),
+        '/perfil/editar': (_) =>
+            const AppEmConstrucaoPage(titulo: 'Editar perfil'),
+        '/publicar': (_) =>
+            const AppEmConstrucaoPage(titulo: 'Nova publicação'),
+        '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
+        '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/perfil') {
+          final usuarioId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider<PerfilProvider>(
+              create: (ctx) => PerfilProvider(
+                repository: ctx.read<PerfilProvider>().repository,
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+              child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        return null;
       },
     );
   }

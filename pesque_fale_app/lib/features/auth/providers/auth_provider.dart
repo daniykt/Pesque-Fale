@@ -55,6 +55,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> signOut() async {
+    await repository.logout();
+    _usuario = null;
+    _status = AuthStatus.idle;
+    _errorMessage = null;
+    _fieldErrors = const {};
+    notifyListeners();
+  }
+
   void clearError() {
     _errorMessage = null;
     _fieldErrors = const {};

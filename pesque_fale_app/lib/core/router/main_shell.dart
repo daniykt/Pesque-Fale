@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../features/perfil/presentation/perfil_page.dart';
+import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 
@@ -23,14 +25,28 @@ class _MainShellState extends State<MainShell> {
     _PlaceholderScreen(label: 'Pesquisa', icon: Icons.search),
     _PlaceholderScreen(label: 'Chat', icon: Icons.chat_bubble_outline),
     _PlaceholderScreen(label: 'Alertas', icon: Icons.notifications_outlined),
-    _PlaceholderScreen(label: 'Perfil', icon: Icons.person_outline),
+    PerfilPage(),
   ];
+
+  static const int _perfilIndex = 4;
 
   @override
   Widget build(BuildContext context) {
+    final naTelaDePerfil = _currentIndex == _perfilIndex;
+
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_currentIndex])),
-      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: Text(_titles[_currentIndex]),
+        leading: naTelaDePerfil
+            ? Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => PerfilOpcoesSheet.show(context),
+                ),
+              )
+            : null,
+      ),
+      drawer: naTelaDePerfil ? null : const AppDrawer(),
       body: IndexedStack(index: _currentIndex, children: _placeholderScreens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,

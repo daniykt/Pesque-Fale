@@ -24,7 +24,11 @@ class AppSnackbar {
     );
   }
 
-  static void showSuccess(BuildContext context, String message) {
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 4),
+  }) {
     final colors = Theme.of(context).extension<AppColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -32,7 +36,7 @@ class AppSnackbar {
         backgroundColor: colors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
-        duration: const Duration(seconds: 4),
+        duration: duration,
         action: SnackBarAction(
           label: 'X',
           textColor: Colors.white,

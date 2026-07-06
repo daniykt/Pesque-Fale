@@ -66,4 +66,7 @@ class AuthRepositoryMock implements AuthRepository {
     await tokenStorage.saveToken(result.accessToken);
     return result;
   }
+
+  @override
+  Future<void> logout() => tokenStorage.clearToken();
 }
