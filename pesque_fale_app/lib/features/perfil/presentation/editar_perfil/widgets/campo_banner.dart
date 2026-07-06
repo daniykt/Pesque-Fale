@@ -57,11 +57,7 @@ class CampoBanner extends StatelessWidget {
                     ),
                   ),
                 ),
-              const Positioned(
-                right: 12,
-                bottom: 12,
-                child: _BadgeCamera(),
-              ),
+              const Positioned(right: 12, bottom: 12, child: _BadgeCamera()),
             ],
           ),
         ),

@@ -52,19 +52,25 @@ void main() {
   });
 
   group('PerfilRepositoryMock.editarPerfil', () {
-    test('atualiza apenas os campos enviados e persiste entre chamadas', () async {
-      final atualizado = await repository.editarPerfil({
-        'nome': 'Ana Editada',
-        'bio': 'Nova bio',
-      });
+    test(
+      'atualiza apenas os campos enviados e persiste entre chamadas',
+      () async {
+        final atualizado = await repository.editarPerfil({
+          'nome': 'Ana Editada',
+          'bio': 'Nova bio',
+        });
 
-      expect(atualizado.nome, 'Ana Editada');
-      expect(atualizado.bio, 'Nova bio');
-      expect(atualizado.username, 'ana_pesca');
+        expect(atualizado.nome, 'Ana Editada');
+        expect(atualizado.bio, 'Nova bio');
+        expect(atualizado.username, 'ana_pesca');
 
-      final perfil = await repository.buscarPerfil('mock-id', meuId: 'mock-id');
-      expect(perfil.usuario.nome, 'Ana Editada');
-    });
+        final perfil = await repository.buscarPerfil(
+          'mock-id',
+          meuId: 'mock-id',
+        );
+        expect(perfil.usuario.nome, 'Ana Editada');
+      },
+    );
   });
 
   group('PerfilRepositoryMock.verificarUsername', () {

@@ -151,7 +151,8 @@ class PerfilApiClient {
         if (fieldErrors.length == 1 && fieldErrors.containsKey('username')) {
           return const UsernameJaCadastradoException();
         }
-        if (fieldErrors.isNotEmpty) return PerfilValidationException(fieldErrors);
+        if (fieldErrors.isNotEmpty)
+          return PerfilValidationException(fieldErrors);
         return const FormatoInvalidoException();
       default:
         if (statusCode == 404) return const RecursoNaoDisponivelException();

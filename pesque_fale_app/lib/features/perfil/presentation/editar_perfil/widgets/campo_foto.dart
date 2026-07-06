@@ -56,8 +56,9 @@ class CampoFoto extends StatelessWidget {
                         usuario != null && usuario.nome.isNotEmpty
                             ? usuario.nome[0].toUpperCase()
                             : '?',
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(color: Colors.white),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.displaySmall?.copyWith(color: Colors.white),
                       ),
                     ),
             ),

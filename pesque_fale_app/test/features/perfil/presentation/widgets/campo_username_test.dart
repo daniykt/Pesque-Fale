@@ -49,7 +49,10 @@ class _FakePerfilRepository implements PerfilRepository {
   final Set<String> usernamesIndisponiveis = {'ocupado'};
 
   @override
-  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) async {
+  Future<PerfilCompleto> buscarPerfil(
+    String id, {
+    required String meuId,
+  }) async {
     throw UnimplementedError();
   }
 
@@ -111,17 +114,24 @@ void main() {
     expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
   });
 
-  testWidgets('estado invalidoFormato exibido sem chamar a API', (tester) async {
+  testWidgets('estado invalidoFormato exibido sem chamar a API', (
+    tester,
+  ) async {
     final provider = await montarWidget(tester);
 
     provider.onUsernameChanged('ab');
     await tester.pump();
 
-    expect(find.text('3-20 caracteres. Use letras, números, _ ou .'), findsOneWidget);
+    expect(
+      find.text('3-20 caracteres. Use letras, números, _ ou .'),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.error_outline), findsOneWidget);
   });
 
-  testWidgets('estado validating exibido logo apos digitar valor valido', (tester) async {
+  testWidgets('estado validating exibido logo apos digitar valor valido', (
+    tester,
+  ) async {
     final provider = await montarWidget(tester);
 
     provider.onUsernameChanged('livre123');
@@ -133,7 +143,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
   });
 
-  testWidgets('estado disponivel exibido apos o debounce resolver', (tester) async {
+  testWidgets('estado disponivel exibido apos o debounce resolver', (
+    tester,
+  ) async {
     final provider = await montarWidget(tester);
 
     provider.onUsernameChanged('livre123');
@@ -144,7 +156,9 @@ void main() {
     expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
   });
 
-  testWidgets('estado indisponivel exibido quando a API recusa', (tester) async {
+  testWidgets('estado indisponivel exibido quando a API recusa', (
+    tester,
+  ) async {
     final provider = await montarWidget(tester);
 
     provider.onUsernameChanged('ocupado');
@@ -155,26 +169,31 @@ void main() {
     expect(find.byIcon(Icons.cancel_outlined), findsOneWidget);
   });
 
-  testWidgets('estado idle nao exibe icone nem texto quando username original é vazio', (tester) async {
-    final authProvider = AuthProvider(repository: _FakeAuthRepository());
-    await authProvider.login(email: 'ana@teste.com', senha: '123456');
-    authProvider.atualizarUsuario(authProvider.usuario!.copyWith(username: ''));
+  testWidgets(
+    'estado idle nao exibe icone nem texto quando username original é vazio',
+    (tester) async {
+      final authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      authProvider.atualizarUsuario(
+        authProvider.usuario!.copyWith(username: ''),
+      );
 
-    await tester.pumpWidget(
-      ChangeNotifierProvider<EditarPerfilProvider>(
-        create: (_) => EditarPerfilProvider(
-          repository: _FakePerfilRepository(),
-          authProvider: authProvider,
+      await tester.pumpWidget(
+        ChangeNotifierProvider<EditarPerfilProvider>(
+          create: (_) => EditarPerfilProvider(
+            repository: _FakePerfilRepository(),
+            authProvider: authProvider,
+          ),
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: const Scaffold(body: CampoUsername()),
+          ),
         ),
-        child: MaterialApp(
-          theme: AppTheme.light,
-          home: const Scaffold(body: CampoUsername()),
-        ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.text('Username atual'), findsNothing);
-    expect(find.byIcon(Icons.check_circle_outline), findsNothing);
-  });
+      expect(find.text('Username atual'), findsNothing);
+      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+    },
+  );
 }

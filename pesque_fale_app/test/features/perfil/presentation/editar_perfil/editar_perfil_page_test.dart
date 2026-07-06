@@ -46,7 +46,10 @@ class _FakeAuthRepository implements AuthRepository {
 
 class _FakePerfilRepository implements PerfilRepository {
   @override
-  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) async {
+  Future<PerfilCompleto> buscarPerfil(
+    String id, {
+    required String meuId,
+  }) async {
     throw UnimplementedError();
   }
 
@@ -110,9 +113,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('permite voltar direto quando nao ha alteracoes', (
-    tester,
-  ) async {
+  testWidgets('permite voltar direto quando nao ha alteracoes', (tester) async {
     await montarApp(tester);
 
     await tester.tap(find.text('abrir'));

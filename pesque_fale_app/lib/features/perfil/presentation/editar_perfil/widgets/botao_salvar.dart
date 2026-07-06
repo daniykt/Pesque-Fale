@@ -10,7 +10,10 @@ import '../../../providers/editar_perfil_provider.dart';
 class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
 
-  Future<void> _salvar(BuildContext context, EditarPerfilProvider provider) async {
+  Future<void> _salvar(
+    BuildContext context,
+    EditarPerfilProvider provider,
+  ) async {
     final ok = await provider.salvar();
     if (!context.mounted) return;
 

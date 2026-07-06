@@ -51,7 +51,10 @@ class _FakePerfilRepository implements PerfilRepository {
   final Duration delay;
 
   @override
-  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) async {
+  Future<PerfilCompleto> buscarPerfil(
+    String id, {
+    required String meuId,
+  }) async {
     throw UnimplementedError();
   }
 

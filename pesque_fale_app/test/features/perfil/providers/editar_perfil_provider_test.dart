@@ -44,14 +44,20 @@ class _FakeAuthRepository implements AuthRepository {
 }
 
 class _FakePerfilRepository implements PerfilRepository {
-  _FakePerfilRepository({this.usernamesIndisponiveis = const {}, this.falharAoEditar = false});
+  _FakePerfilRepository({
+    this.usernamesIndisponiveis = const {},
+    this.falharAoEditar = false,
+  });
 
   final Set<String> usernamesIndisponiveis;
   final bool falharAoEditar;
   int chamadasVerificarUsername = 0;
 
   @override
-  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) async {
+  Future<PerfilCompleto> buscarPerfil(
+    String id, {
+    required String meuId,
+  }) async {
     throw UnimplementedError();
   }
 
@@ -146,19 +152,22 @@ void main() {
       expect(provider.usernameState, UsernameCheckState.disponivel);
     });
 
-    test('estado atual quando username volta ao original sem chamar API', () async {
-      final repository = _FakePerfilRepository();
-      final provider = EditarPerfilProvider(
-        repository: repository,
-        authProvider: authProvider,
-      );
+    test(
+      'estado atual quando username volta ao original sem chamar API',
+      () async {
+        final repository = _FakePerfilRepository();
+        final provider = EditarPerfilProvider(
+          repository: repository,
+          authProvider: authProvider,
+        );
 
-      provider.onUsernameChanged('ana_original');
-      await Future.delayed(const Duration(milliseconds: 700));
+        provider.onUsernameChanged('ana_original');
+        await Future.delayed(const Duration(milliseconds: 700));
 
-      expect(provider.usernameState, UsernameCheckState.atual);
-      expect(repository.chamadasVerificarUsername, 0);
-    });
+        expect(provider.usernameState, UsernameCheckState.atual);
+        expect(repository.chamadasVerificarUsername, 0);
+      },
+    );
 
     test('formato invalido nao chama a API', () async {
       final repository = _FakePerfilRepository();
@@ -190,22 +199,25 @@ void main() {
       expect(provider.podeSalvar, isFalse);
     });
 
-    test('resetUsername volta ao original e cancela checagem pendente', () async {
-      final repository = _FakePerfilRepository();
-      final provider = EditarPerfilProvider(
-        repository: repository,
-        authProvider: authProvider,
-      );
+    test(
+      'resetUsername volta ao original e cancela checagem pendente',
+      () async {
+        final repository = _FakePerfilRepository();
+        final provider = EditarPerfilProvider(
+          repository: repository,
+          authProvider: authProvider,
+        );
 
-      provider.onUsernameChanged('novo1');
-      provider.resetUsername();
+        provider.onUsernameChanged('novo1');
+        provider.resetUsername();
 
-      await Future.delayed(const Duration(milliseconds: 700));
+        await Future.delayed(const Duration(milliseconds: 700));
 
-      expect(provider.username, 'ana_original');
-      expect(provider.usernameState, UsernameCheckState.atual);
-      expect(repository.chamadasVerificarUsername, 0);
-    });
+        expect(provider.username, 'ana_original');
+        expect(provider.usernameState, UsernameCheckState.atual);
+        expect(repository.chamadasVerificarUsername, 0);
+      },
+    );
   });
 
   group('EditarPerfilProvider - salvar', () {

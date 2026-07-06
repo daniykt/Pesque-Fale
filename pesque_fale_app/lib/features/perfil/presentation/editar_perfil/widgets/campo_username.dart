@@ -47,10 +47,7 @@ class _CampoUsernameState extends State<CampoUsername> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Username',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
+          Text('Username', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: AppSpacing.xs),
           TextField(
             controller: _controller,
