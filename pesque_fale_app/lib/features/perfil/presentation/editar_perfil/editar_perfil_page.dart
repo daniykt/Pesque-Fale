@@ -5,6 +5,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/editar_perfil_provider.dart';
 import '../../providers/perfil_provider.dart';
+import 'widgets/botao_salvar.dart';
 import 'widgets/campo_banner.dart';
 import 'widgets/campo_foto.dart';
 import 'widgets/campo_username.dart';
@@ -85,6 +86,9 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
                 child: TextField(
                   controller: _nomeController,
                   onChanged: provider.onNomeChanged,
+                  decoration: InputDecoration(
+                    errorText: provider.fieldErrors['nome'],
+                  ),
                 ),
               ),
               const CampoUsername(),
@@ -112,6 +116,8 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
                 ),
               ),
               ContadorBio(tamanhoAtual: provider.bio.length),
+              const SizedBox(height: AppSpacing.lg),
+              const BotaoSalvar(),
             ],
           ),
         ),
