@@ -5,6 +5,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/editar_perfil_provider.dart';
 import '../../providers/perfil_provider.dart';
+import 'widgets/campo_banner.dart';
+import 'widgets/campo_foto.dart';
 import 'widgets/campo_username.dart';
 import 'widgets/contador_bio.dart';
 import 'widgets/editar_secao.dart';
@@ -65,6 +67,18 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const CampoBanner(),
+                  Positioned(
+                    left: AppSpacing.sm,
+                    bottom: -32,
+                    child: const CampoFoto(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32 + AppSpacing.md),
               EditarSecao(
                 label: 'Nome',
                 dica: 'Mínimo de 2 caracteres.',
