@@ -5,6 +5,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/editar_perfil_provider.dart';
 import '../../providers/perfil_provider.dart';
+import 'widgets/campo_username.dart';
 import 'widgets/contador_bio.dart';
 import 'widgets/editar_secao.dart';
 
@@ -72,6 +73,7 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
                   onChanged: provider.onNomeChanged,
                 ),
               ),
+              const CampoUsername(),
               EditarSecao(
                 label: 'Localização',
                 child: TextField(

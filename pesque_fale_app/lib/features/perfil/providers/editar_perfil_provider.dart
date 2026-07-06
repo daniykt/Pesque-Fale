@@ -63,6 +63,8 @@ class EditarPerfilProvider extends ChangeNotifier {
       novaFotoPath != null ||
       novoBannerPath != null;
 
+  bool get usernameAlterado => username != _usernameOriginal;
+
   bool get podeSalvar =>
       nome.trim().length >= 2 &&
       _usernameValido() &&
@@ -78,7 +80,9 @@ class EditarPerfilProvider extends ChangeNotifier {
     _bioOriginal = bio;
     _localizacaoOriginal = localizacao;
     _usernameOriginal = username;
-    _usernameState = UsernameCheckState.atual;
+    _usernameState = _usernameOriginal.isEmpty
+        ? UsernameCheckState.idle
+        : UsernameCheckState.atual;
   }
 
   bool _usernameValido() {
@@ -107,7 +111,9 @@ class EditarPerfilProvider extends ChangeNotifier {
     _debounceTimer?.cancel();
 
     if (username == _usernameOriginal) {
-      _usernameState = UsernameCheckState.atual;
+      _usernameState = _usernameOriginal.isEmpty
+          ? UsernameCheckState.idle
+          : UsernameCheckState.atual;
       notifyListeners();
       return;
     }
@@ -145,7 +151,9 @@ class EditarPerfilProvider extends ChangeNotifier {
   void resetUsername() {
     _debounceTimer?.cancel();
     username = _usernameOriginal;
-    _usernameState = UsernameCheckState.atual;
+    _usernameState = _usernameOriginal.isEmpty
+        ? UsernameCheckState.idle
+        : UsernameCheckState.atual;
     notifyListeners();
   }
 
@@ -244,7 +252,9 @@ class EditarPerfilProvider extends ChangeNotifier {
     _bioOriginal = bio;
     _localizacaoOriginal = localizacao;
     _usernameOriginal = username;
-    _usernameState = UsernameCheckState.atual;
+    _usernameState = _usernameOriginal.isEmpty
+        ? UsernameCheckState.idle
+        : UsernameCheckState.atual;
     novaFotoPath = null;
     novoBannerPath = null;
   }
