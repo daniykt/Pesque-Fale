@@ -15,17 +15,13 @@ class PerfilRepositoryHttp implements PerfilRepository {
     String id, {
     required String meuId,
   }) async {
-    final usuario = await apiClient.buscarPerfil(id);
+    final completo = await apiClient.buscarPerfil(id);
     final publicacoes = await apiClient.buscarPublicacoes(id);
-
-    // O backend ainda não expõe se o usuário logado segue/é seguido por
-    // este perfil (gap de contrato — ver issue de continuação da Fase 2).
-    // Assumimos "não segue" como padrão seguro até o endpoint existir.
     return PerfilCompleto(
-      usuario: usuario,
+      usuario: completo.usuario,
       publicacoes: publicacoes,
-      isFollowing: false,
-      seguidoPeloOutro: false,
+      isFollowing: completo.isFollowing,
+      seguidoPeloOutro: completo.seguidoPeloOutro,
     );
   }
 
@@ -50,4 +46,18 @@ class PerfilRepositoryHttp implements PerfilRepository {
   @override
   Future<bool> verificarUsername(String username) =>
       apiClient.verificarUsername(username);
+
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) =>
+      apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
+
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) =>
+      apiClient.buscarSeguindo(id, pagina: pagina, porPagina: porPagina);
 }

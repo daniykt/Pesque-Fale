@@ -1,9 +1,22 @@
 const pool = require('../../config/database');
+const jwt = require('jsonwebtoken');
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]{3,20}$/;
 
+// Tenta extrair o usuário autenticado do token sem rejeitar a requisição
+function tryGetUsuario(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try {
+    return jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
 async function getPerfil(req, res) {
   const { id } = req.params;
+  const autenticado = tryGetUsuario(req);
 
   try {
     const result = await pool.query(
@@ -19,6 +32,25 @@ async function getPerfil(req, res) {
     }
 
     const u = result.rows[0];
+
+    let souSeguidor = null;
+    let meSegue = null;
+
+    if (autenticado && autenticado.id !== id) {
+      const [r1, r2] = await Promise.all([
+        pool.query(
+          'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
+          [autenticado.id, id]
+        ),
+        pool.query(
+          'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
+          [id, autenticado.id]
+        ),
+      ]);
+      souSeguidor = r1.rows.length > 0;
+      meSegue = r2.rows.length > 0;
+    }
+
     return res.json({
       data: {
         id: u.id,
@@ -32,6 +64,8 @@ async function getPerfil(req, res) {
         onboardingConcluido: u.onboarding_concluido,
         seguidores: parseInt(u.seguidores),
         seguindo: parseInt(u.seguindo),
+        souSeguidor,
+        meSegue,
         criadoEm: u.criado_em,
       },
     });
@@ -100,7 +134,6 @@ async function updateMe(req, res) {
     );
 
     const u = result.rows[0];
-
     const seguidores = await pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1', [usuarioId]);
     const seguindo = await pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1', [usuarioId]);
 
@@ -128,11 +161,9 @@ async function updateMe(req, res) {
 
 async function checkUsername(req, res) {
   const { username } = req.params;
-
   if (!USERNAME_REGEX.test(username)) {
     return res.json({ data: { disponivel: false } });
   }
-
   try {
     const result = await pool.query('SELECT id FROM usuarios WHERE username = $1', [username]);
     return res.json({ data: { disponivel: result.rows.length === 0 } });
@@ -155,12 +186,10 @@ async function seguir(req, res) {
     if (usuarioExiste.rows.length === 0) {
       return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
     }
-
     await pool.query(
       'INSERT INTO usuario_seguidores (seguidor_id, seguido_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [seguidorId, seguidoId]
     );
-
     return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
   } catch (err) {
     console.error(err);
@@ -177,7 +206,6 @@ async function deixarDeSeguir(req, res) {
       'DELETE FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
       [seguidorId, seguidoId]
     );
-
     return res.status(204).send();
   } catch (err) {
     console.error(err);
@@ -185,4 +213,98 @@ async function deixarDeSeguir(req, res) {
   }
 }
 
-module.exports = { getPerfil, getMe, updateMe, checkUsername, seguir, deixarDeSeguir };
+async function getSeguidores(req, res) {
+  const { id } = req.params;
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+
+  try {
+    const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [id]);
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT u.id, u.nome, u.username, u.foto_perfil
+         FROM usuario_seguidores us
+         JOIN usuarios u ON u.id = us.seguidor_id
+         WHERE us.seguido_id = $1
+         ORDER BY us.criado_em DESC
+         LIMIT $2 OFFSET $3`,
+        [id, porPagina, offset]
+      ),
+      pool.query(
+        'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
+        [id]
+      ),
+    ]);
+
+    return res.json({
+      data: result.rows.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+      })),
+      meta: {
+        total: parseInt(total.rows[0].count),
+        pagina,
+        porPagina,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function getSeguindo(req, res) {
+  const { id } = req.params;
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+
+  try {
+    const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [id]);
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT u.id, u.nome, u.username, u.foto_perfil
+         FROM usuario_seguidores us
+         JOIN usuarios u ON u.id = us.seguido_id
+         WHERE us.seguidor_id = $1
+         ORDER BY us.criado_em DESC
+         LIMIT $2 OFFSET $3`,
+        [id, porPagina, offset]
+      ),
+      pool.query(
+        'SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1',
+        [id]
+      ),
+    ]);
+
+    return res.json({
+      data: result.rows.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+      })),
+      meta: {
+        total: parseInt(total.rows[0].count),
+        pagina,
+        porPagina,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+module.exports = { getPerfil, getMe, updateMe, checkUsername, seguir, deixarDeSeguir, getSeguidores, getSeguindo };
