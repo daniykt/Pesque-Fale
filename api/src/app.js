@@ -3,6 +3,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const usuariosRoutes = require('./modules/usuarios/usuarios.routes');
 const uploadRoutes = require('./modules/upload/upload.routes');
 const pontosRoutes = require('./modules/pontos/pontos.routes');
+const avaliacoesRoutes = require('./modules/avaliacoes/avaliacoes.routes');
 require('dotenv').config();
 
 const app = express();
@@ -17,5 +18,6 @@ app.use('/v1/auth', authRoutes);
 app.use('/v1/usuarios', usuariosRoutes);
 app.use('/v1/usuarios', uploadRoutes);
 app.use('/v1/pontos', pontosRoutes);
+app.use('/v1/pontos/:pontoId/avaliacoes', avaliacoesRoutes);
 
 module.exports = app;
