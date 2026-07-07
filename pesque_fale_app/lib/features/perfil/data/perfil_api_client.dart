@@ -58,7 +58,7 @@ class PerfilApiClient {
   final TokenStorage tokenStorage;
   final http.Client _client;
 
-  static const _timeout = Duration(seconds: 10);
+  static const _timeout = Duration(seconds: 30);
 
   Future<PerfilCompleto> buscarPerfil(String id) async {
     final json = await _request('GET', '/usuarios/$id');
@@ -135,10 +135,10 @@ class PerfilApiClient {
   }
 
   Future<String> atualizarFoto(File arquivo) =>
-      _upload('/usuarios/me/foto', arquivo);
+      _upload('/usuarios/me/foto', arquivo, campo: 'foto');
 
   Future<String> atualizarBanner(File arquivo) =>
-      _upload('/usuarios/me/banner', arquivo);
+      _upload('/usuarios/me/banner', arquivo, campo: 'banner');
 
   Future<Usuario> editarPerfil(Map<String, dynamic> campos) async {
     final json = await _request('PATCH', '/usuarios/me', body: campos);
@@ -186,8 +186,8 @@ class PerfilApiClient {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
-      final uri = Uri.parse('$baseUrl$path')
-          .replace(queryParameters: queryParams);
+      final uri =
+          Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
       final request = http.Request(method, uri)
         ..headers.addAll({
           'Content-Type': 'application/json',
@@ -219,7 +219,11 @@ class PerfilApiClient {
     throw _mapError(response.statusCode, json);
   }
 
-  Future<String> _upload(String path, File arquivo) async {
+  Future<String> _upload(
+    String path,
+    File arquivo, {
+    required String campo,
+  }) async {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
@@ -228,7 +232,7 @@ class PerfilApiClient {
             ..headers
                 .addAll({if (token != null) 'Authorization': 'Bearer $token'})
             ..files.add(
-              await http.MultipartFile.fromPath('arquivo', arquivo.path),
+              await http.MultipartFile.fromPath(campo, arquivo.path),
             );
 
       final streamed = await _client.send(request).timeout(_timeout);
@@ -242,7 +246,7 @@ class PerfilApiClient {
     }
 
     final json = _handleResponse(response);
-    return json['url']?.toString() ?? '';
+    return json['fotoPerfil']?.toString() ?? json['banner']?.toString() ?? '';
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
@@ -268,6 +272,10 @@ class PerfilApiClient {
     switch (code) {
       case 'USUARIO_NAO_ENCONTRADO':
         return const PerfilNaoEncontradoException();
+      case 'ARQUIVO_MUITO_GRANDE':
+        return const FotoMuitoGrandeException();
+      case 'FORMATO_INVALIDO':
+        return const FormatoInvalidoException();
       case 'VALIDATION_ERROR':
         final details = (json['details'] as List<dynamic>?) ?? const [];
         final fieldErrors = <String, String>{};
