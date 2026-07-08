@@ -94,7 +94,11 @@ class _Conteudo extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 16, color: colors.textSecondary),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
                   const SizedBox(width: 4),
                   Text('${ponto.cidade}-${ponto.estado}'),
                   if (ponto.distanciaKm != null) ...[

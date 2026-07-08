@@ -41,7 +41,8 @@ class _UsuarioCardSkeletonState extends State<UsuarioCardSkeleton>
 
     return AnimatedBuilder(
       animation: _opacity,
-      builder: (context, child) => Opacity(opacity: _opacity.value, child: child),
+      builder: (context, child) =>
+          Opacity(opacity: _opacity.value, child: child),
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -85,7 +86,11 @@ class _UsuarioCardSkeletonState extends State<UsuarioCardSkeleton>
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: Container(width: width, height: height, color: colors.surfaceVariant),
+      child: Container(
+        width: width,
+        height: height,
+        color: colors.surfaceVariant,
+      ),
     );
   }
 }

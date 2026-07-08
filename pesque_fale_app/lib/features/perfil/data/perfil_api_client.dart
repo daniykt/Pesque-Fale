@@ -186,8 +186,9 @@ class PerfilApiClient {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
-      final uri =
-          Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        '$baseUrl$path',
+      ).replace(queryParameters: queryParams);
       final request = http.Request(method, uri)
         ..headers.addAll({
           'Content-Type': 'application/json',
@@ -227,13 +228,9 @@ class PerfilApiClient {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
-      final request =
-          http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
-            ..headers
-                .addAll({if (token != null) 'Authorization': 'Bearer $token'})
-            ..files.add(
-              await http.MultipartFile.fromPath(campo, arquivo.path),
-            );
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
+        ..headers.addAll({if (token != null) 'Authorization': 'Bearer $token'})
+        ..files.add(await http.MultipartFile.fromPath(campo, arquivo.path));
 
       final streamed = await _client.send(request).timeout(_timeout);
       response = await http.Response.fromStream(streamed);

@@ -39,11 +39,7 @@ class EstatisticasPerfil extends StatelessWidget {
 }
 
 class _Contador extends StatelessWidget {
-  const _Contador({
-    required this.valor,
-    required this.label,
-    this.onTap,
-  });
+  const _Contador({required this.valor, required this.label, this.onTap});
 
   final int valor;
   final String label;
@@ -57,26 +53,21 @@ class _Contador extends StatelessWidget {
       children: [
         Text(
           '$valor',
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         Text(
           label,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: colors.textSecondary),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
         ),
       ],
     );
 
     if (onTap == null) return conteudo;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: conteudo,
-    );
+    return GestureDetector(onTap: onTap, child: conteudo);
   }
 }

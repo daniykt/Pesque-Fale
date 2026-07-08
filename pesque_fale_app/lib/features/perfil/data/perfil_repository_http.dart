@@ -51,13 +51,11 @@ class PerfilRepositoryHttp implements PerfilRepository {
     String id, {
     int pagina = 1,
     int porPagina = 20,
-  }) =>
-      apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
+  }) => apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
 
   Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
     String id, {
     int pagina = 1,
     int porPagina = 20,
-  }) =>
-      apiClient.buscarSeguindo(id, pagina: pagina, porPagina: porPagina);
+  }) => apiClient.buscarSeguindo(id, pagina: pagina, porPagina: porPagina);
 }

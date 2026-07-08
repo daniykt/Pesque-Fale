@@ -49,7 +49,9 @@ class Ponto {
       tipo: TipoPonto.fromApi(json['tipo'] as String?) ?? TipoPonto.pesqueiro,
       fotoCapa: json['fotoCapa'] as String?,
       fotos:
-          (json['fotos'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          (json['fotos'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           const [],
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??

@@ -103,8 +103,11 @@ class _Conteudo extends StatelessWidget {
             final usuario = provider.usuarios[index];
             return UsuarioCard(
               usuario: usuario,
-              onVerPerfil: () =>
-                  Navigator.pushNamed(context, '/perfil', arguments: usuario.id),
+              onVerPerfil: () => Navigator.pushNamed(
+                context,
+                '/perfil',
+                arguments: usuario.id,
+              ),
             );
           },
         );

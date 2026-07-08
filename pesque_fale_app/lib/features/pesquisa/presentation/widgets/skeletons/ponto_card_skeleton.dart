@@ -41,7 +41,8 @@ class _PontoCardSkeletonState extends State<PontoCardSkeleton>
 
     return AnimatedBuilder(
       animation: _opacity,
-      builder: (context, child) => Opacity(opacity: _opacity.value, child: child),
+      builder: (context, child) =>
+          Opacity(opacity: _opacity.value, child: child),
       child: ClipRRect(
         borderRadius: AppRadius.mdRadius,
         child: Container(
@@ -79,7 +80,11 @@ class _PontoCardSkeletonState extends State<PontoCardSkeleton>
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
-      child: Container(width: width, height: height, color: colors.surfaceVariant),
+      child: Container(
+        width: width,
+        height: height,
+        color: colors.surfaceVariant,
+      ),
     );
   }
 }

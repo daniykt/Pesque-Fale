@@ -66,33 +66,36 @@ void main() {
     expect(capturedUri.queryParameters.containsKey('raio'), isFalse);
   });
 
-  test('inclui busca, tipo e avaliacaoMin quando presentes nos filtros', () async {
-    late Uri capturedUri;
-    final client = MockClient((request) async {
-      capturedUri = request.url;
-      return http.Response(jsonEncode({'data': []}), 200);
-    });
+  test(
+    'inclui busca, tipo e avaliacaoMin quando presentes nos filtros',
+    () async {
+      late Uri capturedUri;
+      final client = MockClient((request) async {
+        capturedUri = request.url;
+        return http.Response(jsonEncode({'data': []}), 200);
+      });
 
-    final repository = PontosRepositoryHttp(
-      apiClient: PontosApiClient(
-        baseUrl: _baseUrl,
-        tokenStorage: _FakeTokenStorage(),
-        client: client,
-      ),
-    );
+      final repository = PontosRepositoryHttp(
+        apiClient: PontosApiClient(
+          baseUrl: _baseUrl,
+          tokenStorage: _FakeTokenStorage(),
+          client: client,
+        ),
+      );
 
-    await repository.buscar(
-      filtros: const FiltrosLocais(
-        busca: 'rio',
-        tipo: TipoPonto.rio,
-        avaliacaoMin: AvaliacaoMinFiltro.quatro,
-      ),
-    );
+      await repository.buscar(
+        filtros: const FiltrosLocais(
+          busca: 'rio',
+          tipo: TipoPonto.rio,
+          avaliacaoMin: AvaliacaoMinFiltro.quatro,
+        ),
+      );
 
-    expect(capturedUri.queryParameters['busca'], 'rio');
-    expect(capturedUri.queryParameters['tipo'], 'rio');
-    expect(capturedUri.queryParameters['avaliacaoMin'], '4.0');
-  });
+      expect(capturedUri.queryParameters['busca'], 'rio');
+      expect(capturedUri.queryParameters['tipo'], 'rio');
+      expect(capturedUri.queryParameters['avaliacaoMin'], '4.0');
+    },
+  );
 
   test('so envia raio quando incluirDistancia e true', () async {
     late Uri capturedComRaio;

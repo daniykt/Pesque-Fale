@@ -75,9 +75,7 @@ class _PesquisaView extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [UsuariosTab(), LocaisTab()],
-        ),
+        body: const TabBarView(children: [UsuariosTab(), LocaisTab()]),
       ),
     );
   }

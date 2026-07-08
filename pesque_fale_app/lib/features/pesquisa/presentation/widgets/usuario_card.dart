@@ -18,7 +18,8 @@ class UsuarioCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final temFoto = usuario.fotoPerfil != null && usuario.fotoPerfil!.isNotEmpty;
+    final temFoto =
+        usuario.fotoPerfil != null && usuario.fotoPerfil!.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -68,7 +69,10 @@ class UsuarioCard extends StatelessWidget {
                     ),
                     Text(
                       '@${usuario.username}',
-                      style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -76,7 +80,10 @@ class UsuarioCard extends StatelessWidget {
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
                         usuario.bio,
-                        style: TextStyle(fontSize: 13, color: colors.textPrimary),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.textPrimary,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

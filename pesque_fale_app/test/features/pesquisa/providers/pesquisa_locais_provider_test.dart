@@ -67,8 +67,7 @@ class _FakeGeolocatorPlatform extends GeolocatorPlatform {
   Future<LocationPermission> checkPermission() async => permissaoInicial;
 
   @override
-  Future<LocationPermission> requestPermission() async =>
-      permissaoAposRequest;
+  Future<LocationPermission> requestPermission() async => permissaoAposRequest;
 
   @override
   Future<Position> getCurrentPosition({

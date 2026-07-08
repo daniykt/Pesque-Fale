@@ -36,17 +36,20 @@ void main() {
     expect(pontos.every((p) => p.avgNota >= 4.0), isTrue);
   });
 
-  test('calcula distancia quando lat/lng informados e incluirDistancia', () async {
-    final pontos = await repository.buscar(
-      filtros: const FiltrosLocais(),
-      lat: -21.6082,
-      lng: -48.3658,
-      incluirDistancia: true,
-    );
+  test(
+    'calcula distancia quando lat/lng informados e incluirDistancia',
+    () async {
+      final pontos = await repository.buscar(
+        filtros: const FiltrosLocais(),
+        lat: -21.6082,
+        lng: -48.3658,
+        incluirDistancia: true,
+      );
 
-    expect(pontos, isNotEmpty);
-    expect(pontos.every((p) => p.distanciaKm != null), isTrue);
-  });
+      expect(pontos, isNotEmpty);
+      expect(pontos.every((p) => p.distanciaKm != null), isTrue);
+    },
+  );
 
   test('nao calcula distancia quando incluirDistancia e falso', () async {
     final pontos = await repository.buscar(

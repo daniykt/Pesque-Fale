@@ -182,7 +182,10 @@ class _ChipRaio extends StatelessWidget {
     );
   }
 
-  void _abrirSeletorRaio(BuildContext context, PesquisaLocaisProvider provider) {
+  void _abrirSeletorRaio(
+    BuildContext context,
+    PesquisaLocaisProvider provider,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(

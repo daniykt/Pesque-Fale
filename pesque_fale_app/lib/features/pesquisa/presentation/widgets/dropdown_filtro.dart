@@ -47,7 +47,10 @@ class DropdownFiltro<T> extends StatelessWidget {
             child: DropdownButtonFormField<T>(
               initialValue: valor,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: colors.textSecondary),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: colors.textSecondary,
+              ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
