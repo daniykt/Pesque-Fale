@@ -62,4 +62,44 @@ class PontosApiClient {
 
     throw const InternalServerException();
   }
+
+  Future<Ponto> buscarPorId(String id) async {
+    final token = await tokenStorage.readToken();
+    http.Response response;
+    try {
+      final request = http.Request('GET', Uri.parse('$baseUrl/pontos/$id'))
+        ..headers.addAll({
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        });
+
+      final streamed = await _client.send(request).timeout(_timeout);
+      response = await http.Response.fromStream(streamed);
+    } on TimeoutException {
+      throw const NetworkException();
+    } on SocketException {
+      throw const NetworkException();
+    } on http.ClientException {
+      throw const NetworkException();
+    }
+
+    Map<String, dynamic> json;
+    try {
+      json = response.body.isEmpty
+          ? const {}
+          : jsonDecode(response.body) as Map<String, dynamic>;
+    } on FormatException {
+      json = const {};
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return Ponto.fromJson((json['data'] as Map<String, dynamic>?) ?? json);
+    }
+
+    if (response.statusCode == 404) {
+      throw const PontoNaoEncontradoException();
+    }
+
+    throw const InternalServerException();
+  }
 }

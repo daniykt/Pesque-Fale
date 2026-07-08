@@ -3,6 +3,7 @@ import 'dart:math';
 import '../domain/filtros_locais.dart';
 import '../domain/ponto.dart';
 import '../domain/tipo_ponto.dart';
+import 'pontos_exceptions.dart';
 import 'pontos_repository.dart';
 
 class PontosRepositoryMock implements PontosRepository {
@@ -242,6 +243,16 @@ class PontosRepositoryMock implements PontosRepository {
     }
 
     return resultado;
+  }
+
+  @override
+  Future<Ponto> buscarPorId(String id) async {
+    await Future.delayed(_delay);
+
+    for (final ponto in _pontos) {
+      if (ponto.id == id) return ponto;
+    }
+    throw const PontoNaoEncontradoException();
   }
 
   Ponto _comDistancia(Ponto p, double lat, double lng) {
