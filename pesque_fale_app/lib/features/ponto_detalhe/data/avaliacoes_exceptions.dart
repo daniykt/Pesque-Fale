@@ -31,8 +31,8 @@ class AvaliacaoNaoEncontradaException extends AvaliacoesException {
     : super('Avaliação não encontrada.');
 }
 
-class PontoNaoEncontradoException extends AvaliacoesException {
-  const PontoNaoEncontradoException()
+class AvaliacoesPontoNaoEncontradoException extends AvaliacoesException {
+  const AvaliacoesPontoNaoEncontradoException()
     : super('Ponto de pesca não encontrado.');
 }
 

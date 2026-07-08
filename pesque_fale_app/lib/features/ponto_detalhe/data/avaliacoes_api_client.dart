@@ -117,7 +117,7 @@ class AvaliacoesApiClient {
       case 'AVALIACAO_NAO_ENCONTRADA':
         return const AvaliacaoNaoEncontradaException();
       case 'PONTO_NAO_ENCONTRADO':
-        return const PontoNaoEncontradoException();
+        return const AvaliacoesPontoNaoEncontradoException();
       case 'VALIDATION_ERROR':
         final details = (json['details'] as List<dynamic>?) ?? const [];
         final mensagem = details.isNotEmpty
