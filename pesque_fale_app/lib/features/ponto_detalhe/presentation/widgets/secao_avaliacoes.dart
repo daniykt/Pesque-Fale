@@ -64,6 +64,8 @@ class SecaoAvaliacoes extends StatelessWidget {
                   context,
                   ponto: ponto,
                   existente: minha,
+                  onSaved: provider.aplicarNovaAvaliacao,
+                  onDeleted: provider.removerMinhaAvaliacao,
                 ),
                 onExcluir: () => _confirmarExclusao(context),
               ),
@@ -86,8 +88,12 @@ class SecaoAvaliacoes extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () =>
-                          AvaliarBottomSheet.show(context, ponto: ponto),
+                      onPressed: () => AvaliarBottomSheet.show(
+                        context,
+                        ponto: ponto,
+                        onSaved: provider.aplicarNovaAvaliacao,
+                        onDeleted: provider.removerMinhaAvaliacao,
+                      ),
                       child: const Text('Avaliar'),
                     ),
                   ],

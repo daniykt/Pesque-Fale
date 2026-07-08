@@ -63,6 +63,8 @@ class PontoAcoesRow extends StatelessWidget {
       context,
       ponto: ponto,
       existente: detalheProvider.minhaAvaliacao,
+      onSaved: detalheProvider.aplicarNovaAvaliacao,
+      onDeleted: detalheProvider.removerMinhaAvaliacao,
     );
   }
 
