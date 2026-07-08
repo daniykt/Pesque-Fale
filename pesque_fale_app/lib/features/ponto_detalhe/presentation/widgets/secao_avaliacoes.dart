@@ -41,9 +41,7 @@ class SecaoAvaliacoes extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: SecaoTitulo(
-                  'AVALIAÇÕES · ${provider.totalAvaliacoes}',
-                ),
+                child: SecaoTitulo('AVALIAÇÕES · ${provider.totalAvaliacoes}'),
               ),
               if (provider.totalAvaliacoes > 5)
                 TextButton(

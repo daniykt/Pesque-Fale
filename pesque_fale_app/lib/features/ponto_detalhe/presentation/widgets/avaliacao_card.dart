@@ -80,7 +80,10 @@ class AvaliacaoCard extends StatelessWidget {
           if (avaliacao.comentario != null &&
               avaliacao.comentario!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text(avaliacao.comentario!, style: TextStyle(color: colors.textPrimary)),
+            Text(
+              avaliacao.comentario!,
+              style: TextStyle(color: colors.textPrimary),
+            ),
           ],
           if (avaliacao.foiEditada) ...[
             const SizedBox(height: AppSpacing.xxs),

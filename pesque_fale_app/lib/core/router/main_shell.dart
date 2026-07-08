@@ -11,8 +11,7 @@ class MainShell extends StatefulWidget {
 
   /// Permite que rotas empurradas por cima do shell (ex.: detalhe de ponto)
   /// troquem de aba ao voltar, já que não são descendentes deste widget.
-  static final GlobalKey<MainShellState> shellKey =
-      GlobalKey<MainShellState>();
+  static final GlobalKey<MainShellState> shellKey = GlobalKey<MainShellState>();
 
   static const int pesquisaIndex = 1;
 

@@ -41,7 +41,10 @@ class SecaoTags extends StatelessWidget {
                       border: Border.all(color: colors.border),
                       borderRadius: AppRadius.pillRadius,
                     ),
-                    child: Text('#$tag', style: TextStyle(color: colors.textPrimary)),
+                    child: Text(
+                      '#$tag',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                 ],

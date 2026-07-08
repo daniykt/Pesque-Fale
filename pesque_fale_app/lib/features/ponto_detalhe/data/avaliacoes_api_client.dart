@@ -48,11 +48,7 @@ class AvaliacoesApiClient {
     String pontoId,
     Map<String, dynamic> body,
   ) {
-    return _request(
-      'PATCH',
-      '/pontos/$pontoId/avaliacoes/minha',
-      body: body,
-    );
+    return _request('PATCH', '/pontos/$pontoId/avaliacoes/minha', body: body);
   }
 
   Future<void> deletar(String pontoId) {

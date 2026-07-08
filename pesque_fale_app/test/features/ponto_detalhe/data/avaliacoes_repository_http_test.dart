@@ -96,27 +96,27 @@ void main() {
     expect(minha, isNull);
   });
 
-  test('criar lanca JaAvaliouException quando o backend responde 409', () async {
-    final client = MockClient((request) async {
-      return http.Response(
-        jsonEncode({
-          'error': 'AVALIACAO_JA_EXISTE',
-          'message': 'Você já avaliou este ponto.',
-        }),
-        409,
+  test(
+    'criar lanca JaAvaliouException quando o backend responde 409',
+    () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'error': 'AVALIACAO_JA_EXISTE',
+            'message': 'Você já avaliou este ponto.',
+          }),
+          409,
+        );
+      });
+
+      final repository = _buildRepository(client);
+
+      expect(
+        () => repository.criar('p1', const CriarEditarAvaliacaoInput(nota: 4)),
+        throwsA(isA<JaAvaliouException>()),
       );
-    });
-
-    final repository = _buildRepository(client);
-
-    expect(
-      () => repository.criar(
-        'p1',
-        const CriarEditarAvaliacaoInput(nota: 4),
-      ),
-      throwsA(isA<JaAvaliouException>()),
-    );
-  });
+    },
+  );
 
   test(
     'criar lanca NaoAutenticadoException quando o backend responde 401',
@@ -134,10 +134,7 @@ void main() {
       final repository = _buildRepository(client);
 
       expect(
-        () => repository.criar(
-          'p1',
-          const CriarEditarAvaliacaoInput(nota: 4),
-        ),
+        () => repository.criar('p1', const CriarEditarAvaliacaoInput(nota: 4)),
         throwsA(isA<NaoAutenticadoException>()),
       );
     },
@@ -186,6 +183,9 @@ void main() {
 
     final repository = _buildRepository(client);
 
-    expect(() => repository.listar('p1'), throwsA(isA<InternalServerException>()));
+    expect(
+      () => repository.listar('p1'),
+      throwsA(isA<InternalServerException>()),
+    );
   });
 }

@@ -12,8 +12,7 @@ class NetworkException extends AvaliacoesException {
 }
 
 class InternalServerException extends AvaliacoesException {
-  const InternalServerException()
-    : super('Erro no servidor. Tente novamente.');
+  const InternalServerException() : super('Erro no servidor. Tente novamente.');
 }
 
 class NaoAutenticadoException extends AvaliacoesException {
@@ -27,8 +26,7 @@ class JaAvaliouException extends AvaliacoesException {
 }
 
 class AvaliacaoNaoEncontradaException extends AvaliacoesException {
-  const AvaliacaoNaoEncontradaException()
-    : super('Avaliação não encontrada.');
+  const AvaliacaoNaoEncontradaException() : super('Avaliação não encontrada.');
 }
 
 class AvaliacoesPontoNaoEncontradoException extends AvaliacoesException {

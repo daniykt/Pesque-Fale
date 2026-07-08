@@ -60,10 +60,7 @@ class _LocaisMapaViewState extends State<LocaisMapaView> {
         final ponto = pontoDestacado;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          _mapController.move(
-            LatLng(ponto.latitude, ponto.longitude),
-            15,
-          );
+          _mapController.move(LatLng(ponto.latitude, ponto.longitude), 15);
         });
       }
     }

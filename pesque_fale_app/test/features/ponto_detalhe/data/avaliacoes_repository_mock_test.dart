@@ -11,12 +11,15 @@ void main() {
   });
 
   group('AvaliacoesRepositoryMock - listar', () {
-    test('retorna avaliacoes seed de um ponto ordenadas por mais recente', () async {
-      final avaliacoes = await repository.listar('1');
+    test(
+      'retorna avaliacoes seed de um ponto ordenadas por mais recente',
+      () async {
+        final avaliacoes = await repository.listar('1');
 
-      expect(avaliacoes, hasLength(2));
-      expect(avaliacoes.first.id, 'av-1');
-    });
+        expect(avaliacoes, hasLength(2));
+        expect(avaliacoes.first.id, 'av-1');
+      },
+    );
 
     test('retorna vazio para ponto sem avaliacoes', () async {
       final avaliacoes = await repository.listar('ponto-sem-avaliacoes');
@@ -57,14 +60,17 @@ void main() {
       expect(nova.pontoId, '2');
     });
 
-    test('lanca JaAvaliouException ao criar duas vezes para o mesmo ponto', () async {
-      await repository.criar('2', const CriarEditarAvaliacaoInput(nota: 3));
+    test(
+      'lanca JaAvaliouException ao criar duas vezes para o mesmo ponto',
+      () async {
+        await repository.criar('2', const CriarEditarAvaliacaoInput(nota: 3));
 
-      expect(
-        () => repository.criar('2', const CriarEditarAvaliacaoInput(nota: 4)),
-        throwsA(isA<JaAvaliouException>()),
-      );
-    });
+        expect(
+          () => repository.criar('2', const CriarEditarAvaliacaoInput(nota: 4)),
+          throwsA(isA<JaAvaliouException>()),
+        );
+      },
+    );
   });
 
   group('AvaliacoesRepositoryMock - editar', () {
@@ -84,15 +90,16 @@ void main() {
       expect(editada.criadoEm, criada.criadoEm);
     });
 
-    test('lanca AvaliacaoNaoEncontradaException ao editar sem avaliar antes', () {
-      expect(
-        () => repository.editar(
-          '4',
-          const CriarEditarAvaliacaoInput(nota: 5),
-        ),
-        throwsA(isA<AvaliacaoNaoEncontradaException>()),
-      );
-    });
+    test(
+      'lanca AvaliacaoNaoEncontradaException ao editar sem avaliar antes',
+      () {
+        expect(
+          () =>
+              repository.editar('4', const CriarEditarAvaliacaoInput(nota: 5)),
+          throwsA(isA<AvaliacaoNaoEncontradaException>()),
+        );
+      },
+    );
   });
 
   group('AvaliacoesRepositoryMock - deletar', () {
@@ -105,11 +112,14 @@ void main() {
       expect(minha, isNull);
     });
 
-    test('lanca AvaliacaoNaoEncontradaException ao deletar sem avaliar antes', () {
-      expect(
-        () => repository.deletar('6'),
-        throwsA(isA<AvaliacaoNaoEncontradaException>()),
-      );
-    });
+    test(
+      'lanca AvaliacaoNaoEncontradaException ao deletar sem avaliar antes',
+      () {
+        expect(
+          () => repository.deletar('6'),
+          throwsA(isA<AvaliacaoNaoEncontradaException>()),
+        );
+      },
+    );
   });
 }

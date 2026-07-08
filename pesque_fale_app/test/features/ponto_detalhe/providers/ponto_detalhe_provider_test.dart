@@ -93,10 +93,7 @@ class _FakePontosRepository implements PontosRepository {
 }
 
 class _FakeAvaliacoesRepository implements AvaliacoesRepository {
-  _FakeAvaliacoesRepository({
-    this.lista = const [],
-    this.minha,
-  });
+  _FakeAvaliacoesRepository({this.lista = const [], this.minha});
 
   List<Avaliacao> lista;
   Avaliacao? minha;
@@ -274,10 +271,7 @@ void main() {
 
       expect(provider.minhaAvaliacao, isNull);
       expect(provider.totalAvaliacoes, totalAntes - 1);
-      expect(
-        provider.primeirasAvaliacoes.any((a) => a.id == 'minha'),
-        isFalse,
-      );
+      expect(provider.primeirasAvaliacoes.any((a) => a.id == 'minha'), isFalse);
     });
   });
 }

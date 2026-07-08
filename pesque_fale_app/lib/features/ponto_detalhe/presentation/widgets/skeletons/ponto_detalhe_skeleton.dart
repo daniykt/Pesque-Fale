@@ -64,9 +64,13 @@ class _PontoDetalheSkeletonState extends State<PontoDetalheSkeleton>
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Row(
               children: [
-                Expanded(child: _box(colors, width: double.infinity, height: 44)),
+                Expanded(
+                  child: _box(colors, width: double.infinity, height: 44),
+                ),
                 const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _box(colors, width: double.infinity, height: 44)),
+                Expanded(
+                  child: _box(colors, width: double.infinity, height: 44),
+                ),
               ],
             ),
           ),
@@ -104,10 +108,18 @@ class _PontoDetalheSkeletonState extends State<PontoDetalheSkeleton>
     );
   }
 
-  Widget _box(AppColors colors, {required double width, required double height}) {
+  Widget _box(
+    AppColors colors, {
+    required double width,
+    required double height,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
-      child: Container(width: width, height: height, color: colors.surfaceVariant),
+      child: Container(
+        width: width,
+        height: height,
+        color: colors.surfaceVariant,
+      ),
     );
   }
 }

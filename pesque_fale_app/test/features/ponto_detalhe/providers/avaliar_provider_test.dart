@@ -5,21 +5,18 @@ import 'package:pesque_fale_app/features/ponto_detalhe/domain/avaliacao.dart';
 import 'package:pesque_fale_app/features/ponto_detalhe/domain/criar_editar_avaliacao_input.dart';
 import 'package:pesque_fale_app/features/ponto_detalhe/providers/avaliar_provider.dart';
 
-Avaliacao _avaliacao({
-  String id = 'a1',
-  double nota = 4,
-  String? comentario,
-}) => Avaliacao(
-  id: id,
-  usuarioId: 'u1',
-  usuarioNome: 'Ana',
-  usuarioUsername: 'ana',
-  pontoId: 'p1',
-  nota: nota,
-  comentario: comentario,
-  criadoEm: DateTime(2026, 1, 1),
-  atualizadoEm: DateTime(2026, 1, 1),
-);
+Avaliacao _avaliacao({String id = 'a1', double nota = 4, String? comentario}) =>
+    Avaliacao(
+      id: id,
+      usuarioId: 'u1',
+      usuarioNome: 'Ana',
+      usuarioUsername: 'ana',
+      pontoId: 'p1',
+      nota: nota,
+      comentario: comentario,
+      criadoEm: DateTime(2026, 1, 1),
+      atualizadoEm: DateTime(2026, 1, 1),
+    );
 
 class _FakeAvaliacoesRepository implements AvaliacoesRepository {
   _FakeAvaliacoesRepository({this.falhar = false});
@@ -70,18 +67,14 @@ class _FakeAvaliacoesRepository implements AvaliacoesRepository {
 void main() {
   group('AvaliarProvider - validacao de nota', () {
     test('podeSalvar false quando nota nao foi escolhida', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar();
 
       expect(provider.podeSalvar, isFalse);
     });
 
     test('podeSalvar true apos alterarNota', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar();
 
       provider.alterarNota(3.5);
@@ -91,9 +84,7 @@ void main() {
     });
 
     test('alterarNota faz clamp entre 1.0 e 5.0', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar();
 
       provider.alterarNota(0.5);
@@ -104,9 +95,7 @@ void main() {
     });
 
     test('alterarComentario trunca em 500 caracteres', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar();
 
       provider.alterarComentario('a' * 600);
@@ -117,9 +106,7 @@ void main() {
 
   group('AvaliarProvider - inicializar', () {
     test('ehEdicao false e nota 0 quando nao ha avaliacao existente', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar();
 
       expect(provider.ehEdicao, isFalse);
@@ -127,9 +114,7 @@ void main() {
     });
 
     test('ehEdicao true e pre-preenche quando ha avaliacao existente', () {
-      final provider = AvaliarProvider(
-        repository: _FakeAvaliacoesRepository(),
-      );
+      final provider = AvaliarProvider(repository: _FakeAvaliacoesRepository());
       provider.inicializar(
         existente: _avaliacao(nota: 4.5, comentario: 'Muito bom'),
       );
@@ -168,29 +153,35 @@ void main() {
       expect(repository.ultimoInputCriado, isNull);
     });
 
-    test('retorna null e nao chama repositorio quando nota nao escolhida', () async {
-      final repository = _FakeAvaliacoesRepository();
-      final provider = AvaliarProvider(repository: repository);
-      provider.inicializar();
+    test(
+      'retorna null e nao chama repositorio quando nota nao escolhida',
+      () async {
+        final repository = _FakeAvaliacoesRepository();
+        final provider = AvaliarProvider(repository: repository);
+        provider.inicializar();
 
-      final resultado = await provider.salvar('p1');
+        final resultado = await provider.salvar('p1');
 
-      expect(resultado, isNull);
-      expect(repository.ultimoInputCriado, isNull);
-    });
+        expect(resultado, isNull);
+        expect(repository.ultimoInputCriado, isNull);
+      },
+    );
 
-    test('deixa mensagemErro e status erro quando o repositorio falha', () async {
-      final repository = _FakeAvaliacoesRepository(falhar: true);
-      final provider = AvaliarProvider(repository: repository);
-      provider.inicializar();
-      provider.alterarNota(3);
+    test(
+      'deixa mensagemErro e status erro quando o repositorio falha',
+      () async {
+        final repository = _FakeAvaliacoesRepository(falhar: true);
+        final provider = AvaliarProvider(repository: repository);
+        provider.inicializar();
+        provider.alterarNota(3);
 
-      final resultado = await provider.salvar('p1');
+        final resultado = await provider.salvar('p1');
 
-      expect(resultado, isNull);
-      expect(provider.status, AvaliarStatus.erro);
-      expect(provider.mensagemErro, isNotNull);
-    });
+        expect(resultado, isNull);
+        expect(provider.status, AvaliarStatus.erro);
+        expect(provider.mensagemErro, isNotNull);
+      },
+    );
   });
 
   group('AvaliarProvider - deletar', () {

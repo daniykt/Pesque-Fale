@@ -209,10 +209,7 @@ void main() {
       late Uri capturedUri;
       final client = MockClient((request) async {
         capturedUri = request.url;
-        return http.Response(
-          jsonEncode({'data': _pontoJson('1')}),
-          200,
-        );
+        return http.Response(jsonEncode({'data': _pontoJson('1')}), 200);
       });
 
       final repository = PontosRepositoryHttp(

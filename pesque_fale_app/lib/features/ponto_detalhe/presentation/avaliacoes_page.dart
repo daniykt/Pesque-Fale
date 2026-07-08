@@ -87,30 +87,31 @@ class _AvaliacoesViewState extends State<_AvaliacoesView> {
             ),
           ),
         ),
-        AvaliacoesListaStatus.sucesso ||
-        AvaliacoesListaStatus.carregandoMais => provider.avaliacoes.isEmpty
-            ? Center(
-                child: Text(
-                  'Seja o primeiro a avaliar este ponto',
-                  style: TextStyle(color: colors.textSecondary),
+        AvaliacoesListaStatus.sucesso || AvaliacoesListaStatus.carregandoMais =>
+          provider.avaliacoes.isEmpty
+              ? Center(
+                  child: Text(
+                    'Seja o primeiro a avaliar este ponto',
+                    style: TextStyle(color: colors.textSecondary),
+                  ),
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount:
+                      provider.avaliacoes.length +
+                      (provider.status == AvaliacoesListaStatus.carregandoMais
+                          ? 1
+                          : 0),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    if (index >= provider.avaliacoes.length) {
+                      return const AvaliacaoCardSkeleton();
+                    }
+                    return AvaliacaoCard(avaliacao: provider.avaliacoes[index]);
+                  },
                 ),
-              )
-            : ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                itemCount:
-                    provider.avaliacoes.length +
-                    (provider.status == AvaliacoesListaStatus.carregandoMais
-                        ? 1
-                        : 0),
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  if (index >= provider.avaliacoes.length) {
-                    return const AvaliacaoCardSkeleton();
-                  }
-                  return AvaliacaoCard(avaliacao: provider.avaliacoes[index]);
-                },
-              ),
       },
     );
   }

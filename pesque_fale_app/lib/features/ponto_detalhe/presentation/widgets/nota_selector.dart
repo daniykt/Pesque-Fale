@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 class NotaSelector extends StatelessWidget {
-  const NotaSelector({
-    super.key,
-    required this.nota,
-    required this.onChanged,
-  });
+  const NotaSelector({super.key, required this.nota, required this.onChanged});
 
   final double nota;
   final ValueChanged<double> onChanged;
@@ -48,9 +44,7 @@ class NotaSelector extends StatelessWidget {
       height: 48,
       child: Stack(
         children: [
-          Positioned.fill(
-            child: Icon(icone, size: 40, color: Colors.amber),
-          ),
+          Positioned.fill(child: Icon(icone, size: 40, color: Colors.amber)),
           Positioned.fill(
             child: Row(
               children: [

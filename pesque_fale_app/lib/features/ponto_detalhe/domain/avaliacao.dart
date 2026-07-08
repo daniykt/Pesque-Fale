@@ -36,11 +36,12 @@ class Avaliacao {
       pontoId: json['pontoId']?.toString() ?? '',
       nota: (json['nota'] as num?)?.toDouble() ?? 0,
       comentario: json['comentario'] as String?,
-      criadoEm: DateTime.tryParse(json['criadoEm']?.toString() ?? '') ??
+      criadoEm:
+          DateTime.tryParse(json['criadoEm']?.toString() ?? '') ??
           DateTime.now(),
       atualizadoEm:
           DateTime.tryParse(json['atualizadoEm']?.toString() ?? '') ??
-              DateTime.now(),
+          DateTime.now(),
     );
   }
 }

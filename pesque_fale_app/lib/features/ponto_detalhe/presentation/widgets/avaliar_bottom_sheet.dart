@@ -30,8 +30,9 @@ class AvaliarBottomSheet {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) => ChangeNotifierProvider<AvaliarProvider>(
-        create: (_) => AvaliarProvider(repository: avaliacoesRepository)
-          ..inicializar(existente: existente),
+        create: (_) =>
+            AvaliarProvider(repository: avaliacoesRepository)
+              ..inicializar(existente: existente),
         child: _Conteudo(ponto: ponto, detalheProvider: detalheProvider),
       ),
     );
@@ -127,13 +128,17 @@ class _ConteudoState extends State<_Conteudo> {
               children: [
                 if (provider.ehEdicao)
                   TextButton(
-                    onPressed: salvando ? null : () => _excluir(context, provider),
+                    onPressed: salvando
+                        ? null
+                        : () => _excluir(context, provider),
                     style: TextButton.styleFrom(foregroundColor: colors.danger),
                     child: const Text('Excluir'),
                   ),
                 const Spacer(),
                 TextButton(
-                  onPressed: salvando ? null : () => Navigator.of(context).pop(),
+                  onPressed: salvando
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   child: const Text('Cancelar'),
                 ),
                 const SizedBox(width: AppSpacing.xs),
