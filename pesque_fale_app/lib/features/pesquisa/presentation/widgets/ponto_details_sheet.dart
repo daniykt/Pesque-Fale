@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../shared/utils/tipo_visuals.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/tipo_chip.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../ponto_detalhe/data/avaliacoes_repository.dart';
 import '../../../ponto_detalhe/domain/avaliacao.dart';
@@ -62,7 +62,6 @@ class _ConteudoState extends State<_Conteudo> {
     final colors = Theme.of(context).extension<AppColors>()!;
     final ponto = widget.ponto;
     final temFoto = ponto.fotoCapa != null && ponto.fotoCapa!.isNotEmpty;
-    final cor = TipoVisuals.corDe(ponto.tipo);
 
     return ListView(
       controller: widget.scrollController,
@@ -95,24 +94,7 @@ class _ConteudoState extends State<_Conteudo> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      ponto.tipo.label.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                  TipoChip.tinted(tipo: ponto.tipo),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
