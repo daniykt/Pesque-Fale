@@ -53,6 +53,12 @@ async function listar(req, res) {
   if (estado) { conditions.push(`estado = $${i++}`); values.push(estado.toUpperCase()); }
   if (busca) { conditions.push(`LOWER(nome) LIKE LOWER($${i++})`); values.push(`%${busca}%`); }
 
+  const avaliacaoMin = parseFloat(req.query.avaliacaoMin);
+  if (!isNaN(avaliacaoMin) && avaliacaoMin > 0) {
+    conditions.push(`avg_nota >= $${i++}`);
+    values.push(avaliacaoMin);
+  }
+
   let distanciaSelect = '';
   let orderBy = 'criado_em DESC';
 
