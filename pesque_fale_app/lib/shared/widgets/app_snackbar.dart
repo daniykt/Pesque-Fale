@@ -45,4 +45,30 @@ class AppSnackbar {
       ),
     );
   }
+
+  static void showWarning(BuildContext context, String message) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: colors.warning,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  static void showInfo(BuildContext context, String message) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: colors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 }
