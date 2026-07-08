@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../domain/ponto.dart';
 import '../../providers/pesquisa_locais_provider.dart';
 import 'ponto_details_sheet.dart';
 import 'ponto_marker.dart';
@@ -22,6 +23,7 @@ class LocaisMapaView extends StatefulWidget {
 
 class _LocaisMapaViewState extends State<LocaisMapaView> {
   final MapController _mapController = MapController();
+  String? _ultimoCentradoId;
 
   @override
   void dispose() {
@@ -43,6 +45,28 @@ class _LocaisMapaViewState extends State<LocaisMapaView> {
     final centro = posicaoUsuario != null
         ? LatLng(posicaoUsuario.latitude, posicaoUsuario.longitude)
         : _posicaoPadrao;
+
+    final destacadoId = provider.pontoDestacadoId;
+    if (destacadoId != null && destacadoId != _ultimoCentradoId) {
+      Ponto? pontoDestacado;
+      for (final p in provider.pontos) {
+        if (p.id == destacadoId) {
+          pontoDestacado = p;
+          break;
+        }
+      }
+      if (pontoDestacado != null) {
+        _ultimoCentradoId = destacadoId;
+        final ponto = pontoDestacado;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _mapController.move(
+            LatLng(ponto.latitude, ponto.longitude),
+            15,
+          );
+        });
+      }
+    }
 
     return Stack(
       children: [

@@ -8,7 +8,6 @@ import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/ponto.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/tipo_ponto.dart';
-import 'package:pesque_fale_app/features/ponto_detalhe/data/avaliacoes_exceptions.dart';
 import 'package:pesque_fale_app/features/ponto_detalhe/data/avaliacoes_repository.dart';
 import 'package:pesque_fale_app/features/ponto_detalhe/domain/avaliacao.dart';
 import 'package:pesque_fale_app/features/ponto_detalhe/domain/criar_editar_avaliacao_input.dart';

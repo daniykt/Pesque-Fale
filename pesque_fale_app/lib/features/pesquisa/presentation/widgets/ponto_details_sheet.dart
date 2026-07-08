@@ -129,8 +129,11 @@ class _Conteudo extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () =>
-                          AppSnackbar.showInfo(context, 'Detalhes em breve'),
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        '/pontos',
+                        arguments: ponto.id,
+                      ),
                       child: const Text('Ver detalhes'),
                     ),
                   ),

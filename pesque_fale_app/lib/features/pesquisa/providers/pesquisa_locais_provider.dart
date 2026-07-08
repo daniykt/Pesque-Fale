@@ -93,6 +93,17 @@ class PesquisaLocaisProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Chamado a partir da tela de detalhe ("Ver no mapa"): muda para o modo
+  /// Mapa, garante que o ponto esteja na lista exibida e o destaca.
+  void focarPonto(Ponto ponto) {
+    _modo = ModoLocais.mapa;
+    if (!_pontos.any((p) => p.id == ponto.id)) {
+      _pontos = [..._pontos, ponto];
+    }
+    _pontoDestacadoId = ponto.id;
+    notifyListeners();
+  }
+
   Future<void> recarregar() => _buscar();
 
   Future<Position?> _obterLocalizacao() async {

@@ -9,11 +9,18 @@ import '../../shared/widgets/app_drawer.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  /// Permite que rotas empurradas por cima do shell (ex.: detalhe de ponto)
+  /// troquem de aba ao voltar, já que não são descendentes deste widget.
+  static final GlobalKey<MainShellState> shellKey =
+      GlobalKey<MainShellState>();
+
+  static const int pesquisaIndex = 1;
+
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   static const int _notifCount = 0;
@@ -29,8 +36,10 @@ class _MainShellState extends State<MainShell> {
     PerfilPage(),
   ];
 
-  static const int _pesquisaIndex = 1;
+  static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _perfilIndex = 4;
+
+  void selecionarAba(int index) => setState(() => _currentIndex = index);
 
   @override
   Widget build(BuildContext context) {

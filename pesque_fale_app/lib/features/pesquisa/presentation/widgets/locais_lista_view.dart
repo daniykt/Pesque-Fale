@@ -5,7 +5,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../providers/pesquisa_locais_provider.dart';
 import 'ponto_card.dart';
-import 'ponto_details_sheet.dart';
 import 'skeletons/ponto_card_skeleton.dart';
 
 class LocaisListaView extends StatelessWidget {
@@ -67,7 +66,8 @@ class LocaisListaView extends StatelessWidget {
             final ponto = provider.pontos[index];
             return PontoCard(
               ponto: ponto,
-              onTap: () => PontoDetailsSheet.show(context, ponto),
+              onTap: () =>
+                  Navigator.pushNamed(context, '/pontos', arguments: ponto.id),
             );
           },
         );

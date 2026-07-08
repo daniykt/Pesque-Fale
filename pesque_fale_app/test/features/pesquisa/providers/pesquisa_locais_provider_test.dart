@@ -34,6 +34,9 @@ class _FakePontosRepository implements PontosRepository {
     if (erro != null) throw erro!;
     return resultado;
   }
+
+  @override
+  Future<Ponto> buscarPorId(String id) async => throw UnimplementedError();
 }
 
 Ponto _ponto(String id) => Ponto(
