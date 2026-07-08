@@ -32,4 +32,7 @@ class PontosRepositoryHttp implements PontosRepository {
 
     return apiClient.buscar(queryParams);
   }
+
+  @override
+  Future<Ponto> buscarPorId(String id) => apiClient.buscarPorId(id);
 }

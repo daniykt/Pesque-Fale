@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/tipo_ponto.dart';
+import '../../features/pesquisa/domain/tipo_ponto.dart';
 
 class TipoVisuals {
   TipoVisuals._();

@@ -203,4 +203,49 @@ void main() {
       throwsA(isA<NetworkException>()),
     );
   });
+
+  group('buscarPorId', () {
+    test('monta URL e faz parsing do ponto', () async {
+      late Uri capturedUri;
+      final client = MockClient((request) async {
+        capturedUri = request.url;
+        return http.Response(jsonEncode({'data': _pontoJson('1')}), 200);
+      });
+
+      final repository = PontosRepositoryHttp(
+        apiClient: PontosApiClient(
+          baseUrl: _baseUrl,
+          tokenStorage: _FakeTokenStorage(),
+          client: client,
+        ),
+      );
+
+      final ponto = await repository.buscarPorId('1');
+
+      expect(capturedUri.path, '/v1/pontos/1');
+      expect(ponto.id, '1');
+    });
+
+    test('lanca PontoNaoEncontradoException quando status 404', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({'error': 'PONTO_NAO_ENCONTRADO'}),
+          404,
+        );
+      });
+
+      final repository = PontosRepositoryHttp(
+        apiClient: PontosApiClient(
+          baseUrl: _baseUrl,
+          tokenStorage: _FakeTokenStorage(),
+          client: client,
+        ),
+      );
+
+      expect(
+        () => repository.buscarPorId('id-inexistente'),
+        throwsA(isA<PontoNaoEncontradoException>()),
+      );
+    });
+  });
 }

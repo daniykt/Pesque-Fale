@@ -21,6 +21,17 @@ import 'features/perfil/data/perfil_repository_mock.dart';
 import 'features/perfil/presentation/editar_perfil/editar_perfil_page.dart';
 import 'features/perfil/presentation/perfil_de_outro_page.dart';
 import 'features/perfil/providers/perfil_provider.dart';
+import 'features/pesquisa/data/pontos_api_client.dart';
+import 'features/pesquisa/data/pontos_repository.dart';
+import 'features/pesquisa/data/pontos_repository_http.dart';
+import 'features/pesquisa/data/pontos_repository_mock.dart';
+import 'features/pesquisa/providers/pesquisa_locais_provider.dart';
+import 'features/ponto_detalhe/data/avaliacoes_api_client.dart';
+import 'features/ponto_detalhe/data/avaliacoes_repository.dart';
+import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
+import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
+import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
+import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'shared/widgets/app_em_construcao_page.dart';
 
 void main() {
@@ -41,6 +52,24 @@ void main() {
           ),
         );
 
+  final PontosRepository pontosRepository = AppConfig.useMock
+      ? PontosRepositoryMock()
+      : PontosRepositoryHttp(
+          apiClient: PontosApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
+  final AvaliacoesRepository avaliacoesRepository = AppConfig.useMock
+      ? AvaliacoesRepositoryMock()
+      : AvaliacoesRepositoryHttp(
+          apiClient: AvaliacoesApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   runApp(
     MultiProvider(
       providers: [
@@ -54,6 +83,13 @@ void main() {
             authProvider: context.read<AuthProvider>(),
           ),
           update: (context, auth, previous) => previous!..authProvider = auth,
+        ),
+        Provider<PontosRepository>.value(value: pontosRepository),
+        Provider<AvaliacoesRepository>.value(value: avaliacoesRepository),
+        ChangeNotifierProvider(
+          create: (_) =>
+              PesquisaLocaisProvider(repository: pontosRepository)
+                ..inicializar(),
         ),
       ],
       child: const PesqueFaleApp(),
@@ -77,7 +113,7 @@ class PesqueFaleApp extends StatelessWidget {
         '/cadastro': (_) => const CadastroPage(),
         '/login': (_) => const LoginPage(),
         '/onboarding': (_) => const OnboardingPlaceholderPage(),
-        '/home': (_) => const MainShell(),
+        '/home': (_) => MainShell(key: MainShell.shellKey),
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
@@ -94,6 +130,19 @@ class PesqueFaleApp extends StatelessWidget {
                 authProvider: ctx.read<AuthProvider>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        if (settings.name == '/pontos') {
+          final pontoId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider<PontoDetalheProvider>(
+              create: (ctx) => PontoDetalheProvider(
+                pontosRepository: ctx.read<PontosRepository>(),
+                avaliacoesRepository: ctx.read<AvaliacoesRepository>(),
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+              child: PontoDetalhePage(pontoId: pontoId),
             ),
           );
         }

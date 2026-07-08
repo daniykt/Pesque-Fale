@@ -14,3 +14,7 @@ class NetworkException extends PontosException {
 class InternalServerException extends PontosException {
   const InternalServerException() : super('Erro no servidor. Tente novamente.');
 }
+
+class PontoNaoEncontradoException extends PontosException {
+  const PontoNaoEncontradoException() : super('Ponto de pesca não encontrado.');
+}

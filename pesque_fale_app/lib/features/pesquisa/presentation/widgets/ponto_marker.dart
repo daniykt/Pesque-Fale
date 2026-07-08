@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/utils/tipo_visuals.dart';
 import '../../domain/tipo_ponto.dart';
-import 'tipo_visuals.dart';
 
 class PontoMarker extends StatelessWidget {
   const PontoMarker({

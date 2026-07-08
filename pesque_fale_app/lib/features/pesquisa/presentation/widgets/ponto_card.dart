@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/tipo_chip.dart';
 import '../../domain/ponto.dart';
 
 class PontoCard extends StatelessWidget {
@@ -51,25 +52,7 @@ class PontoCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        ponto.tipo.label.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          letterSpacing: 0.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    TipoChip.solid(tipo: ponto.tipo),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       ponto.nome,

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pesque_fale_app/features/pesquisa/data/pontos_exceptions.dart';
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository_mock.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/avaliacao_min_filtro.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
@@ -67,5 +68,20 @@ void main() {
     );
 
     expect(pontos, isEmpty);
+  });
+
+  group('PontosRepositoryMock - buscarPorId', () {
+    test('retorna o ponto quando o id existe', () async {
+      final ponto = await repository.buscarPorId('1');
+
+      expect(ponto.id, '1');
+    });
+
+    test('lanca PontoNaoEncontradoException quando o id nao existe', () {
+      expect(
+        () => repository.buscarPorId('id-inexistente'),
+        throwsA(isA<PontoNaoEncontradoException>()),
+      );
+    });
   });
 }

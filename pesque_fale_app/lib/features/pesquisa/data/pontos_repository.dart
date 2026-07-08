@@ -12,4 +12,6 @@ abstract class PontosRepository {
     double? lng,
     bool incluirDistancia = false,
   });
+
+  Future<Ponto> buscarPorId(String id);
 }
