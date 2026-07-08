@@ -8,7 +8,6 @@ import '../../../pesquisa/domain/ponto.dart';
 import '../../data/avaliacoes_repository.dart';
 import '../../domain/avaliacao.dart';
 import '../../providers/avaliar_provider.dart';
-import '../../providers/ponto_detalhe_provider.dart';
 import 'nota_selector.dart';
 
 class AvaliarBottomSheet {
@@ -18,8 +17,9 @@ class AvaliarBottomSheet {
     BuildContext context, {
     required Ponto ponto,
     Avaliacao? existente,
+    required ValueChanged<Avaliacao> onSaved,
+    required VoidCallback onDeleted,
   }) {
-    final detalheProvider = context.read<PontoDetalheProvider>();
     final avaliacoesRepository = context.read<AvaliacoesRepository>();
 
     showModalBottomSheet(
@@ -33,17 +33,22 @@ class AvaliarBottomSheet {
         create: (_) =>
             AvaliarProvider(repository: avaliacoesRepository)
               ..inicializar(existente: existente),
-        child: _Conteudo(ponto: ponto, detalheProvider: detalheProvider),
+        child: _Conteudo(ponto: ponto, onSaved: onSaved, onDeleted: onDeleted),
       ),
     );
   }
 }
 
 class _Conteudo extends StatefulWidget {
-  const _Conteudo({required this.ponto, required this.detalheProvider});
+  const _Conteudo({
+    required this.ponto,
+    required this.onSaved,
+    required this.onDeleted,
+  });
 
   final Ponto ponto;
-  final PontoDetalheProvider detalheProvider;
+  final ValueChanged<Avaliacao> onSaved;
+  final VoidCallback onDeleted;
 
   @override
   State<_Conteudo> createState() => _ConteudoState();
@@ -165,7 +170,7 @@ class _ConteudoState extends State<_Conteudo> {
     if (!context.mounted) return;
 
     if (resultado != null) {
-      widget.detalheProvider.aplicarNovaAvaliacao(resultado);
+      widget.onSaved(resultado);
       Navigator.of(context).pop();
       AppSnackbar.showSuccess(context, 'Avaliação salva');
     } else if (provider.mensagemErro != null) {
@@ -198,7 +203,7 @@ class _ConteudoState extends State<_Conteudo> {
     if (!context.mounted) return;
 
     if (ok) {
-      widget.detalheProvider.removerMinhaAvaliacao();
+      widget.onDeleted();
       Navigator.of(context).pop();
       AppSnackbar.showSuccess(context, 'Avaliação excluída');
     } else if (provider.mensagemErro != null) {
