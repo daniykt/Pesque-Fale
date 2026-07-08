@@ -307,4 +307,52 @@ async function getSeguindo(req, res) {
   }
 }
 
-module.exports = { getPerfil, getMe, updateMe, checkUsername, seguir, deixarDeSeguir, getSeguidores, getSeguindo };
+async function buscar(req, res) {
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(50, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+  const busca = (req.query.busca || '').trim();
+
+  if (busca.length < 1) {
+    return res.json({ data: [], meta: { total: 0, pagina, porPagina } });
+  }
+
+  try {
+    const termo = `%${busca}%`;
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT id, nome, username, foto_perfil, bio
+           FROM usuarios
+          WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)
+          ORDER BY
+            CASE WHEN LOWER(username) = LOWER($2) THEN 0
+                 WHEN LOWER(nome) = LOWER($2) THEN 1
+                 ELSE 2 END,
+            nome ASC
+          LIMIT $3 OFFSET $4`,
+        [termo, busca, porPagina, offset]
+      ),
+      pool.query(
+        `SELECT COUNT(*) FROM usuarios
+          WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)`,
+        [termo]
+      ),
+    ]);
+
+    return res.json({
+      data: result.rows.map((u) => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        bio: u.bio ?? '',
+      })),
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+module.exports = { getPerfil, getMe, updateMe, checkUsername, seguir, deixarDeSeguir, getSeguidores, getSeguindo, buscar };
