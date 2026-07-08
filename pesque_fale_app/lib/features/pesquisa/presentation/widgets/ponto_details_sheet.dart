@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/utils/tipo_visuals.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../ponto_detalhe/data/avaliacoes_repository.dart';
+import '../../../ponto_detalhe/domain/avaliacao.dart';
+import '../../../ponto_detalhe/presentation/widgets/avaliar_bottom_sheet.dart';
 import '../../domain/ponto.dart';
+import '../../providers/pesquisa_locais_provider.dart';
 
 class PontoDetailsSheet {
   PontoDetailsSheet._();
 
   static void show(BuildContext context, Ponto ponto) {
+    final rootContext = context;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -21,27 +29,43 @@ class PontoDetailsSheet {
         minChildSize: 0.25,
         maxChildSize: 0.85,
         expand: false,
-        builder: (context, scrollController) =>
-            _Conteudo(ponto: ponto, scrollController: scrollController),
+        builder: (context, scrollController) => _Conteudo(
+          ponto: ponto,
+          scrollController: scrollController,
+          rootContext: rootContext,
+        ),
       ),
     );
   }
 }
 
-class _Conteudo extends StatelessWidget {
-  const _Conteudo({required this.ponto, required this.scrollController});
+class _Conteudo extends StatefulWidget {
+  const _Conteudo({
+    required this.ponto,
+    required this.scrollController,
+    required this.rootContext,
+  });
 
   final Ponto ponto;
   final ScrollController scrollController;
+  final BuildContext rootContext;
+
+  @override
+  State<_Conteudo> createState() => _ConteudoState();
+}
+
+class _ConteudoState extends State<_Conteudo> {
+  bool _carregandoMinha = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final ponto = widget.ponto;
     final temFoto = ponto.fotoCapa != null && ponto.fotoCapa!.isNotEmpty;
     final cor = TipoVisuals.corDe(ponto.tipo);
 
     return ListView(
-      controller: scrollController,
+      controller: widget.scrollController,
       padding: EdgeInsets.zero,
       children: [
         if (temFoto)
@@ -144,9 +168,17 @@ class _Conteudo extends StatelessWidget {
                         backgroundColor: colors.primary,
                         foregroundColor: Colors.white,
                       ),
-                      onPressed: () =>
-                          AppSnackbar.showInfo(context, 'Rotas em breve'),
-                      child: const Text('Traçar rota'),
+                      onPressed: _carregandoMinha ? null : _avaliar,
+                      child: _carregandoMinha
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Avaliar'),
                     ),
                   ),
                 ],
@@ -155,6 +187,48 @@ class _Conteudo extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _avaliar() async {
+    final logado = context.read<AuthProvider>().usuario != null;
+    if (!logado) {
+      AppSnackbar.showInfo(context, 'Faça login para avaliar');
+      return;
+    }
+
+    setState(() => _carregandoMinha = true);
+
+    final navigator = Navigator.of(context);
+    final avaliacoesRepository = context.read<AvaliacoesRepository>();
+    final locaisProvider = Provider.of<PesquisaLocaisProvider>(
+      widget.rootContext,
+      listen: false,
+    );
+    final rootContext = widget.rootContext;
+
+    Avaliacao? minha;
+    try {
+      minha = await avaliacoesRepository.minhaAvaliacao(widget.ponto.id);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        'Não foi possível verificar sua avaliação',
+      );
+      setState(() => _carregandoMinha = false);
+      return;
+    }
+
+    if (!mounted || !rootContext.mounted) return;
+
+    navigator.pop();
+    AvaliarBottomSheet.show(
+      rootContext,
+      ponto: widget.ponto,
+      existente: minha,
+      onSaved: (_) => locaisProvider.recarregar(),
+      onDeleted: () => locaisProvider.recarregar(),
     );
   }
 }
