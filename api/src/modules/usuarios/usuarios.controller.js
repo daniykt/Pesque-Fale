@@ -1,9 +1,9 @@
 const pool = require('../../config/database');
 const jwt = require('jsonwebtoken');
+const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]{3,20}$/;
 
-// Tenta extrair o usuário autenticado do token sem rejeitar a requisição
 function tryGetUsuario(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
@@ -186,10 +186,18 @@ async function seguir(req, res) {
     if (usuarioExiste.rows.length === 0) {
       return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
     }
+
     await pool.query(
       'INSERT INTO usuario_seguidores (seguidor_id, seguido_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [seguidorId, seguidoId]
     );
+
+    await criarNotificacao({
+      para: seguidoId,
+      deId: seguidorId,
+      tipo: 'seguindo',
+    });
+
     return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
   } catch (err) {
     console.error(err);
@@ -235,10 +243,7 @@ async function getSeguidores(req, res) {
          LIMIT $2 OFFSET $3`,
         [id, porPagina, offset]
       ),
-      pool.query(
-        'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
-        [id]
-      ),
+      pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1', [id]),
     ]);
 
     return res.json({
@@ -248,11 +253,7 @@ async function getSeguidores(req, res) {
         username: u.username,
         fotoPerfil: u.foto_perfil,
       })),
-      meta: {
-        total: parseInt(total.rows[0].count),
-        pagina,
-        porPagina,
-      },
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
   } catch (err) {
     console.error(err);
@@ -282,10 +283,7 @@ async function getSeguindo(req, res) {
          LIMIT $2 OFFSET $3`,
         [id, porPagina, offset]
       ),
-      pool.query(
-        'SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1',
-        [id]
-      ),
+      pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1', [id]),
     ]);
 
     return res.json({
@@ -295,11 +293,7 @@ async function getSeguindo(req, res) {
         username: u.username,
         fotoPerfil: u.foto_perfil,
       })),
-      meta: {
-        total: parseInt(total.rows[0].count),
-        pagina,
-        porPagina,
-      },
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
   } catch (err) {
     console.error(err);
@@ -322,25 +316,25 @@ async function buscar(req, res) {
     const [result, total] = await Promise.all([
       pool.query(
         `SELECT id, nome, username, foto_perfil, bio
-           FROM usuarios
-          WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)
-          ORDER BY
-            CASE WHEN LOWER(username) = LOWER($2) THEN 0
-                 WHEN LOWER(nome) = LOWER($2) THEN 1
-                 ELSE 2 END,
-            nome ASC
-          LIMIT $3 OFFSET $4`,
+         FROM usuarios
+         WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)
+         ORDER BY
+           CASE WHEN LOWER(username) = LOWER($2) THEN 0
+                WHEN LOWER(nome) = LOWER($2) THEN 1
+                ELSE 2 END,
+           nome ASC
+         LIMIT $3 OFFSET $4`,
         [termo, busca, porPagina, offset]
       ),
       pool.query(
         `SELECT COUNT(*) FROM usuarios
-          WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)`,
+         WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)`,
         [termo]
       ),
     ]);
 
     return res.json({
-      data: result.rows.map((u) => ({
+      data: result.rows.map(u => ({
         id: u.id,
         nome: u.nome,
         username: u.username,
