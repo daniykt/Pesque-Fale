@@ -6,6 +6,7 @@ const pontosRoutes = require('./modules/pontos/pontos.routes');
 const avaliacoesRoutes = require('./modules/avaliacoes/avaliacoes.routes');
 const publicacoesRoutes = require('./modules/publicacoes/publicacoes.routes');
 const eventosRoutes = require('./modules/eventos/eventos.routes');
+const chatRoutes = require('./modules/chat/chat.routes');
 require('dotenv').config();
 
 const app = express();
@@ -24,5 +25,6 @@ app.use('/v1/pontos', pontosRoutes);
 app.use('/v1/pontos/:pontoId/avaliacoes', avaliacoesRoutes);
 app.use('/v1/publicacoes', publicacoesRoutes);
 app.use('/v1/eventos', eventosRoutes);
+app.use('/v1/chats', chatRoutes);
 
 module.exports = app;
