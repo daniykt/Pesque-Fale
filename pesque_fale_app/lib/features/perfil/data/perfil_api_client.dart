@@ -122,16 +122,26 @@ class PerfilApiClient {
     );
   }
 
-  Future<List<Publicacao>> buscarPublicacoes(String id) async {
-    try {
-      final json = await _request('GET', '/usuarios/$id/publicacoes');
-      final lista = (json['publicacoes'] as List<dynamic>?) ?? const [];
-      return lista
-          .map((e) => Publicacao.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } on RecursoNaoDisponivelException {
-      return const [];
-    }
+  Future<ListaPaginada<Publicacao>> buscarPublicacoes(
+    String id, {
+    int pagina = 1,
+    int porPagina = 12,
+  }) async {
+    final json = await _requestPaginado(
+      'GET',
+      '/usuarios/$id/publicacoes',
+      queryParams: {'pagina': '$pagina', 'porPagina': '$porPagina'},
+    );
+    final itens = (json['data'] as List<dynamic>? ?? [])
+        .map((e) => Publicacao.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final meta = json['meta'] as Map<String, dynamic>? ?? {};
+    return ListaPaginada(
+      itens: itens,
+      total: meta['total'] as int? ?? 0,
+      pagina: meta['pagina'] as int? ?? pagina,
+      porPagina: meta['porPagina'] as int? ?? porPagina,
+    );
   }
 
   Future<String> atualizarFoto(File arquivo) =>

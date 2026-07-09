@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
+import '../domain/publicacao.dart';
 import 'perfil_api_client.dart';
 import 'perfil_repository.dart';
 
@@ -16,10 +17,10 @@ class PerfilRepositoryHttp implements PerfilRepository {
     required String meuId,
   }) async {
     final completo = await apiClient.buscarPerfil(id);
-    final publicacoes = await apiClient.buscarPublicacoes(id);
+    final paginada = await apiClient.buscarPublicacoes(id);
     return PerfilCompleto(
       usuario: completo.usuario,
-      publicacoes: publicacoes,
+      publicacoes: paginada.itens,
       isFollowing: completo.isFollowing,
       seguidoPeloOutro: completo.seguidoPeloOutro,
     );
@@ -51,11 +52,20 @@ class PerfilRepositoryHttp implements PerfilRepository {
     String id, {
     int pagina = 1,
     int porPagina = 20,
-  }) => apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
+  }) =>
+      apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
 
   Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
     String id, {
     int pagina = 1,
     int porPagina = 20,
-  }) => apiClient.buscarSeguindo(id, pagina: pagina, porPagina: porPagina);
+  }) =>
+      apiClient.buscarSeguindo(id, pagina: pagina, porPagina: porPagina);
+
+  Future<ListaPaginada<Publicacao>> buscarPublicacoesPaginadas(
+    String id, {
+    int pagina = 1,
+    int porPagina = 12,
+  }) =>
+      apiClient.buscarPublicacoes(id, pagina: pagina, porPagina: porPagina);
 }
