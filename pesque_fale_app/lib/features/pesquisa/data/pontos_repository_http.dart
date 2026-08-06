@@ -14,6 +14,7 @@ class PontosRepositoryHttp implements PontosRepository {
     double? lat,
     double? lng,
     bool incluirDistancia = false,
+    String? ordem,
   }) {
     final queryParams = <String, String>{'porPagina': '50'};
 
@@ -29,6 +30,7 @@ class PontosRepositoryHttp implements PontosRepository {
         queryParams['raio'] = filtros.raioKm.toString();
       }
     }
+    if (ordem != null) queryParams['ordem'] = ordem;
 
     return apiClient.buscar(queryParams);
   }

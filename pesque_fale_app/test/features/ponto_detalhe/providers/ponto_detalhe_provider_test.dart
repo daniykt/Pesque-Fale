@@ -82,6 +82,7 @@ class _FakePontosRepository implements PontosRepository {
     double? lat,
     double? lng,
     bool incluirDistancia = false,
+    String? ordem,
   }) async => throw UnimplementedError();
 
   @override
