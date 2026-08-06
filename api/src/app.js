@@ -10,6 +10,8 @@ const eventosRoutes = require('./modules/eventos/eventos.routes');
 const chatRoutes = require('./modules/chat/chat.routes');
 const notificacoesRoutes = require('./modules/notificacoes/notificacoes.routes');
 const curtidasRoutes = require('./modules/curtidas/curtidas.routes');
+const comentariosRoutes = require('./modules/comentarios/comentarios.routes');
+const comentariosStandaloneRoutes = require('./modules/comentarios/comentarios-standalone.routes');
 require('dotenv').config();
 
 const app = express();
@@ -29,6 +31,8 @@ app.use('/v1/pontos', pontosRoutes);
 app.use('/v1/pontos/:pontoId/avaliacoes', avaliacoesRoutes);
 app.use('/v1/publicacoes', publicacoesRoutes);
 app.use('/v1/publicacoes/:publicacaoId/curtir', curtidasRoutes);
+app.use('/v1/publicacoes/:publicacaoId/comentarios', comentariosRoutes);
+app.use('/v1/comentarios', comentariosStandaloneRoutes);
 app.use('/v1/eventos', eventosRoutes);
 app.use('/v1/chats', chatRoutes);
 app.use('/v1/notificacoes', notificacoesRoutes);
