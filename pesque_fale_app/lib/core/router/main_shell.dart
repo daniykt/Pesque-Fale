@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/feed/presentation/feed_page.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
 import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
 import '../../features/pesquisa/presentation/pesquisa_page.dart';
@@ -13,6 +14,7 @@ class MainShell extends StatefulWidget {
   /// troquem de aba ao voltar, já que não são descendentes deste widget.
   static final GlobalKey<MainShellState> shellKey = GlobalKey<MainShellState>();
 
+  static const int inicioIndex = 0;
   static const int pesquisaIndex = 1;
 
   @override
@@ -28,7 +30,7 @@ class MainShellState extends State<MainShell> {
 
   // Placeholders — cada um vira lib/features/<tela>/ na Fase 1.
   static const _placeholderScreens = [
-    _PlaceholderScreen(label: 'Início', icon: Icons.home_outlined),
+    FeedPage(),
     PesquisaPage(),
     _PlaceholderScreen(label: 'Chat', icon: Icons.chat_bubble_outline),
     _PlaceholderScreen(label: 'Alertas', icon: Icons.notifications_outlined),
