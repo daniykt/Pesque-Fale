@@ -212,6 +212,7 @@ class PontosRepositoryMock implements PontosRepository {
     double? lat,
     double? lng,
     bool incluirDistancia = false,
+    String? ordem,
   }) async {
     await Future.delayed(_delay);
 
@@ -240,6 +241,11 @@ class PontosRepositoryMock implements PontosRepository {
             ..sort(
               (a, b) => (a.distanciaKm ?? 0).compareTo(b.distanciaKm ?? 0),
             );
+    }
+
+    if (ordem == 'nota_desc') {
+      resultado = List.of(resultado)
+        ..sort((a, b) => b.avgNota.compareTo(a.avgNota));
     }
 
     return resultado;

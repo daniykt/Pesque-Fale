@@ -83,6 +83,10 @@ async function listar(req, res) {
     orderBy = 'distancia_km ASC';
   }
 
+  if (req.query.ordem === 'nota_desc') {
+    orderBy = 'avg_nota DESC NULLS LAST, total_avaliacoes DESC';
+  }
+
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   try {

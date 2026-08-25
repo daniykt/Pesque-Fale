@@ -11,6 +11,7 @@ abstract class PontosRepository {
     double? lat,
     double? lng,
     bool incluirDistancia = false,
+    String? ordem,
   });
 
   Future<Ponto> buscarPorId(String id);

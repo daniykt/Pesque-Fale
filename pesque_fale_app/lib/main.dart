@@ -13,6 +13,23 @@ import 'features/auth/data/token_storage.dart';
 import 'features/auth/presentation/cadastro/cadastro_page.dart';
 import 'features/auth/presentation/login/login_page.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/feed/data/comentarios_api_client.dart';
+import 'features/feed/data/comentarios_repository.dart';
+import 'features/feed/data/comentarios_repository_http.dart';
+import 'features/feed/data/comentarios_repository_mock.dart';
+import 'features/feed/data/curtidas_api_client.dart';
+import 'features/feed/data/curtidas_repository.dart';
+import 'features/feed/data/curtidas_repository_http.dart';
+import 'features/feed/data/curtidas_repository_mock.dart';
+import 'features/feed/data/eventos_api_client.dart';
+import 'features/feed/data/eventos_repository.dart';
+import 'features/feed/data/eventos_repository_http.dart';
+import 'features/feed/data/eventos_repository_mock.dart';
+import 'features/feed/data/publicacoes_api_client.dart';
+import 'features/feed/data/publicacoes_repository.dart';
+import 'features/feed/data/publicacoes_repository_http.dart';
+import 'features/feed/data/publicacoes_repository_mock.dart';
+import 'features/feed/providers/feed_provider.dart';
 import 'features/onboarding/onboarding_placeholder_page.dart';
 import 'features/perfil/data/perfil_api_client.dart';
 import 'features/perfil/data/perfil_repository.dart';
@@ -70,6 +87,39 @@ void main() {
           ),
         );
 
+  final PublicacoesRepository publicacoesRepository = AppConfig.useMock
+      ? PublicacoesRepositoryMock()
+      : PublicacoesRepositoryHttp(
+          apiClient: PublicacoesApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
+  final CurtidasRepository curtidasRepository = AppConfig.useMock
+      ? CurtidasRepositoryMock()
+      : CurtidasRepositoryHttp(
+          apiClient: CurtidasApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
+  final ComentariosRepository comentariosRepository = AppConfig.useMock
+      ? ComentariosRepositoryMock()
+      : ComentariosRepositoryHttp(
+          apiClient: ComentariosApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
+  final EventosRepository eventosRepository = AppConfig.useMock
+      ? EventosRepositoryMock()
+      : EventosRepositoryHttp(
+          apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
+        );
+
   runApp(
     MultiProvider(
       providers: [
@@ -90,6 +140,20 @@ void main() {
           create: (_) =>
               PesquisaLocaisProvider(repository: pontosRepository)
                 ..inicializar(),
+        ),
+        Provider<PublicacoesRepository>.value(value: publicacoesRepository),
+        Provider<CurtidasRepository>.value(value: curtidasRepository),
+        Provider<ComentariosRepository>.value(value: comentariosRepository),
+        Provider<EventosRepository>.value(value: eventosRepository),
+        ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+          create: (context) => FeedProvider(
+            publicacoesRepo: publicacoesRepository,
+            curtidasRepo: curtidasRepository,
+            eventosRepo: eventosRepository,
+            pontosRepo: pontosRepository,
+            authProvider: context.read<AuthProvider>(),
+          ),
+          update: (context, auth, previous) => previous!..reagirAuth(auth),
         ),
       ],
       child: const PesqueFaleApp(),
