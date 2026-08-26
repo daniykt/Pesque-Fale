@@ -11,4 +11,13 @@ abstract class PublicacoesRepository {
   Future<Publicacao> buscarPorId(String id);
 
   Future<void> deletar(String id);
+
+  Future<Publicacao> criar({
+    String? descricao,
+    String? imagemUrl,
+    String? localTexto,
+    double? avaliacaoNota,
+    String? pontoId,
+    List<String> tags = const [],
+  });
 }

@@ -29,6 +29,10 @@ import 'features/feed/data/publicacoes_api_client.dart';
 import 'features/feed/data/publicacoes_repository.dart';
 import 'features/feed/data/publicacoes_repository_http.dart';
 import 'features/feed/data/publicacoes_repository_mock.dart';
+import 'features/feed/data/upload_publicacao_imagem_api_client.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/onboarding/onboarding_placeholder_page.dart';
@@ -48,6 +52,8 @@ import 'features/ponto_detalhe/data/avaliacoes_api_client.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
+import 'features/nova_publicacao/presentation/nova_publicacao_page.dart';
+import 'features/nova_publicacao/providers/nova_publicacao_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
@@ -123,6 +129,16 @@ void main() {
           apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
         );
 
+  final UploadPublicacaoImagemRepository uploadPublicacaoImagemRepository =
+      AppConfig.useMock
+      ? UploadPublicacaoImagemRepositoryMock()
+      : UploadPublicacaoImagemRepositoryHttp(
+          apiClient: UploadPublicacaoImagemApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   runApp(
     MultiProvider(
       providers: [
@@ -148,6 +164,9 @@ void main() {
         Provider<CurtidasRepository>.value(value: curtidasRepository),
         Provider<ComentariosRepository>.value(value: comentariosRepository),
         Provider<EventosRepository>.value(value: eventosRepository),
+        Provider<UploadPublicacaoImagemRepository>.value(
+          value: uploadPublicacaoImagemRepository,
+        ),
         ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
           create: (context) => FeedProvider(
             publicacoesRepo: publicacoesRepository,
@@ -184,6 +203,16 @@ class PesqueFaleApp extends StatelessWidget {
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
+        '/publicacao/nova': (context) =>
+            ChangeNotifierProvider<NovaPublicacaoProvider>(
+              create: (ctx) => NovaPublicacaoProvider(
+                publicacoesRepository: ctx.read<PublicacoesRepository>(),
+                uploadRepository: ctx.read<UploadPublicacaoImagemRepository>(),
+                feedProvider: ctx.read<FeedProvider>(),
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+              child: const NovaPublicacaoPage(),
+            ),
         '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },

@@ -214,6 +214,17 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Insere uma publicação recém-criada no topo da aba "Para você" e,
+  /// se o autor for o usuário logado, também na "Seguindo".
+  /// Chamado pela tela de nova publicação após POST bem-sucedido.
+  void adicionarPublicacao(Publicacao publicacao) {
+    paraVoce.insert(0, publicacao);
+    if (seguindo.isNotEmpty && publicacao.autorId == authProvider.usuario?.id) {
+      seguindo.insert(0, publicacao);
+    }
+    notifyListeners();
+  }
+
   void _substituirEmTodasListas(Publicacao nova) {
     for (final lista in [paraVoce, seguindo]) {
       final idx = lista.indexWhere((p) => p.id == nova.id);
