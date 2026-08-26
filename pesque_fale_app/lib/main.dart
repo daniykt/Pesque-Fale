@@ -29,6 +29,10 @@ import 'features/feed/data/publicacoes_api_client.dart';
 import 'features/feed/data/publicacoes_repository.dart';
 import 'features/feed/data/publicacoes_repository_http.dart';
 import 'features/feed/data/publicacoes_repository_mock.dart';
+import 'features/feed/data/upload_publicacao_imagem_api_client.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
+import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/onboarding/onboarding_placeholder_page.dart';
@@ -123,6 +127,16 @@ void main() {
           apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
         );
 
+  final UploadPublicacaoImagemRepository uploadPublicacaoImagemRepository =
+      AppConfig.useMock
+      ? UploadPublicacaoImagemRepositoryMock()
+      : UploadPublicacaoImagemRepositoryHttp(
+          apiClient: UploadPublicacaoImagemApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   runApp(
     MultiProvider(
       providers: [
@@ -148,6 +162,9 @@ void main() {
         Provider<CurtidasRepository>.value(value: curtidasRepository),
         Provider<ComentariosRepository>.value(value: comentariosRepository),
         Provider<EventosRepository>.value(value: eventosRepository),
+        Provider<UploadPublicacaoImagemRepository>.value(
+          value: uploadPublicacaoImagemRepository,
+        ),
         ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
           create: (context) => FeedProvider(
             publicacoesRepo: publicacoesRepository,
