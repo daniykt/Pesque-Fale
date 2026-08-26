@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/cloudinary_url.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/publicacao.dart';
 import 'acoes_bar.dart';
 import 'comentarios_sheet.dart';
@@ -97,11 +96,27 @@ class PublicacaoCard extends StatelessWidget {
           if (p.descricao != null && p.descricao!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
-              child: Text(p.descricao!, style: const TextStyle(fontSize: 14)),
+              child: p.imagemUrl == null
+                  ? InkWell(
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        '/publicacao/detalhe',
+                        arguments: p,
+                      ),
+                      child: Text(
+                        p.descricao!,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    )
+                  : Text(p.descricao!, style: const TextStyle(fontSize: 14)),
             ),
           if (p.imagemUrl != null)
             InkWell(
-              onTap: () => AppSnackbar.showInfo(context, 'Detalhes em breve'),
+              onTap: () => Navigator.pushNamed(
+                context,
+                '/publicacao/detalhe',
+                arguments: p,
+              ),
               child: AspectRatio(
                 aspectRatio: 4 / 5,
                 child: Image.network(

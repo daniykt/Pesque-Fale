@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -12,7 +13,11 @@ import '../../providers/feed_provider.dart';
 class PublicacaoMenuSheet {
   PublicacaoMenuSheet._();
 
-  static void show(BuildContext context, Publicacao publicacao) {
+  static void show(
+    BuildContext context,
+    Publicacao publicacao, {
+    VoidCallback? onDeleted,
+  }) {
     final feedProvider = context.read<FeedProvider>();
     final publicacoesRepo = context.read<PublicacoesRepository>();
     final authProvider = context.read<AuthProvider>();
@@ -44,6 +49,7 @@ class PublicacaoMenuSheet {
                     if (context.mounted) {
                       AppSnackbar.showSuccess(context, 'Publicação excluída.');
                     }
+                    onDeleted?.call();
                   } catch (_) {
                     if (context.mounted) {
                       AppSnackbar.showError(
@@ -54,6 +60,18 @@ class PublicacaoMenuSheet {
                   }
                 },
               ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('Copiar link'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                final url = 'https://pesqueefale.com.br/p/${publicacao.id}';
+                await Clipboard.setData(ClipboardData(text: url));
+                if (context.mounted) {
+                  AppSnackbar.showSuccess(context, 'Link copiado');
+                }
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.share),
               title: const Text('Compartilhar'),

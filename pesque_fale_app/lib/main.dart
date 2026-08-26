@@ -29,6 +29,7 @@ import 'features/feed/data/publicacoes_api_client.dart';
 import 'features/feed/data/publicacoes_repository.dart';
 import 'features/feed/data/publicacoes_repository_http.dart';
 import 'features/feed/data/publicacoes_repository_mock.dart';
+import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/onboarding/onboarding_placeholder_page.dart';
 import 'features/perfil/data/perfil_api_client.dart';
@@ -49,6 +50,8 @@ import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
+import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
+import 'features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
 import 'shared/widgets/app_em_construcao_page.dart';
 
 void main() {
@@ -208,6 +211,26 @@ class PesqueFaleApp extends StatelessWidget {
               ),
               child: PontoDetalhePage(pontoId: pontoId),
             ),
+          );
+        }
+        if (settings.name == '/publicacao/detalhe') {
+          final args = settings.arguments;
+          final Publicacao? publicacaoInicial = args is Publicacao
+              ? args
+              : null;
+          final String? publicacaoId = args is String ? args : null;
+          if (publicacaoInicial == null && publicacaoId == null) return null;
+
+          return MaterialPageRoute(
+            builder: (context) =>
+                ChangeNotifierProvider<PublicacaoDetalheProvider>(
+                  create: (ctx) => PublicacaoDetalheProvider(
+                    publicacoesRepository: ctx.read<PublicacoesRepository>(),
+                    publicacaoInicial: publicacaoInicial,
+                    publicacaoId: publicacaoId,
+                  )..carregar(),
+                  child: const PublicacaoDetalhePage(),
+                ),
           );
         }
         return null;
