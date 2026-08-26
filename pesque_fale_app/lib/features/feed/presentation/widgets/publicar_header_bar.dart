@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/cloudinary_url.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 class PublicarHeaderBar extends StatelessWidget {
@@ -32,8 +31,7 @@ class PublicarHeaderBar extends StatelessWidget {
           Expanded(
             child: InkWell(
               borderRadius: BorderRadius.circular(24),
-              onTap: () =>
-                  AppSnackbar.showInfo(context, 'Publicações em breve'),
+              onTap: () => Navigator.of(context).pushNamed('/publicacao/nova'),
               child: Container(
                 height: 40,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
