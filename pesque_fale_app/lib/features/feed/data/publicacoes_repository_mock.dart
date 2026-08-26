@@ -41,6 +41,7 @@ class PublicacoesRepositoryMock implements PublicacoesRepository {
       .map((p) => p.id)
       .toSet();
   final List<String> _deletadas = [];
+  int _proximoId = 0;
 
   @override
   Future<PagedResult<Publicacao>> listar({
@@ -90,5 +91,35 @@ class PublicacoesRepositoryMock implements PublicacoesRepository {
   Future<void> deletar(String id) async {
     await Future.delayed(_delay);
     _deletadas.add(id);
+  }
+
+  @override
+  Future<Publicacao> criar({
+    String? descricao,
+    String? imagemUrl,
+    String? localTexto,
+    double? avaliacaoNota,
+    String? pontoId,
+    List<String> tags = const [],
+  }) async {
+    await Future.delayed(_delay);
+
+    final agora = DateTime.now();
+    final publicacao = Publicacao(
+      id: 'mock-pub-${_proximoId++}',
+      autorId: 'mock-id',
+      autorNome: 'Ana Pescadora',
+      autorUsername: 'ana_pesca',
+      descricao: descricao,
+      imagemUrl: imagemUrl,
+      localTexto: localTexto,
+      avaliacaoNota: avaliacaoNota,
+      pontoId: pontoId,
+      tags: tags,
+      criadoEm: agora,
+      atualizadoEm: agora,
+    );
+    _todas.insert(0, publicacao);
+    return publicacao;
   }
 }

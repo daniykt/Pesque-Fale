@@ -41,10 +41,14 @@ class PublicacoesApiClient {
 
   Future<void> deletar(String id) => _request('DELETE', '/publicacoes/$id');
 
+  Future<Map<String, dynamic>> criar(Map<String, dynamic> body) =>
+      _request('POST', '/publicacoes', body: body);
+
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {
     Map<String, String>? queryParams,
+    Map<String, dynamic>? body,
   }) async {
     final token = await tokenStorage.readToken();
     http.Response response;
@@ -57,6 +61,7 @@ class PublicacoesApiClient {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         });
+      if (body != null) request.body = jsonEncode(body);
 
       final streamed = await _client.send(request).timeout(_timeout);
       response = await http.Response.fromStream(streamed);

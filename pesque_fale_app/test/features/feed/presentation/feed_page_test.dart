@@ -60,6 +60,16 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
 
   @override
   Future<void> deletar(String id) async => todas.removeWhere((p) => p.id == id);
+
+  @override
+  Future<Publicacao> criar({
+    String? descricao,
+    String? imagemUrl,
+    String? localTexto,
+    double? avaliacaoNota,
+    String? pontoId,
+    List<String> tags = const [],
+  }) async => throw UnimplementedError();
 }
 
 class _FakeCurtidasRepository implements CurtidasRepository {

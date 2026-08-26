@@ -40,4 +40,25 @@ class PublicacoesRepositoryHttp implements PublicacoesRepository {
 
   @override
   Future<void> deletar(String id) => apiClient.deletar(id);
+
+  @override
+  Future<Publicacao> criar({
+    String? descricao,
+    String? imagemUrl,
+    String? localTexto,
+    double? avaliacaoNota,
+    String? pontoId,
+    List<String> tags = const [],
+  }) async {
+    final json = await apiClient.criar({
+      'descricao': ?descricao,
+      'imagemUrl': ?imagemUrl,
+      'localTexto': ?localTexto,
+      'avaliacaoNota': ?avaliacaoNota,
+      'pontoId': ?pontoId,
+      'tags': tags,
+    });
+    final data = (json['data'] as Map<String, dynamic>?) ?? json;
+    return Publicacao.fromJson(data);
+  }
 }
