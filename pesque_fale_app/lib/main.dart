@@ -52,6 +52,8 @@ import 'features/ponto_detalhe/data/avaliacoes_api_client.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
+import 'features/nova_publicacao/presentation/nova_publicacao_page.dart';
+import 'features/nova_publicacao/providers/nova_publicacao_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
@@ -201,6 +203,16 @@ class PesqueFaleApp extends StatelessWidget {
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
+        '/publicacao/nova': (context) =>
+            ChangeNotifierProvider<NovaPublicacaoProvider>(
+              create: (ctx) => NovaPublicacaoProvider(
+                publicacoesRepository: ctx.read<PublicacoesRepository>(),
+                uploadRepository: ctx.read<UploadPublicacaoImagemRepository>(),
+                feedProvider: ctx.read<FeedProvider>(),
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+              child: const NovaPublicacaoPage(),
+            ),
         '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
