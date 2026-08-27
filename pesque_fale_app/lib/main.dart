@@ -6,10 +6,6 @@ import 'core/router/main_shell.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/data/auth_api_client.dart';
-import 'features/chat/data/conversas_api_client.dart';
-import 'features/chat/data/conversas_repository.dart';
-import 'features/chat/data/conversas_repository_http.dart';
-import 'features/chat/data/conversas_repository_mock.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/auth_repository_http.dart';
 import 'features/auth/data/auth_repository_mock.dart';
@@ -17,6 +13,12 @@ import 'features/auth/data/token_storage.dart';
 import 'features/auth/presentation/cadastro/cadastro_page.dart';
 import 'features/auth/presentation/login/login_page.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/chat/data/conversas_api_client.dart';
+import 'features/chat/data/conversas_repository.dart';
+import 'features/chat/data/conversas_repository_http.dart';
+import 'features/chat/data/conversas_repository_mock.dart';
+import 'features/chat/presentation/inbox_page.dart';
+import 'features/chat/providers/inbox_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
 import 'features/feed/data/comentarios_repository.dart';
 import 'features/feed/data/comentarios_repository_http.dart';
@@ -227,7 +229,11 @@ class PesqueFaleApp extends StatelessWidget {
               ),
               child: const NovaPublicacaoPage(),
             ),
-        '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
+        '/chat': (context) => ChangeNotifierProvider<InboxProvider>(
+          create: (ctx) =>
+              InboxProvider(repository: ctx.read<ConversasRepository>()),
+          child: const InboxPage(),
+        ),
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
       onGenerateRoute: (settings) {

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../features/chat/data/conversas_repository.dart';
+import '../../features/chat/presentation/inbox_page.dart';
+import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
 import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
@@ -28,17 +32,23 @@ class MainShellState extends State<MainShell> {
 
   static const _titles = ['Início', 'Pesquisa', 'Chat', 'Alertas', 'Perfil'];
 
-  // Placeholders — cada um vira lib/features/<tela>/ na Fase 1.
-  static const _placeholderScreens = [
-    FeedPage(),
-    PesquisaPage(),
-    _PlaceholderScreen(label: 'Chat', icon: Icons.chat_bubble_outline),
-    _PlaceholderScreen(label: 'Alertas', icon: Icons.notifications_outlined),
-    PerfilPage(),
-  ];
-
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _perfilIndex = 4;
+
+  late final List<Widget> _screens = [
+    const FeedPage(),
+    const PesquisaPage(),
+    ChangeNotifierProvider<InboxProvider>(
+      create: (ctx) =>
+          InboxProvider(repository: ctx.read<ConversasRepository>()),
+      child: const InboxPage(),
+    ),
+    const _PlaceholderScreen(
+      label: 'Alertas',
+      icon: Icons.notifications_outlined,
+    ),
+    const PerfilPage(),
+  ];
 
   void selecionarAba(int index) => setState(() => _currentIndex = index);
 
@@ -62,7 +72,7 @@ class MainShellState extends State<MainShell> {
                   : null,
             ),
       drawer: naTelaDePerfil || naTelaDePesquisa ? null : const AppDrawer(),
-      body: IndexedStack(index: _currentIndex, children: _placeholderScreens),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         notifCount: _notifCount,
