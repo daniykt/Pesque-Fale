@@ -66,6 +66,7 @@ import 'features/notificacoes/data/notificacoes_api_client.dart';
 import 'features/notificacoes/data/notificacoes_repository.dart';
 import 'features/notificacoes/data/notificacoes_repository_http.dart';
 import 'features/notificacoes/data/notificacoes_repository_mock.dart';
+import 'features/notificacoes/providers/badge_notificacoes_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
@@ -196,6 +197,11 @@ void main() {
         Provider<EventosRepository>.value(value: eventosRepository),
         Provider<ConversasRepository>.value(value: conversasRepository),
         Provider<NotificacoesRepository>.value(value: notificacoesRepository),
+        ChangeNotifierProvider<BadgeNotificacoesProvider>(
+          create: (ctx) =>
+              BadgeNotificacoesProvider(repository: ctx.read<NotificacoesRepository>())
+                ..atualizar(),
+        ),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
         ),

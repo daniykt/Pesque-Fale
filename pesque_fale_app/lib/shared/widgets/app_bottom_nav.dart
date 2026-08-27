@@ -44,13 +44,13 @@ class AppBottomNav extends StatelessWidget {
           icon: Badge(
             backgroundColor: badgeColor,
             isLabelVisible: notifCount > 0,
-            label: Text(notifCount > 9 ? '9+' : '$notifCount'),
+            label: Text(notifCount > 99 ? '99+' : '$notifCount'),
             child: const Icon(Icons.notifications_outlined),
           ),
           selectedIcon: Badge(
             backgroundColor: badgeColor,
             isLabelVisible: notifCount > 0,
-            label: Text(notifCount > 9 ? '9+' : '$notifCount'),
+            label: Text(notifCount > 99 ? '99+' : '$notifCount'),
             child: const Icon(Icons.notifications_outlined),
           ),
           label: 'Alertas',

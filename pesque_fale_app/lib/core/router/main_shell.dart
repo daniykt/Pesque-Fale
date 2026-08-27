@@ -5,6 +5,11 @@ import '../../features/chat/data/conversas_repository.dart';
 import '../../features/chat/presentation/inbox_page.dart';
 import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
+import '../../features/notificacoes/data/notificacoes_repository.dart';
+import '../../features/notificacoes/presentation/notificacoes_page.dart';
+import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
+import '../../features/notificacoes/providers/notificacoes_provider.dart';
+import '../../features/perfil/data/perfil_repository.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
 import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
 import '../../features/pesquisa/presentation/pesquisa_page.dart';
@@ -28,8 +33,6 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  static const int _notifCount = 0;
-
   static const _titles = ['Início', 'Pesquisa', 'Chat', 'Alertas', 'Perfil'];
 
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
@@ -44,9 +47,12 @@ class MainShellState extends State<MainShell> {
           InboxProvider(repository: ctx.read<ConversasRepository>()),
       child: const InboxPage(),
     ),
-    const _PlaceholderScreen(
-      label: 'Alertas',
-      icon: Icons.notifications_outlined,
+    ChangeNotifierProvider<NotificacoesProvider>(
+      create: (ctx) => NotificacoesProvider(
+        repository: ctx.read<NotificacoesRepository>(),
+        perfilRepository: ctx.read<PerfilRepository>(),
+      ),
+      child: const NotificacoesPage(),
     ),
     const PerfilPage(),
   ];
@@ -54,10 +60,17 @@ class MainShellState extends State<MainShell> {
   void selecionarAba(int index) => setState(() => _currentIndex = index);
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    context.read<BadgeNotificacoesProvider>().atualizar();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final naTelaDePerfil = _currentIndex == _perfilIndex;
     final naTelaDePesquisa = _currentIndex == _pesquisaIndex;
     final naTelaDeChat = _currentIndex == _chatIndex;
+    final notifCount = context.watch<BadgeNotificacoesProvider>().naoLidas;
 
     return Scaffold(
       appBar: naTelaDePesquisa || naTelaDeChat
@@ -79,34 +92,8 @@ class MainShellState extends State<MainShell> {
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
-        notifCount: _notifCount,
+        notifCount: notifCount,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-      ),
-    );
-  }
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.label, required this.icon});
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 48, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 12),
-          Text(label, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 4),
-          Text(
-            'Tela ainda não implementada (Fase 1+)',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
       ),
     );
   }
