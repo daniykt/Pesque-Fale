@@ -13,6 +13,12 @@ import 'features/auth/data/token_storage.dart';
 import 'features/auth/presentation/cadastro/cadastro_page.dart';
 import 'features/auth/presentation/login/login_page.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/chat/data/conversas_api_client.dart';
+import 'features/chat/data/conversas_repository.dart';
+import 'features/chat/data/conversas_repository_http.dart';
+import 'features/chat/data/conversas_repository_mock.dart';
+import 'features/chat/presentation/inbox_page.dart';
+import 'features/chat/providers/inbox_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
 import 'features/feed/data/comentarios_repository.dart';
 import 'features/feed/data/comentarios_repository_http.dart';
@@ -129,6 +135,15 @@ void main() {
           apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
         );
 
+  final ConversasRepository conversasRepository = AppConfig.useMock
+      ? ConversasRepositoryMock()
+      : ConversasRepositoryHttp(
+          apiClient: ConversasApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   final UploadPublicacaoImagemRepository uploadPublicacaoImagemRepository =
       AppConfig.useMock
       ? UploadPublicacaoImagemRepositoryMock()
@@ -164,6 +179,7 @@ void main() {
         Provider<CurtidasRepository>.value(value: curtidasRepository),
         Provider<ComentariosRepository>.value(value: comentariosRepository),
         Provider<EventosRepository>.value(value: eventosRepository),
+        Provider<ConversasRepository>.value(value: conversasRepository),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
         ),
@@ -213,7 +229,11 @@ class PesqueFaleApp extends StatelessWidget {
               ),
               child: const NovaPublicacaoPage(),
             ),
-        '/chat': (_) => const AppEmConstrucaoPage(titulo: 'Chat'),
+        '/chat': (context) => ChangeNotifierProvider<InboxProvider>(
+          create: (ctx) =>
+              InboxProvider(repository: ctx.read<ConversasRepository>()),
+          child: const InboxPage(),
+        ),
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
       onGenerateRoute: (settings) {
