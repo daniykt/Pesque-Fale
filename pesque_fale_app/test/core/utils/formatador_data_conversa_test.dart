@@ -51,4 +51,52 @@ void main() {
       );
     });
   });
+
+  group('formatarDivisorData', () {
+    test('hoje retorna "Hoje"', () {
+      expect(
+        formatador.formatarDivisorData(
+          DateTime(2026, 5, 28, 9, 5),
+          agora: agora,
+        ),
+        'Hoje',
+      );
+    });
+
+    test('ontem retorna "Ontem"', () {
+      expect(
+        formatador.formatarDivisorData(
+          DateTime(2026, 5, 27, 18, 0),
+          agora: agora,
+        ),
+        'Ontem',
+      );
+    });
+
+    test('demais dias retornam data por extenso', () {
+      expect(
+        formatador.formatarDivisorData(
+          DateTime(2026, 5, 20, 10, 0),
+          agora: agora,
+        ),
+        '20 de maio de 2026',
+      );
+    });
+
+    test('ano anterior tambem retorna data por extenso', () {
+      expect(
+        formatador.formatarDivisorData(
+          DateTime(2024, 12, 25, 10, 0),
+          agora: agora,
+        ),
+        '25 de dezembro de 2024',
+      );
+    });
+  });
+
+  group('formatarHora', () {
+    test('retorna HH:mm com zero a esquerda', () {
+      expect(formatador.formatarHora(DateTime(2026, 5, 28, 9, 5)), '09:05');
+    });
+  });
 }
