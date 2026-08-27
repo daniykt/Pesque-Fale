@@ -6,6 +6,10 @@ import 'core/router/main_shell.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/data/auth_api_client.dart';
+import 'features/chat/data/conversas_api_client.dart';
+import 'features/chat/data/conversas_repository.dart';
+import 'features/chat/data/conversas_repository_http.dart';
+import 'features/chat/data/conversas_repository_mock.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/auth_repository_http.dart';
 import 'features/auth/data/auth_repository_mock.dart';
@@ -129,6 +133,15 @@ void main() {
           apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
         );
 
+  final ConversasRepository conversasRepository = AppConfig.useMock
+      ? ConversasRepositoryMock()
+      : ConversasRepositoryHttp(
+          apiClient: ConversasApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   final UploadPublicacaoImagemRepository uploadPublicacaoImagemRepository =
       AppConfig.useMock
       ? UploadPublicacaoImagemRepositoryMock()
@@ -164,6 +177,7 @@ void main() {
         Provider<CurtidasRepository>.value(value: curtidasRepository),
         Provider<ComentariosRepository>.value(value: comentariosRepository),
         Provider<EventosRepository>.value(value: eventosRepository),
+        Provider<ConversasRepository>.value(value: conversasRepository),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
         ),
