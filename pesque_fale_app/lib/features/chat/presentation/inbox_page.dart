@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../shared/widgets/app_snackbar.dart';
 import '../providers/inbox_provider.dart';
 import 'widgets/busca_conversas_bar.dart';
 import 'widgets/empty_state_inbox.dart';
@@ -113,7 +112,9 @@ class _InboxPageState extends State<InboxPage> {
             itemCount: lista.length,
             itemBuilder: (context, i) => ItemConversa(
               conversa: lista[i],
-              onTap: () => AppSnackbar.showInfo(context, 'Chat em breve'),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed('/chat/conversa', arguments: lista[i]),
             ),
           ),
         );
