@@ -62,6 +62,10 @@ import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
 import 'features/nova_publicacao/presentation/nova_publicacao_page.dart';
 import 'features/nova_publicacao/providers/nova_publicacao_provider.dart';
+import 'features/notificacoes/data/notificacoes_api_client.dart';
+import 'features/notificacoes/data/notificacoes_repository.dart';
+import 'features/notificacoes/data/notificacoes_repository_http.dart';
+import 'features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
@@ -146,6 +150,15 @@ void main() {
           ),
         );
 
+  final NotificacoesRepository notificacoesRepository = AppConfig.useMock
+      ? NotificacoesRepositoryMock()
+      : NotificacoesRepositoryHttp(
+          apiClient: NotificacoesApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   final UploadPublicacaoImagemRepository uploadPublicacaoImagemRepository =
       AppConfig.useMock
       ? UploadPublicacaoImagemRepositoryMock()
@@ -182,6 +195,7 @@ void main() {
         Provider<ComentariosRepository>.value(value: comentariosRepository),
         Provider<EventosRepository>.value(value: eventosRepository),
         Provider<ConversasRepository>.value(value: conversasRepository),
+        Provider<NotificacoesRepository>.value(value: notificacoesRepository),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
         ),
