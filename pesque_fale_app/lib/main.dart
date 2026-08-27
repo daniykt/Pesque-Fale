@@ -17,6 +17,8 @@ import 'features/chat/data/conversas_api_client.dart';
 import 'features/chat/data/conversas_repository.dart';
 import 'features/chat/data/conversas_repository_http.dart';
 import 'features/chat/data/conversas_repository_mock.dart';
+import 'features/chat/domain/conversa.dart';
+import 'features/chat/presentation/chat_page.dart';
 import 'features/chat/presentation/inbox_page.dart';
 import 'features/chat/providers/inbox_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
@@ -237,6 +239,12 @@ class PesqueFaleApp extends StatelessWidget {
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
       onGenerateRoute: (settings) {
+        if (settings.name == '/chat/conversa') {
+          final conversa = settings.arguments as Conversa;
+          return MaterialPageRoute(
+            builder: (_) => ChatPage(conversa: conversa),
+          );
+        }
         if (settings.name == '/perfil') {
           final usuarioId = settings.arguments as String;
           return MaterialPageRoute(
