@@ -33,6 +33,7 @@ class MainShellState extends State<MainShell> {
   static const _titles = ['Início', 'Pesquisa', 'Chat', 'Alertas', 'Perfil'];
 
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
+  static const int _chatIndex = 2;
   static const int _perfilIndex = 4;
 
   late final List<Widget> _screens = [
@@ -56,9 +57,10 @@ class MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final naTelaDePerfil = _currentIndex == _perfilIndex;
     final naTelaDePesquisa = _currentIndex == _pesquisaIndex;
+    final naTelaDeChat = _currentIndex == _chatIndex;
 
     return Scaffold(
-      appBar: naTelaDePesquisa
+      appBar: naTelaDePesquisa || naTelaDeChat
           ? null
           : AppBar(
               title: Text(_titles[_currentIndex]),
@@ -71,7 +73,9 @@ class MainShellState extends State<MainShell> {
                     )
                   : null,
             ),
-      drawer: naTelaDePerfil || naTelaDePesquisa ? null : const AppDrawer(),
+      drawer: naTelaDePerfil || naTelaDePesquisa || naTelaDeChat
+          ? null
+          : const AppDrawer(),
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
