@@ -43,7 +43,9 @@ import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
-import 'features/onboarding/onboarding_placeholder_page.dart';
+import 'features/onboarding/domain/onboarding_status_storage.dart';
+import 'features/onboarding/presentation/onboarding_wizard_page.dart';
+import 'features/onboarding/providers/onboarding_provider.dart';
 import 'features/perfil/data/perfil_api_client.dart';
 import 'features/perfil/data/perfil_repository.dart';
 import 'features/perfil/data/perfil_repository_http.dart';
@@ -177,6 +179,7 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
         ),
+        Provider<PerfilRepository>.value(value: perfilRepository),
         ChangeNotifierProxyProvider<AuthProvider, PerfilProvider>(
           create: (context) => PerfilProvider(
             repository: perfilRepository,
@@ -236,7 +239,14 @@ class PesqueFaleApp extends StatelessWidget {
       routes: {
         '/cadastro': (_) => const CadastroPage(),
         '/login': (_) => const LoginPage(),
-        '/onboarding': (_) => const OnboardingPlaceholderPage(),
+        '/onboarding': (context) => ChangeNotifierProvider<OnboardingProvider>(
+          create: (ctx) => OnboardingProvider(
+            perfilRepository: ctx.read<PerfilRepository>(),
+            authProvider: ctx.read<AuthProvider>(),
+            statusStorage: OnboardingStatusStorage(),
+          ),
+          child: const OnboardingWizardPage(),
+        ),
         '/home': (_) => MainShell(key: MainShell.shellKey),
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/publicar': (_) =>

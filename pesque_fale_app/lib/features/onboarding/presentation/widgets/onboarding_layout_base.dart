@@ -17,7 +17,9 @@ class OnboardingLayoutBase extends StatelessWidget {
   });
 
   final OnboardingEtapa etapa;
-  final String titulo;
+
+  /// Widget do título (permite destacar trechos, ex.: o nome do usuário).
+  final Widget titulo;
   final String subtitulo;
   final Widget conteudo;
   final Widget acoesInferior;
@@ -46,13 +48,13 @@ class OnboardingLayoutBase extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: AppSpacing.md),
-                        Text(
-                          titulo,
+                        DefaultTextStyle.merge(
                           textAlign: TextAlign.center,
                           style: textTheme.headlineSmall?.copyWith(
                             color: colors.primary,
                             fontWeight: FontWeight.bold,
                           ),
+                          child: titulo,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
