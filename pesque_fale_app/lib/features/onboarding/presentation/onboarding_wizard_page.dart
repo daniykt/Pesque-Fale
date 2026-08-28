@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../domain/onboarding_etapa.dart';
 import '../providers/onboarding_provider.dart';
+import 'etapas/onboarding_bio_page.dart';
 import 'etapas/onboarding_boas_vindas_page.dart';
+import 'etapas/onboarding_foto_capa_page.dart';
 import 'etapas/onboarding_foto_perfil_page.dart';
 import 'etapas/onboarding_nome_localizacao_page.dart';
 import 'etapas/onboarding_sucesso_page.dart';
@@ -23,8 +25,9 @@ class OnboardingWizardPage extends StatelessWidget {
       case OnboardingEtapa.username:
         return const OnboardingUsernamePage();
       case OnboardingEtapa.bio:
+        return const OnboardingBioPage();
       case OnboardingEtapa.fotoCapa:
-        return const SizedBox.shrink();
+        return const OnboardingFotoCapaPage();
       case OnboardingEtapa.sucesso:
         return const OnboardingSucessoPage();
     }
