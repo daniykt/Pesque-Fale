@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../core/theme/theme_provider.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -34,18 +29,6 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             const Divider(),
-            SwitchListTile(
-              secondary: Icon(
-                themeProvider.isDarkMode
-                    ? Icons.dark_mode_outlined
-                    : Icons.light_mode_outlined,
-              ),
-              title: Text(
-                themeProvider.isDarkMode ? 'Modo Escuro' : 'Modo Claro',
-              ),
-              value: themeProvider.isDarkMode,
-              onChanged: (_) => themeProvider.toggleTheme(),
-            ),
             ListTile(
               leading: const Icon(Icons.restart_alt),
               title: const Text('Reiniciar Tour'),
@@ -58,21 +41,6 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            const Spacer(),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sair'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Logout ainda não implementado.'),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
