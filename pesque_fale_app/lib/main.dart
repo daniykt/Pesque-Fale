@@ -21,6 +21,8 @@ import 'features/chat/domain/conversa.dart';
 import 'features/chat/presentation/chat_page.dart';
 import 'features/chat/presentation/inbox_page.dart';
 import 'features/chat/providers/inbox_provider.dart';
+import 'features/configuracoes/presentation/configuracoes_page.dart';
+import 'features/configuracoes/providers/preferencias_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
 import 'features/feed/data/comentarios_repository.dart';
 import 'features/feed/data/comentarios_repository_http.dart';
@@ -176,6 +178,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => PreferenciasProvider()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
         ),
@@ -249,6 +252,7 @@ class PesqueFaleApp extends StatelessWidget {
         ),
         '/home': (_) => MainShell(key: MainShell.shellKey),
         '/perfil/editar': (_) => const EditarPerfilPage(),
+        '/configuracoes': (_) => const ConfiguracoesPage(),
         '/publicar': (_) =>
             const AppEmConstrucaoPage(titulo: 'Nova publicação'),
         '/publicacao/nova': (context) =>
