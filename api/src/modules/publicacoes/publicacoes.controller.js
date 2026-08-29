@@ -97,14 +97,14 @@ async function listar(req, res) {
 
 async function criar(req, res) {
   const autorId = req.usuario.id;
-  const { descricao, imagemUrl, localTexto, avaliacaoNota, pontoId } = req.body;
+  const { descricao, imagemUrl, localTexto, avaliacaoNota, pontoId, tags } = req.body;
 
   try {
     const result = await pool.query(
-      `INSERT INTO publicacoes (autor_id, ponto_id, descricao, imagem_url, local_texto, avaliacao_nota)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO publicacoes (autor_id, ponto_id, descricao, imagem_url, local_texto, avaliacao_nota, tags)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [autorId, pontoId ?? null, descricao ?? null, imagemUrl ?? null, localTexto ?? null, avaliacaoNota ?? null]
+      [autorId, pontoId ?? null, descricao ?? null, imagemUrl ?? null, localTexto ?? null, avaliacaoNota ?? null, tags ?? []]
     );
 
     return res.status(201).json({ data: _format(result.rows[0]) });
