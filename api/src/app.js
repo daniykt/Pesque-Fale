@@ -30,6 +30,7 @@ app.use('/v1/usuarios/:id/publicacoes', publicacoesRoutes);
 app.use('/v1/pontos', pontosRoutes);
 app.use('/v1/pontos/:pontoId/avaliacoes', avaliacoesRoutes);
 app.use('/v1/publicacoes', publicacoesRoutes);
+app.use('/v1/publicacoes', uploadRoutes);
 app.use('/v1/publicacoes/:publicacaoId/curtir', curtidasRoutes);
 app.use('/v1/publicacoes/:publicacaoId/comentarios', comentariosRoutes);
 app.use('/v1/comentarios', comentariosStandaloneRoutes);

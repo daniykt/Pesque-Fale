@@ -1,7 +1,6 @@
 const cloudinary = require('../../config/cloudinary');
 const pool = require('../../config/database');
 
-// Magic bytes para detectar formato real do arquivo
 function detectarMimeReal(buffer) {
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg';
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'image/png';
@@ -12,14 +11,48 @@ function detectarMimeReal(buffer) {
 const MIME_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 
 async function uploadFoto(req, res) {
-  return _upload(req, res, 'foto');
+  return _uploadPerfil(req, res, 'foto');
 }
 
 async function uploadBanner(req, res) {
-  return _upload(req, res, 'banner');
+  return _uploadPerfil(req, res, 'banner');
 }
 
-async function _upload(req, res, tipo) {
+async function uploadImagemPublicacao(req, res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Nenhum arquivo enviado.' });
+  }
+
+  const mimeReal = detectarMimeReal(req.file.buffer);
+  if (!mimeReal || !MIME_PERMITIDOS.includes(mimeReal)) {
+    return res.status(415).json({ error: 'FORMATO_INVALIDO', message: 'Formato inválido. Use jpeg, png ou webp.' });
+  }
+
+  try {
+    const resultado = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'publicacoes',
+          overwrite: false,
+          resource_type: 'image',
+          transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto', fetch_format: 'auto' }],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    return res.json({ data: { imagemUrl: resultado.secure_url } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function _uploadPerfil(req, res, tipo) {
   if (!req.file) {
     return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Nenhum arquivo enviado.' });
   }
@@ -32,12 +65,10 @@ async function _upload(req, res, tipo) {
   const usuarioId = req.usuario.id;
 
   try {
-    // Busca URL antiga para deletar do Cloudinary
     const campo = tipo === 'foto' ? 'foto_perfil' : 'banner';
     const atual = await pool.query(`SELECT ${campo} FROM usuarios WHERE id = $1`, [usuarioId]);
     const urlAntiga = atual.rows[0]?.[campo];
 
-    // Faz upload para o Cloudinary
     const pasta = tipo === 'foto' ? 'fotos_perfil' : 'banners';
     const publicId = `${pasta}/${usuarioId}`;
 
@@ -62,16 +93,14 @@ async function _upload(req, res, tipo) {
 
     const novaUrl = resultado.secure_url;
 
-    // Deleta imagem antiga se existir e for diferente
     if (urlAntiga && urlAntiga !== novaUrl) {
       try {
         await cloudinary.uploader.destroy(publicId);
       } catch {
-        // Falha silenciosa — não bloqueia o upload
+        // Falha silenciosa
       }
     }
 
-    // Persiste a nova URL no banco
     await pool.query(
       `UPDATE usuarios SET ${campo} = $1, atualizado_em = NOW() WHERE id = $2`,
       [novaUrl, usuarioId]
@@ -88,4 +117,4 @@ async function _upload(req, res, tipo) {
   }
 }
 
-module.exports = { uploadFoto, uploadBanner };
+module.exports = { uploadFoto, uploadBanner, uploadImagemPublicacao };
