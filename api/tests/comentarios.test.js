@@ -49,7 +49,9 @@ describe('POST /v1/publicacoes/:id/comentarios', () => {
             autor_foto: null,
           },
         ],
-      });
+      })
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user' }] })
+      .mockResolvedValueOnce({ rows: [] });
 
     const token = gerarToken('user-1');
     const res = await request(app)
