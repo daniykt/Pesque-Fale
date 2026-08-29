@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/auth_hero.dart';
 import '../widgets/auth_logo_title.dart';
 import '../widgets/auth_password_field.dart';
@@ -27,10 +29,35 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _login() async {
+    final auth = context.read<AuthProvider>();
+    await auth.login(
+      email: _emailController.text.trim(),
+      senha: _senhaController.text,
+    );
+
+    if (!mounted) return;
+
+    if (auth.status == AuthStatus.success) {
+      final usuario = auth.usuario!;
+      if (usuario.onboardingConcluido) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/onboarding');
+      }
+    } else if (auth.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage!)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final auth = context.watch<AuthProvider>();
+    final isLoading = auth.status == AuthStatus.loading;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -59,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _senhaController,
                       label: 'Senha',
                       textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _login(),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -72,7 +100,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    AuthPrimaryButton(label: 'Entrar', onPressed: () {}),
+                    AuthPrimaryButton(
+                      label: 'Entrar',
+                      onPressed: isLoading ? null : _login,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     AuthSwitchLink(
                       question: 'Não tem conta? ',
