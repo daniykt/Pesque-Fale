@@ -9,9 +9,15 @@ async function listar(req, res) {
   try {
     const [result, total, naoLidas] = await Promise.all([
       pool.query(
-        `SELECT * FROM notificacoes
-         WHERE para = $1
-         ORDER BY criado_em DESC
+        `SELECT n.*,
+                u.foto_perfil AS de_foto,
+                CASE WHEN us.seguidor_id IS NOT NULL THEN true ELSE false END AS ja_sigo_de
+         FROM notificacoes n
+         LEFT JOIN usuarios u ON u.id = n.de_id
+         LEFT JOIN usuario_seguidores us
+           ON us.seguidor_id = $1 AND us.seguido_id = n.de_id
+         WHERE n.para = $1
+         ORDER BY n.criado_em DESC
          LIMIT $2 OFFSET $3`,
         [usuarioId, porPagina, offset]
       ),
@@ -96,6 +102,8 @@ function _format(n) {
     deId: n.de_id,
     de: n.de,
     deUsername: n.de_username,
+    deFoto: n.de_foto,
+    jaSigoDe: n.ja_sigo_de,
     tipo: n.tipo,
     texto: n.texto,
     postId: n.post_id,
