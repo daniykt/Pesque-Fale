@@ -160,6 +160,18 @@ module.exports = function initChatGateway(io) {
       }
     });
 
+    // Indicador de digitação
+    socket.on('digitando', () => {
+      if (!socket.chatId) return;
+      socket.to(socket.chatId).emit('outro_digitando', { userId: usuarioId });
+    });
+
+    // Indicador de parou de digitar
+    socket.on('parou_digitando', () => {
+      if (!socket.chatId) return;
+      socket.to(socket.chatId).emit('outro_parou_digitando', { userId: usuarioId });
+    });
+
     socket.on('disconnect', () => {
       console.log(`Socket desconectado: ${usuarioId}`);
     });
