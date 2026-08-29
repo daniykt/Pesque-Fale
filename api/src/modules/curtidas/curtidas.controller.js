@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
 
 async function curtir(req, res) {
   const { publicacaoId } = req.params;
@@ -9,6 +10,21 @@ async function curtir(req, res) {
       'INSERT INTO curtidas (usuario_id, publicacao_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [usuarioId, publicacaoId]
     );
+
+    const publicacao = await pool.query(
+      'SELECT autor_id FROM publicacoes WHERE id = $1',
+      [publicacaoId]
+    );
+
+    if (publicacao.rows.length > 0) {
+      await criarNotificacao({
+        para: publicacao.rows[0].autor_id,
+        deId: usuarioId,
+        tipo: 'curtida',
+        postId: publicacaoId,
+      });
+    }
+
     return res.status(201).json({ data: { curtido: true } });
   } catch (err) {
     if (err.code === '23503') {

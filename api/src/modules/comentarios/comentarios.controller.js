@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
 
 async function listar(req, res) {
   const { publicacaoId } = req.params;
@@ -58,6 +59,21 @@ async function criar(req, res) {
        WHERE c.id = $1`,
       [inserido.rows[0].id]
     );
+
+    const publicacao = await pool.query(
+      'SELECT autor_id FROM publicacoes WHERE id = $1',
+      [publicacaoId]
+    );
+
+    if (publicacao.rows.length > 0) {
+      await criarNotificacao({
+        para: publicacao.rows[0].autor_id,
+        deId: autorId,
+        tipo: 'comentario',
+        texto: texto.slice(0, 100),
+        postId: publicacaoId,
+      });
+    }
 
     return res.status(201).json({ data: _format(result.rows[0]) });
   } catch (err) {
