@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const authRoutes = require('./modules/auth/auth.routes');
 const usuariosRoutes = require('./modules/usuarios/usuarios.routes');
 const uploadRoutes = require('./modules/upload/upload.routes');
@@ -22,6 +24,9 @@ app.use(express.json());
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Pesque & Fale API rodando!' });
 });
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/docs.json', (req, res) => res.json(swaggerSpec));
 
 app.use('/v1/auth', authRoutes);
 app.use('/v1/usuarios', usuariosRoutes);

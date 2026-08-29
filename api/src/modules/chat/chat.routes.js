@@ -4,7 +4,16 @@ const authMiddleware = require('../../middlewares/auth.middleware');
 
 const router = Router();
 
-// Listar conversas do usuário autenticado
+/**
+ * @swagger
+ * /chats:
+ *   get:
+ *     summary: Listar conversas do usuário autenticado
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Lista de conversas com última mensagem e contagem de não lidas
+ */
 router.get('/', authMiddleware, async (req, res) => {
   const usuarioId = req.usuario.id;
 
@@ -42,7 +51,35 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Histórico de mensagens de um chat via REST (fallback)
+/**
+ * @swagger
+ * /chats/{chatId}/mensagens:
+ *   get:
+ *     summary: Histórico de mensagens de um chat (REST fallback)
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do chat no formato uid1_uid2 (ordenados alfabeticamente)
+ *       - in: query
+ *         name: pagina
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: porPagina
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Lista paginada de mensagens
+ *       404:
+ *         description: Chat não encontrado ou usuário não é participante
+ */
 router.get('/:chatId/mensagens', authMiddleware, async (req, res) => {
   const { chatId } = req.params;
   const usuarioId = req.usuario.id;

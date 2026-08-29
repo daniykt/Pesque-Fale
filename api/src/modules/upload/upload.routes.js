@@ -21,6 +21,30 @@ function handleMulterError(err, req, res, next) {
   next(err);
 }
 
+/**
+ * @swagger
+ * /usuarios/me/foto:
+ *   post:
+ *     summary: Upload de foto de perfil (crop 400x400 face)
+ *     tags: [Upload]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               foto:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: '{ "data": { "fotoPerfil": "https://res.cloudinary.com/..." } }'
+ *       413:
+ *         description: Arquivo maior que 5MB
+ *       415:
+ *         description: Formato inválido
+ */
 router.post(
   '/me/foto',
   authMiddleware,
@@ -29,6 +53,30 @@ router.post(
   uploadFoto
 );
 
+/**
+ * @swagger
+ * /usuarios/me/banner:
+ *   post:
+ *     summary: Upload de banner do perfil (crop 1200x400)
+ *     tags: [Upload]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               banner:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: '{ "data": { "banner": "https://res.cloudinary.com/..." } }'
+ *       413:
+ *         description: Arquivo maior que 5MB
+ *       415:
+ *         description: Formato inválido
+ */
 router.post(
   '/me/banner',
   authMiddleware,
@@ -37,6 +85,30 @@ router.post(
   uploadBanner
 );
 
+/**
+ * @swagger
+ * /publicacoes/imagens:
+ *   post:
+ *     summary: Upload de imagem de publicação (limit 1200x1200)
+ *     tags: [Upload]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               imagem:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: '{ "data": { "imagemUrl": "https://res.cloudinary.com/..." } }'
+ *       413:
+ *         description: Arquivo maior que 5MB
+ *       415:
+ *         description: Formato inválido
+ */
 router.post(
   '/imagens',
   authMiddleware,
