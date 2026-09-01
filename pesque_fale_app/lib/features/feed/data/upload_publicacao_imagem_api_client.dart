@@ -27,13 +27,13 @@ class UploadPublicacaoImagemApiClient {
       final request =
           http.MultipartRequest(
               'POST',
-              Uri.parse('$baseUrl/upload/publicacao-imagem'),
+              Uri.parse('$baseUrl/publicacoes/imagens'),
             )
             ..headers.addAll({
               if (token != null) 'Authorization': 'Bearer $token',
             })
             ..files.add(
-              await http.MultipartFile.fromPath('foto', arquivo.path),
+              await http.MultipartFile.fromPath('imagem', arquivo.path),
             );
 
       final streamed = await _client.send(request).timeout(_timeout);
