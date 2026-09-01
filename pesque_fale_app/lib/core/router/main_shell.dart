@@ -13,6 +13,8 @@ import '../../features/perfil/data/perfil_repository.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
 import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
 import '../../features/pesquisa/presentation/pesquisa_page.dart';
+import '../../features/tour/presentation/widgets/tour_overlay.dart';
+import '../../features/tour/providers/tour_provider.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 
@@ -72,6 +74,15 @@ class MainShellState extends State<MainShell> {
     final naTelaDeChat = _currentIndex == _chatIndex;
     final notifCount = context.watch<BadgeNotificacoesProvider>().naoLidas;
 
+    final passoDoTour = context.watch<TourProvider>().passoAtual;
+    if (passoDoTour != null && passoDoTour.abaAlvo != _currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _currentIndex != passoDoTour.abaAlvo) {
+          setState(() => _currentIndex = passoDoTour.abaAlvo);
+        }
+      });
+    }
+
     return Scaffold(
       appBar: naTelaDePesquisa || naTelaDeChat
           ? null
@@ -89,10 +100,16 @@ class MainShellState extends State<MainShell> {
       drawer: naTelaDePerfil || naTelaDePesquisa || naTelaDeChat
           ? null
           : const AppDrawer(),
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: Stack(
+        children: [
+          IndexedStack(index: _currentIndex, children: _screens),
+          const TourOverlay(),
+        ],
+      ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _currentIndex,
         notifCount: notifCount,
+        highlightedIndex: passoDoTour?.abaAlvo,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
       ),
     );
