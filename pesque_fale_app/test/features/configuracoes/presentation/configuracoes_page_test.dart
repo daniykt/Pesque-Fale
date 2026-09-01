@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,8 @@ import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/configuracoes/presentation/configuracoes_page.dart';
 import 'package:pesque_fale_app/features/configuracoes/providers/preferencias_provider.dart';
+import 'package:pesque_fale_app/features/tour/domain/tour_status_storage.dart';
+import 'package:pesque_fale_app/features/tour/providers/tour_provider.dart';
 
 /// Fake do canal de plataforma do flutter_secure_storage, backed por um Map
 /// em memória, pra que o AuthRepositoryMock.logout() (via TokenStorage) nao
@@ -72,6 +75,12 @@ void main() {
           ChangeNotifierProvider<AuthProvider>(
             create: (_) => AuthProvider(
               repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+            ),
+          ),
+          ChangeNotifierProvider<TourProvider>(
+            create: (ctx) => TourProvider(
+              storage: TourStatusStorage(storage: const FlutterSecureStorage()),
+              authProvider: ctx.read<AuthProvider>(),
             ),
           ),
         ],
@@ -177,6 +186,67 @@ void main() {
 
     expect(find.text('Editar Perfil'), findsOneWidget);
   });
+
+  testWidgets('renderiza Ver tutorial novamente', (tester) async {
+    await montarComProviders(tester);
+
+    expect(find.text('Ver tutorial novamente'), findsOneWidget);
+  });
+
+  testWidgets(
+    'tap em Ver tutorial novamente volta para /home e inicia o tour',
+    (tester) async {
+      final authProvider = AuthProvider(
+        repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+      );
+      final tourProvider = TourProvider(
+        storage: TourStatusStorage(storage: const FlutterSecureStorage()),
+        authProvider: authProvider,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeProvider>.value(
+              value: ThemeProvider(),
+            ),
+            ChangeNotifierProvider<PreferenciasProvider>.value(
+              value: PreferenciasProvider(),
+            ),
+            ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+            ChangeNotifierProvider<TourProvider>.value(value: tourProvider),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            initialRoute: '/home',
+            routes: {
+              '/home': (context) => Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/configuracoes'),
+                    child: const Text('Abrir Configurações'),
+                  ),
+                ),
+              ),
+              '/configuracoes': (_) => const ConfiguracoesPage(),
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Abrir Configurações'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Ver tutorial novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ConfiguracoesPage), findsNothing);
+      expect(find.text('Abrir Configurações'), findsOneWidget);
+      expect(tourProvider.passoAtualIndex, 0);
+    },
+  );
 
   testWidgets('renderiza Sair da conta com cor danger', (tester) async {
     await montarComProviders(tester);

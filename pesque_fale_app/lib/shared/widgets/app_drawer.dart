@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../features/tour/providers/tour_provider.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -34,11 +37,7 @@ class AppDrawer extends StatelessWidget {
               title: const Text('Reiniciar Tour'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tour de onboarding ainda não implementado.'),
-                  ),
-                );
+                context.read<TourProvider>().iniciarManual();
               },
             ),
           ],

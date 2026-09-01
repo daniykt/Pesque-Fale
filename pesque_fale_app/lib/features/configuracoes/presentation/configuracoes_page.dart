@@ -5,11 +5,18 @@ import '../../../core/config/app_info.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../tour/providers/tour_provider.dart';
 import '../providers/preferencias_provider.dart';
 import 'widgets/configuracoes_secao.dart';
 
 class ConfiguracoesPage extends StatelessWidget {
   const ConfiguracoesPage({super.key});
+
+  void _verTutorial(BuildContext context) {
+    final tourProvider = context.read<TourProvider>();
+    Navigator.of(context).popUntil(ModalRoute.withName('/home'));
+    tourProvider.iniciarManual();
+  }
 
   Future<void> _confirmarSaida(BuildContext context) async {
     final colors = Theme.of(context).extension<AppColors>()!;
@@ -86,6 +93,12 @@ class ConfiguracoesPage extends StatelessWidget {
                 title: const Text('Editar perfil'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.pushNamed(context, '/perfil/editar'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.school_outlined),
+                title: const Text('Ver tutorial novamente'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _verTutorial(context),
               ),
               ListTile(
                 leading: Icon(Icons.logout, color: colors.danger),
