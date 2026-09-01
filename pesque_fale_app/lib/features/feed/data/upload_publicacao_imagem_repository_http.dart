@@ -13,7 +13,7 @@ class UploadPublicacaoImagemRepositoryHttp
   Future<String> upload(File arquivo) async {
     final json = await apiClient.upload(arquivo);
     final data = json['data'] as Map<String, dynamic>?;
-    final url = data?['url'] as String?;
+    final url = data?['imagemUrl'] as String?;
     if (url == null) throw Exception('URL não retornada pelo servidor');
     return url;
   }
