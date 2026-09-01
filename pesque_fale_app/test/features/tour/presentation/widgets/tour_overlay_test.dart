@@ -4,20 +4,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
-import 'package:pesque_fale_app/core/theme/theme_provider.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
-import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
-import 'package:pesque_fale_app/features/onboarding/presentation/etapas/onboarding_sucesso_page.dart';
 import 'package:pesque_fale_app/features/tour/domain/tour_status_storage.dart';
+import 'package:pesque_fale_app/features/tour/presentation/widgets/tour_overlay.dart';
 import 'package:pesque_fale_app/features/tour/providers/tour_provider.dart';
 
-/// Fake do canal de plataforma do flutter_secure_storage, com os dados
-/// mantidos em um Map em memória (sem depender de nenhum plugin nativo).
 class _FakeFlutterSecureStorageChannel {
   _FakeFlutterSecureStorageChannel() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -74,40 +68,24 @@ class _FakeAuthRepository implements AuthRepository {
 
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
     _FakeFlutterSecureStorageChannel();
   });
 
   Future<TourProvider> montarWidget(WidgetTester tester) async {
-    final authProvider = AuthProvider(repository: _FakeAuthRepository())
-      ..atualizarUsuario(
-        const Usuario(
-          id: 'user-1',
-          nome: 'Ana',
-          email: 'ana@teste.com',
-          onboardingConcluido: true,
-        ),
-      );
     final tourProvider = TourProvider(
       storage: TourStatusStorage(storage: const FlutterSecureStorage()),
-      authProvider: authProvider,
+      authProvider: AuthProvider(repository: _FakeAuthRepository()),
     );
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
-          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-          ChangeNotifierProvider<TourProvider>.value(value: tourProvider),
-        ],
+      ChangeNotifierProvider<TourProvider>.value(
+        value: tourProvider,
         child: MaterialApp(
           theme: AppTheme.light,
-          home: const OnboardingSucessoPage(),
-          routes: {
-            '/home': (_) => const Scaffold(body: Text('Home')),
-          },
+          home: const Scaffold(body: Stack(children: [TourOverlay()])),
         ),
       ),
     );
@@ -115,42 +93,55 @@ void main() {
     return tourProvider;
   }
 
-  testWidgets('renderiza titulo e subtitulo', (tester) async {
-    await montarWidget(tester);
-
-    expect(find.text('Perfil completo, bora pescar!'), findsOneWidget);
-    expect(
-      find.textContaining('Seu perfil foi configurado com sucesso'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('renderiza o emoji de festa', (tester) async {
-    await montarWidget(tester);
-
-    expect(find.text('🎉'), findsOneWidget);
-  });
-
-  testWidgets('tap em Ir para Home navega para /home removendo a pilha', (
+  testWidgets('nao renderiza nada quando o tour esta inativo', (
     tester,
   ) async {
     await montarWidget(tester);
 
-    await tester.tap(find.text('Ir para Home'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(OnboardingSucessoPage), findsNothing);
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Tour guiado'), findsNothing);
+    expect(find.byType(GestureDetector), findsNothing);
   });
 
-  testWidgets('tap em Ir para Home dispara o tour guiado pendente', (
+  testWidgets('renderiza o card com o texto do passo atual quando ativo', (
     tester,
   ) async {
     final tourProvider = await montarWidget(tester);
 
-    await tester.tap(find.text('Ir para Home'));
+    tourProvider.iniciarManual();
     await tester.pumpAndSettle();
 
-    expect(tourProvider.passoAtualIndex, 0);
+    expect(find.text('Tour guiado'), findsOneWidget);
+    expect(find.text('Bem-vindo!'), findsOneWidget);
+    expect(find.text('Passo 1 de 7'), findsOneWidget);
+  });
+
+  testWidgets('tocar em Pular encerra o tour e some o overlay', (
+    tester,
+  ) async {
+    final tourProvider = await montarWidget(tester);
+
+    tourProvider.iniciarManual();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Pular'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tour guiado'), findsNothing);
+    expect(tourProvider.passoAtualIndex, isNull);
+  });
+
+  testWidgets('tocar em Próximo avança o passo exibido no card', (
+    tester,
+  ) async {
+    final tourProvider = await montarWidget(tester);
+
+    tourProvider.iniciarManual();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Próximo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Página Inicial'), findsOneWidget);
+    expect(find.text('Passo 2 de 7'), findsOneWidget);
   });
 }

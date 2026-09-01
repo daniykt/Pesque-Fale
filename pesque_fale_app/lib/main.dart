@@ -73,6 +73,8 @@ import 'features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'features/notificacoes/providers/badge_notificacoes_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
+import 'features/tour/domain/tour_status_storage.dart';
+import 'features/tour/providers/tour_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
 import 'features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
 import 'shared/widgets/app_em_construcao_page.dart';
@@ -220,6 +222,13 @@ void main() {
             authProvider: context.read<AuthProvider>(),
           ),
           update: (context, auth, previous) => previous!..reagirAuth(auth),
+        ),
+        Provider<TourStatusStorage>(create: (_) => TourStatusStorage()),
+        ChangeNotifierProvider<TourProvider>(
+          create: (ctx) => TourProvider(
+            storage: ctx.read<TourStatusStorage>(),
+            authProvider: ctx.read<AuthProvider>(),
+          ),
         ),
       ],
       child: const PesqueFaleApp(),
