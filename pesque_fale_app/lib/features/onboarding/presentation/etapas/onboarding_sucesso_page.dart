@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../tour/providers/tour_provider.dart';
 import '../../domain/onboarding_etapa.dart';
 import '../widgets/onboarding_botao_principal.dart';
 import '../widgets/onboarding_layout_base.dart';
 
 class OnboardingSucessoPage extends StatelessWidget {
   const OnboardingSucessoPage({super.key});
+
+  Future<void> _irParaHome(BuildContext context) async {
+    final userId = context.read<AuthProvider>().usuario?.id;
+    if (userId != null) {
+      await context.read<TourProvider>().iniciarSePendente(userId);
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +46,7 @@ class OnboardingSucessoPage extends StatelessWidget {
       acoesInferior: OnboardingBotaoPrincipal(
         label: 'Ir para Home',
         icone: Icons.home_outlined,
-        onPressed: () => Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/home', (_) => false),
+        onPressed: () => _irParaHome(context),
       ),
     );
   }
