@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +29,7 @@ class CampoFoto extends StatelessWidget {
     final usuario = context.watch<AuthProvider>().usuario;
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    final previewLocal = provider.novaFotoPath;
+    final novaFoto = provider.novaFotoArquivo;
     final fotoRemota = usuario?.fotoPerfil;
 
     return GestureDetector(
@@ -47,8 +47,19 @@ class CampoFoto extends StatelessWidget {
             child: SizedBox(
               width: tamanho,
               height: tamanho,
-              child: previewLocal != null
-                  ? Image.file(File(previewLocal), fit: BoxFit.cover)
+              child: novaFoto != null
+                  ? FutureBuilder<Uint8List>(
+                      future: provider.lerBytesNovaFoto(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Image.memory(
+                            snapshot.data!,
+                            fit: BoxFit.cover,
+                          );
+                        }
+                        return Container(color: colors.primary);
+                      },
+                    )
                   : (fotoRemota != null && fotoRemota.isNotEmpty)
                   ? Image.network(fotoRemota, fit: BoxFit.cover)
                   : Center(

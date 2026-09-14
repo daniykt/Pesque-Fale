@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -144,11 +145,16 @@ class PerfilApiClient {
     );
   }
 
-  Future<String> atualizarFoto(File arquivo) =>
-      _upload('/usuarios/me/foto', arquivo, campo: 'foto');
+  Future<String> atualizarFoto(Uint8List bytes, {required String filename}) =>
+      _upload('/usuarios/me/foto', bytes, campo: 'foto', filename: filename);
 
-  Future<String> atualizarBanner(File arquivo) =>
-      _upload('/usuarios/me/banner', arquivo, campo: 'banner');
+  Future<String> atualizarBanner(Uint8List bytes, {required String filename}) =>
+      _upload(
+        '/usuarios/me/banner',
+        bytes,
+        campo: 'banner',
+        filename: filename,
+      );
 
   Future<Usuario> editarPerfil(Map<String, dynamic> campos) async {
     final json = await _request('PATCH', '/usuarios/me', body: campos);
@@ -232,15 +238,18 @@ class PerfilApiClient {
 
   Future<String> _upload(
     String path,
-    File arquivo, {
+    Uint8List bytes, {
     required String campo,
+    required String filename,
   }) async {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
       final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
         ..headers.addAll({if (token != null) 'Authorization': 'Bearer $token'})
-        ..files.add(await http.MultipartFile.fromPath(campo, arquivo.path));
+        ..files.add(
+          http.MultipartFile.fromBytes(campo, bytes, filename: filename),
+        );
 
       final streamed = await _client.send(request).timeout(_timeout);
       response = await http.Response.fromStream(streamed);

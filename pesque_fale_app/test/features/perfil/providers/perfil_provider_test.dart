@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
@@ -73,10 +73,16 @@ class _FakePerfilRepository implements PerfilRepository {
   }
 
   @override
-  Future<String> atualizarFoto(File arquivo) async => 'https://x/foto.png';
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+  }) async => 'https://x/foto.png';
 
   @override
-  Future<String> atualizarBanner(File arquivo) async => 'https://x/banner.png';
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+  }) async => 'https://x/banner.png';
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async {

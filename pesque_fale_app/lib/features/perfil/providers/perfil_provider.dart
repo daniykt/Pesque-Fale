@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 
 import '../../auth/domain/usuario.dart';
@@ -106,9 +104,12 @@ class PerfilProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> atualizarFoto(File arquivo) async {
+  Future<bool> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+  }) async {
     try {
-      final url = await repository.atualizarFoto(arquivo);
+      final url = await repository.atualizarFoto(bytes, filename: filename);
       _perfil = _perfil?.copyWith(fotoPerfil: url);
       notifyListeners();
       return true;
@@ -119,9 +120,12 @@ class PerfilProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> atualizarBanner(File arquivo) async {
+  Future<bool> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+  }) async {
     try {
-      final url = await repository.atualizarBanner(arquivo);
+      final url = await repository.atualizarBanner(bytes, filename: filename);
       _perfil = _perfil?.copyWith(banner: url);
       notifyListeners();
       return true;
