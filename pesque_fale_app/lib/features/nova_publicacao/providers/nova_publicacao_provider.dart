@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -25,7 +23,8 @@ class NovaPublicacaoProvider extends ChangeNotifier {
   final FeedProvider feedProvider;
   final AuthProvider authProvider;
 
-  File? foto;
+  Uint8List? fotoBytes;
+  String? fotoFilename;
   Ponto? pontoSelecionado;
   String descricao = '';
   double? avaliacaoNota;
@@ -36,21 +35,27 @@ class NovaPublicacaoProvider extends ChangeNotifier {
   static const int limiteMaximoTags = 5;
   static const int limiteMaximoDescricao = 300;
 
-  bool get temFotoObrigatoria => foto != null;
+  bool get temFotoObrigatoria => fotoBytes != null;
   bool get temLocalObrigatorio => pontoSelecionado != null;
   bool get podePublicar =>
       temFotoObrigatoria &&
       temLocalObrigatorio &&
       status != StatusPublicacao.enviando;
   bool get formularioSujo =>
-      foto != null ||
+      fotoBytes != null ||
       pontoSelecionado != null ||
       descricao.isNotEmpty ||
       avaliacaoNota != null ||
       tagsSelecionadas.isNotEmpty;
 
-  void setFoto(File? novaFoto) {
-    foto = novaFoto;
+  /// Define a foto selecionada. Chamar sem argumentos limpa a seleção.
+  void setFoto({Uint8List? bytes, String? filename}) {
+    assert(
+      (bytes == null) == (filename == null),
+      'bytes e filename devem ser informados juntos',
+    );
+    fotoBytes = bytes;
+    fotoFilename = filename;
     notifyListeners();
   }
 
@@ -101,7 +106,10 @@ class NovaPublicacaoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final imagemUrl = await uploadRepository.upload(foto!);
+      final imagemUrl = await uploadRepository.upload(
+        fotoBytes!,
+        filename: fotoFilename!,
+      );
 
       final publicacao = await publicacoesRepository.criar(
         descricao: descricao.trim().isEmpty ? null : descricao.trim(),

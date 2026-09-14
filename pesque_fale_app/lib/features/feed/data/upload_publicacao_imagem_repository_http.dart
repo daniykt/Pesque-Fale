@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'upload_publicacao_imagem_api_client.dart';
 import 'upload_publicacao_imagem_repository.dart';
@@ -10,8 +10,8 @@ class UploadPublicacaoImagemRepositoryHttp
   final UploadPublicacaoImagemApiClient apiClient;
 
   @override
-  Future<String> upload(File arquivo) async {
-    final json = await apiClient.upload(arquivo);
+  Future<String> upload(Uint8List bytes, {required String filename}) async {
+    final json = await apiClient.upload(bytes, filename: filename);
     final data = json['data'] as Map<String, dynamic>?;
     final url = data?['imagemUrl'] as String?;
     if (url == null) throw Exception('URL não retornada pelo servidor');
