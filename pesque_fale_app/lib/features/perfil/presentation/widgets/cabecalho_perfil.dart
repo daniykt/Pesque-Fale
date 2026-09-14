@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/utils/upload_imagem_validator.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/domain/usuario.dart';
 import '../../data/perfil_exceptions.dart';
@@ -35,9 +36,6 @@ class CabecalhoPerfil extends StatefulWidget {
 }
 
 class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
-  static const _tamanhoMaximoBytes = 5 * 1024 * 1024;
-  static const _formatosAceitos = {'jpg', 'jpeg', 'png', 'webp'};
-
   bool _enviandoFoto = false;
   bool _enviandoBanner = false;
 
@@ -48,15 +46,14 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
     );
     if (arquivo == null || !mounted) return;
 
-    final extensao = arquivo.name.split('.').last.toLowerCase();
-    if (!_formatosAceitos.contains(extensao)) {
+    if (!UploadImagemValidator.formatoValido(arquivo)) {
       AppSnackbar.showError(context, const FormatoInvalidoException().message);
       return;
     }
 
-    final tamanho = await arquivo.length();
+    final tamanhoOk = await UploadImagemValidator.tamanhoValido(arquivo);
     if (!mounted) return;
-    if (tamanho > _tamanhoMaximoBytes) {
+    if (!tamanhoOk) {
       AppSnackbar.showError(context, const FotoMuitoGrandeException().message);
       return;
     }

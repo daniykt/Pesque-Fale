@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../shared/utils/upload_imagem_validator.dart';
 import '../../auth/domain/usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/perfil_exceptions.dart';
@@ -23,8 +24,6 @@ class EditarPerfilProvider extends ChangeNotifier {
 
   static final _usernameRegex = RegExp(r'^[a-zA-Z0-9_.]{3,20}$');
   static const _debounceDuration = Duration(milliseconds: 500);
-  static const _tamanhoMaximoBytes = 5 * 1024 * 1024;
-  static const _formatosAceitos = {'jpg', 'jpeg', 'png', 'webp'};
 
   // ── Estado dos campos (editáveis) ──
   String nome = '';
@@ -167,15 +166,13 @@ class EditarPerfilProvider extends ChangeNotifier {
     );
     if (arquivo == null) return false;
 
-    final extensao = arquivo.name.split('.').last.toLowerCase();
-    if (!_formatosAceitos.contains(extensao)) {
+    if (!UploadImagemValidator.formatoValido(arquivo)) {
       _errorMessage = const FormatoInvalidoException().message;
       notifyListeners();
       return false;
     }
 
-    final tamanho = await arquivo.length();
-    if (tamanho > _tamanhoMaximoBytes) {
+    if (!await UploadImagemValidator.tamanhoValido(arquivo)) {
       _errorMessage = const FotoMuitoGrandeException().message;
       notifyListeners();
       return false;
