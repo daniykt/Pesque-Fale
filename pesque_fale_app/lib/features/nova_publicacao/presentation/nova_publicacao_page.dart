@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -42,9 +40,9 @@ class NovaPublicacaoPage extends StatelessWidget {
               children: [
                 const _LabelObrigatorio(texto: 'Foto'),
                 CampoFoto(
-                  foto: provider.foto,
+                  foto: provider.fotoBytes,
                   onEscolher: () => _escolherFoto(context, provider),
-                  onRemover: () => provider.setFoto(null),
+                  onRemover: () => provider.setFoto(),
                 ),
                 const SizedBox(height: 24),
                 const _LabelObrigatorio(texto: 'Local'),
@@ -104,7 +102,10 @@ class NovaPublicacaoPage extends StatelessWidget {
       source: ImageSource.gallery,
       imageQuality: 85,
     );
-    if (arquivo != null) provider.setFoto(File(arquivo.path));
+    if (arquivo != null) {
+      final bytes = await arquivo.readAsBytes();
+      provider.setFoto(bytes: bytes, filename: arquivo.name);
+    }
   }
 
   Future<void> _selecionarPonto(

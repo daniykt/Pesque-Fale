@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -25,18 +25,14 @@ UploadPublicacaoImagemRepositoryHttp _buildRepository(http.Client client) {
   );
 }
 
-Future<File> _criarArquivoTemporario() async {
-  final dir = await Directory.systemTemp.createTemp('upload_imagem_test_');
-  final arquivo = File('${dir.path}/imagem.jpg');
-  await arquivo.writeAsBytes(List.filled(10, 0));
-  return arquivo;
-}
+Uint8List _bytesFake({int tamanho = 10}) =>
+    Uint8List.fromList(List<int>.filled(tamanho, 0));
 
 void main() {
   test(
     'retorna imagemUrl quando resposta contem data.imagemUrl',
     () async {
-      final arquivo = await _criarArquivoTemporario();
+      final bytes = _bytesFake();
       final client = MockClient((request) async {
         return http.Response(
           jsonEncode({
@@ -50,14 +46,14 @@ void main() {
       });
 
       final repository = _buildRepository(client);
-      final url = await repository.upload(arquivo);
+      final url = await repository.upload(bytes, filename: 'foto.jpg');
 
       expect(url, 'https://res.cloudinary.com/xxx/publicacoes/abc.jpg');
     },
   );
 
   test('lanca excecao quando resposta nao contem imagemUrl', () async {
-    final arquivo = await _criarArquivoTemporario();
+    final bytes = _bytesFake();
     final client = MockClient((request) async {
       return http.Response(jsonEncode({'data': <String, dynamic>{}}), 200);
     });
@@ -65,7 +61,7 @@ void main() {
     final repository = _buildRepository(client);
 
     expect(
-      () => repository.upload(arquivo),
+      () => repository.upload(bytes, filename: 'foto.jpg'),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -77,7 +73,7 @@ void main() {
   });
 
   test('lanca excecao quando data e nulo', () async {
-    final arquivo = await _criarArquivoTemporario();
+    final bytes = _bytesFake();
     final client = MockClient((request) async {
       return http.Response(jsonEncode(<String, dynamic>{}), 200);
     });
@@ -85,7 +81,7 @@ void main() {
     final repository = _buildRepository(client);
 
     expect(
-      () => repository.upload(arquivo),
+      () => repository.upload(bytes, filename: 'foto.jpg'),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -94,5 +90,31 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('envia multipart com filename e bytes preservados', () async {
+    final bytes = _bytesFake(tamanho: 7);
+    String? filenameEnviado;
+    int? tamanhoCorpo;
+
+    final client = MockClient((request) async {
+      filenameEnviado = RegExp(
+        r'filename="([^"]+)"',
+      ).firstMatch(request.body)?.group(1);
+      tamanhoCorpo = request.bodyBytes.length;
+      return http.Response(
+        jsonEncode({
+          'data': {'imagemUrl': 'https://res.cloudinary.com/xxx/ok.jpg'},
+        }),
+        200,
+      );
+    });
+
+    final repository = _buildRepository(client);
+    await repository.upload(bytes, filename: 'minha-foto.jpg');
+
+    expect(filenameEnviado, 'minha-foto.jpg');
+    expect(tamanhoCorpo, isNotNull);
+    expect(tamanhoCorpo! > bytes.length, isTrue);
   });
 }

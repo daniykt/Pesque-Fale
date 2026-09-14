@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -14,7 +14,7 @@ class CampoFoto extends StatelessWidget {
     required this.onRemover,
   });
 
-  final File? foto;
+  final Uint8List? foto;
   final VoidCallback onEscolher;
   final VoidCallback onRemover;
 
@@ -30,7 +30,7 @@ class CampoFoto extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: AppRadius.mdRadius,
-              child: Image.file(foto!, fit: BoxFit.cover),
+              child: Image.memory(foto!, fit: BoxFit.cover),
             ),
             Positioned(
               top: AppSpacing.xs,
