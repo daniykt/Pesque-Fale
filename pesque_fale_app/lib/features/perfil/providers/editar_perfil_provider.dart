@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -32,8 +31,8 @@ class EditarPerfilProvider extends ChangeNotifier {
   String bio = '';
   String localizacao = '';
   String username = '';
-  String? novaFotoPath;
-  String? novoBannerPath;
+  XFile? novaFotoArquivo;
+  XFile? novoBannerArquivo;
 
   // ── Estado original (dirty tracking e reset) ──
   late String _nomeOriginal;
@@ -60,8 +59,8 @@ class EditarPerfilProvider extends ChangeNotifier {
       bio != _bioOriginal ||
       localizacao != _localizacaoOriginal ||
       username != _usernameOriginal ||
-      novaFotoPath != null ||
-      novoBannerPath != null;
+      novaFotoArquivo != null ||
+      novoBannerArquivo != null;
 
   bool get usernameAlterado => username != _usernameOriginal;
 
@@ -168,7 +167,7 @@ class EditarPerfilProvider extends ChangeNotifier {
     );
     if (arquivo == null) return false;
 
-    final extensao = arquivo.path.split('.').last.toLowerCase();
+    final extensao = arquivo.name.split('.').last.toLowerCase();
     if (!_formatosAceitos.contains(extensao)) {
       _errorMessage = const FormatoInvalidoException().message;
       notifyListeners();
@@ -183,13 +182,21 @@ class EditarPerfilProvider extends ChangeNotifier {
     }
 
     if (banner) {
-      novoBannerPath = arquivo.path;
+      novoBannerArquivo = arquivo;
     } else {
-      novaFotoPath = arquivo.path;
+      novaFotoArquivo = arquivo;
     }
     notifyListeners();
     return true;
   }
+
+  /// Lê os bytes da nova foto escolhida (para renderizar preview).
+  Future<Uint8List> lerBytesNovaFoto() async =>
+      Uint8List.fromList(await novaFotoArquivo!.readAsBytes());
+
+  /// Lê os bytes do novo banner escolhido (para renderizar preview).
+  Future<Uint8List> lerBytesNovoBanner() async =>
+      Uint8List.fromList(await novoBannerArquivo!.readAsBytes());
 
   Future<bool> salvar() async {
     if (!podeSalvar) return false;
@@ -208,14 +215,18 @@ class EditarPerfilProvider extends ChangeNotifier {
       }
       if (username != _usernameOriginal) campos['username'] = username;
 
-      if (novaFotoPath != null) {
+      if (novaFotoArquivo != null) {
+        final bytes = await novaFotoArquivo!.readAsBytes();
         campos['fotoPerfil'] = await repository.atualizarFoto(
-          File(novaFotoPath!),
+          Uint8List.fromList(bytes),
+          filename: novaFotoArquivo!.name,
         );
       }
-      if (novoBannerPath != null) {
+      if (novoBannerArquivo != null) {
+        final bytes = await novoBannerArquivo!.readAsBytes();
         campos['banner'] = await repository.atualizarBanner(
-          File(novoBannerPath!),
+          Uint8List.fromList(bytes),
+          filename: novoBannerArquivo!.name,
         );
       }
 
@@ -255,8 +266,8 @@ class EditarPerfilProvider extends ChangeNotifier {
     _usernameState = _usernameOriginal.isEmpty
         ? UsernameCheckState.idle
         : UsernameCheckState.atual;
-    novaFotoPath = null;
-    novoBannerPath = null;
+    novaFotoArquivo = null;
+    novoBannerArquivo = null;
   }
 
   @override

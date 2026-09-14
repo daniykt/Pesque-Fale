@@ -71,10 +71,16 @@ class _FakePerfilRepository implements PerfilRepository {
   Future<void> deixarDeSeguir(String id) async {}
 
   @override
-  Future<String> atualizarFoto(File arquivo) async => '';
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+  }) async => '';
 
   @override
-  Future<String> atualizarBanner(File arquivo) {
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+  }) {
     if (capaCompleter != null) return capaCompleter!.future;
     return Future.value('https://x.com/capa-nova.png');
   }

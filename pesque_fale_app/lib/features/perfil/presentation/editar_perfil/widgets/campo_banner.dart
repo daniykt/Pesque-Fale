@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,7 +28,7 @@ class CampoBanner extends StatelessWidget {
     final usuario = context.watch<AuthProvider>().usuario;
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    final previewLocal = provider.novoBannerPath;
+    final novoBanner = provider.novoBannerArquivo;
     final bannerRemoto = usuario?.banner;
 
     return GestureDetector(
@@ -40,8 +40,27 @@ class CampoBanner extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (previewLocal != null)
-                Image.file(File(previewLocal), fit: BoxFit.cover)
+              if (novoBanner != null)
+                FutureBuilder<Uint8List>(
+                  future: provider.lerBytesNovoBanner(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Image.memory(snapshot.data!, fit: BoxFit.cover);
+                    }
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colors.primary,
+                            Color.lerp(colors.primary, colors.surface, 0.4)!,
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                )
               else if (bannerRemoto != null && bannerRemoto.isNotEmpty)
                 Image.network(bannerRemoto, fit: BoxFit.cover)
               else

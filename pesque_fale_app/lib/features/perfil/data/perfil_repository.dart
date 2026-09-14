@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
@@ -12,11 +12,13 @@ abstract class PerfilRepository {
 
   Future<void> deixarDeSeguir(String id);
 
-  /// Retorna a nova URL da foto de perfil.
-  Future<String> atualizarFoto(File arquivo);
+  /// Retorna a nova URL. [filename] preserva extensão original pro
+  /// Content-Type no multipart.
+  Future<String> atualizarFoto(Uint8List bytes, {required String filename});
 
-  /// Retorna a nova URL do banner.
-  Future<String> atualizarBanner(File arquivo);
+  /// Retorna a nova URL. [filename] preserva extensão original pro
+  /// Content-Type no multipart.
+  Future<String> atualizarBanner(Uint8List bytes, {required String filename});
 
   /// Envia apenas os [camposAlterados] (PATCH parcial) e retorna o Usuario
   /// atualizado.

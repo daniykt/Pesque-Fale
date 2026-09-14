@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,7 +48,7 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
     );
     if (arquivo == null || !mounted) return;
 
-    final extensao = arquivo.path.split('.').last.toLowerCase();
+    final extensao = arquivo.name.split('.').last.toLowerCase();
     if (!_formatosAceitos.contains(extensao)) {
       AppSnackbar.showError(context, const FormatoInvalidoException().message);
       return;
@@ -70,10 +70,16 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
     });
 
     final provider = context.read<PerfilProvider>();
-    final arquivoLocal = File(arquivo.path);
+    final bytes = await arquivo.readAsBytes();
     final ok = banner
-        ? await provider.atualizarBanner(arquivoLocal)
-        : await provider.atualizarFoto(arquivoLocal);
+        ? await provider.atualizarBanner(
+            Uint8List.fromList(bytes),
+            filename: arquivo.name,
+          )
+        : await provider.atualizarFoto(
+            Uint8List.fromList(bytes),
+            filename: arquivo.name,
+          );
 
     if (!mounted) return;
     setState(() {

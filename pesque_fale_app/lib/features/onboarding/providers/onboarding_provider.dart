@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -174,9 +173,16 @@ class OnboardingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final bytes = await arquivo.readAsBytes();
       final url = banner
-          ? await perfilRepository.atualizarBanner(File(arquivo.path))
-          : await perfilRepository.atualizarFoto(File(arquivo.path));
+          ? await perfilRepository.atualizarBanner(
+              Uint8List.fromList(bytes),
+              filename: arquivo.name,
+            )
+          : await perfilRepository.atualizarFoto(
+              Uint8List.fromList(bytes),
+              filename: arquivo.name,
+            );
       if (banner) {
         fotoCapaUrl = url;
       } else {
