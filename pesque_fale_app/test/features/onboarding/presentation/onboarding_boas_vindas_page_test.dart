@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,10 +65,16 @@ class _FakePerfilRepository implements PerfilRepository {
   Future<void> deixarDeSeguir(String id) async {}
 
   @override
-  Future<String> atualizarFoto(File arquivo) async => '';
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+  }) async => '';
 
   @override
-  Future<String> atualizarBanner(File arquivo) async => '';
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+  }) async => '';
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async =>

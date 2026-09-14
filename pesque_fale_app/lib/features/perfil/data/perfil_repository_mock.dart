@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
@@ -105,13 +105,19 @@ class PerfilRepositoryMock implements PerfilRepository {
   }
 
   @override
-  Future<String> atualizarFoto(File arquivo) async {
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+  }) async {
     await Future.delayed(_delay);
     return 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/200/200';
   }
 
   @override
-  Future<String> atualizarBanner(File arquivo) async {
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+  }) async {
     await Future.delayed(_delay);
     return 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/800/450';
   }

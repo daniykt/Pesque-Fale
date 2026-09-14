@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -20,7 +21,10 @@ class UploadPublicacaoImagemApiClient {
 
   static const _timeout = Duration(seconds: 30);
 
-  Future<Map<String, dynamic>> upload(File arquivo) async {
+  Future<Map<String, dynamic>> upload(
+    Uint8List bytes, {
+    required String filename,
+  }) async {
     final token = await tokenStorage.readToken();
     http.Response response;
     try {
@@ -33,7 +37,11 @@ class UploadPublicacaoImagemApiClient {
               if (token != null) 'Authorization': 'Bearer $token',
             })
             ..files.add(
-              await http.MultipartFile.fromPath('imagem', arquivo.path),
+              http.MultipartFile.fromBytes(
+                'imagem',
+                bytes,
+                filename: filename,
+              ),
             );
 
       final streamed = await _client.send(request).timeout(_timeout);

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
@@ -33,12 +33,12 @@ class PerfilRepositoryHttp implements PerfilRepository {
   Future<void> deixarDeSeguir(String id) => apiClient.deixarDeSeguir(id);
 
   @override
-  Future<String> atualizarFoto(File arquivo) =>
-      apiClient.atualizarFoto(arquivo);
+  Future<String> atualizarFoto(Uint8List bytes, {required String filename}) =>
+      apiClient.atualizarFoto(bytes, filename: filename);
 
   @override
-  Future<String> atualizarBanner(File arquivo) =>
-      apiClient.atualizarBanner(arquivo);
+  Future<String> atualizarBanner(Uint8List bytes, {required String filename}) =>
+      apiClient.atualizarBanner(bytes, filename: filename);
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) =>
