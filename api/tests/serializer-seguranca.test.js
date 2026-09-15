@@ -1,3 +1,6 @@
+process.env.JWT_SECRET = 'test_secret';
+process.env.JWT_EXPIRES_IN = '24h';
+
 jest.mock('../src/config/database', () => ({ query: jest.fn() }));
 
 const request = require('supertest');
