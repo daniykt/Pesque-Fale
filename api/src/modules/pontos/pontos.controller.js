@@ -27,7 +27,6 @@ async function criar(req, res) {
       [nome, descricao ?? null, latitude, longitude, cidade, estado.toUpperCase(), tipo,
        fotoCapa ?? null, fotos ?? null, tags ?? null, criado_por]
     );
-
     return res.status(201).json({ data: _format(result.rows[0]) });
   } catch (err) {
     console.error(err);
@@ -43,43 +42,48 @@ async function listar(req, res) {
   const lat = parseFloat(req.query.lat);
   const lng = parseFloat(req.query.lng);
   const raio = parseFloat(req.query.raio) || 50;
+  const avaliacaoMin = parseFloat(req.query.avaliacaoMin);
 
   const conditions = [];
-  const values = [];
+  const filterValues = [];
   let i = 1;
 
-  if (tipo) { conditions.push(`tipo = $${i++}`); values.push(tipo); }
-  if (cidade) { conditions.push(`LOWER(cidade) = LOWER($${i++})`); values.push(cidade); }
-  if (estado) { conditions.push(`estado = $${i++}`); values.push(estado.toUpperCase()); }
-  if (busca) { conditions.push(`LOWER(nome) LIKE LOWER($${i++})`); values.push(`%${busca}%`); }
-
-  const avaliacaoMin = parseFloat(req.query.avaliacaoMin);
+  if (tipo) { conditions.push(`tipo = $${i++}`); filterValues.push(tipo); }
+  if (cidade) { conditions.push(`LOWER(cidade) = LOWER($${i++})`); filterValues.push(cidade); }
+  if (estado) { conditions.push(`estado = $${i++}`); filterValues.push(estado.toUpperCase()); }
+  if (busca) { conditions.push(`LOWER(nome) LIKE LOWER($${i++})`); filterValues.push(`%${busca}%`); }
   if (!isNaN(avaliacaoMin) && avaliacaoMin > 0) {
     conditions.push(`avg_nota >= $${i++}`);
-    values.push(avaliacaoMin);
+    filterValues.push(avaliacaoMin);
   }
+
+  const usaGeo = !isNaN(lat) && !isNaN(lng);
+
+  if (usaGeo) {
+    conditions.push(
+      `ST_DWithin(
+         ST_MakePoint(longitude, latitude)::geography,
+         ST_MakePoint($${i}, $${i + 1})::geography,
+         $${i + 2}
+       )`
+    );
+    filterValues.push(lng, lat, raio * 1000);
+    i += 3;
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   let distanciaSelect = '';
   let orderBy = 'criado_em DESC';
 
-  if (!isNaN(lat) && !isNaN(lng)) {
+  if (usaGeo) {
     distanciaSelect = `,
-      ROUND((
-        6371 * acos(
-          cos(radians($${i})) * cos(radians(latitude)) *
-          cos(radians(longitude) - radians($${i + 1})) +
-          sin(radians($${i})) * sin(radians(latitude))
-        )
-      )::numeric, 1) AS distancia_km`;
-    conditions.push(`(
-      6371 * acos(
-        cos(radians($${i})) * cos(radians(latitude)) *
-        cos(radians(longitude) - radians($${i + 1})) +
-        sin(radians($${i})) * sin(radians(latitude))
-      )
-    ) <= $${i + 2}`);
-    values.push(lat, lng, raio);
-    i += 3;
+      ROUND(
+        CAST(ST_Distance(
+          ST_MakePoint(longitude, latitude)::geography,
+          ST_MakePoint($${i}, $${i + 1})::geography
+        ) / 1000.0 AS numeric), 1
+      ) AS distancia_km`;
     orderBy = 'distancia_km ASC';
   }
 
@@ -87,7 +91,8 @@ async function listar(req, res) {
     orderBy = 'avg_nota DESC NULLS LAST, total_avaliacoes DESC';
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const geoValues = usaGeo ? [lng, lat] : [];
+  const queryValues = [...filterValues, ...geoValues, porPagina, offset];
 
   try {
     const [result, total] = await Promise.all([
@@ -97,10 +102,10 @@ async function listar(req, res) {
                 ${distanciaSelect}
          FROM pontos_de_pesca ${where}
          ORDER BY ${orderBy}
-         LIMIT $${i++} OFFSET $${i++}`,
-        [...values, porPagina, offset]
+         LIMIT $${i + (usaGeo ? 2 : 0)} OFFSET $${i + (usaGeo ? 3 : 1)}`,
+        queryValues
       ),
-      pool.query(`SELECT COUNT(*) FROM pontos_de_pesca ${where}`, values.slice(0, values.length - (distanciaSelect ? 3 : 0) + (distanciaSelect ? 3 : 0))),
+      pool.query(`SELECT COUNT(*) FROM pontos_de_pesca ${where}`, filterValues),
     ]);
 
     return res.json({
@@ -167,7 +172,6 @@ async function atualizar(req, res) {
       `UPDATE pontos_de_pesca SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
       values
     );
-
     return res.json({ data: _format(result.rows[0]) });
   } catch (err) {
     console.error(err);
