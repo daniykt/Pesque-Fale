@@ -210,6 +210,7 @@ class OnboardingProvider extends ChangeNotifier {
         'username': username,
         if (localizacao.isNotEmpty) 'localizacao': localizacao,
         if (bio.isNotEmpty) 'bio': bio,
+        'onboardingConcluido': true,
       };
 
       final usuarioAtualizado = await perfilRepository.editarPerfil(campos);
