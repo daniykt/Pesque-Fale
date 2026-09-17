@@ -81,7 +81,7 @@ async function getMe(req, res) {
 }
 
 async function updateMe(req, res) {
-  const { nome, bio, localizacao, username, fotoPerfil, banner } = req.body;
+  const { nome, bio, localizacao, username, fotoPerfil, banner, onboardingConcluido } = req.body;
   const usuarioId = req.usuario.id;
 
   const details = [];
@@ -119,6 +119,9 @@ async function updateMe(req, res) {
     if (username !== undefined) { fields.push(`username = $${i++}`); values.push(username); }
     if (fotoPerfil !== undefined) { fields.push(`foto_perfil = $${i++}`); values.push(fotoPerfil); }
     if (banner !== undefined) { fields.push(`banner = $${i++}`); values.push(banner); }
+    // Só aceita a conclusão do onboarding. Não existe caso de uso para "des-concluir",
+    // então false (ou qualquer outro valor) é ignorado de propósito.
+    if (onboardingConcluido === true) { fields.push(`onboarding_concluido = $${i++}`); values.push(true); }
 
     if (fields.length === 0) {
       return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Nenhum campo para atualizar.' });

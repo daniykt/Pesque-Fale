@@ -75,6 +75,10 @@ router.get('/me', authMiddleware, getMe);
  *                 type: string
  *               banner:
  *                 type: string
+ *               onboardingConcluido:
+ *                 type: boolean
+ *                 description: Marca o onboarding como concluído. Somente `true` é aceito; qualquer outro valor é ignorado.
+ *                 example: true
  *     responses:
  *       200:
  *         description: Perfil atualizado
