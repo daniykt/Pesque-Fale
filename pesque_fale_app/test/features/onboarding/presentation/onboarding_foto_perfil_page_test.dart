@@ -14,7 +14,6 @@ import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
-import 'package:pesque_fale_app/features/onboarding/domain/onboarding_status_storage.dart';
 import 'package:pesque_fale_app/features/onboarding/presentation/etapas/onboarding_foto_perfil_page.dart';
 import 'package:pesque_fale_app/features/onboarding/presentation/widgets/onboarding_link_pular.dart';
 import 'package:pesque_fale_app/features/onboarding/providers/onboarding_provider.dart';
@@ -86,17 +85,6 @@ class _FakePerfilRepository implements PerfilRepository {
 
   @override
   Future<bool> verificarUsername(String username) async => true;
-}
-
-class _FakeStatusStorage extends OnboardingStatusStorage {
-  @override
-  Future<bool> isConcluido(String userId) async => false;
-
-  @override
-  Future<void> marcarConcluido(String userId) async {}
-
-  @override
-  Future<void> limpar(String userId) async {}
 }
 
 class _FakeImagePickerChannel {
@@ -218,7 +206,6 @@ void main() {
               onboardingProvider = OnboardingProvider(
                 perfilRepository: repository,
                 authProvider: authProvider,
-                statusStorage: _FakeStatusStorage(),
               );
               return onboardingProvider;
             },

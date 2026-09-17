@@ -7,7 +7,6 @@ import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/onboarding/domain/onboarding_etapa.dart';
-import 'package:pesque_fale_app/features/onboarding/domain/onboarding_status_storage.dart';
 import 'package:pesque_fale_app/features/onboarding/domain/username_onboarding_state.dart';
 import 'package:pesque_fale_app/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_exceptions.dart';
@@ -97,7 +96,8 @@ class _FakePerfilRepository implements PerfilRepository {
       username: camposAlterados['username'] as String?,
       bio: camposAlterados['bio'] as String?,
       localizacao: camposAlterados['localizacao'] as String?,
-      onboardingConcluido: true,
+      // Espelha o payload, como o backend faz: só volta true se foi enviado.
+      onboardingConcluido: camposAlterados['onboardingConcluido'] as bool? ?? false,
     );
   }
 
@@ -106,23 +106,6 @@ class _FakePerfilRepository implements PerfilRepository {
     chamadasVerificarUsername++;
     await Future.delayed(const Duration(milliseconds: 50));
     return !usernamesIndisponiveis.contains(username);
-  }
-}
-
-class _FakeStatusStorage extends OnboardingStatusStorage {
-  final Map<String, bool> _dados = {};
-
-  @override
-  Future<bool> isConcluido(String userId) async => _dados[userId] ?? false;
-
-  @override
-  Future<void> marcarConcluido(String userId) async {
-    _dados[userId] = true;
-  }
-
-  @override
-  Future<void> limpar(String userId) async {
-    _dados.remove(userId);
   }
 }
 
@@ -159,7 +142,6 @@ void main() {
 
   late AuthProvider authProvider;
   late _FakePerfilRepository perfilRepository;
-  late _FakeStatusStorage statusStorage;
   late _FakeImagePickerChannel imagePickerChannel;
 
   Future<OnboardingProvider> montarProvider({
@@ -176,12 +158,9 @@ void main() {
       usernamesIndisponiveis: usernamesIndisponiveis,
       falharAoEditar: falharAoEditar,
     );
-    statusStorage = _FakeStatusStorage();
-
     return OnboardingProvider(
       perfilRepository: perfilRepository,
       authProvider: authProvider,
-      statusStorage: statusStorage,
     );
   }
 
@@ -361,7 +340,7 @@ void main() {
   });
 
   group('OnboardingProvider - concluir', () {
-    test('em sucesso envia campos preenchidos, marca storage e avanca para sucesso', () async {
+    test('em sucesso envia campos preenchidos com onboardingConcluido e avanca para sucesso', () async {
       final provider = await montarProvider();
       provider.onNomeChanged('Ana Editada');
       provider.onLocalizacaoChanged('Floripa');
@@ -381,7 +360,11 @@ void main() {
       expect(perfilRepository.ultimosCamposEditados?['bio'], 'Bio nova');
       expect(perfilRepository.ultimosCamposEditados?['username'], 'ana_pesca');
       expect(authProvider.usuario?.nome, 'Ana Editada');
-      expect(await statusStorage.isConcluido('user-1'), isTrue);
+      expect(
+        perfilRepository.ultimosCamposEditados?['onboardingConcluido'],
+        isTrue,
+      );
+      expect(authProvider.usuario?.onboardingConcluido, isTrue);
     });
 
     test('em erro de validacao mantem a etapa e preenche errorMessage', () async {
@@ -395,7 +378,7 @@ void main() {
       expect(ok, isFalse);
       expect(provider.errorMessage, isNotNull);
       expect(provider.etapaAtual, etapaAntes);
-      expect(await statusStorage.isConcluido('user-1'), isFalse);
+      expect(authProvider.usuario?.onboardingConcluido, isFalse);
     });
   });
 }

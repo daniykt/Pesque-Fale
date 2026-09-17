@@ -45,7 +45,6 @@ import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
-import 'features/onboarding/domain/onboarding_status_storage.dart';
 import 'features/onboarding/presentation/onboarding_wizard_page.dart';
 import 'features/onboarding/providers/onboarding_provider.dart';
 import 'features/perfil/data/perfil_api_client.dart';
@@ -255,7 +254,6 @@ class PesqueFaleApp extends StatelessWidget {
           create: (ctx) => OnboardingProvider(
             perfilRepository: ctx.read<PerfilRepository>(),
             authProvider: ctx.read<AuthProvider>(),
-            statusStorage: OnboardingStatusStorage(),
           ),
           child: const OnboardingWizardPage(),
         ),

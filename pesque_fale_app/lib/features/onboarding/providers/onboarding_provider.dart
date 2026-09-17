@@ -8,7 +8,6 @@ import '../../auth/providers/auth_provider.dart';
 import '../../perfil/data/perfil_exceptions.dart';
 import '../../perfil/data/perfil_repository.dart';
 import '../domain/onboarding_etapa.dart';
-import '../domain/onboarding_status_storage.dart';
 import '../domain/username_onboarding_state.dart';
 
 /// Provider único do wizard de onboarding (não é global — criado no build
@@ -17,14 +16,12 @@ class OnboardingProvider extends ChangeNotifier {
   OnboardingProvider({
     required this.perfilRepository,
     required this.authProvider,
-    required this.statusStorage,
   }) {
     _hidratar();
   }
 
   final PerfilRepository perfilRepository;
   final AuthProvider authProvider;
-  final OnboardingStatusStorage statusStorage;
 
   static final _usernameRegex = RegExp(r'^[a-zA-Z0-9_.]{3,20}$');
   static const _debounceDuration = Duration(milliseconds: 500);
@@ -210,12 +207,12 @@ class OnboardingProvider extends ChangeNotifier {
         'username': username,
         if (localizacao.isNotEmpty) 'localizacao': localizacao,
         if (bio.isNotEmpty) 'bio': bio,
+        'onboardingConcluido': true,
       };
 
       final usuarioAtualizado = await perfilRepository.editarPerfil(campos);
 
       authProvider.atualizarUsuario(usuarioAtualizado);
-      await statusStorage.marcarConcluido(userId);
 
       etapaAtual = OnboardingEtapa.sucesso;
       return true;
