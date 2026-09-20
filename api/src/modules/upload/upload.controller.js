@@ -66,11 +66,7 @@ async function _uploadPerfil(req, res, tipo) {
 
   try {
     const campo = tipo === 'foto' ? 'foto_perfil' : 'banner';
-    const atual = await pool.query(`SELECT ${campo} FROM usuarios WHERE id = $1`, [usuarioId]);
-    const urlAntiga = atual.rows[0]?.[campo];
-
     const pasta = tipo === 'foto' ? 'fotos_perfil' : 'banners';
-    const publicId = `${pasta}/${usuarioId}`;
 
     const resultado = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
@@ -92,14 +88,6 @@ async function _uploadPerfil(req, res, tipo) {
     });
 
     const novaUrl = resultado.secure_url;
-
-    if (urlAntiga && urlAntiga !== novaUrl) {
-      try {
-        await cloudinary.uploader.destroy(publicId);
-      } catch {
-        // Falha silenciosa
-      }
-    }
 
     await pool.query(
       `UPDATE usuarios SET ${campo} = $1, atualizado_em = NOW() WHERE id = $2`,

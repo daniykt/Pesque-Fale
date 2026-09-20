@@ -46,7 +46,11 @@ void main() {
       });
 
       final repository = _buildRepository(client);
-      final url = await repository.upload(bytes, filename: 'foto.jpg');
+      final url = await repository.upload(
+        bytes,
+        filename: 'foto.jpg',
+        mimeType: 'image/jpeg',
+      );
 
       expect(url, 'https://res.cloudinary.com/xxx/publicacoes/abc.jpg');
     },
@@ -61,7 +65,11 @@ void main() {
     final repository = _buildRepository(client);
 
     expect(
-      () => repository.upload(bytes, filename: 'foto.jpg'),
+      () => repository.upload(
+        bytes,
+        filename: 'foto.jpg',
+        mimeType: 'image/jpeg',
+      ),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -81,7 +89,11 @@ void main() {
     final repository = _buildRepository(client);
 
     expect(
-      () => repository.upload(bytes, filename: 'foto.jpg'),
+      () => repository.upload(
+        bytes,
+        filename: 'foto.jpg',
+        mimeType: 'image/jpeg',
+      ),
       throwsA(
         isA<Exception>().having(
           (e) => e.toString(),
@@ -111,7 +123,11 @@ void main() {
     });
 
     final repository = _buildRepository(client);
-    await repository.upload(bytes, filename: 'minha-foto.jpg');
+    await repository.upload(
+      bytes,
+      filename: 'minha-foto.jpg',
+      mimeType: 'image/jpeg',
+    );
 
     expect(filenameEnviado, 'minha-foto.jpg');
     expect(tamanhoCorpo, isNotNull);

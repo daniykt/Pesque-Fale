@@ -118,6 +118,14 @@ npm run dev
 A API estará disponível em `http://localhost:3333`.  
 Documentação interativa: `http://localhost:3333/docs`
 
+#### 4. Scripts pontuais
+
+```bash
+node scripts/limpar-imagens-orfas.js
+```
+
+Rodar **uma única vez, após o deploy do fix do #114**. As fotos de perfil e banners enviados antes do fix foram apagados do Cloudinary, então as URLs gravadas no banco respondem 404. O script zera `usuarios.foto_perfil` e `usuarios.banner` para que o app exiba o fallback visual (inicial do nome / gradiente) em vez de imagem quebrada, até os usuários reenviarem.
+
 ---
 
 ## 📦 Estrutura do Repositório
@@ -126,6 +134,7 @@ Pesque-Fale/
 ├── api/ # Backend Node.js/Express
 │ ├── src/
 │ ├── tests/
+│ ├── scripts/ # Scripts pontuais rodados manualmente
 │ ├── .env.example # Template de variáveis de ambiente
 │ └── package.json
 └── pesque_fale_app/ # App mobile Flutter

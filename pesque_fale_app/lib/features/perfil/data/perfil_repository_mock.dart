@@ -108,6 +108,7 @@ class PerfilRepositoryMock implements PerfilRepository {
   Future<String> atualizarFoto(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async {
     await Future.delayed(_delay);
     return 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/200/200';
@@ -117,6 +118,7 @@ class PerfilRepositoryMock implements PerfilRepository {
   Future<String> atualizarBanner(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async {
     await Future.delayed(_delay);
     return 'https://picsum.photos/seed/${DateTime.now().millisecondsSinceEpoch}/800/450';

@@ -68,14 +68,17 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
 
     final provider = context.read<PerfilProvider>();
     final bytes = await arquivo.readAsBytes();
+    final mimeType = arquivo.mimeType ?? 'image/jpeg';
     final ok = banner
         ? await provider.atualizarBanner(
             Uint8List.fromList(bytes),
             filename: arquivo.name,
+            mimeType: mimeType,
           )
         : await provider.atualizarFoto(
             Uint8List.fromList(bytes),
             filename: arquivo.name,
+            mimeType: mimeType,
           );
 
     if (!mounted) return;

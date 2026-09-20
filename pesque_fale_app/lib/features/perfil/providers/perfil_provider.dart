@@ -107,9 +107,14 @@ class PerfilProvider extends ChangeNotifier {
   Future<bool> atualizarFoto(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async {
     try {
-      final url = await repository.atualizarFoto(bytes, filename: filename);
+      final url = await repository.atualizarFoto(
+        bytes,
+        filename: filename,
+        mimeType: mimeType,
+      );
       _perfil = _perfil?.copyWith(fotoPerfil: url);
       notifyListeners();
       return true;
@@ -123,9 +128,14 @@ class PerfilProvider extends ChangeNotifier {
   Future<bool> atualizarBanner(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async {
     try {
-      final url = await repository.atualizarBanner(bytes, filename: filename);
+      final url = await repository.atualizarBanner(
+        bytes,
+        filename: filename,
+        mimeType: mimeType,
+      );
       _perfil = _perfil?.copyWith(banner: url);
       notifyListeners();
       return true;

@@ -68,6 +68,7 @@ class _FakePerfilRepository implements PerfilRepository {
   Future<String> atualizarFoto(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) {
     if (fotoCompleter != null) return fotoCompleter!.future;
     return Future.value('https://x.com/foto-nova.png');
@@ -77,6 +78,7 @@ class _FakePerfilRepository implements PerfilRepository {
   Future<String> atualizarBanner(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async => '';
 
   @override

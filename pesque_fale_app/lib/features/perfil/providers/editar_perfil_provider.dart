@@ -217,6 +217,7 @@ class EditarPerfilProvider extends ChangeNotifier {
         campos['fotoPerfil'] = await repository.atualizarFoto(
           Uint8List.fromList(bytes),
           filename: novaFotoArquivo!.name,
+          mimeType: novaFotoArquivo!.mimeType ?? 'image/jpeg',
         );
       }
       if (novoBannerArquivo != null) {
@@ -224,6 +225,7 @@ class EditarPerfilProvider extends ChangeNotifier {
         campos['banner'] = await repository.atualizarBanner(
           Uint8List.fromList(bytes),
           filename: novoBannerArquivo!.name,
+          mimeType: novoBannerArquivo!.mimeType ?? 'image/jpeg',
         );
       }
 
