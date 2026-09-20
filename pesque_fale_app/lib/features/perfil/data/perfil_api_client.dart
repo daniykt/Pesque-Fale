@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../auth/data/token_storage.dart';
 import '../../auth/domain/usuario.dart';
@@ -145,16 +146,29 @@ class PerfilApiClient {
     );
   }
 
-  Future<String> atualizarFoto(Uint8List bytes, {required String filename}) =>
-      _upload('/usuarios/me/foto', bytes, campo: 'foto', filename: filename);
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  }) => _upload(
+    '/usuarios/me/foto',
+    bytes,
+    campo: 'foto',
+    filename: filename,
+    mimeType: mimeType,
+  );
 
-  Future<String> atualizarBanner(Uint8List bytes, {required String filename}) =>
-      _upload(
-        '/usuarios/me/banner',
-        bytes,
-        campo: 'banner',
-        filename: filename,
-      );
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  }) => _upload(
+    '/usuarios/me/banner',
+    bytes,
+    campo: 'banner',
+    filename: filename,
+    mimeType: mimeType,
+  );
 
   Future<Usuario> editarPerfil(Map<String, dynamic> campos) async {
     final json = await _request('PATCH', '/usuarios/me', body: campos);
@@ -241,14 +255,21 @@ class PerfilApiClient {
     Uint8List bytes, {
     required String campo,
     required String filename,
+    required String mimeType,
   }) async {
     final token = await tokenStorage.readToken();
+    final tipo = mimeType.split('/');
     http.Response response;
     try {
       final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
         ..headers.addAll({if (token != null) 'Authorization': 'Bearer $token'})
         ..files.add(
-          http.MultipartFile.fromBytes(campo, bytes, filename: filename),
+          http.MultipartFile.fromBytes(
+            campo,
+            bytes,
+            filename: filename,
+            contentType: MediaType(tipo[0], tipo[1]),
+          ),
         );
 
       final streamed = await _client.send(request).timeout(_timeout);

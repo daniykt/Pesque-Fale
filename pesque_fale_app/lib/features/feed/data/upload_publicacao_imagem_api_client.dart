@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../../auth/data/token_storage.dart';
 import 'upload_publicacao_imagem_exceptions.dart';
@@ -24,8 +25,10 @@ class UploadPublicacaoImagemApiClient {
   Future<Map<String, dynamic>> upload(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async {
     final token = await tokenStorage.readToken();
+    final tipo = mimeType.split('/');
     http.Response response;
     try {
       final request =
@@ -41,6 +44,7 @@ class UploadPublicacaoImagemApiClient {
                 'imagem',
                 bytes,
                 filename: filename,
+                contentType: MediaType(tipo[0], tipo[1]),
               ),
             );
 

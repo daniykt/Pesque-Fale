@@ -63,12 +63,14 @@ class _FakePerfilRepository implements PerfilRepository {
   Future<String> atualizarFoto(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async => '';
 
   @override
   Future<String> atualizarBanner(
     Uint8List bytes, {
     required String filename,
+    required String mimeType,
   }) async => '';
 
   @override

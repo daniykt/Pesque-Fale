@@ -104,7 +104,11 @@ class NovaPublicacaoPage extends StatelessWidget {
     );
     if (arquivo != null) {
       final bytes = await arquivo.readAsBytes();
-      provider.setFoto(bytes: bytes, filename: arquivo.name);
+      provider.setFoto(
+        bytes: bytes,
+        filename: arquivo.name,
+        mimeType: arquivo.mimeType ?? 'image/jpeg',
+      );
     }
   }
 

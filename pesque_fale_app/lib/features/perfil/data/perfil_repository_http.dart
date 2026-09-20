@@ -33,12 +33,19 @@ class PerfilRepositoryHttp implements PerfilRepository {
   Future<void> deixarDeSeguir(String id) => apiClient.deixarDeSeguir(id);
 
   @override
-  Future<String> atualizarFoto(Uint8List bytes, {required String filename}) =>
-      apiClient.atualizarFoto(bytes, filename: filename);
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  }) => apiClient.atualizarFoto(bytes, filename: filename, mimeType: mimeType);
 
   @override
-  Future<String> atualizarBanner(Uint8List bytes, {required String filename}) =>
-      apiClient.atualizarBanner(bytes, filename: filename);
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  }) =>
+      apiClient.atualizarBanner(bytes, filename: filename, mimeType: mimeType);
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) =>

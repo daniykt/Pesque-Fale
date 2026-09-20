@@ -25,6 +25,7 @@ class NovaPublicacaoProvider extends ChangeNotifier {
 
   Uint8List? fotoBytes;
   String? fotoFilename;
+  String? fotoMimeType;
   Ponto? pontoSelecionado;
   String descricao = '';
   double? avaliacaoNota;
@@ -49,13 +50,14 @@ class NovaPublicacaoProvider extends ChangeNotifier {
       tagsSelecionadas.isNotEmpty;
 
   /// Define a foto selecionada. Chamar sem argumentos limpa a seleção.
-  void setFoto({Uint8List? bytes, String? filename}) {
+  void setFoto({Uint8List? bytes, String? filename, String? mimeType}) {
     assert(
       (bytes == null) == (filename == null),
       'bytes e filename devem ser informados juntos',
     );
     fotoBytes = bytes;
     fotoFilename = filename;
+    fotoMimeType = mimeType;
     notifyListeners();
   }
 
@@ -109,6 +111,7 @@ class NovaPublicacaoProvider extends ChangeNotifier {
       final imagemUrl = await uploadRepository.upload(
         fotoBytes!,
         filename: fotoFilename!,
+        mimeType: fotoMimeType ?? 'image/jpeg',
       );
 
       final publicacao = await publicacoesRepository.criar(

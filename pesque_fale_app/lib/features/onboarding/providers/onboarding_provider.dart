@@ -168,14 +168,17 @@ class OnboardingProvider extends ChangeNotifier {
 
     try {
       final bytes = await arquivo.readAsBytes();
+      final mimeType = arquivo.mimeType ?? 'image/jpeg';
       final url = banner
           ? await perfilRepository.atualizarBanner(
               Uint8List.fromList(bytes),
               filename: arquivo.name,
+              mimeType: mimeType,
             )
           : await perfilRepository.atualizarFoto(
               Uint8List.fromList(bytes),
               filename: arquivo.name,
+              mimeType: mimeType,
             );
       if (banner) {
         fotoCapaUrl = url;

@@ -14,11 +14,19 @@ abstract class PerfilRepository {
 
   /// Retorna a nova URL. [filename] preserva extensão original pro
   /// Content-Type no multipart.
-  Future<String> atualizarFoto(Uint8List bytes, {required String filename});
+  Future<String> atualizarFoto(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  });
 
   /// Retorna a nova URL. [filename] preserva extensão original pro
   /// Content-Type no multipart.
-  Future<String> atualizarBanner(Uint8List bytes, {required String filename});
+  Future<String> atualizarBanner(
+    Uint8List bytes, {
+    required String filename,
+    required String mimeType,
+  });
 
   /// Envia apenas os [camposAlterados] (PATCH parcial) e retorna o Usuario
   /// atualizado.
