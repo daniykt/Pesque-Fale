@@ -61,6 +61,10 @@ class MainShellState extends State<MainShell> {
 
   void selecionarAba(int index) => setState(() => _currentIndex = index);
 
+  /// Aba visível no shell. Lida por telas empilhadas por cima dele, que
+  /// precisam destacar a aba de origem no próprio menu inferior.
+  int get abaAtual => _currentIndex;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
