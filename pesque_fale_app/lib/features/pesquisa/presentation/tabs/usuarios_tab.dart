@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/router/navegacao_perfil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../providers/pesquisa_usuarios_provider.dart';
@@ -103,11 +104,7 @@ class _Conteudo extends StatelessWidget {
             final usuario = provider.usuarios[index];
             return UsuarioCard(
               usuario: usuario,
-              onVerPerfil: () => Navigator.pushNamed(
-                context,
-                '/perfil',
-                arguments: usuario.id,
-              ),
+              onVerPerfil: () => abrirPerfil(context, usuario.id),
             );
           },
         );

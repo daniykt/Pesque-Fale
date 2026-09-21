@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/router/shell_bottom_nav.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../providers/perfil_provider.dart';
 import 'widgets/abas_perfil.dart';
@@ -42,6 +43,7 @@ class _PerfilDeOutroPageState extends State<PerfilDeOutroPage> {
           child: _buildBody(provider),
         ),
       ),
+      bottomNavigationBar: const ShellBottomNav(),
     );
   }
 

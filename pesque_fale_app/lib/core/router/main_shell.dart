@@ -27,6 +27,7 @@ class MainShell extends StatefulWidget {
 
   static const int inicioIndex = 0;
   static const int pesquisaIndex = 1;
+  static const int perfilIndex = 4;
 
   @override
   State<MainShell> createState() => MainShellState();
@@ -39,7 +40,7 @@ class MainShellState extends State<MainShell> {
 
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _chatIndex = 2;
-  static const int _perfilIndex = 4;
+  static const int _perfilIndex = MainShell.perfilIndex;
 
   late final List<Widget> _screens = [
     const FeedPage(),
@@ -60,6 +61,10 @@ class MainShellState extends State<MainShell> {
   ];
 
   void selecionarAba(int index) => setState(() => _currentIndex = index);
+
+  /// Aba visível no shell. Lida por telas empilhadas por cima dele, que
+  /// precisam destacar a aba de origem no próprio menu inferior.
+  int get abaAtual => _currentIndex;
 
   @override
   void didChangeDependencies() {
