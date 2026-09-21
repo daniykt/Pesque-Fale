@@ -27,6 +27,7 @@ class MainShell extends StatefulWidget {
 
   static const int inicioIndex = 0;
   static const int pesquisaIndex = 1;
+  static const int perfilIndex = 4;
 
   @override
   State<MainShell> createState() => MainShellState();
@@ -39,7 +40,7 @@ class MainShellState extends State<MainShell> {
 
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _chatIndex = 2;
-  static const int _perfilIndex = 4;
+  static const int _perfilIndex = MainShell.perfilIndex;
 
   late final List<Widget> _screens = [
     const FeedPage(),
