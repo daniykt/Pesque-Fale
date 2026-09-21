@@ -106,6 +106,10 @@ router.delete('/:id', authMiddleware, deletar);
  *     responses:
  *       201:
  *         description: Publicação criada
+ *       400:
+ *         description: Corpo contém imagem em base64 (BASE64_NAO_PERMITIDO). Use POST /publicacoes/imagens (multipart/form-data).
+ *       413:
+ *         description: Corpo maior que o limite do parser JSON (PAYLOAD_MUITO_GRANDE).
  */
 router.post('/', authMiddleware, criar);
 
