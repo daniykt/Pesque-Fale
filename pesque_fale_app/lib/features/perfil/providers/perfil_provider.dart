@@ -9,7 +9,9 @@ import '../domain/publicacao.dart';
 enum PerfilStatus { idle, loading, success, error }
 
 class PerfilProvider extends ChangeNotifier {
-  PerfilProvider({required this.repository, required this.authProvider});
+  PerfilProvider({required this.repository, required this.authProvider}) {
+    authProvider.addListener(_onAuthChanged);
+  }
 
   final PerfilRepository repository;
   AuthProvider authProvider;
@@ -153,5 +155,32 @@ class PerfilProvider extends ChangeNotifier {
     final outroId = _perfil?.id ?? '';
     final ids = [meuId, outroId]..sort();
     return ids.join('_');
+  }
+
+  /// Reassocia o listener quando o `ProxyProvider` recria/reatribui o
+  /// `AuthProvider` (evita listener órfão apontando para instância antiga).
+  void rebindAuth(AuthProvider novo) {
+    if (identical(novo, authProvider)) return;
+    authProvider.removeListener(_onAuthChanged);
+    authProvider = novo;
+    authProvider.addListener(_onAuthChanged);
+  }
+
+  /// Espelha localmente o usuário do `AuthProvider` quando ele muda enquanto
+  /// estamos visualizando o próprio perfil — sem refetch de rede, o dado já
+  /// vem pronto de `EditarPerfilProvider.salvar()`.
+  void _onAuthChanged() {
+    final usuarioLogado = authProvider.usuario;
+    if (usuarioLogado == null || _perfil == null) return;
+    if (_perfil!.id != usuarioLogado.id) return;
+    if (identical(_perfil, usuarioLogado)) return;
+    _perfil = usuarioLogado;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    authProvider.removeListener(_onAuthChanged);
+    super.dispose();
   }
 }
