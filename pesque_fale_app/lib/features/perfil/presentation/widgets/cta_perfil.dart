@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../chat/domain/conversa.dart';
 import '../../providers/perfil_provider.dart';
+import 'hint_mutual_follow.dart';
 
 /// Botão contextual full-width: Nova Publicação (próprio perfil), Seguir,
 /// ou Seguindo + Mensagem quando o chat já está liberado entre os dois.
@@ -44,8 +46,24 @@ class _CtaPerfilState extends State<CtaPerfil> {
   }
 
   void _abrirChat(PerfilProvider provider) {
-    final chatId = provider.abrirChat();
-    Navigator.pushNamed(context, '/chat', arguments: chatId);
+    final perfil = provider.perfil;
+    if (perfil == null) return;
+
+    // A ChatPage identifica o destinatário por `outroId` — o chatId real vem do
+    // servidor no evento `historico`. Mesmo padrão do toque numa notificação
+    // de mensagem em notificacoes_page.dart.
+    final conversa = Conversa(
+      id: provider.abrirChat(),
+      outroId: perfil.id,
+      outroNome: perfil.nome,
+      outroUsername: perfil.username ?? '',
+      outroFoto: perfil.fotoPerfil,
+      ultimaMensagem: null,
+      ultimaMensagemEm: null,
+      naoLidas: 0,
+      criadoEm: DateTime.now(),
+    );
+    Navigator.pushNamed(context, '/chat/conversa', arguments: conversa);
   }
 
   @override
@@ -63,7 +81,9 @@ class _CtaPerfilState extends State<CtaPerfil> {
       );
     }
 
-    if (provider.isFollowing && provider.chatLiberado) {
+    // `chatLiberado` já exige as duas direções do follow; checar `isFollowing`
+    // de novo aqui seria redundante.
+    if (provider.chatLiberado) {
       return Row(
         children: [
           Expanded(
@@ -81,6 +101,25 @@ class _CtaPerfilState extends State<CtaPerfil> {
               child: const Text('Mensagem'),
             ),
           ),
+        ],
+      );
+    }
+
+    // Sigo, mas ainda não sou seguido de volta: sem chat, com a explicação.
+    if (provider.isFollowing) {
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: _carregando ? null : () => _deixarDeSeguir(provider),
+              child: _carregando
+                  ? const _BotaoSpinner()
+                  : const Text('Seguindo'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const HintMutualFollow(),
         ],
       );
     }
