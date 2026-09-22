@@ -32,7 +32,12 @@ class PerfilProvider extends ChangeNotifier {
   bool get isOwnProfile =>
       _perfil != null && _perfil!.id == authProvider.usuario?.id;
 
-  bool get chatLiberado => !isOwnProfile && (_isFollowing || _seguidoPeloOutro);
+  bool get chatLiberado => !isOwnProfile && (_isFollowing && _seguidoPeloOutro);
+
+  /// Follow unilateral: eu sigo, mas o outro não me segue de volta. Nesse
+  /// estado o chat fica bloqueado e a tela explica o porquê.
+  bool get mostrarHintMutualFollow =>
+      !isOwnProfile && _isFollowing && !_seguidoPeloOutro;
 
   int get totalPublicacoes => _publicacoes.length;
 

@@ -42,12 +42,20 @@ class _FakeAuthRepository implements AuthRepository {
 }
 
 class _FakePerfilRepository implements PerfilRepository {
-  _FakePerfilRepository({this.falharAoSeguir = false});
+  _FakePerfilRepository({
+    this.falharAoSeguir = false,
+    this.isFollowing = false,
+    this.seguidoPeloOutro = false,
+    this.usuarioId = 'outro',
+  });
 
   final bool falharAoSeguir;
+  final bool isFollowing;
+  final bool seguidoPeloOutro;
+  final String usuarioId;
 
-  final _outro = const Usuario(
-    id: 'outro',
+  Usuario get _outro => Usuario(
+    id: usuarioId,
     nome: 'Outro Pescador',
     email: 'outro@teste.com',
     onboardingConcluido: true,
@@ -59,7 +67,12 @@ class _FakePerfilRepository implements PerfilRepository {
     String id, {
     required String meuId,
   }) async {
-    return PerfilCompleto(usuario: _outro, publicacoes: const []);
+    return PerfilCompleto(
+      usuario: _outro,
+      publicacoes: const [],
+      isFollowing: isFollowing,
+      seguidoPeloOutro: seguidoPeloOutro,
+    );
   }
 
   @override
@@ -161,6 +174,80 @@ void main() {
       await provider.carregarPerfil('outro');
 
       expect(provider.abrirChat(), 'eu_outro');
+    });
+  });
+
+  // Regra: mutual follow exige as duas direções (backend enforça isso via
+  // chat.gateway.js — `verificarMutualFollow` só passa com as duas linhas em
+  // `usuario_seguidores`).
+  group('PerfilProvider.chatLiberado', () {
+    test('é false quando apenas eu sigo o outro', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(isFollowing: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.chatLiberado, isFalse);
+    });
+
+    test('é false quando apenas o outro me segue', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(seguidoPeloOutro: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.chatLiberado, isFalse);
+    });
+
+    test('é true apenas quando ambos se seguem', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(
+          isFollowing: true,
+          seguidoPeloOutro: true,
+        ),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.chatLiberado, isTrue);
+    });
+  });
+
+  group('PerfilProvider.mostrarHintMutualFollow', () {
+    test('é true quando eu sigo e o outro não me segue de volta', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(isFollowing: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.mostrarHintMutualFollow, isTrue);
+    });
+
+    test('é false quando ambos se seguem', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(
+          isFollowing: true,
+          seguidoPeloOutro: true,
+        ),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.mostrarHintMutualFollow, isFalse);
+    });
+
+    test('é false no próprio perfil', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(usuarioId: 'eu', isFollowing: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('eu');
+
+      expect(provider.isOwnProfile, isTrue);
+      expect(provider.mostrarHintMutualFollow, isFalse);
     });
   });
 }
