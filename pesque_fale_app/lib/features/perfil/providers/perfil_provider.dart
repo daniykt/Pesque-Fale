@@ -39,6 +39,10 @@ class PerfilProvider extends ChangeNotifier {
   bool get mostrarHintMutualFollow =>
       !isOwnProfile && _isFollowing && !_seguidoPeloOutro;
 
+  /// O outro me segue e eu ainda não sigo: o CTA oferece "Seguir de volta".
+  bool get podeSeguirDeVolta =>
+      !isOwnProfile && !_isFollowing && _seguidoPeloOutro;
+
   int get totalPublicacoes => _publicacoes.length;
 
   Future<void> carregarPerfil(String id) async {

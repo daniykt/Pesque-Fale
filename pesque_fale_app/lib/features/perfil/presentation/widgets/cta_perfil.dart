@@ -7,8 +7,9 @@ import '../../../chat/domain/conversa.dart';
 import '../../providers/perfil_provider.dart';
 import 'hint_mutual_follow.dart';
 
-/// Botão contextual full-width: Nova Publicação (próprio perfil), Seguir,
-/// ou Seguindo + Mensagem quando o chat já está liberado entre os dois.
+/// Botão contextual full-width: Nova Publicação (próprio perfil), Seguir
+/// (ou Seguir de volta, quando o outro já me segue), ou Seguindo + Mensagem
+/// quando o chat já está liberado entre os dois.
 class CtaPerfil extends StatefulWidget {
   const CtaPerfil({super.key});
 
@@ -130,7 +131,7 @@ class _CtaPerfilState extends State<CtaPerfil> {
         onPressed: _carregando ? null : () => _seguir(provider),
         child: _carregando
             ? const _BotaoSpinner(branco: true)
-            : const Text('Seguir'),
+            : Text(provider.podeSeguirDeVolta ? 'Seguir de volta' : 'Seguir'),
       ),
     );
   }
