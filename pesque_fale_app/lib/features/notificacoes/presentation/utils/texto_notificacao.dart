@@ -12,7 +12,10 @@ List<TextSpan> spansDaNotificacao(
     case TipoNotificacao.seguindo:
       return [
         TextSpan(text: nome, style: bold),
-        TextSpan(text: ' começou a seguir você', style: base),
+        TextSpan(
+          text: n.deVolta ? ' seguiu você de volta' : ' começou a seguir você',
+          style: base,
+        ),
       ];
     case TipoNotificacao.curtida:
       return [

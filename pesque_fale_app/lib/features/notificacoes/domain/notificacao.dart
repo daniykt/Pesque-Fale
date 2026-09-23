@@ -35,6 +35,7 @@ class Notificacao {
     this.chatId,
     required this.lida,
     this.jaSigoDe,
+    this.deVolta = false,
     required this.criadoEm,
   });
 
@@ -50,6 +51,7 @@ class Notificacao {
   final String? chatId;
   final bool lida;
   final bool? jaSigoDe;
+  final bool deVolta;
   final DateTime criadoEm;
 
   Notificacao copyWith({bool? lida, bool? jaSigoDe}) => Notificacao(
@@ -65,6 +67,7 @@ class Notificacao {
     chatId: chatId,
     lida: lida ?? this.lida,
     jaSigoDe: jaSigoDe ?? this.jaSigoDe,
+    deVolta: deVolta,
     criadoEm: criadoEm,
   );
 
@@ -81,6 +84,7 @@ class Notificacao {
     chatId: json['chatId'] as String?,
     lida: json['lida'] as bool? ?? false,
     jaSigoDe: json['jaSigoDe'] as bool?,
+    deVolta: json['deVolta'] as bool? ?? false,
     criadoEm: DateTime.parse(json['criadoEm'] as String).toLocal(),
   );
 }

@@ -250,4 +250,67 @@ void main() {
       expect(provider.mostrarHintMutualFollow, isFalse);
     });
   });
+
+  group('PerfilProvider.podeSeguirDeVolta', () {
+    test('é true quando o outro me segue e eu não sigo', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(seguidoPeloOutro: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.podeSeguirDeVolta, isTrue);
+    });
+
+    test('é false quando eu já sigo', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(
+          isFollowing: true,
+          seguidoPeloOutro: true,
+        ),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.podeSeguirDeVolta, isFalse);
+    });
+
+    test('é false quando o outro não me segue', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      expect(provider.podeSeguirDeVolta, isFalse);
+    });
+
+    test('é false no próprio perfil', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(
+          usuarioId: 'eu',
+          seguidoPeloOutro: true,
+        ),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('eu');
+
+      expect(provider.isOwnProfile, isTrue);
+      expect(provider.podeSeguirDeVolta, isFalse);
+    });
+
+    test('vira false e libera o chat depois de seguir de volta', () async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(seguidoPeloOutro: true),
+        authProvider: authProvider,
+      );
+      await provider.carregarPerfil('outro');
+
+      final ok = await provider.seguir();
+
+      expect(ok, isTrue);
+      expect(provider.podeSeguirDeVolta, isFalse);
+      expect(provider.chatLiberado, isTrue);
+    });
+  });
 }

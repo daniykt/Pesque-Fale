@@ -95,6 +95,7 @@ class NotificacoesRepositoryMock implements NotificacoesRepository {
         tipo: TipoNotificacao.seguindo,
         lida: true,
         jaSigoDe: true,
+        deVolta: true,
         criadoEm: agora.subtract(const Duration(days: 2)),
       ),
       Notificacao(

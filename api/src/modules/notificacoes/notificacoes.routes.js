@@ -23,7 +23,10 @@ const router = Router();
  *           default: 20
  *     responses:
  *       200:
- *         description: Lista paginada de notificações com deFoto e jaSigoDe
+ *         description: >-
+ *           Lista paginada de notificações. Cada item traz deFoto (foto do
+ *           autor), jaSigoDe (se eu sigo o autor hoje) e deVolta (true quando a
+ *           notificação do tipo seguindo foi um seguir de volta).
  */
 router.get('/', authMiddleware, listar);
 

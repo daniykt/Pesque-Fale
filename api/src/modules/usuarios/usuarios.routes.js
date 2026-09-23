@@ -212,6 +212,11 @@ router.get('/:id/publicacoes', listarPorUsuario);
  * /usuarios/{id}/seguir:
  *   post:
  *     summary: Seguir usuário (gera notificação)
+ *     description: >-
+ *       Idempotente: seguir quem já sigo responde 201 com o mesmo body e não
+ *       gera notificação nova. Só um follow novo notifica o alvo (tipo
+ *       seguindo). A notificação leva deVolta = true quando o alvo já seguia
+ *       o autor (seguir de volta).
  *     tags: [Usuários]
  *     parameters:
  *       - in: path

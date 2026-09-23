@@ -190,16 +190,26 @@ async function seguir(req, res) {
       return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
     }
 
-    await pool.query(
-      'INSERT INTO usuario_seguidores (seguidor_id, seguido_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    const inserido = await pool.query(
+      `INSERT INTO usuario_seguidores (seguidor_id, seguido_id) VALUES ($1, $2)
+       ON CONFLICT DO NOTHING
+       RETURNING seguidor_id`,
       [seguidorId, seguidoId]
     );
 
-    await criarNotificacao({
-      para: seguidoId,
-      deId: seguidorId,
-      tipo: 'seguindo',
-    });
+    // Só notifica follow novo. Seguir quem já sigo é idempotente e silencioso.
+    if (inserido.rows.length > 0) {
+      const reciproco = await pool.query(
+        'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
+        [seguidoId, seguidorId]
+      );
+      await criarNotificacao({
+        para: seguidoId,
+        deId: seguidorId,
+        tipo: 'seguindo',
+        deVolta: reciproco.rows.length > 0,
+      });
+    }
 
     return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
   } catch (err) {

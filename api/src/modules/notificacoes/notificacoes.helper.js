@@ -1,6 +1,6 @@
 const pool = require('../../config/database');
 
-async function criarNotificacao({ para, deId, tipo, texto, postId, chatId }) {
+async function criarNotificacao({ para, deId, tipo, texto, postId, chatId, deVolta = false }) {
   try {
     if (para === deId) return; // não notifica a si mesmo
 
@@ -13,9 +13,9 @@ async function criarNotificacao({ para, deId, tipo, texto, postId, chatId }) {
     const { nome, username } = remetente.rows[0];
 
     await pool.query(
-      `INSERT INTO notificacoes (para, de_id, de, de_username, tipo, texto, post_id, chat_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [para, deId, nome, username, tipo, texto ?? null, postId ?? null, chatId ?? null]
+      `INSERT INTO notificacoes (para, de_id, de, de_username, tipo, texto, post_id, chat_id, de_volta)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [para, deId, nome, username, tipo, texto ?? null, postId ?? null, chatId ?? null, deVolta === true]
     );
   } catch (err) {
     console.error('Erro ao criar notificação:', err);
