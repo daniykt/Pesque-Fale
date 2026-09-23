@@ -104,6 +104,7 @@ function _format(n) {
     deUsername: n.de_username,
     deFoto: n.de_foto,
     jaSigoDe: n.ja_sigo_de,
+    deVolta: n.de_volta === true,
     tipo: n.tipo,
     texto: n.texto,
     postId: n.post_id,

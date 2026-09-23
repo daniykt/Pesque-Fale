@@ -128,6 +128,7 @@ describe('Gatilhos automáticos de notificação', () => {
   it('seguir dispara notificação tipo seguindo', async () => {
     pool.query
       .mockResolvedValueOnce({ rows: [{ id: 'user-2' }] })
+      .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
       .mockResolvedValueOnce({ rows: [] });
