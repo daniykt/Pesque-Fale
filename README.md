@@ -148,6 +148,7 @@ Pesque-Fale/
 |------|--------|
 | Danilo | Testes / Front-End Principal |
 | Henrique | Back-End / Documentação |
+| Felipe   | Back-end / Front-end   |
 | João Pedro | Front-End |
 | Lucas | Designer / Back-End |
 | Vinicius | Designer / Front-End |
