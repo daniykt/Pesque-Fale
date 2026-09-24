@@ -13,7 +13,9 @@ import 'widgets/item_notificacao.dart';
 import 'widgets/skeleton_notificacoes.dart';
 
 class NotificacoesPage extends StatefulWidget {
-  const NotificacoesPage({super.key});
+  const NotificacoesPage({super.key, this.ativa = true});
+
+  final bool ativa;
 
   @override
   State<NotificacoesPage> createState() => _NotificacoesPageState();
@@ -21,27 +23,38 @@ class NotificacoesPage extends StatefulWidget {
 
 class _NotificacoesPageState extends State<NotificacoesPage> {
   final Set<String> _destaqueSessao = {};
-  bool _capturouDestaque = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final provider = context.read<NotificacoesProvider>();
-      await provider.carregar();
-      if (!mounted) return;
-      _capturarDestaque(provider);
-      context.read<BadgeNotificacoesProvider>().zerar();
-    });
+    if (widget.ativa) _agendarAbertura();
+  }
+
+  @override
+  void didUpdateWidget(covariant NotificacoesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.ativa && !oldWidget.ativa) _agendarAbertura();
+  }
+
+  void _agendarAbertura() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _abrir());
+  }
+
+  Future<void> _abrir() async {
+    if (!mounted) return;
+    final provider = context.read<NotificacoesProvider>();
+    final badge = context.read<BadgeNotificacoesProvider>();
+    badge.zerar();
+    await provider.carregar();
+    if (!mounted) return;
+    _capturarDestaque(provider);
+    badge.zerar();
   }
 
   void _capturarDestaque(NotificacoesProvider provider) {
-    if (_capturouDestaque) return;
-    _capturouDestaque = true;
-    _destaqueSessao.addAll(
-      provider.notificacoes.where((n) => !n.lida).map((n) => n.id),
-    );
+    _destaqueSessao
+      ..clear()
+      ..addAll(provider.notificacoes.where((n) => !n.lida).map((n) => n.id));
   }
 
   @override

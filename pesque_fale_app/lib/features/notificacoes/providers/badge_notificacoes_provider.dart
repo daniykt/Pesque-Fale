@@ -8,21 +8,29 @@ class BadgeNotificacoesProvider extends ChangeNotifier {
   final NotificacoesRepository repository;
 
   int _naoLidas = 0;
+  int _geracao = 0;
+  bool _atualizando = false;
+
   int get naoLidas => _naoLidas;
 
   Future<void> atualizar() async {
+    if (_atualizando) return;
+    _atualizando = true;
+    final geracao = _geracao;
     try {
       final n = await repository.contarNaoLidas();
-      if (n != _naoLidas) {
-        _naoLidas = n;
-        notifyListeners();
-      }
+      if (geracao != _geracao || n == _naoLidas) return;
+      _naoLidas = n;
+      notifyListeners();
     } catch (_) {
-      // Silencia erro — mantém o contador já exibido.
+      return;
+    } finally {
+      _atualizando = false;
     }
   }
 
   void zerar() {
+    _geracao++;
     if (_naoLidas != 0) {
       _naoLidas = 0;
       notifyListeners();

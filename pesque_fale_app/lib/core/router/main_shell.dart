@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,22 +29,26 @@ class MainShell extends StatefulWidget {
 
   static const int inicioIndex = 0;
   static const int pesquisaIndex = 1;
+  static const int alertasIndex = 3;
   static const int perfilIndex = 4;
+  static const Duration intervaloBadge = Duration(seconds: 30);
 
   @override
   State<MainShell> createState() => MainShellState();
 }
 
-class MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
+  Timer? _timerBadge;
 
   static const _titles = ['Início', 'Pesquisa', 'Chat', 'Alertas', 'Perfil'];
 
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _chatIndex = 2;
+  static const int _alertasIndex = MainShell.alertasIndex;
   static const int _perfilIndex = MainShell.perfilIndex;
 
-  late final List<Widget> _screens = [
+  List<Widget> _buildScreens() => [
     const FeedPage(),
     const PesquisaPage(),
     ChangeNotifierProvider<InboxProvider>(
@@ -55,20 +61,47 @@ class MainShellState extends State<MainShell> {
         repository: ctx.read<NotificacoesRepository>(),
         perfilRepository: ctx.read<PerfilRepository>(),
       ),
-      child: const NotificacoesPage(),
+      child: NotificacoesPage(ativa: _currentIndex == _alertasIndex),
     ),
     const PerfilPage(),
   ];
 
-  void selecionarAba(int index) => setState(() => _currentIndex = index);
+  void selecionarAba(int index) => _trocarAba(index);
 
   /// Aba visível no shell. Lida por telas empilhadas por cima dele, que
   /// precisam destacar a aba de origem no próprio menu inferior.
   int get abaAtual => _currentIndex;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _timerBadge = Timer.periodic(
+      MainShell.intervaloBadge,
+      (_) => _atualizarBadge(),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _atualizarBadge());
+  }
+
+  @override
+  void dispose() {
+    _timerBadge?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _atualizarBadge();
+  }
+
+  void _trocarAba(int index) {
+    setState(() => _currentIndex = index);
+    _atualizarBadge();
+  }
+
+  void _atualizarBadge() {
+    if (!mounted || _currentIndex == _alertasIndex) return;
     context.read<BadgeNotificacoesProvider>().atualizar();
   }
 
@@ -107,7 +140,7 @@ class MainShellState extends State<MainShell> {
           : const AppDrawer(),
       body: Stack(
         children: [
-          IndexedStack(index: _currentIndex, children: _screens),
+          IndexedStack(index: _currentIndex, children: _buildScreens()),
           const TourOverlay(),
         ],
       ),
@@ -115,7 +148,7 @@ class MainShellState extends State<MainShell> {
         currentIndex: _currentIndex,
         notifCount: notifCount,
         highlightedIndex: passoDoTour?.abaAlvo,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        onDestinationSelected: _trocarAba,
       ),
     );
   }
