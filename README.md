@@ -108,7 +108,24 @@ CLOUDINARY_API_SECRET=   # Dashboard Cloudinary → Product Environment Credenti
 
 > ⚠️ **Atenção:** sem as 3 variáveis do Cloudinary preenchidas, o servidor sobe normalmente mas uploads de foto/banner falham com 500. O servidor emite um `console.warn` claro no startup se detectar valores ausentes ou placeholder.
 
-#### 3. Instalar dependências e rodar
+#### 3. Aplicar as migrations do banco
+
+As alterações de schema ficam em `api/db/migrations/`, numeradas em ordem (`003_...`, `004_...`). Elas **não** rodam sozinhas: cada pessoa precisa aplicá-las no próprio banco local, em ordem numérica.
+
+Pelo terminal, de dentro da pasta `api`:
+
+```bash
+psql "postgresql://postgres:SUA_SENHA@localhost:5432/pesqueefale" -f db/migrations/003_curtidas_comentarios.sql
+psql "postgresql://postgres:SUA_SENHA@localhost:5432/pesqueefale" -f db/migrations/004_notificacoes_de_volta.sql
+```
+
+Ou pelo pgAdmin: clique com o botão direito no banco `pesqueefale` → **Query Tool** → cole o conteúdo de cada arquivo → **F5**.
+
+As migrations usam `IF NOT EXISTS` / `CREATE OR REPLACE`, então é seguro rodá-las de novo.
+
+> ⚠️ **Atenção:** a cada `git pull` na `dev`, confira se entrou arquivo novo em `api/db/migrations/`. Com o banco desatualizado, a API sobe normalmente, mas algumas operações falham em silêncio. Exemplo: sem a `004`, **nenhuma notificação é criada** — seguir, curtir e comentar continuam respondendo `201`, e o erro só aparece no terminal da API como `Erro ao criar notificação` com `code: '42703'` (coluna inexistente).
+
+#### 4. Instalar dependências e rodar
 
 ```bash
 npm install
@@ -118,7 +135,7 @@ npm run dev
 A API estará disponível em `http://localhost:3333`.  
 Documentação interativa: `http://localhost:3333/docs`
 
-#### 4. Scripts pontuais
+#### 5. Scripts pontuais
 
 ```bash
 node scripts/limpar-imagens-orfas.js
