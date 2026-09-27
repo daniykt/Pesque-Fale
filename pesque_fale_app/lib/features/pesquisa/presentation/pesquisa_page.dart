@@ -47,7 +47,7 @@ class _PesquisaView extends StatelessWidget {
           title: const Text('Pesquisar'),
           bottom: TabBar(
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.white.withOpacity(0.72),
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.72),
             indicatorColor: Colors.white,
             tabs: const [
               Tab(icon: Icon(Icons.people), text: 'Usuários'),
