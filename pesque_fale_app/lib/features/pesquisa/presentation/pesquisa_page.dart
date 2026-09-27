@@ -45,8 +45,11 @@ class _PesquisaView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Pesquisar'),
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.72),
+            indicatorColor: Colors.white,
+            tabs: const [
               Tab(icon: Icon(Icons.people), text: 'Usuários'),
               Tab(icon: Icon(Icons.place), text: 'Locais'),
             ],
