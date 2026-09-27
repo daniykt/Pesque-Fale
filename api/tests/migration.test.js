@@ -33,6 +33,18 @@ describe('migration 003_curtidas_comentarios.sql', () => {
     expect(sql).toMatch(/AFTER INSERT OR DELETE ON comentarios/);
   });
 
+  it('remove os triggers legados antes de criar os novos, evitando contagem dupla', () => {
+    const idx = (trecho) => sql.indexOf(trecho);
+    expect(idx('DROP TRIGGER IF EXISTS trigger_curtidas_count ON curtidas;')).toBeGreaterThan(-1);
+    expect(idx('DROP TRIGGER IF EXISTS trigger_comentarios_count ON comentarios;')).toBeGreaterThan(-1);
+    expect(idx('DROP TRIGGER IF EXISTS trigger_curtidas_count ON curtidas;')).toBeLessThan(
+      idx('CREATE TRIGGER trg_curtidas_count')
+    );
+    expect(idx('DROP TRIGGER IF EXISTS trigger_comentarios_count ON comentarios;')).toBeLessThan(
+      idx('CREATE TRIGGER trg_comentarios_count')
+    );
+  });
+
   it('os triggers nunca deixam os contadores ficarem negativos', () => {
     expect(sql).toMatch(/GREATEST\(curtidas_count - 1, 0\)/);
     expect(sql).toMatch(/GREATEST\(comentarios_count - 1, 0\)/);

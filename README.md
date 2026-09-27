@@ -84,7 +84,7 @@ flutter run -d chrome
 
 #### 1. Pré-requisitos
 - Node.js 18+
-- PostgreSQL 18
+- PostgreSQL 18 com a extensão **PostGIS** (no Windows, instale pelo **Stack Builder**, que abre ao final da instalação do PostgreSQL → *Spatial Extensions* → PostGIS)
 - Conta gratuita no [Cloudinary](https://cloudinary.com/users/register_free)
 
 #### 2. Configurar variáveis de ambiente
@@ -108,20 +108,39 @@ CLOUDINARY_API_SECRET=   # Dashboard Cloudinary → Product Environment Credenti
 
 > ⚠️ **Atenção:** sem as 3 variáveis do Cloudinary preenchidas, o servidor sobe normalmente mas uploads de foto/banner falham com 500. O servidor emite um `console.warn` claro no startup se detectar valores ausentes ou placeholder.
 
-#### 3. Aplicar as migrations do banco
+#### 3. Montar o banco de dados
 
-As alterações de schema ficam em `api/db/migrations/`, numeradas em ordem (`003_...`, `004_...`). Elas **não** rodam sozinhas: cada pessoa precisa aplicá-las no próprio banco local, em ordem numérica.
+O schema fica versionado em `api/db/migrations/`, em arquivos numerados que devem ser aplicados **em ordem numérica**. Eles **não** rodam sozinhos: cada pessoa aplica no próprio banco local.
 
-Pelo terminal, de dentro da pasta `api`:
+| Migration | O que faz |
+|---|---|
+| `001_schema_inicial.sql` | Cria as extensões (pgcrypto, PostGIS) e as tabelas base: usuários, seguidores, pontos de pesca, avaliações, publicações, eventos, chats, mensagens e notificações |
+| `003_curtidas_comentarios.sql` | Cria curtidas e comentários, com os triggers de contagem |
+| `004_notificacoes_de_volta.sql` | Adiciona a coluna `de_volta` em notificações |
+
+Os comandos abaixo usam `psql` e `createdb`. Se o terminal não reconhecer esses comandos, adicione a pasta `bin` do PostgreSQL ao PATH (no PowerShell: `$env:Path += ";C:\Program Files\PostgreSQL\18\bin"`).
+
+**Banco novo (primeira vez)** — de dentro da pasta `api`:
 
 ```bash
-psql "postgresql://postgres:SUA_SENHA@localhost:5432/pesqueefale" -f db/migrations/003_curtidas_comentarios.sql
-psql "postgresql://postgres:SUA_SENHA@localhost:5432/pesqueefale" -f db/migrations/004_notificacoes_de_volta.sql
+createdb -U postgres pesqueefale
+psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/001_schema_inicial.sql
+psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/003_curtidas_comentarios.sql
+psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/004_notificacoes_de_volta.sql
 ```
 
-Ou pelo pgAdmin: clique com o botão direito no banco `pesqueefale` → **Query Tool** → cole o conteúdo de cada arquivo → **F5**.
+A `001` roda dentro de uma transação e só deve ser aplicada em um banco **vazio**. Se falhar (por exemplo, com o PostGIS não instalado), nada é criado pela metade: corrija o problema e rode de novo.
 
-As migrations usam `IF NOT EXISTS` / `CREATE OR REPLACE`, então é seguro rodá-las de novo.
+**Banco que já existia** — **não** rode a `001`. Aplique apenas as migrations a partir da `003`:
+
+```bash
+psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/003_curtidas_comentarios.sql
+psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/004_notificacoes_de_volta.sql
+```
+
+A partir da `003`, as migrations usam `IF NOT EXISTS` / `CREATE OR REPLACE` / `DROP ... IF EXISTS`, então é seguro rodá-las de novo. A `003` também substitui os triggers de contagem com nome antigo (`trigger_curtidas_count` / `trigger_comentarios_count`), que existiam em bancos montados antes dela, evitando contagem dupla de curtidas e comentários.
+
+Também é possível aplicar pelo pgAdmin: clique com o botão direito no banco `pesqueefale` → **Query Tool** → cole o conteúdo de cada arquivo → **F5**.
 
 > ⚠️ **Atenção:** a cada `git pull` na `dev`, confira se entrou arquivo novo em `api/db/migrations/`. Com o banco desatualizado, a API sobe normalmente, mas algumas operações falham em silêncio. Exemplo: sem a `004`, **nenhuma notificação é criada** — seguir, curtir e comentar continuam respondendo `201`, e o erro só aparece no terminal da API como `Erro ao criar notificação` com `code: '42703'` (coluna inexistente).
 
