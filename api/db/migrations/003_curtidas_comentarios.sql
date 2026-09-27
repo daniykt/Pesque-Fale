@@ -21,6 +21,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_curtidas_count ON curtidas;
 DROP TRIGGER IF EXISTS trg_curtidas_count ON curtidas;
 CREATE TRIGGER trg_curtidas_count
 AFTER INSERT OR DELETE ON curtidas
@@ -46,6 +47,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_comentarios_count ON comentarios;
 DROP TRIGGER IF EXISTS trg_comentarios_count ON comentarios;
 CREATE TRIGGER trg_comentarios_count
 AFTER INSERT OR DELETE ON comentarios
