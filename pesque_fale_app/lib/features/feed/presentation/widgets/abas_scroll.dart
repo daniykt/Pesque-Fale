@@ -5,6 +5,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/aba_feed.dart';
 import '../../providers/feed_provider.dart';
 
+/// Largura do fade na borda direita que indica que há mais abas para rolar.
+const double _larguraFade = 24;
+
 class AbasScroll extends StatelessWidget {
   const AbasScroll({super.key});
 
@@ -14,22 +17,38 @@ class AbasScroll extends StatelessWidget {
 
     return SizedBox(
       height: 52,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            for (final aba in AbaFeed.values) ...[
-              _AbaChip(
-                aba: aba,
-                ativa: aba == abaAtiva,
-                onTap: () => context.read<FeedProvider>().trocarAba(aba),
-              ),
-              const SizedBox(width: 8),
+      // Máscara de opacidade (não depende do tema): as abas somem aos poucos
+      // na borda direita, sinalizando que a lista continua.
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) {
+          final inicioFade = bounds.width <= _larguraFade
+              ? 0.0
+              : 1 - _larguraFade / bounds.width;
+          return LinearGradient(
+            colors: const [Colors.black, Colors.black, Colors.transparent],
+            stops: [0, inicioFade, 1],
+          ).createShader(bounds);
+        },
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              for (final aba in AbaFeed.values) ...[
+                _AbaChip(
+                  aba: aba,
+                  ativa: aba == abaAtiva,
+                  onTap: () => context.read<FeedProvider>().trocarAba(aba),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // No fim da rolagem o fade cai neste espaço e a última aba
+              // fica inteira visível.
+              const SizedBox(width: _larguraFade),
             ],
-            const SizedBox(width: 4),
-          ],
+          ),
         ),
       ),
     );
