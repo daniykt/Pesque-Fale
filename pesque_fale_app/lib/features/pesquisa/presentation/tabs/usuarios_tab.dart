@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/router/navegacao_perfil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/estado_centralizado_rolavel.dart';
 import '../../providers/pesquisa_usuarios_provider.dart';
 import '../widgets/busca_bar.dart';
 import '../widgets/skeletons/usuario_card_skeleton.dart';
@@ -42,17 +43,14 @@ class _Conteudo extends StatelessWidget {
 
     switch (provider.status) {
       case PesquisaUsuariosStatus.idle:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.search, size: 48, color: colors.textSecondary),
-                const SizedBox(height: AppSpacing.sm),
-                const Text('Digite o nome de um pescador para começar'),
-              ],
-            ),
+        return EstadoCentralizadoRolavel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search, size: 48, color: colors.textSecondary),
+              const SizedBox(height: AppSpacing.sm),
+              const Text('Digite o nome de um pescador para começar'),
+            ],
           ),
         );
       case PesquisaUsuariosStatus.carregando:
@@ -63,36 +61,30 @@ class _Conteudo extends StatelessWidget {
           itemBuilder: (_, _) => const UsuarioCardSkeleton(),
         );
       case PesquisaUsuariosStatus.vazio:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.person_off, size: 48, color: colors.textSecondary),
-                const SizedBox(height: AppSpacing.sm),
-                const Text('Nenhum pescador encontrado com esse nome'),
-              ],
-            ),
+        return EstadoCentralizadoRolavel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.person_off, size: 48, color: colors.textSecondary),
+              const SizedBox(height: AppSpacing.sm),
+              const Text('Nenhum pescador encontrado com esse nome'),
+            ],
           ),
         );
       case PesquisaUsuariosStatus.erro:
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: colors.danger),
-                const SizedBox(height: AppSpacing.sm),
-                Text(provider.mensagemErro ?? 'Não foi possível buscar'),
-                const SizedBox(height: AppSpacing.sm),
-                ElevatedButton(
-                  onPressed: provider.recarregar,
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
-            ),
+        return EstadoCentralizadoRolavel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: colors.danger),
+              const SizedBox(height: AppSpacing.sm),
+              Text(provider.mensagemErro ?? 'Não foi possível buscar'),
+              const SizedBox(height: AppSpacing.sm),
+              ElevatedButton(
+                onPressed: provider.recarregar,
+                child: const Text('Tentar novamente'),
+              ),
+            ],
           ),
         );
       case PesquisaUsuariosStatus.sucesso:

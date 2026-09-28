@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../domain/publicacao.dart';
@@ -55,25 +56,30 @@ class _AcoesBarState extends State<AcoesBar> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _AcaoBotao(
-                icon: p.jaCurtiu ? Icons.favorite : Icons.favorite_border,
-                cor: p.jaCurtiu ? Colors.red[400]! : colors.primary,
-                label: p.jaCurtiu ? 'Curtido' : 'Curtir',
-                onTap: _curtindo ? null : _curtir,
+              Expanded(
+                child: _AcaoBotao(
+                  icon: p.jaCurtiu ? Icons.favorite : Icons.favorite_border,
+                  cor: p.jaCurtiu ? Colors.red[400]! : colors.primary,
+                  label: p.jaCurtiu ? 'Curtido' : 'Curtir',
+                  onTap: _curtindo ? null : _curtir,
+                ),
               ),
-              _AcaoBotao(
-                icon: Icons.chat_bubble_outline,
-                cor: colors.primary,
-                label: 'Comentar',
-                onTap: widget.onComentarTap,
+              Expanded(
+                child: _AcaoBotao(
+                  icon: Icons.chat_bubble_outline,
+                  cor: colors.primary,
+                  label: 'Comentar',
+                  onTap: widget.onComentarTap,
+                ),
               ),
-              _AcaoBotao(
-                icon: Icons.share,
-                cor: colors.primary,
-                label: 'Compartilhar',
-                onTap: _compartilhar,
+              Expanded(
+                child: _AcaoBotao(
+                  icon: Icons.share,
+                  cor: colors.primary,
+                  label: 'Compartilhar',
+                  onTap: _compartilhar,
+                ),
               ),
             ],
           ),
@@ -127,13 +133,26 @@ class _AcaoBotao extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 8,
+        ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 20, color: cor),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(color: cor, fontSize: 13)),
+            // Só encolhe quando o rótulo não cabe no terço (fonte grande).
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(color: cor, fontSize: 13),
+                ),
+              ),
+            ),
           ],
         ),
       ),
