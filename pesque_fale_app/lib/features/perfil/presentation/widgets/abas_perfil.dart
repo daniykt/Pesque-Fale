@@ -37,6 +37,8 @@ class _AbasPerfilState extends State<AbasPerfil>
       children: [
         TabBar(
           controller: _controller,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: colors.primary,
           unselectedLabelColor: colors.textSecondary,
           indicatorColor: colors.primary,
