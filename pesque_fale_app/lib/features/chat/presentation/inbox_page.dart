@@ -112,9 +112,13 @@ class _InboxPageState extends State<InboxPage> {
             itemCount: lista.length,
             itemBuilder: (context, i) => ItemConversa(
               conversa: lista[i],
-              onTap: () => Navigator.of(
-                context,
-              ).pushNamed('/chat/conversa', arguments: lista[i]),
+              onTap: () async {
+                await Navigator.of(
+                  context,
+                ).pushNamed('/chat/conversa', arguments: lista[i]);
+                if (!mounted) return;
+                provider.refresh();
+              },
             ),
           ),
         );
