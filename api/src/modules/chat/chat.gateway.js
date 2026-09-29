@@ -7,12 +7,11 @@ function gerarChatId(uid1, uid2) {
 
 async function verificarMutualFollow(uid1, uid2) {
   const result = await pool.query(
-    `SELECT COUNT(*) FROM usuario_seguidores
-     WHERE (seguidor_id = $1 AND seguido_id = $2)
-        OR (seguidor_id = $2 AND seguido_id = $1)`,
+    `SELECT EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2)
+        AND EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $2 AND seguido_id = $1) AS mutuo`,
     [uid1, uid2]
   );
-  return parseInt(result.rows[0].count) === 2;
+  return result.rows[0].mutuo;
 }
 
 async function obterOuCriarChat(uid1, uid2) {
@@ -89,6 +88,11 @@ module.exports = function initChatGateway(io) {
     // Entrar em uma sala de chat
     socket.on('entrar_chat', async ({ outroId }) => {
       try {
+        if (outroId === usuarioId) {
+          socket.emit('erro', { code: 'CHAT_CONSIGO_MESMO', message: 'Não é possível conversar consigo mesmo.' });
+          return;
+        }
+
         const mutuo = await verificarMutualFollow(usuarioId, outroId);
         if (!mutuo) {
           socket.emit('erro', { message: 'Vocês precisam se seguir mutuamente para conversar.' });
@@ -189,3 +193,5 @@ function _formatMensagem(m) {
     criadoEm: m.criado_em,
   };
 }
+
+module.exports.verificarMutualFollow = verificarMutualFollow;
