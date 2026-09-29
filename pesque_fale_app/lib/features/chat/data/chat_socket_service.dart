@@ -18,6 +18,7 @@ class ChatSocketService {
       io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
+          .enableForceNew()
           .enableReconnection()
           .setReconnectionDelay(2000)
           .build(),
