@@ -193,3 +193,5 @@ function _formatMensagem(m) {
     criadoEm: m.criado_em,
   };
 }
+
+module.exports.verificarMutualFollow = verificarMutualFollow;
