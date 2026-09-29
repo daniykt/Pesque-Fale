@@ -89,6 +89,11 @@ module.exports = function initChatGateway(io) {
     // Entrar em uma sala de chat
     socket.on('entrar_chat', async ({ outroId }) => {
       try {
+        if (outroId === usuarioId) {
+          socket.emit('erro', { code: 'CHAT_CONSIGO_MESMO', message: 'Não é possível conversar consigo mesmo.' });
+          return;
+        }
+
         const mutuo = await verificarMutualFollow(usuarioId, outroId);
         if (!mutuo) {
           socket.emit('erro', { message: 'Vocês precisam se seguir mutuamente para conversar.' });
