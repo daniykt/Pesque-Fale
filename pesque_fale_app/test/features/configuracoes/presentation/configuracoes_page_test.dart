@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -14,6 +16,10 @@ import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/configuracoes/presentation/configuracoes_page.dart';
 import 'package:pesque_fale_app/features/configuracoes/providers/preferencias_provider.dart';
+import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository.dart';
+import 'package:pesque_fale_app/features/notificacoes/domain/notificacao.dart';
+import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
+import 'package:pesque_fale_app/shared/widgets/app_bottom_nav.dart';
 import 'package:pesque_fale_app/features/tour/domain/tour_status_storage.dart';
 import 'package:pesque_fale_app/features/tour/providers/tour_provider.dart';
 
@@ -55,6 +61,26 @@ class _FakeFlutterSecureStorageChannel {
   }
 }
 
+class _FakeNotificacoesRepository implements NotificacoesRepository {
+  final List<Completer<int>> buscas = [];
+
+  @override
+  Future<int> contarNaoLidas() {
+    final busca = Completer<int>();
+    buscas.add(busca);
+    return busca.future;
+  }
+
+  @override
+  Future<({List<Notificacao> lista, int naoLidas})> listar({
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => (lista: const <Notificacao>[], naoLidas: 0);
+
+  @override
+  Future<void> marcarTodasComoLidas() async {}
+}
+
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +107,11 @@ void main() {
             create: (ctx) => TourProvider(
               storage: TourStatusStorage(storage: const FlutterSecureStorage()),
               authProvider: ctx.read<AuthProvider>(),
+            ),
+          ),
+          ChangeNotifierProvider<BadgeNotificacoesProvider>(
+            create: (_) => BadgeNotificacoesProvider(
+              repository: _FakeNotificacoesRepository(),
             ),
           ),
         ],
@@ -326,6 +357,93 @@ void main() {
         find.widgetWithText(ListTile, 'Versão'),
       );
       expect(tile.onTap, isNull);
+    },
+  );
+
+  testWidgets(
+    'trocar de conta zera o badge e ignora a busca da conta anterior',
+    (tester) async {
+      final repo = _FakeNotificacoesRepository();
+      final badge = BadgeNotificacoesProvider(repository: repo);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeProvider>(
+              create: (_) => ThemeProvider(),
+            ),
+            ChangeNotifierProvider<PreferenciasProvider>(
+              create: (_) => PreferenciasProvider(),
+            ),
+            ChangeNotifierProvider<AuthProvider>(
+              create: (_) => AuthProvider(
+                repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+              ),
+            ),
+            ChangeNotifierProvider<TourProvider>(
+              create: (ctx) => TourProvider(
+                storage: TourStatusStorage(
+                  storage: const FlutterSecureStorage(),
+                ),
+                authProvider: ctx.read<AuthProvider>(),
+              ),
+            ),
+            ChangeNotifierProvider<BadgeNotificacoesProvider>.value(
+              value: badge,
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light,
+            home: const ConfiguracoesPage(),
+            routes: {
+              '/cadastro': (context) => Scaffold(
+                body: const Text('Cadastro'),
+                bottomNavigationBar: AppBottomNav(
+                  currentIndex: 0,
+                  onDestinationSelected: (_) {},
+                  notifCount: context
+                      .watch<BadgeNotificacoesProvider>()
+                      .naoLidas,
+                ),
+              ),
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      bool badgeVisivel() =>
+          tester.widget<Badge>(find.byType(Badge).first).isLabelVisible;
+
+      unawaited(badge.atualizar());
+      repo.buscas.last.complete(5);
+      await tester.pump();
+      expect(badge.naoLidas, 5);
+
+      unawaited(badge.atualizar());
+      final buscaDaContaAnterior = repo.buscas.last;
+
+      await tester.tap(find.text('Sair da conta'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Sair'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cadastro'), findsOneWidget);
+      expect(badge.naoLidas, 0);
+      expect(badgeVisivel(), isFalse);
+
+      unawaited(badge.atualizar());
+      expect(repo.buscas, hasLength(3));
+
+      buscaDaContaAnterior.complete(5);
+      await tester.pump();
+      expect(badge.naoLidas, 0);
+      expect(badgeVisivel(), isFalse);
+
+      repo.buscas.last.complete(0);
+      await tester.pump();
+      expect(badge.naoLidas, 0);
+      expect(badgeVisivel(), isFalse);
     },
   );
 }
