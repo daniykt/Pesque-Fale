@@ -9,14 +9,14 @@ class BadgeNotificacoesProvider extends ChangeNotifier {
 
   int _naoLidas = 0;
   int _geracao = 0;
-  bool _atualizando = false;
+  int? _geracaoEmBusca;
 
   int get naoLidas => _naoLidas;
 
   Future<void> atualizar() async {
-    if (_atualizando) return;
-    _atualizando = true;
     final geracao = _geracao;
+    if (_geracaoEmBusca == geracao) return;
+    _geracaoEmBusca = geracao;
     try {
       final n = await repository.contarNaoLidas();
       if (geracao != _geracao || n == _naoLidas) return;
@@ -25,7 +25,7 @@ class BadgeNotificacoesProvider extends ChangeNotifier {
     } catch (_) {
       return;
     } finally {
-      _atualizando = false;
+      if (_geracaoEmBusca == geracao) _geracaoEmBusca = null;
     }
   }
 
@@ -35,5 +35,12 @@ class BadgeNotificacoesProvider extends ChangeNotifier {
       _naoLidas = 0;
       notifyListeners();
     }
+  }
+
+  void resetar() {
+    _geracao++;
+    _geracaoEmBusca = null;
+    _naoLidas = 0;
+    notifyListeners();
   }
 }

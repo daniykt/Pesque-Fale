@@ -112,4 +112,66 @@ void main() {
     expect(repo.chamadasContar, 1);
     expect(provider.naoLidas, 1);
   });
+
+  test('resetar zera o contador e notifica', () async {
+    repo.naoLidas = 4;
+    await provider.atualizar();
+
+    provider.resetar();
+
+    expect(provider.naoLidas, 0);
+    expect(notificacoes, 2);
+  });
+
+  test('resetar descarta a resposta de uma busca da conta anterior', () async {
+    repo.pendente = Completer<int>();
+    final buscaAnterior = provider.atualizar();
+
+    provider.resetar();
+    repo.pendente!.complete(9);
+    await buscaAnterior;
+
+    expect(provider.naoLidas, 0);
+  });
+
+  test('resetar libera a trava para a primeira busca da conta nova', () async {
+    final anterior = Completer<int>();
+    repo.pendente = anterior;
+    final buscaAnterior = provider.atualizar();
+
+    provider.resetar();
+    repo.pendente = null;
+    repo.naoLidas = 2;
+    await provider.atualizar();
+
+    expect(repo.chamadasContar, 2);
+    expect(provider.naoLidas, 2);
+
+    anterior.complete(9);
+    await buscaAnterior;
+
+    expect(provider.naoLidas, 2);
+  });
+
+  test('busca antiga que termina depois do resetar não libera a trava da conta nova', () async {
+    final anterior = Completer<int>();
+    repo.pendente = anterior;
+    final buscaAnterior = provider.atualizar();
+
+    provider.resetar();
+    final novaPendente = Completer<int>();
+    repo.pendente = novaPendente;
+    final buscaNova = provider.atualizar();
+
+    anterior.complete(9);
+    await buscaAnterior;
+    await provider.atualizar();
+
+    expect(repo.chamadasContar, 2);
+
+    novaPendente.complete(1);
+    await buscaNova;
+
+    expect(provider.naoLidas, 1);
+  });
 }
