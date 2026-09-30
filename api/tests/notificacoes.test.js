@@ -196,3 +196,87 @@ describe('Gatilhos automáticos de notificação', () => {
     expect(insertsNotif.length).toBeGreaterThan(0);
   });
 });
+
+describe('DELETE /v1/notificacoes/:id', () => {
+  beforeEach(() => pool.query.mockReset());
+
+  it('204 apaga a notificação do usuário autenticado', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ para: 'user-1' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .delete('/v1/notificacoes/notif-1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(204);
+    const [sql, params] = pool.query.mock.calls[1];
+    expect(sql).toMatch(/DELETE FROM notificacoes WHERE id = \$1 AND para = \$2/);
+    expect(params).toEqual(['notif-1', 'user-1']);
+  });
+
+  it('403 ao tentar apagar notificação de outro usuário, sem apagar nada', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [{ para: 'user-2' }] });
+
+    const res = await request(app)
+      .delete('/v1/notificacoes/notif-1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('FORBIDDEN');
+    expect(pool.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('404 quando a notificação não existe', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .delete('/v1/notificacoes/nao-existe')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('NOTIFICACAO_NAO_ENCONTRADA');
+  });
+
+  it('404 quando o id não é um UUID válido', async () => {
+    pool.query.mockRejectedValueOnce(Object.assign(new Error('uuid inválido'), { code: '22P02' }));
+
+    const res = await request(app)
+      .delete('/v1/notificacoes/abc')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('NOTIFICACAO_NAO_ENCONTRADA');
+  });
+
+  it('401 sem token', async () => {
+    const res = await request(app).delete('/v1/notificacoes/notif-1');
+
+    expect(res.status).toBe(401);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('DELETE /v1/notificacoes', () => {
+  beforeEach(() => pool.query.mockReset());
+
+  it('204 apaga todas as notificações do usuário autenticado', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .delete('/v1/notificacoes')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(204);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toMatch(/DELETE FROM notificacoes WHERE para = \$1/);
+    expect(params).toEqual(['user-1']);
+  });
+
+  it('401 sem token', async () => {
+    const res = await request(app).delete('/v1/notificacoes');
+
+    expect(res.status).toBe(401);
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+});
