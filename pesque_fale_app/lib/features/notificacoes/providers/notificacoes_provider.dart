@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import '../../perfil/data/perfil_repository.dart';
@@ -15,6 +17,8 @@ class NotificacoesProvider extends ChangeNotifier {
   StatusNotificacoes status = StatusNotificacoes.carregando;
   List<Notificacao> _todas = [];
   TipoNotificacao? _filtro;
+  final Map<String, ({Notificacao notificacao, int indice})> _remocoesPendentes = {};
+  bool _descartado = false;
 
   List<Notificacao> get notificacoes {
     if (_filtro == null) return _todas;
@@ -29,7 +33,7 @@ class NotificacoesProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final resultado = await repository.listar();
-      _todas = resultado.lista;
+      _todas = _semPendentes(resultado.lista);
       status = StatusNotificacoes.carregado;
       if (_todas.any((n) => !n.lida)) {
         await repository.marcarTodasComoLidas();
@@ -44,7 +48,7 @@ class NotificacoesProvider extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       final resultado = await repository.listar();
-      _todas = resultado.lista;
+      _todas = _semPendentes(resultado.lista);
       notifyListeners();
     } catch (_) {
       // Silencia erro no refresh — mantém os dados já carregados na tela.
@@ -76,5 +80,59 @@ class NotificacoesProvider extends ChangeNotifier {
     } catch (_) {
       return false;
     }
+  }
+
+  bool removerLocal(String id) {
+    final indice = _todas.indexWhere((n) => n.id == id);
+    if (indice == -1) return false;
+    final removida = _todas.removeAt(indice);
+    _remocoesPendentes[id] = (notificacao: removida, indice: indice);
+    notifyListeners();
+    return true;
+  }
+
+  void desfazerRemocao(String id) {
+    final pendente = _remocoesPendentes.remove(id);
+    if (pendente == null) return;
+    _todas.insert(math.min(pendente.indice, _todas.length), pendente.notificacao);
+    notifyListeners();
+  }
+
+  Future<bool> confirmarRemocao(String id) async {
+    if (!_remocoesPendentes.containsKey(id)) return true;
+    try {
+      await repository.apagar(id);
+      _remocoesPendentes.remove(id);
+      return true;
+    } catch (_) {
+      desfazerRemocao(id);
+      return false;
+    }
+  }
+
+  Future<bool> limparTodas() async {
+    try {
+      await repository.apagarTodas();
+      _todas = [];
+      _remocoesPendentes.clear();
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  List<Notificacao> _semPendentes(List<Notificacao> lista) =>
+      lista.where((n) => !_remocoesPendentes.containsKey(n.id)).toList();
+
+  @override
+  void notifyListeners() {
+    if (!_descartado) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _descartado = true;
+    super.dispose();
   }
 }
