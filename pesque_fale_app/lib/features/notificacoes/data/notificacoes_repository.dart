@@ -9,4 +9,8 @@ abstract class NotificacoesRepository {
   Future<int> contarNaoLidas();
 
   Future<void> marcarTodasComoLidas();
+
+  Future<void> apagar(String id);
+
+  Future<void> apagarTodas();
 }

@@ -35,6 +35,11 @@ class NotificacoesApiClient {
   Future<void> marcarTodasComoLidas() =>
       _request('PATCH', '/notificacoes/todas-lidas');
 
+  Future<void> apagar(String id) =>
+      _request('DELETE', '/notificacoes/${Uri.encodeComponent(id)}');
+
+  Future<void> apagarTodas() => _request('DELETE', '/notificacoes');
+
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {
@@ -80,6 +85,8 @@ class NotificacoesApiClient {
 
   NotificacoesException _mapError(int statusCode) {
     if (statusCode == 401) return const NaoAutenticadoException();
+    if (statusCode == 403) return const SemPermissaoException();
+    if (statusCode == 404) return const NotificacaoNaoEncontradaException();
     return const InternalServerException();
   }
 }
