@@ -11,6 +11,7 @@ import 'widgets/chat_app_bar.dart';
 import 'widgets/erro_mutual_follow.dart';
 import 'widgets/input_mensagem.dart';
 import 'widgets/lista_mensagens.dart';
+import 'widgets/skeleton_mensagens.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.conversa});
@@ -75,7 +76,17 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
     final provider = _provider;
     if (provider == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: ChatAppBar(conversa: widget.conversa, outroDigitando: false),
+        body: Column(
+          children: [
+            const Expanded(child: SkeletonMensagens()),
+            IgnorePointer(
+              child: InputMensagem(onEnviar: (_) {}, onDigitando: (_) {}),
+            ),
+          ],
+        ),
+      );
     }
 
     return ChangeNotifierProvider.value(
@@ -119,7 +130,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   Widget _buildConteudo(ChatProvider provider) {
     if (provider.status == StatusChat.conectando) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonMensagens();
     }
     if (provider.mensagens.isEmpty) {
       return _EstadoVazio(nomeOutro: widget.conversa.outroNome);
