@@ -5,6 +5,7 @@ import '../../../core/config/app_info.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../notificacoes/providers/badge_notificacoes_provider.dart';
 import '../../tour/providers/tour_provider.dart';
 import '../providers/preferencias_provider.dart';
 import 'widgets/configuracoes_secao.dart';
@@ -41,7 +42,9 @@ class ConfiguracoesPage extends StatelessWidget {
     if (confirmou != true) return;
     if (!context.mounted) return;
 
+    final badge = context.read<BadgeNotificacoesProvider>();
     await context.read<AuthProvider>().signOut();
+    badge.resetar();
     if (!context.mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/cadastro', (_) => false);
   }
