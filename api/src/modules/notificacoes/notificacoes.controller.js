@@ -95,6 +95,42 @@ async function contarNaoLidas(req, res) {
   }
 }
 
+async function apagar(req, res) {
+  const { id } = req.params;
+  const usuarioId = req.usuario.id;
+
+  try {
+    const existe = await pool.query('SELECT para FROM notificacoes WHERE id = $1', [id]);
+    if (existe.rows.length === 0) {
+      return res.status(404).json({ error: 'NOTIFICACAO_NAO_ENCONTRADA', message: 'Notificação não encontrada.' });
+    }
+    if (existe.rows[0].para !== usuarioId) {
+      return res.status(403).json({ error: 'FORBIDDEN', message: 'Você não tem permissão para apagar esta notificação.' });
+    }
+
+    await pool.query('DELETE FROM notificacoes WHERE id = $1 AND para = $2', [id, usuarioId]);
+    return res.status(204).send();
+  } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'NOTIFICACAO_NAO_ENCONTRADA', message: 'Notificação não encontrada.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function apagarTodas(req, res) {
+  const usuarioId = req.usuario.id;
+
+  try {
+    await pool.query('DELETE FROM notificacoes WHERE para = $1', [usuarioId]);
+    return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
 function _format(n) {
   return {
     id: n.id,
@@ -114,4 +150,11 @@ function _format(n) {
   };
 }
 
-module.exports = { listar, marcarComoLida, marcarTodasComoLidas, contarNaoLidas };
+module.exports = {
+  listar,
+  marcarComoLida,
+  marcarTodasComoLidas,
+  contarNaoLidas,
+  apagar,
+  apagarTodas,
+};

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../chat/domain/conversa.dart';
 import '../domain/notificacao.dart';
@@ -100,16 +102,49 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
             itemCount: lista.length,
             itemBuilder: (context, i) {
               final n = lista[i];
-              return ItemNotificacao(
-                notif: n,
-                destacar: _destaqueSessao.contains(n.id),
-                onTap: () => _navegar(n, provider),
-                onSeguirDeVolta: () => provider.seguirDeVolta(n),
+              return Dismissible(
+                key: ValueKey(n.id),
+                direction: DismissDirection.endToStart,
+                background: const _FundoApagar(),
+                onDismissed: (_) => _apagar(n, provider),
+                child: ItemNotificacao(
+                  notif: n,
+                  destacar: _destaqueSessao.contains(n.id),
+                  onTap: () => _navegar(n, provider),
+                  onSeguirDeVolta: () => provider.seguirDeVolta(n),
+                ),
               );
             },
           ),
         );
     }
+  }
+
+  void _apagar(Notificacao n, NotificacoesProvider provider) {
+    if (!provider.removerLocal(n.id)) return;
+    final badge = context.read<BadgeNotificacoesProvider>();
+    final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    final snackbar = messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Notificação apagada'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        persist: false,
+        action: SnackBarAction(
+          label: 'Desfazer',
+          onPressed: () => provider.desfazerRemocao(n.id),
+        ),
+      ),
+    );
+    snackbar.closed.then((motivo) async {
+      if (motivo == SnackBarClosedReason.action) return;
+      final apagou = await provider.confirmarRemocao(n.id);
+      if (apagou) {
+        badge.atualizar();
+      } else if (mounted) {
+        AppSnackbar.showError(context, 'Não foi possível apagar a notificação.');
+      }
+    });
   }
 
   void _navegar(Notificacao n, NotificacoesProvider provider) {
@@ -150,5 +185,24 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
         AppSnackbar.showInfo(context, 'Notificação de sistema');
         break;
     }
+  }
+}
+
+class _FundoApagar extends StatelessWidget {
+  const _FundoApagar();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    return Container(
+      color: colors.danger,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Icon(
+        Icons.delete_outline,
+        color: Theme.of(context).colorScheme.onError,
+        semanticLabel: 'Apagar notificação',
+      ),
+    );
   }
 }

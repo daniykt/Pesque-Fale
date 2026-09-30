@@ -1,5 +1,6 @@
 import '../domain/notificacao.dart';
 import 'notificacoes_api_client.dart';
+import 'notificacoes_exceptions.dart';
 import 'notificacoes_repository.dart';
 
 class NotificacoesRepositoryHttp implements NotificacoesRepository {
@@ -32,4 +33,16 @@ class NotificacoesRepositoryHttp implements NotificacoesRepository {
 
   @override
   Future<void> marcarTodasComoLidas() => apiClient.marcarTodasComoLidas();
+
+  @override
+  Future<void> apagar(String id) async {
+    try {
+      await apiClient.apagar(id);
+    } on NotificacaoNaoEncontradaException {
+      return;
+    }
+  }
+
+  @override
+  Future<void> apagarTodas() => apiClient.apagarTodas();
 }

@@ -36,6 +36,9 @@ class AppTheme {
           borderSide: BorderSide(color: colors.border),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: colors.primaryAccent),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.action,

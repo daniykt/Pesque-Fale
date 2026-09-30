@@ -32,6 +32,18 @@ class NotificacoesRepositoryMock implements NotificacoesRepository {
     }
   }
 
+  @override
+  Future<void> apagar(String id) async {
+    await Future.delayed(_delay);
+    _todas.removeWhere((n) => n.id == id);
+  }
+
+  @override
+  Future<void> apagarTodas() async {
+    await Future.delayed(_delay);
+    _todas.clear();
+  }
+
   static List<Notificacao> _gerar() {
     final agora = DateTime.now();
     return [

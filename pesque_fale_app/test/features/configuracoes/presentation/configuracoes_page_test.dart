@@ -79,6 +79,12 @@ class _FakeNotificacoesRepository implements NotificacoesRepository {
 
   @override
   Future<void> marcarTodasComoLidas() async {}
+
+  @override
+  Future<void> apagar(String id) async {}
+
+  @override
+  Future<void> apagarTodas() async {}
 }
 
 void main() {

@@ -1,5 +1,12 @@
 const { Router } = require('express');
-const { listar, marcarComoLida, marcarTodasComoLidas, contarNaoLidas } = require('./notificacoes.controller');
+const {
+  listar,
+  marcarComoLida,
+  marcarTodasComoLidas,
+  contarNaoLidas,
+  apagar,
+  apagarTodas,
+} = require('./notificacoes.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 
 const router = Router();
@@ -73,5 +80,43 @@ router.patch('/todas-lidas', authMiddleware, marcarTodasComoLidas);
  *         description: Notificação não encontrada
  */
 router.patch('/:id/lida', authMiddleware, marcarComoLida);
+
+/**
+ * @swagger
+ * /notificacoes:
+ *   delete:
+ *     summary: Apagar todas as notificações do usuário autenticado
+ *     tags: [Notificações]
+ *     responses:
+ *       204:
+ *         description: Todas as notificações do usuário foram apagadas
+ *       401:
+ *         description: Token ausente ou inválido
+ */
+router.delete('/', authMiddleware, apagarTodas);
+
+/**
+ * @swagger
+ * /notificacoes/{id}:
+ *   delete:
+ *     summary: Apagar uma notificação do usuário autenticado
+ *     tags: [Notificações]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Notificação apagada
+ *       401:
+ *         description: Token ausente ou inválido
+ *       403:
+ *         description: A notificação pertence a outro usuário
+ *       404:
+ *         description: Notificação não encontrada
+ */
+router.delete('/:id', authMiddleware, apagar);
 
 module.exports = router;
