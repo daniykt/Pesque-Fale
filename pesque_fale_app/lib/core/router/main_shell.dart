@@ -9,6 +9,7 @@ import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
 import '../../features/notificacoes/data/notificacoes_repository.dart';
 import '../../features/notificacoes/presentation/notificacoes_page.dart';
+import '../../features/notificacoes/presentation/widgets/botao_limpar_notificacoes.dart';
 import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
 import '../../features/notificacoes/providers/notificacoes_provider.dart';
 import '../../features/perfil/data/perfil_repository.dart';
@@ -56,13 +57,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           InboxProvider(repository: ctx.read<ConversasRepository>()),
       child: const InboxPage(),
     ),
-    ChangeNotifierProvider<NotificacoesProvider>(
-      create: (ctx) => NotificacoesProvider(
-        repository: ctx.read<NotificacoesRepository>(),
-        perfilRepository: ctx.read<PerfilRepository>(),
-      ),
-      child: NotificacoesPage(ativa: _currentIndex == _alertasIndex),
-    ),
+    NotificacoesPage(ativa: _currentIndex == _alertasIndex),
     const PerfilPage(),
   ];
 
@@ -121,34 +116,44 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       });
     }
 
-    return Scaffold(
-      appBar: naTelaDePesquisa || naTelaDeChat
-          ? null
-          : AppBar(
-              title: Text(_titles[_currentIndex]),
-              leading: naTelaDePerfil
-                  ? Builder(
-                      builder: (context) => IconButton(
-                        icon: const Icon(Icons.menu),
-                        onPressed: () => PerfilOpcoesSheet.show(context),
-                      ),
-                    )
-                  : null,
-            ),
-      drawer: naTelaDePerfil || naTelaDePesquisa || naTelaDeChat
-          ? null
-          : const AppDrawer(),
-      body: Stack(
-        children: [
-          IndexedStack(index: _currentIndex, children: _buildScreens()),
-          const TourOverlay(),
-        ],
+    return ChangeNotifierProvider<NotificacoesProvider>(
+      create: (ctx) => NotificacoesProvider(
+        repository: ctx.read<NotificacoesRepository>(),
+        perfilRepository: ctx.read<PerfilRepository>(),
       ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _currentIndex,
-        notifCount: notifCount,
-        highlightedIndex: passoDoTour?.abaAlvo,
-        onDestinationSelected: _trocarAba,
+      child: Scaffold(
+        appBar: naTelaDePesquisa || naTelaDeChat
+            ? null
+            : AppBar(
+                title: Text(_titles[_currentIndex]),
+                leading: naTelaDePerfil
+                    ? Builder(
+                        builder: (context) => IconButton(
+                          icon: const Icon(Icons.menu),
+                          onPressed: () => PerfilOpcoesSheet.show(context),
+                        ),
+                      )
+                    : null,
+                actions: [
+                  if (_currentIndex == _alertasIndex)
+                    const BotaoLimparNotificacoes(),
+                ],
+              ),
+        drawer: naTelaDePerfil || naTelaDePesquisa || naTelaDeChat
+            ? null
+            : const AppDrawer(),
+        body: Stack(
+          children: [
+            IndexedStack(index: _currentIndex, children: _buildScreens()),
+            const TourOverlay(),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNav(
+          currentIndex: _currentIndex,
+          notifCount: notifCount,
+          highlightedIndex: passoDoTour?.abaAlvo,
+          onDestinationSelected: _trocarAba,
+        ),
       ),
     );
   }
