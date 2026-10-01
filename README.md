@@ -187,7 +187,7 @@ Pesque-Fale/
 | Felipe   | Back-end / Front-end   |
 | João Pedro | Front-End |
 | Lucas | Designer / Back-End |
-| Vinicius | Designer / Front-End |
+| Vinicius | Designer / Front-End / Documentação |
 | Rebeca | Documentação |
 
 ---
