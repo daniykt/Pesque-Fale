@@ -266,6 +266,12 @@ void main() {
       );
       montado.repository.capaCompleter = Completer<String>();
 
+      // O padding inferior do layout deixa o seletor fora da área visível
+      // do viewport de teste; rola até ele antes do toque.
+      await tester.ensureVisible(
+        find.byIcon(Icons.add_photo_alternate_outlined),
+      );
+      await tester.pump();
       await tester.runAsync(() async {
         await tester.tap(find.byIcon(Icons.add_photo_alternate_outlined));
         await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -296,6 +302,10 @@ void main() {
         () => _criarArquivoTemporario(extensao: 'jpg'),
       );
 
+      await tester.ensureVisible(
+        find.byIcon(Icons.add_photo_alternate_outlined),
+      );
+      await tester.pump();
       await tester.runAsync(() async {
         await tester.tap(find.byIcon(Icons.add_photo_alternate_outlined));
         await Future<void>.delayed(const Duration(milliseconds: 100));

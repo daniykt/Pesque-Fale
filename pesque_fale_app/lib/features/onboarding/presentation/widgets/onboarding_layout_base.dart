@@ -75,7 +75,7 @@ class OnboardingLayoutBase extends StatelessWidget {
                     AppSpacing.lg,
                     AppSpacing.lg,
                     AppSpacing.lg,
-                    AppSpacing.xxl,
+                    AppSpacing.xxl + AppSpacing.xl,
                   ),
                   child: acoesInferior,
                 ),

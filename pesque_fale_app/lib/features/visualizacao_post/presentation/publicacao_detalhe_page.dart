@@ -223,7 +223,10 @@ class _ConteudoDetalhe extends StatelessWidget {
               ),
             ),
           ),
-          ComentarioInputBar(focusNode: comentarioFocusNode),
+          SafeArea(
+            top: false,
+            child: ComentarioInputBar(focusNode: comentarioFocusNode),
+          ),
         ],
       ),
     );
