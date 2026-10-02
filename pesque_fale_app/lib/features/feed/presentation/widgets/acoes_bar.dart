@@ -60,7 +60,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: p.jaCurtiu ? Icons.favorite : Icons.favorite_border,
-                  cor: p.jaCurtiu ? Colors.red[400]! : colors.primaryAccent,
+                  cor: p.jaCurtiu ? colors.danger : colors.primaryAccent,
                   label: p.jaCurtiu ? 'Curtido' : 'Curtir',
                   onTap: _curtindo ? null : _curtir,
                 ),

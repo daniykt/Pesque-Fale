@@ -19,14 +19,15 @@ class AvatarComTipo extends StatelessWidget {
   static const double _raioAvatar = 24;
   static const double _tamanhoBadge = 20;
 
-  static const List<Color> _coresIniciais = [
-    Color(0xFF0EA5E9),
-    Color(0xFF22C55E),
-    Color(0xFFF97316),
-    Color(0xFFA855F7),
-    Color(0xFFEC4899),
-    Color(0xFF14B8A6),
-    Color(0xFFEAB308),
+  @visibleForTesting
+  static const List<Color> coresIniciais = [
+    Color(0xFF0369A1),
+    Color(0xFF15803D),
+    Color(0xFFC2410C),
+    Color(0xFF7E22CE),
+    Color(0xFFBE185D),
+    Color(0xFF0F766E),
+    Color(0xFFA16207),
   ];
 
   @override
@@ -84,7 +85,7 @@ class AvatarComTipo extends StatelessWidget {
   Color _corIniciais(String? nome) {
     final n = nome ?? '';
     final indice = n.isEmpty ? 0 : n.codeUnits.reduce((a, b) => a + b);
-    return _coresIniciais[indice % _coresIniciais.length];
+    return coresIniciais[indice % coresIniciais.length];
   }
 
   IconData _iconeDoTipo(TipoNotificacao tipo) {

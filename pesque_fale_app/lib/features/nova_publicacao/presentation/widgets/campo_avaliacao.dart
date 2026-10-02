@@ -55,7 +55,7 @@ class CampoAvaliacao extends StatelessWidget {
                 child: Icon(
                   preenchida ? Icons.star : Icons.star_border,
                   size: 32,
-                  color: preenchida ? Colors.amber[600] : colors.textSecondary,
+                  color: preenchida ? colors.rating : colors.textSecondary,
                 ),
               ),
             );

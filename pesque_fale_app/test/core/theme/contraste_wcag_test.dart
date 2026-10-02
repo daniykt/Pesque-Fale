@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pesque_fale_app/core/theme/app_colors.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
+import 'package:pesque_fale_app/features/notificacoes/presentation/widgets/avatar_com_tipo.dart';
 
 /// Razão de contraste WCAG 2.1 entre duas cores opacas.
 double contraste(Color a, Color b) {
@@ -179,4 +180,10 @@ void main() {
       });
     });
   }
+
+  test('branco sobre cada cor de AvatarComTipo.coresIniciais', () {
+    for (final (i, cor) in AvatarComTipo.coresIniciais.indexed) {
+      _verifica('ambos', 'branco / coresIniciais[$i]', Colors.white, cor, 4.5);
+    }
+  });
 }
