@@ -16,7 +16,7 @@ class AbasScroll extends StatelessWidget {
     final abaAtiva = context.watch<FeedProvider>().abaAtiva;
 
     return SizedBox(
-      height: 52,
+      height: 64,
       // Máscara de opacidade (não depende do tema): as abas somem aos poucos
       // na borda direita, sinalizando que a lista continua.
       child: ShaderMask(
@@ -68,14 +68,14 @@ class _AbaChip extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        height: 36,
+        height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: ativa ? colors.primary : Colors.transparent,
           border: ativa ? null : Border.all(color: colors.border),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
