@@ -27,7 +27,7 @@ class PontoHeaderInfo extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 24,
-              color: colors.primary,
+              color: colors.primaryAccent,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),

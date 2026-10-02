@@ -13,7 +13,7 @@ class MapaSkeleton extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         Container(color: colors.surfaceVariant),
-        CircularProgressIndicator(color: colors.primary, strokeWidth: 2.5),
+        CircularProgressIndicator(color: colors.primaryAccent, strokeWidth: 2.5),
       ],
     );
   }

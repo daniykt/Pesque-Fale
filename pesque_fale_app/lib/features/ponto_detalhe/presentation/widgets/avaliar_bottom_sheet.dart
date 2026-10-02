@@ -105,7 +105,7 @@ class _ConteudoState extends State<_Conteudo> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
-                color: colors.primary,
+                color: colors.primaryAccent,
               ),
             ),
             const SizedBox(height: AppSpacing.md),

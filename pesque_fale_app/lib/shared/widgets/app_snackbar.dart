@@ -10,14 +10,14 @@ class AppSnackbar {
     final colors = Theme.of(context).extension<AppColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: TextStyle(color: colors.onDanger)),
         backgroundColor: colors.danger,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'X',
-          textColor: Colors.white,
+          textColor: colors.onDanger,
           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
@@ -32,14 +32,14 @@ class AppSnackbar {
     final colors = Theme.of(context).extension<AppColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: TextStyle(color: colors.onSuccess)),
         backgroundColor: colors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
         duration: duration,
         action: SnackBarAction(
           label: 'X',
-          textColor: Colors.white,
+          textColor: colors.onSuccess,
           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
@@ -50,7 +50,7 @@ class AppSnackbar {
     final colors = Theme.of(context).extension<AppColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: TextStyle(color: colors.onWarning)),
         backgroundColor: colors.warning,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
@@ -63,7 +63,7 @@ class AppSnackbar {
     final colors = Theme.of(context).extension<AppColors>()!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: colors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),

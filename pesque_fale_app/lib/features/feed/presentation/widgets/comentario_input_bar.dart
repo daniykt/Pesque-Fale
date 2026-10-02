@@ -73,7 +73,7 @@ class _ComentarioInputBarState extends State<ComentarioInputBar> {
             IconButton(
               icon: Icon(
                 Icons.send,
-                color: _temTexto ? colors.primary : colors.textSecondary,
+                color: _temTexto ? colors.primaryAccent : colors.textSecondary,
               ),
               onPressed: _temTexto ? _enviar : null,
             ),
