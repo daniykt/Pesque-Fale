@@ -119,7 +119,7 @@ class _EstadoVazio extends StatelessWidget {
           if (isOwnProfile) ...[
             const SizedBox(height: AppSpacing.sm),
             FilledButton(
-              onPressed: () => Navigator.pushNamed(context, '/publicar'),
+              onPressed: () => Navigator.pushNamed(context, '/publicacao/nova'),
               child: const Text('Nova Publicação'),
             ),
           ],

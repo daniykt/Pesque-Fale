@@ -260,8 +260,6 @@ class PesqueFaleApp extends StatelessWidget {
         '/home': (_) => MainShell(key: MainShell.shellKey),
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/configuracoes': (_) => const ConfiguracoesPage(),
-        '/publicar': (_) =>
-            const AppEmConstrucaoPage(titulo: 'Nova publicação'),
         '/publicacao/nova': (context) =>
             ChangeNotifierProvider<NovaPublicacaoProvider>(
               create: (ctx) => NovaPublicacaoProvider(
