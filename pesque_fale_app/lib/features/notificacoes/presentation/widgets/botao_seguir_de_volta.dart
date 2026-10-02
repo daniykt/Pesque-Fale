@@ -47,7 +47,9 @@ class _BotaoSeguirDeVoltaState extends State<BotaoSeguirDeVolta> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: _jaSigo ? colors.primary : Colors.transparent,
-          border: Border.all(color: colors.primary),
+          border: Border.all(
+            color: _jaSigo ? colors.primary : colors.primaryAccent,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -57,7 +59,7 @@ class _BotaoSeguirDeVoltaState extends State<BotaoSeguirDeVolta> {
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: _jaSigo ? Colors.white : colors.primary,
+                    color: _jaSigo ? Colors.white : colors.primaryAccent,
                   ),
                 )
               : Row(
@@ -66,7 +68,7 @@ class _BotaoSeguirDeVoltaState extends State<BotaoSeguirDeVolta> {
                     Icon(
                       _jaSigo ? Icons.check : Icons.person_add,
                       size: 14,
-                      color: _jaSigo ? Colors.white : colors.primary,
+                      color: _jaSigo ? Colors.white : colors.primaryAccent,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -74,7 +76,7 @@ class _BotaoSeguirDeVoltaState extends State<BotaoSeguirDeVolta> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _jaSigo ? Colors.white : colors.primary,
+                        color: _jaSigo ? Colors.white : colors.primaryAccent,
                       ),
                     ),
                   ],

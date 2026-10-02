@@ -43,7 +43,10 @@ class BotaoSalvar extends StatelessWidget {
             ? null
             : () => _salvar(context, provider),
         style: salvo
-            ? FilledButton.styleFrom(backgroundColor: colors.success)
+            ? FilledButton.styleFrom(
+                backgroundColor: colors.success,
+                foregroundColor: colors.onSuccess,
+              )
             : null,
         child: salvando
             ? const SizedBox(
@@ -55,12 +58,12 @@ class BotaoSalvar extends StatelessWidget {
                 ),
               )
             : salvo
-            ? const Row(
+            ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check, color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text('Salvo!'),
+                  Icon(Icons.check, color: colors.onSuccess, size: 18),
+                  const SizedBox(width: 8),
+                  const Text('Salvo!'),
                 ],
               )
             : const Text('Salvar Alterações'),

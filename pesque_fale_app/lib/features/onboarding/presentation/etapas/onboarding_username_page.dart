@@ -138,7 +138,7 @@ class _OnboardingUsernamePageState extends State<OnboardingUsernamePage> {
           TextField(
             controller: _controller,
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.alternate_email, color: colors.primary),
+              prefixIcon: Icon(Icons.alternate_email, color: colors.primaryAccent),
               hintText: 'seu_username',
               filled: true,
               fillColor: colors.surface,

@@ -60,7 +60,7 @@ class _InboxPageState extends State<InboxPage> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: colors.primary,
+                        color: colors.primaryAccent,
                       ),
                     ),
                   ),

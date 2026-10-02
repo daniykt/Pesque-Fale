@@ -60,7 +60,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: p.jaCurtiu ? Icons.favorite : Icons.favorite_border,
-                  cor: p.jaCurtiu ? Colors.red[400]! : colors.primary,
+                  cor: p.jaCurtiu ? Colors.red[400]! : colors.primaryAccent,
                   label: p.jaCurtiu ? 'Curtido' : 'Curtir',
                   onTap: _curtindo ? null : _curtir,
                 ),
@@ -68,7 +68,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: Icons.chat_bubble_outline,
-                  cor: colors.primary,
+                  cor: colors.primaryAccent,
                   label: 'Comentar',
                   onTap: widget.onComentarTap,
                 ),
@@ -76,7 +76,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: Icons.share,
-                  cor: colors.primary,
+                  cor: colors.primaryAccent,
                   label: 'Compartilhar',
                   onTap: _compartilhar,
                 ),

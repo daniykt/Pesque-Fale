@@ -60,7 +60,7 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Text(
                       'está digitando...',
                       style: TextStyle(
-                        color: colors.primary,
+                        color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                       ),

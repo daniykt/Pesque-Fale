@@ -39,9 +39,9 @@ class _AbasPerfilState extends State<AbasPerfil>
           controller: _controller,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          labelColor: colors.primary,
+          labelColor: colors.primaryAccent,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: colors.primary,
+          indicatorColor: colors.primaryAccent,
           tabs: const [
             Tab(text: 'Galeria'),
             Tab(text: 'Equipamentos'),

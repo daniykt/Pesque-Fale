@@ -30,7 +30,7 @@ class AuthLogoTitle extends StatelessWidget {
             style: GoogleFonts.antonSc(
               fontSize: 28,
               letterSpacing: 2,
-              color: colors.primary,
+              color: colors.primaryAccent,
             ),
           ),
         ],

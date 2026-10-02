@@ -51,7 +51,7 @@ class OnboardingLayoutBase extends StatelessWidget {
                         DefaultTextStyle.merge(
                           textAlign: TextAlign.center,
                           style: textTheme.headlineSmall?.copyWith(
-                            color: colors.primary,
+                            color: colors.primaryAccent,
                             fontWeight: FontWeight.bold,
                           ),
                           child: titulo,

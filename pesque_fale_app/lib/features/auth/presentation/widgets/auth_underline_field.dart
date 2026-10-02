@@ -44,17 +44,17 @@ class AuthUnderlineField extends StatelessWidget {
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: label,
-        suffixIcon: Icon(icon, color: colors.primary, size: 20),
+        suffixIcon: Icon(icon, color: colors.primaryAccent, size: 20),
         filled: false,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
         border: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 1.5),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 1.5),
         ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 1.5),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 1.5),
         ),
         focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 2),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 2),
         ),
         errorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: colors.danger, width: 1.5),
@@ -64,7 +64,7 @@ class AuthUnderlineField extends StatelessWidget {
         ),
         labelStyle: TextStyle(color: colors.textSecondary),
         floatingLabelStyle: TextStyle(
-          color: colors.primary,
+          color: colors.primaryAccent,
           fontWeight: FontWeight.w500,
         ),
       ),

@@ -83,13 +83,13 @@ class _AbaChip extends StatelessWidget {
             Icon(
               aba.icone,
               size: 16,
-              color: ativa ? Colors.white : colors.primary,
+              color: ativa ? Colors.white : colors.primaryAccent,
             ),
             const SizedBox(width: 6),
             Text(
               aba.label,
               style: TextStyle(
-                color: ativa ? Colors.white : colors.primary,
+                color: ativa ? Colors.white : colors.primaryAccent,
                 fontWeight: ativa ? FontWeight.bold : FontWeight.w500,
               ),
             ),

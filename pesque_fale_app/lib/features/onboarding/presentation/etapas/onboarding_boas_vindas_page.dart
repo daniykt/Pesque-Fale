@@ -63,7 +63,7 @@ class OnboardingBoasVindasPage extends StatelessWidget {
               if (i > 0) const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  Icon(_itens[i].$1, color: colors.primary),
+                  Icon(_itens[i].$1, color: colors.primaryAccent),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(child: Text(_itens[i].$2)),
                 ],

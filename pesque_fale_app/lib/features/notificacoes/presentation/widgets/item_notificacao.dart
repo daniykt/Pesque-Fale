@@ -63,7 +63,7 @@ class ItemNotificacao extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: colors.primary,
+                            color: colors.primaryAccent,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.xxs),

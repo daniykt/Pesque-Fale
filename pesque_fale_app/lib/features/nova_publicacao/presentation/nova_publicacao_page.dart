@@ -172,7 +172,7 @@ class _LabelObrigatorio extends StatelessWidget {
         text: TextSpan(
           text: texto,
           style: TextStyle(
-            color: colors.primary,
+            color: colors.primaryAccent,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),

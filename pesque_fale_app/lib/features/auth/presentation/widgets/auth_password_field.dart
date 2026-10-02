@@ -76,20 +76,20 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
             _showEye
                 ? (_obscure ? Icons.visibility_off : Icons.visibility)
                 : Icons.lock_outline,
-            color: colors.primary,
+            color: colors.primaryAccent,
             size: 20,
           ),
         ),
         filled: false,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
         border: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 1.5),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 1.5),
         ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 1.5),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 1.5),
         ),
         focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary, width: 2),
+          borderSide: BorderSide(color: colors.primaryAccent, width: 2),
         ),
         errorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: colors.danger, width: 1.5),
@@ -99,7 +99,7 @@ class _AuthPasswordFieldState extends State<AuthPasswordField> {
         ),
         labelStyle: TextStyle(color: colors.textSecondary),
         floatingLabelStyle: TextStyle(
-          color: colors.primary,
+          color: colors.primaryAccent,
           fontWeight: FontWeight.w500,
         ),
       ),

@@ -27,7 +27,7 @@ class AuthSwitchLink extends StatelessWidget {
           child: Text(
             actionLabel,
             style: bodyMedium.copyWith(
-              color: colors.primary,
+              color: colors.primaryAccent,
               fontWeight: FontWeight.w700,
             ),
           ),

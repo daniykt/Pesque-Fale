@@ -90,7 +90,7 @@ class _ConteudoState extends State<_Conteudo> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
-                        color: colors.primary,
+                        color: colors.primaryAccent,
                       ),
                     ),
                   ),

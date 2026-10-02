@@ -35,7 +35,7 @@ class ClimaCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 42,
               fontWeight: FontWeight.bold,
-              color: colors.primary,
+              color: colors.primaryAccent,
             ),
           ),
           const SizedBox(height: 4),

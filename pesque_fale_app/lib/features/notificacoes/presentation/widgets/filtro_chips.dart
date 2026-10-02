@@ -39,10 +39,12 @@ class FiltroChips extends StatelessWidget {
           backgroundColor: colors.surface,
           selectedColor: colors.primary,
           labelStyle: TextStyle(
-            color: ativo ? Colors.white : colors.primary,
+            color: ativo ? Colors.white : colors.primaryAccent,
             fontWeight: FontWeight.w600,
           ),
-          side: BorderSide(color: colors.primary),
+          side: BorderSide(
+            color: ativo ? colors.primary : colors.primaryAccent,
+          ),
           shape: const StadiumBorder(),
         );
       }).toList(),

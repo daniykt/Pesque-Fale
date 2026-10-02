@@ -64,7 +64,7 @@ class PublicacaoCard extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: colors.primary,
+                            color: colors.primaryAccent,
                           ),
                         ),
                       ),
@@ -156,12 +156,15 @@ class PublicacaoCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.15),
+                        color: colors.primaryAccent.withValues(alpha: 0.15),
                         borderRadius: AppRadius.pillRadius,
                       ),
                       child: Text(
                         '#$tag',
-                        style: TextStyle(color: colors.primary, fontSize: 12),
+                        style: TextStyle(
+                          color: colors.primaryAccent,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                 ],
