@@ -109,8 +109,8 @@ class _InputMensagemState extends State<InputMensagem> {
                   onTap: _podeEnviar ? _enviar : null,
                   borderRadius: AppRadius.pillRadius,
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: colors.primary,
                       shape: BoxShape.circle,

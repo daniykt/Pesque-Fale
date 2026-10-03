@@ -31,7 +31,9 @@ class OnboardingBarraProgresso extends StatelessWidget {
               Expanded(
                 child: Container(
                   height: 2,
-                  color: i < etapaAtual.index ? colors.primary : colors.border,
+                  color: i < etapaAtual.index
+                      ? colors.primaryAccent
+                      : colors.border,
                 ),
               ),
           ],
@@ -60,12 +62,12 @@ class _CirculoEtapa extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: preenchido ? colors.primary : colors.surfaceVariant,
+        color: preenchido ? colors.primaryAccent : colors.surfaceVariant,
       ),
       child: Text(
         '$numero',
         style: TextStyle(
-          color: preenchido ? Colors.white : colors.textSecondary,
+          color: preenchido ? colors.onPrimaryAccent : colors.textSecondary,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),

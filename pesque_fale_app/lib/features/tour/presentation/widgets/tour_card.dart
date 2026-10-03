@@ -56,13 +56,13 @@ class TourCard extends StatelessWidget {
                       vertical: AppSpacing.xxs,
                     ),
                     decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
+                      color: colors.primaryAccent.withValues(alpha: 0.1),
                       borderRadius: AppRadius.pillRadius,
                     ),
                     child: Text(
                       'Tour guiado',
                       style: textTheme.labelSmall?.copyWith(
-                        color: colors.primary,
+                        color: colors.primaryAccent,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -99,14 +99,14 @@ class TourCard extends StatelessWidget {
                   value: progresso,
                   minHeight: 6,
                   backgroundColor: colors.surfaceVariant,
-                  color: colors.primary,
+                  color: colors.primaryAccent,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               Text(
                 passo.titulo,
                 style: textTheme.headlineMedium?.copyWith(
-                  color: colors.primary,
+                  color: colors.primaryAccent,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -130,7 +130,7 @@ class TourCard extends StatelessWidget {
                       width: ativo ? 24 : 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: ativo ? colors.primary : colors.border,
+                        color: ativo ? colors.primaryAccent : colors.border,
                         borderRadius: AppRadius.pillRadius,
                       ),
                     ),

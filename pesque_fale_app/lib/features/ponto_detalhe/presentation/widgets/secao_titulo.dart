@@ -14,7 +14,7 @@ class SecaoTitulo extends StatelessWidget {
     return Text(
       texto,
       style: TextStyle(
-        color: colors.primary,
+        color: colors.primaryAccent,
         fontSize: 12,
         fontWeight: FontWeight.bold,
         letterSpacing: 1,

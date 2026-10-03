@@ -73,7 +73,7 @@ class CampoLocal extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.location_on, color: colors.primary),
+            Icon(Icons.location_on, color: colors.primaryAccent),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Column(

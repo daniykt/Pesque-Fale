@@ -77,7 +77,7 @@ class _CtaPerfilState extends State<CtaPerfil> {
         child: FilledButton.icon(
           icon: const Icon(Icons.add_photo_alternate_outlined),
           label: const Text('Nova Publicação'),
-          onPressed: () => Navigator.pushNamed(context, '/publicar'),
+          onPressed: () => Navigator.pushNamed(context, '/publicacao/nova'),
         ),
       );
     }

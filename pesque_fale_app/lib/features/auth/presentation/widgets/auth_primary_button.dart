@@ -26,7 +26,7 @@ class AuthPrimaryButton extends StatelessWidget {
         style: ButtonStyle(
           minimumSize: WidgetStateProperty.all(const Size.fromHeight(48)),
           side: WidgetStateProperty.all(
-            BorderSide(color: colors.primary, width: 1.5),
+            BorderSide(color: colors.primaryAccent, width: 1.5),
           ),
           shape: WidgetStateProperty.all(
             RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
@@ -37,10 +37,10 @@ class AuthPrimaryButton extends StatelessWidget {
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) return Colors.white;
-            return colors.primary;
+            return colors.primaryAccent;
           }),
           overlayColor: WidgetStateProperty.all(
-            colors.primary.withValues(alpha: 0.08),
+            colors.primaryAccent.withValues(alpha: 0.08),
           ),
           textStyle: WidgetStateProperty.all(
             GoogleFonts.poppins(
@@ -59,7 +59,7 @@ class AuthPrimaryButton extends StatelessWidget {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: colors.primary,
+                      color: colors.primaryAccent,
                     ),
                   ),
                   const SizedBox(width: 8),

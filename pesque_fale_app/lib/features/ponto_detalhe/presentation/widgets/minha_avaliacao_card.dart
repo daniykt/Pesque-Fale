@@ -27,8 +27,8 @@ class MinhaAvaliacaoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.05),
-        border: Border.all(color: colors.primary, width: 1.5),
+        color: colors.primaryAccent.withValues(alpha: 0.05),
+        border: Border.all(color: colors.primaryAccent, width: 1.5),
         borderRadius: AppRadius.mdRadius,
       ),
       child: Column(
@@ -40,7 +40,7 @@ class MinhaAvaliacaoCard extends StatelessWidget {
                 child: Text(
                   'SUA AVALIAÇÃO',
                   style: TextStyle(
-                    color: colors.primary,
+                    color: colors.primaryAccent,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                     letterSpacing: 1,

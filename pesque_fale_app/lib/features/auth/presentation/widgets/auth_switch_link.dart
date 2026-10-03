@@ -22,14 +22,15 @@ class AuthSwitchLink extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(question, style: bodyMedium.copyWith(color: colors.textSecondary)),
-        GestureDetector(
-          onTap: onTap,
+        TextButton(
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: const Size(0, kMinInteractiveDimension),
+          ),
           child: Text(
             actionLabel,
-            style: bodyMedium.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.w700,
-            ),
+            style: bodyMedium.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],

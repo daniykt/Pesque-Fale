@@ -20,7 +20,7 @@ class ItemConversa extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final foto = CloudinaryUrl.avatar(conversa.outroFoto, tamanho: 96);
     final temNaoLidas = conversa.naoLidas > 0;
-    final corDestaque = temNaoLidas ? colors.primary : colors.textSecondary;
+    final corDestaque = temNaoLidas ? colors.primaryAccent : colors.textSecondary;
 
     return InkWell(
       onTap: onTap,

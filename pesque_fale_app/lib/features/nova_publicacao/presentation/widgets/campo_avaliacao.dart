@@ -51,11 +51,11 @@ class CampoAvaliacao extends StatelessWidget {
               customBorder: const CircleBorder(),
               onTap: () => onChanged((index + 1).toDouble()),
               child: Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
                 child: Icon(
                   preenchida ? Icons.star : Icons.star_border,
                   size: 32,
-                  color: preenchida ? Colors.amber[600] : colors.textSecondary,
+                  color: preenchida ? colors.rating : colors.textSecondary,
                 ),
               ),
             );

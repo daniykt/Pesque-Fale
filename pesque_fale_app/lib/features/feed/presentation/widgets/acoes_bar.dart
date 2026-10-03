@@ -34,7 +34,7 @@ class _AcoesBarState extends State<AcoesBar> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
           child: Row(
             children: [
               Text(
@@ -44,9 +44,20 @@ class _AcoesBarState extends State<AcoesBar> {
               const SizedBox(width: 12),
               InkWell(
                 onTap: widget.onComentarTap,
-                child: Text(
-                  '${p.comentariosCount} comentário${p.comentariosCount != 1 ? 's' : ''}',
-                  style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: kMinInteractiveDimension,
+                  ),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(
+                      '${p.comentariosCount} comentário${p.comentariosCount != 1 ? 's' : ''}',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -60,7 +71,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: p.jaCurtiu ? Icons.favorite : Icons.favorite_border,
-                  cor: p.jaCurtiu ? Colors.red[400]! : colors.primary,
+                  cor: p.jaCurtiu ? colors.danger : colors.primaryAccent,
                   label: p.jaCurtiu ? 'Curtido' : 'Curtir',
                   onTap: _curtindo ? null : _curtir,
                 ),
@@ -68,7 +79,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: Icons.chat_bubble_outline,
-                  cor: colors.primary,
+                  cor: colors.primaryAccent,
                   label: 'Comentar',
                   onTap: widget.onComentarTap,
                 ),
@@ -76,7 +87,7 @@ class _AcoesBarState extends State<AcoesBar> {
               Expanded(
                 child: _AcaoBotao(
                   icon: Icons.share,
-                  cor: colors.primary,
+                  cor: colors.primaryAccent,
                   label: 'Compartilhar',
                   onTap: _compartilhar,
                 ),
@@ -135,7 +146,7 @@ class _AcaoBotao extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.xs,
-          vertical: 8,
+          vertical: 14,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

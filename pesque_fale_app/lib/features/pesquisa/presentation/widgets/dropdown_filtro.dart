@@ -32,7 +32,7 @@ class DropdownFiltro<T> extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: colors.primary,
+            color: colors.primaryAccent,
             letterSpacing: 0.5,
           ),
         ),

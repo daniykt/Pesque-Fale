@@ -71,7 +71,10 @@ class _EditarPerfilViewState extends State<_EditarPerfilView> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: colors.danger),
+            style: FilledButton.styleFrom(
+              backgroundColor: colors.danger,
+              foregroundColor: colors.onDanger,
+            ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Descartar'),
           ),

@@ -100,7 +100,7 @@ class _InfoUsuarioState extends State<InfoUsuario> {
                             _bioExpandida ? 'ver menos' : 'ver mais',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: colors.primary,
+                                  color: colors.primaryAccent,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),

@@ -191,7 +191,11 @@ class _ChipRaio extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.social_distance, size: 16, color: colors.primary),
+              Icon(
+                Icons.social_distance,
+                size: 16,
+                color: colors.primaryAccent,
+              ),
               const SizedBox(width: 4),
               Text('Raio: ${raioKm.toInt()} km'),
               const SizedBox(width: 4),

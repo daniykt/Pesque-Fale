@@ -67,13 +67,13 @@ class EventoCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: 0.15),
+                            color: colors.primaryAccent.withValues(alpha: 0.15),
                             borderRadius: AppRadius.pillRadius,
                           ),
                           child: Text(
                             _dataResumida(evento.dataInicio),
                             style: TextStyle(
-                              color: colors.primary,
+                              color: colors.primaryAccent,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),

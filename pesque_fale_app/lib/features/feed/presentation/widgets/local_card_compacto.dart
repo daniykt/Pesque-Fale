@@ -78,7 +78,7 @@ class LocalCardCompacto extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: colors.primary,
+                            color: colors.primaryAccent,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

@@ -21,8 +21,8 @@ class OnboardingFabTema extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: () => context.read<ThemeProvider>().toggleTheme(),
         child: SizedBox(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           child: Icon(
             isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
             color: colors.textPrimary,

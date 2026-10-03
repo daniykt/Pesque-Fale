@@ -18,9 +18,12 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: colors.primary,
         brightness: brightness,
-        primary: colors.primary,
+        primary: colors.primaryAccent,
+        onPrimary: colors.onPrimaryAccent,
         surface: colors.surface,
+        onSurface: colors.textPrimary,
         error: colors.danger,
+        onError: colors.onDanger,
       ),
       textTheme: AppTypography.textTheme(colors.textPrimary),
       cardTheme: CardThemeData(
@@ -38,6 +41,12 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: colors.primaryAccent),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colors.primary,
+          foregroundColor: Colors.white,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

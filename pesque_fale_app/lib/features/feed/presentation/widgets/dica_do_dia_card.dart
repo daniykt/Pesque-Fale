@@ -21,7 +21,7 @@ class DicaDoDiaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.phishing, color: colors.primary),
+              Icon(Icons.phishing, color: colors.primaryAccent),
               const SizedBox(width: 8),
               const Text(
                 'Dica do dia',
