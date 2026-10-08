@@ -20,18 +20,23 @@ class EstatisticasPerfil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _Contador(valor: totalPublicacoes, label: 'Publicações'),
-        _Contador(
-          valor: usuario.seguidores,
-          label: 'Seguidores',
-          onTap: onSeguidoresTap,
+        Expanded(
+          child: _Contador(valor: totalPublicacoes, label: 'Publicações'),
         ),
-        _Contador(
-          valor: usuario.seguindo,
-          label: 'Seguindo',
-          onTap: onSeguindoTap,
+        Expanded(
+          child: _Contador(
+            valor: usuario.seguidores,
+            label: 'Seguidores',
+            onTap: onSeguidoresTap,
+          ),
+        ),
+        Expanded(
+          child: _Contador(
+            valor: usuario.seguindo,
+            label: 'Seguindo',
+            onTap: onSeguindoTap,
+          ),
         ),
       ],
     );
@@ -45,29 +50,48 @@ class _Contador extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
 
+  static const double _raio = 12;
+  static const EdgeInsets _padding = EdgeInsets.symmetric(vertical: 8);
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    final conteudo = Column(
-      children: [
-        Text(
-          '$valor',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-        ),
-      ],
+    final conteudo = Padding(
+      padding: _padding,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$valor',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      ),
     );
 
     if (onTap == null) return conteudo;
 
-    return GestureDetector(onTap: onTap, child: conteudo);
+    // InkWell precisa de um Material ancestral para pintar o ripple. O
+    // Scaffold já provê um, mas garantimos aqui para funcionar em qualquer
+    // contexto (ex.: dentro de um Dialog).
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(_raio),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_raio),
+        child: conteudo,
+      ),
+    );
   }
 }
