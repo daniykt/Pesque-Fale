@@ -5,7 +5,7 @@ import '../domain/tour_passo.dart';
 import '../domain/tour_status_storage.dart';
 
 /// Controla o tour guiado global (7 passos), disparado automaticamente após
-/// o onboarding ou manualmente via AppDrawer/Configurações.
+/// o onboarding ou manualmente via Configurações.
 class TourProvider extends ChangeNotifier {
   TourProvider({required this.storage, required this.authProvider});
 

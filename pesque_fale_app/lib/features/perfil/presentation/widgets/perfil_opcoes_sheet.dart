@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Substitui o AppDrawer quando o usuário está vendo o próprio perfil.
+/// Menu de opções do usuário acessado pelo ícone no AppBar da Perfil.
 class PerfilOpcoesSheet extends StatelessWidget {
   const PerfilOpcoesSheet({super.key});
 
