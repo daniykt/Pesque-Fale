@@ -19,7 +19,6 @@ import '../../features/pesquisa/presentation/pesquisa_page.dart';
 import '../../features/tour/presentation/widgets/tour_overlay.dart';
 import '../../features/tour/providers/tour_provider.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
-import '../../shared/widgets/app_drawer.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -139,9 +138,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
                     const BotaoLimparNotificacoes(),
                 ],
               ),
-        drawer: naTelaDePerfil || naTelaDePesquisa || naTelaDeChat
-            ? null
-            : const AppDrawer(),
         body: Stack(
           children: [
             IndexedStack(index: _currentIndex, children: _buildScreens()),
