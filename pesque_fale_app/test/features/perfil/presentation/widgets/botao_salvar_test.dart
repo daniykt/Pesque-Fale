@@ -12,6 +12,7 @@ import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 import 'package:pesque_fale_app/features/perfil/presentation/editar_perfil/widgets/botao_salvar.dart';
 import 'package:pesque_fale_app/features/perfil/providers/editar_perfil_provider.dart';
@@ -91,6 +92,20 @@ class _FakePerfilRepository implements PerfilRepository {
 
   @override
   Future<bool> verificarUsername(String username) async => true;
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
 }
 
 void main() {

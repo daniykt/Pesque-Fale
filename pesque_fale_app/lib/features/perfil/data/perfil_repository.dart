@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
+import 'perfil_api_client.dart';
 
 abstract class PerfilRepository {
   /// Busca o perfil completo (usuario + publicacoes + estado de seguimento)
@@ -11,6 +12,21 @@ abstract class PerfilRepository {
   Future<void> seguir(String id);
 
   Future<void> deixarDeSeguir(String id);
+
+  /// Lista paginada de quem segue [id]. Cada item traz `souSeguidor` do ponto
+  /// de vista do viewer autenticado (null quando sem auth).
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  });
+
+  /// Lista paginada de quem [id] segue. Mesmo contrato de `souSeguidor`.
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  });
 
   /// Retorna a nova URL. [filename] preserva extensão original pro
   /// Content-Type no multipart.

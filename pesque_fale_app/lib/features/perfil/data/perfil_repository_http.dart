@@ -55,12 +55,14 @@ class PerfilRepositoryHttp implements PerfilRepository {
   Future<bool> verificarUsername(String username) =>
       apiClient.verificarUsername(username);
 
+  @override
   Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
     String id, {
     int pagina = 1,
     int porPagina = 20,
   }) => apiClient.buscarSeguidores(id, pagina: pagina, porPagina: porPagina);
 
+  @override
   Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
     String id, {
     int pagina = 1,
