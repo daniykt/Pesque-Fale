@@ -4,6 +4,7 @@ const {
   seguir, deixarDeSeguir, getSeguidores, getSeguindo, buscar
 } = require('./usuarios.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
+const authOpcional = require('../../middlewares/auth-opcional.middleware');
 const { listarPorUsuario } = require('../publicacoes/publicacoes.controller');
 
 const router = Router();
@@ -155,9 +156,12 @@ router.get('/:id', getPerfil);
  *           default: 20
  *     responses:
  *       200:
- *         description: Lista paginada de seguidores
+ *         description: >-
+ *           Lista paginada de seguidores. Cada item traz souSeguidor = true/false
+ *           indicando se o viewer autenticado segue aquele usuário; null quando
+ *           não autenticado.
  */
-router.get('/:id/seguidores', getSeguidores);
+router.get('/:id/seguidores', authOpcional, getSeguidores);
 
 /**
  * @swagger
@@ -174,9 +178,12 @@ router.get('/:id/seguidores', getSeguidores);
  *           type: string
  *     responses:
  *       200:
- *         description: Lista paginada de seguindo
+ *         description: >-
+ *           Lista paginada de usuários que o alvo segue. Cada item traz
+ *           souSeguidor = true/false indicando se o viewer autenticado segue
+ *           aquele usuário; null quando não autenticado.
  */
-router.get('/:id/seguindo', getSeguindo);
+router.get('/:id/seguindo', authOpcional, getSeguindo);
 
 /**
  * @swagger

@@ -236,6 +236,7 @@ async function deixarDeSeguir(req, res) {
 
 async function getSeguidores(req, res) {
   const { id } = req.params;
+  const viewerId = req.usuario?.id ?? null;
   const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
   const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
   const offset = (pagina - 1) * porPagina;
@@ -248,13 +249,17 @@ async function getSeguidores(req, res) {
 
     const [result, total] = await Promise.all([
       pool.query(
-        `SELECT u.id, u.nome, u.username, u.foto_perfil
+        `SELECT u.id, u.nome, u.username, u.foto_perfil,
+                CASE WHEN $4::uuid IS NULL THEN NULL
+                     ELSE (us2.seguidor_id IS NOT NULL) END AS sou_seguidor
          FROM usuario_seguidores us
          JOIN usuarios u ON u.id = us.seguidor_id
+         LEFT JOIN usuario_seguidores us2
+           ON us2.seguidor_id = $4::uuid AND us2.seguido_id = u.id
          WHERE us.seguido_id = $1
          ORDER BY us.criado_em DESC
          LIMIT $2 OFFSET $3`,
-        [id, porPagina, offset]
+        [id, porPagina, offset, viewerId]
       ),
       pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1', [id]),
     ]);
@@ -265,6 +270,7 @@ async function getSeguidores(req, res) {
         nome: u.nome,
         username: u.username,
         fotoPerfil: u.foto_perfil,
+        souSeguidor: u.sou_seguidor,
       })),
       meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
@@ -276,6 +282,7 @@ async function getSeguidores(req, res) {
 
 async function getSeguindo(req, res) {
   const { id } = req.params;
+  const viewerId = req.usuario?.id ?? null;
   const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
   const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
   const offset = (pagina - 1) * porPagina;
@@ -288,13 +295,17 @@ async function getSeguindo(req, res) {
 
     const [result, total] = await Promise.all([
       pool.query(
-        `SELECT u.id, u.nome, u.username, u.foto_perfil
+        `SELECT u.id, u.nome, u.username, u.foto_perfil,
+                CASE WHEN $4::uuid IS NULL THEN NULL
+                     ELSE (us2.seguidor_id IS NOT NULL) END AS sou_seguidor
          FROM usuario_seguidores us
          JOIN usuarios u ON u.id = us.seguido_id
+         LEFT JOIN usuario_seguidores us2
+           ON us2.seguidor_id = $4::uuid AND us2.seguido_id = u.id
          WHERE us.seguidor_id = $1
          ORDER BY us.criado_em DESC
          LIMIT $2 OFFSET $3`,
-        [id, porPagina, offset]
+        [id, porPagina, offset, viewerId]
       ),
       pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1', [id]),
     ]);
@@ -305,6 +316,7 @@ async function getSeguindo(req, res) {
         nome: u.nome,
         username: u.username,
         fotoPerfil: u.foto_perfil,
+        souSeguidor: u.sou_seguidor,
       })),
       meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
