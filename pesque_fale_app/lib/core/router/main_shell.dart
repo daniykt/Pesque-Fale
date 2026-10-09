@@ -14,7 +14,6 @@ import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
 import '../../features/notificacoes/providers/notificacoes_provider.dart';
 import '../../features/perfil/data/perfil_repository.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
-import '../../features/perfil/presentation/widgets/perfil_opcoes_sheet.dart';
 import '../../features/pesquisa/presentation/pesquisa_page.dart';
 import '../../features/tour/presentation/widgets/tour_overlay.dart';
 import '../../features/tour/providers/tour_provider.dart';
@@ -46,7 +45,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   static const int _pesquisaIndex = MainShell.pesquisaIndex;
   static const int _chatIndex = 2;
   static const int _alertasIndex = MainShell.alertasIndex;
-  static const int _perfilIndex = MainShell.perfilIndex;
 
   List<Widget> _buildScreens() => [
     const FeedPage(),
@@ -101,7 +99,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final naTelaDePerfil = _currentIndex == _perfilIndex;
     final naTelaDePesquisa = _currentIndex == _pesquisaIndex;
     final naTelaDeChat = _currentIndex == _chatIndex;
     final notifCount = context.watch<BadgeNotificacoesProvider>().naoLidas;
@@ -125,14 +122,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
             ? null
             : AppBar(
                 title: Text(_titles[_currentIndex]),
-                leading: naTelaDePerfil
-                    ? Builder(
-                        builder: (context) => IconButton(
-                          icon: const Icon(Icons.menu),
-                          onPressed: () => PerfilOpcoesSheet.show(context),
-                        ),
-                      )
-                    : null,
                 actions: [
                   if (_currentIndex == _alertasIndex)
                     const BotaoLimparNotificacoes(),

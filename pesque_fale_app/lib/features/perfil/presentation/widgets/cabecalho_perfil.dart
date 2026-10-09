@@ -20,13 +20,15 @@ class CabecalhoPerfil extends StatefulWidget {
     required this.usuario,
     required this.isOwnProfile,
     this.onEditar,
-    this.onMenu,
+    this.onConfiguracoes,
+    this.onSobre,
   });
 
   final Usuario usuario;
   final bool isOwnProfile;
   final VoidCallback? onEditar;
-  final VoidCallback? onMenu;
+  final VoidCallback? onConfiguracoes;
+  final VoidCallback? onSobre;
 
   static const fotoTamanho = 80.0;
   static const _fotoOffset = 40.0;
@@ -142,10 +144,12 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
             ),
             if (widget.isOwnProfile &&
                 widget.onEditar != null &&
-                widget.onMenu != null)
+                widget.onConfiguracoes != null &&
+                widget.onSobre != null)
               AcoesHeaderPerfil(
                 onEditar: widget.onEditar!,
-                onMenu: widget.onMenu!,
+                onConfiguracoes: widget.onConfiguracoes!,
+                onSobre: widget.onSobre!,
               ),
             Positioned(
               bottom: -CabecalhoPerfil._fotoOffset,
