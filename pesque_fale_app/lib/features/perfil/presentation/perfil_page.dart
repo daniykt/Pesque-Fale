@@ -10,7 +10,6 @@ import 'widgets/cabecalho_perfil.dart';
 import 'widgets/cta_perfil.dart';
 import 'widgets/estatisticas_perfil.dart';
 import 'widgets/lista_relacionamentos_sheet.dart';
-import 'widgets/perfil_opcoes_sheet.dart';
 import 'widgets/perfil_skeleton.dart';
 
 class PerfilPage extends StatefulWidget {
@@ -91,7 +90,9 @@ class _PerfilPageState extends State<PerfilPage> {
             usuario: usuario,
             isOwnProfile: provider.isOwnProfile,
             onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
-            onMenu: () => PerfilOpcoesSheet.show(context),
+            onConfiguracoes: () =>
+                Navigator.pushNamed(context, '/configuracoes'),
+            onSobre: () => Navigator.pushNamed(context, '/sobre'),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
