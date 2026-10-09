@@ -17,6 +17,7 @@ import 'package:pesque_fale_app/features/onboarding/presentation/etapas/onboardi
 import 'package:pesque_fale_app/features/onboarding/presentation/widgets/onboarding_link_pular.dart';
 import 'package:pesque_fale_app/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 
 class _FakeAuthRepository implements AuthRepository {
@@ -81,6 +82,20 @@ class _FakePerfilRepository implements PerfilRepository {
 
   @override
   Future<bool> verificarUsername(String username) async => true;
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
 }
 
 void main() {

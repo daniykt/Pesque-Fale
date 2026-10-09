@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../../core/router/shell_bottom_nav.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../providers/lista_relacionamentos_provider.dart';
 import '../providers/perfil_provider.dart';
 import 'widgets/abas_perfil.dart';
 import 'widgets/cabecalho_perfil.dart';
 import 'widgets/cta_perfil.dart';
 import 'widgets/estatisticas_perfil.dart';
+import 'widgets/lista_relacionamentos_sheet.dart';
 import 'widgets/perfil_skeleton.dart';
 
 /// Tela de visualização do perfil de outro pescador, acessada via
@@ -99,6 +101,16 @@ class _PerfilDeOutroPageState extends State<PerfilDeOutroPage> {
             child: EstatisticasPerfil(
               usuario: usuario,
               totalPublicacoes: provider.totalPublicacoes,
+              onSeguidoresTap: () => ListaRelacionamentosSheet.show(
+                context,
+                perfilId: usuario.id,
+                tipo: TipoRelacionamento.seguidores,
+              ),
+              onSeguindoTap: () => ListaRelacionamentosSheet.show(
+                context,
+                perfilId: usuario.id,
+                tipo: TipoRelacionamento.seguindo,
+              ),
             ),
           ),
           Padding(

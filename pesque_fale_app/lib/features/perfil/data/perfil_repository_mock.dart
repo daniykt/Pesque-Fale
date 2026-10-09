@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
 import '../domain/publicacao.dart';
+import 'perfil_api_client.dart';
 import 'perfil_exceptions.dart';
 import 'perfil_repository.dart';
 
@@ -147,5 +148,102 @@ class PerfilRepositoryMock implements PerfilRepository {
     if (username == 'existente') return false;
     if (username == 'erro') throw const InternalServerException();
     return true;
+  }
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async {
+    await Future.delayed(_delay);
+    final usuario = _usuarios[id];
+    if (usuario == null) {
+      throw const PerfilNaoEncontradoException();
+    }
+    return _paginar(
+      _gerarListaFake(semente: 'seguidores-$id', total: usuario.seguidores),
+      pagina: pagina,
+      porPagina: porPagina,
+    );
+  }
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async {
+    await Future.delayed(_delay);
+    final usuario = _usuarios[id];
+    if (usuario == null) {
+      throw const PerfilNaoEncontradoException();
+    }
+    return _paginar(
+      _gerarListaFake(semente: 'seguindo-$id', total: usuario.seguindo),
+      pagina: pagina,
+      porPagina: porPagina,
+    );
+  }
+
+  /// Gera uma lista determinística de usuários fake pra popular os modais de
+  /// seguidores/seguindo. Os três usuários "reais" do mock entram primeiro —
+  /// pra permitir follow/unfollow coerente com `_seguindoPorMim` — e o resto
+  /// é preenchido com usuários gerados a partir da semente.
+  List<UsuarioResumido> _gerarListaFake({
+    required String semente,
+    required int total,
+  }) {
+    final itens = <UsuarioResumido>[];
+    final reais = _usuarios.values.toList();
+    for (var i = 0; i < total; i++) {
+      if (i < reais.length) {
+        final u = reais[i];
+        itens.add(
+          UsuarioResumido(
+            id: u.id,
+            nome: u.nome,
+            username: u.username,
+            fotoPerfil: u.fotoPerfil,
+            souSeguidor: u.id == _meuId ? null : _seguindoPorMim.contains(u.id),
+          ),
+        );
+      } else {
+        final idFake = '$semente-$i';
+        itens.add(
+          UsuarioResumido(
+            id: idFake,
+            nome: 'Pescador ${i + 1}',
+            username: 'pescador_${i + 1}',
+            fotoPerfil: 'https://picsum.photos/seed/$idFake/120/120',
+            souSeguidor: _seguindoPorMim.contains(idFake),
+          ),
+        );
+      }
+    }
+    return itens;
+  }
+
+  ListaPaginada<UsuarioResumido> _paginar(
+    List<UsuarioResumido> itens, {
+    required int pagina,
+    required int porPagina,
+  }) {
+    final inicio = (pagina - 1) * porPagina;
+    if (inicio >= itens.length) {
+      return ListaPaginada(
+        itens: const [],
+        total: itens.length,
+        pagina: pagina,
+        porPagina: porPagina,
+      );
+    }
+    final fim = (inicio + porPagina).clamp(0, itens.length);
+    return ListaPaginada(
+      itens: itens.sublist(inicio, fim),
+      total: itens.length,
+      pagina: pagina,
+      porPagina: porPagina,
+    );
   }
 }

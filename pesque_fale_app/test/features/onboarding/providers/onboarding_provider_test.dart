@@ -11,6 +11,7 @@ import 'package:pesque_fale_app/features/onboarding/domain/username_onboarding_s
 import 'package:pesque_fale_app/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_exceptions.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 
 class _FakeAuthRepository implements AuthRepository {
@@ -109,6 +110,20 @@ class _FakePerfilRepository implements PerfilRepository {
     await Future.delayed(const Duration(milliseconds: 50));
     return !usernamesIndisponiveis.contains(username);
   }
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguidores(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<ListaPaginada<UsuarioResumido>> buscarSeguindo(
+    String id, {
+    int pagina = 1,
+    int porPagina = 20,
+  }) async => throw UnimplementedError();
 }
 
 /// Fake do canal de plataforma do image_picker, devolvendo um caminho de

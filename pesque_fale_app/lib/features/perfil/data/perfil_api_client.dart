@@ -18,6 +18,7 @@ class UsuarioResumido {
     required this.nome,
     this.username,
     this.fotoPerfil,
+    this.souSeguidor,
   });
 
   final String id;
@@ -25,12 +26,27 @@ class UsuarioResumido {
   final String? username;
   final String? fotoPerfil;
 
+  /// Se o viewer autenticado segue este usuário. null quando a requisição
+  /// foi feita sem autenticação (ex.: tela pública de perfil).
+  final bool? souSeguidor;
+
   factory UsuarioResumido.fromJson(Map<String, dynamic> json) {
     return UsuarioResumido(
       id: json['id']?.toString() ?? '',
       nome: json['nome']?.toString() ?? '',
       username: json['username'] as String?,
       fotoPerfil: json['fotoPerfil'] as String?,
+      souSeguidor: json['souSeguidor'] as bool?,
+    );
+  }
+
+  UsuarioResumido copyWith({bool? souSeguidor}) {
+    return UsuarioResumido(
+      id: id,
+      nome: nome,
+      username: username,
+      fotoPerfil: fotoPerfil,
+      souSeguidor: souSeguidor ?? this.souSeguidor,
     );
   }
 }
