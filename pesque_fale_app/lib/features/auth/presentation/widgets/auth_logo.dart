@@ -14,30 +14,34 @@ class AuthLogo extends StatelessWidget {
   final double alturaNome;
   final double espaco;
 
+  static ColorFilter filtroModoEscuro(Color cor) => ColorFilter.matrix([
+    0, 0, 0, 0, cor.r * 255,
+    0, 0, 0, 0, cor.g * 255,
+    0, 0, 0, 0, cor.b * 255,
+    -0.2126, -0.7152, -0.0722, 1, 0,
+  ]);
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final cor = tema.brightness == Brightness.dark
-        ? tema.extension<AppColors>()!.textPrimary
-        : null;
+    final logo = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Image.asset('assets/image/login/logo1.png', height: alturaSimbolo),
+        SizedBox(width: espaco),
+        Image.asset('assets/image/login/logo2.png', height: alturaNome),
+      ],
+    );
 
     return ExcludeSemantics(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            'assets/image/login/logo1.png',
-            height: alturaSimbolo,
-            color: cor,
-          ),
-          SizedBox(width: espaco),
-          Image.asset(
-            'assets/image/login/logo2.png',
-            height: alturaNome,
-            color: cor,
-          ),
-        ],
-      ),
+      child: tema.brightness == Brightness.dark
+          ? ColorFiltered(
+              colorFilter: filtroModoEscuro(
+                tema.extension<AppColors>()!.textPrimary,
+              ),
+              child: logo,
+            )
+          : logo,
     );
   }
 }
