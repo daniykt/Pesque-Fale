@@ -68,6 +68,7 @@ void main() {
           theme: AppTheme.light,
           routes: {
             '/login': (_) => const LoginPage(),
+            '/entrando': (_) => const Scaffold(body: Text('ENTRANDO')),
             '/home': (_) => const Scaffold(body: Text('FEED')),
             '/onboarding': (_) => const Scaffold(body: Text('TUTORIAL')),
           },
@@ -96,14 +97,16 @@ void main() {
   }
 
   group('LoginPage — destino pos-login', () {
-    testWidgets('usuario com onboardingConcluido true vai para /home', (
-      tester,
-    ) async {
-      await montarELogar(tester, onboardingConcluido: true);
+    testWidgets(
+      'usuario com onboardingConcluido true passa pela tela de entrada',
+      (tester) async {
+        await montarELogar(tester, onboardingConcluido: true);
 
-      expect(find.text('FEED'), findsOneWidget);
-      expect(find.text('TUTORIAL'), findsNothing);
-    });
+        expect(find.text('ENTRANDO'), findsOneWidget);
+        expect(find.text('FEED'), findsNothing);
+        expect(find.text('TUTORIAL'), findsNothing);
+      },
+    );
 
     testWidgets('usuario com onboardingConcluido false vai para /onboarding', (
       tester,
@@ -111,6 +114,7 @@ void main() {
       await montarELogar(tester, onboardingConcluido: false);
 
       expect(find.text('TUTORIAL'), findsOneWidget);
+      expect(find.text('ENTRANDO'), findsNothing);
       expect(find.text('FEED'), findsNothing);
     });
   });
