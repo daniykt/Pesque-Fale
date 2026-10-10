@@ -16,23 +16,42 @@ class GaleriaPerfil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (publicacoes.isEmpty) {
-      return _EstadoVazio(isOwnProfile: isOwnProfile);
-    }
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(4),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 4,
-        crossAxisSpacing: 4,
-        childAspectRatio: 1,
-      ),
-      itemCount: publicacoes.length,
-      itemBuilder: (context, index) =>
-          _ItemGaleria(publicacao: publicacoes[index]),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.xs,
+          ),
+          child: Semantics(
+            header: true,
+            child: Text(
+              'Publicações',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        ),
+        if (publicacoes.isEmpty)
+          _EstadoVazio(isOwnProfile: isOwnProfile)
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(4),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+              childAspectRatio: 1,
+            ),
+            itemCount: publicacoes.length,
+            itemBuilder: (context, index) =>
+                _ItemGaleria(publicacao: publicacoes[index]),
+          ),
+      ],
     );
   }
 }
