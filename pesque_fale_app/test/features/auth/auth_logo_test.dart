@@ -8,35 +8,56 @@ import 'package:pesque_fale_app/features/auth/presentation/widgets/auth_logo.dar
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  Future<List<Image>> montar(WidgetTester tester, ThemeData tema) async {
+  Future<void> montar(WidgetTester tester, ThemeData tema) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: tema,
         home: const Scaffold(body: Center(child: AuthLogo())),
       ),
     );
-    return tester.widgetList<Image>(find.byType(Image)).toList();
   }
 
-  testWidgets('no tema claro mantém as cores originais do logo', (
+  List<Image> imagens(WidgetTester tester) =>
+      tester.widgetList<Image>(find.byType(Image)).toList();
+
+  testWidgets('no tema claro mostra o logo original, sem filtro', (
     tester,
   ) async {
-    final imagens = await montar(tester, AppTheme.light);
+    await montar(tester, AppTheme.light);
 
-    expect(imagens, hasLength(2));
-    for (final imagem in imagens) {
+    expect(imagens(tester), hasLength(2));
+    expect(find.byType(ColorFiltered), findsNothing);
+    for (final imagem in imagens(tester)) {
       expect(imagem.color, isNull);
     }
   });
 
-  testWidgets('no tema escuro pinta o logo com a cor clara do texto', (
+  testWidgets('no tema escuro aplica o filtro com a cor clara do texto', (
     tester,
   ) async {
-    final imagens = await montar(tester, AppTheme.dark);
+    await montar(tester, AppTheme.dark);
 
-    expect(imagens, hasLength(2));
-    for (final imagem in imagens) {
-      expect(imagem.color, AppColors.dark.textPrimary);
+    final filtrado = tester.widget<ColorFiltered>(find.byType(ColorFiltered));
+    expect(
+      filtrado.colorFilter,
+      AuthLogo.filtroModoEscuro(AppColors.dark.textPrimary),
+    );
+    expect(
+      find.descendant(
+        of: find.byType(ColorFiltered),
+        matching: find.byType(Image),
+      ),
+      findsNWidgets(2),
+    );
+  });
+
+  testWidgets('no tema escuro não pinta as imagens por cima dos detalhes', (
+    tester,
+  ) async {
+    await montar(tester, AppTheme.dark);
+
+    for (final imagem in imagens(tester)) {
+      expect(imagem.color, isNull);
     }
   });
 
