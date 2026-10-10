@@ -5,10 +5,10 @@ import '../../../core/router/shell_bottom_nav.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../providers/lista_relacionamentos_provider.dart';
 import '../providers/perfil_provider.dart';
-import 'widgets/abas_perfil.dart';
 import 'widgets/cabecalho_perfil.dart';
 import 'widgets/cta_perfil.dart';
 import 'widgets/estatisticas_perfil.dart';
+import 'widgets/galeria_perfil.dart';
 import 'widgets/lista_relacionamentos_sheet.dart';
 import 'widgets/perfil_skeleton.dart';
 
@@ -117,7 +117,10 @@ class _PerfilDeOutroPageState extends State<PerfilDeOutroPage> {
             padding: const EdgeInsets.all(AppSpacing.md),
             child: const CtaPerfil(),
           ),
-          AbasPerfil(publicacoes: provider.publicacoes, isOwnProfile: false),
+          GaleriaPerfil(
+            publicacoes: provider.publicacoes,
+            isOwnProfile: false,
+          ),
         ],
       ),
     );
