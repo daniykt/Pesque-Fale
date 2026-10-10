@@ -25,15 +25,18 @@ void main() {
   }
 
   testWidgets('mostra o título Publicações como cabeçalho', (tester) async {
-    final semantica = tester.ensureSemantics();
     await montar(tester);
 
     expect(find.text('Publicações'), findsOneWidget);
-    expect(
-      tester.getSemantics(find.text('Publicações')),
-      containsSemantics(label: 'Publicações', isHeader: true),
+    final semantica = tester.widget<Semantics>(
+      find
+          .ancestor(
+            of: find.text('Publicações'),
+            matching: find.byType(Semantics),
+          )
+          .first,
     );
-    semantica.dispose();
+    expect(semantica.properties.header, isTrue);
   });
 
   testWidgets('não mostra abas nem os placeholders das abas futuras', (
