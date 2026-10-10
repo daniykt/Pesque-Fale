@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import 'auth_logo.dart';
 
 class AuthLogoTitle extends StatelessWidget {
   const AuthLogoTitle({super.key, required this.title});
@@ -16,14 +17,7 @@ class AuthLogoTitle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/image/login/logo1.png', height: 48),
-              const SizedBox(width: 12),
-              Image.asset('assets/image/login/logo2.png', height: 40),
-            ],
-          ),
+          const AuthLogo(),
           const SizedBox(height: AppSpacing.sm),
           Text(
             title.toUpperCase(),
