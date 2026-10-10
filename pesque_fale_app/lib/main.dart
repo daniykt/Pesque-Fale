@@ -11,6 +11,7 @@ import 'features/auth/data/auth_repository_http.dart';
 import 'features/auth/data/auth_repository_mock.dart';
 import 'features/auth/data/token_storage.dart';
 import 'features/auth/presentation/cadastro/cadastro_page.dart';
+import 'features/auth/presentation/entrando/entrando_page.dart';
 import 'features/auth/presentation/login/login_page.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/chat/data/conversas_api_client.dart';
@@ -43,6 +44,7 @@ import 'features/feed/data/upload_publicacao_imagem_api_client.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
+import 'features/feed/domain/aba_feed.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/onboarding/presentation/onboarding_wizard_page.dart';
@@ -257,7 +259,10 @@ class PesqueFaleApp extends StatelessWidget {
           ),
           child: const OnboardingWizardPage(),
         ),
-        '/home': (_) => MainShell(key: MainShell.shellKey),
+        '/entrando': (context) => EntrandoPage(
+          preparar: () =>
+              context.read<FeedProvider>().trocarAba(AbaFeed.paraVoce),
+        ),
         '/perfil/editar': (_) => const EditarPerfilPage(),
         '/configuracoes': (_) => const ConfiguracoesPage(),
         '/publicacao/nova': (context) =>
@@ -278,6 +283,15 @@ class PesqueFaleApp extends StatelessWidget {
         '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
       },
       onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+          return PageRouteBuilder<void>(
+            settings: settings,
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (_, _, _) => MainShell(key: MainShell.shellKey),
+            transitionsBuilder: (_, animacao, _, child) =>
+                FadeTransition(opacity: animacao, child: child),
+          );
+        }
         if (settings.name == '/chat/conversa') {
           final conversa = settings.arguments as Conversa;
           return MaterialPageRoute(

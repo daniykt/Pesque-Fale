@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     if (auth.status == AuthStatus.success) {
       final usuario = auth.usuario!;
       if (usuario.onboardingConcluido) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacementNamed('/entrando');
       } else {
         Navigator.of(context).pushReplacementNamed('/onboarding');
       }
