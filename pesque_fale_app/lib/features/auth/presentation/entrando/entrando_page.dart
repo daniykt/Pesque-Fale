@@ -20,6 +20,8 @@ class EntrandoPage extends StatefulWidget {
   final Duration avisoDemora;
   final Duration limite;
 
+  static const chaveBarra = Key('entrando-barra-progresso');
+
   @override
   State<EntrandoPage> createState() => _EntrandoPageState();
 }
@@ -46,6 +48,7 @@ class _EntrandoPageState extends State<EntrandoPage>
     begin: 1,
     end: 1.04,
   ).animate(CurvedAnimation(parent: _pulso, curve: Curves.easeInOut));
+  late final AnimationController _progresso = AnimationController(vsync: this);
 
   Timer? _timerAviso;
   bool _mostrarAviso = false;
@@ -59,6 +62,11 @@ class _EntrandoPageState extends State<EntrandoPage>
     _timerAviso = Timer(widget.avisoDemora, () {
       if (mounted) setState(() => _mostrarAviso = true);
     });
+    _progresso.animateTo(
+      0.9,
+      duration: widget.limite,
+      curve: Curves.easeOutCubic,
+    );
     _entrar();
   }
 
@@ -67,6 +75,7 @@ class _EntrandoPageState extends State<EntrandoPage>
     _timerAviso?.cancel();
     _entrada.dispose();
     _pulso.dispose();
+    _progresso.dispose();
     super.dispose();
   }
 
@@ -77,6 +86,12 @@ class _EntrandoPageState extends State<EntrandoPage>
     ]);
     if (!mounted) return;
     _timerAviso?.cancel();
+    await _progresso.animateTo(
+      1,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/home');
   }
 
@@ -117,9 +132,18 @@ class _EntrandoPageState extends State<EntrandoPage>
                     ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.lg),
+                FadeTransition(
+                  opacity: _opacidade,
+                  child: _BarraProgresso(
+                    key: EntrandoPage.chaveBarra,
+                    progresso: _progresso,
+                    cor: colors.primaryAccent,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 SizedBox(
-                  height: 56,
+                  height: 24,
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: _mostrarAviso
@@ -136,6 +160,46 @@ class _EntrandoPageState extends State<EntrandoPage>
   }
 }
 
+class _BarraProgresso extends StatelessWidget {
+  const _BarraProgresso({
+    super.key,
+    required this.progresso,
+    required this.cor,
+  });
+
+  final Animation<double> progresso;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    final borda = BorderRadius.circular(2);
+
+    return SizedBox(
+      width: 180,
+      height: 4,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: cor.withValues(alpha: 0.2),
+          borderRadius: borda,
+        ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: AnimatedBuilder(
+            animation: progresso,
+            builder: (context, _) => FractionallySizedBox(
+              widthFactor: progresso.value,
+              heightFactor: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: cor, borderRadius: borda),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AvisoQuaseLa extends StatelessWidget {
   const _AvisoQuaseLa({required this.colors});
 
@@ -143,25 +207,11 @@ class _AvisoQuaseLa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: colors.primaryAccent,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          'Quase lá…',
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-        ),
-      ],
+    return Text(
+      'Quase lá…',
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
     );
   }
 }
