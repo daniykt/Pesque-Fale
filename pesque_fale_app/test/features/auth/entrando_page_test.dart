@@ -12,6 +12,15 @@ void main() {
   final aviso = find.text('Quase lá…');
   final home = find.text('HOME');
 
+  double progresso(WidgetTester tester) => tester
+      .widget<FractionallySizedBox>(
+        find.descendant(
+          of: find.byKey(EntrandoPage.chaveBarra),
+          matching: find.byType(FractionallySizedBox),
+        ),
+      )
+      .widthFactor!;
+
   Future<void> montar(
     WidgetTester tester, {
     required Future<void> Function() preparar,
@@ -26,13 +35,14 @@ void main() {
     );
   }
 
-  testWidgets('começa com o logo, sem indicador de carregamento', (
+  testWidgets('começa com o logo e a barra vazia, sem aviso', (
     tester,
   ) async {
     await montar(tester, preparar: () async {});
 
     expect(find.byType(Image), findsNWidgets(2));
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byKey(EntrandoPage.chaveBarra), findsOneWidget);
+    expect(progresso(tester), 0);
     expect(aviso, findsNothing);
 
     await tester.pump(const Duration(seconds: 1));
@@ -62,12 +72,10 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 2400));
       expect(aviso, findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
 
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 300));
       expect(aviso, findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(home, findsNothing);
 
       carregamento.complete();
@@ -76,6 +84,49 @@ void main() {
       expect(home, findsOneWidget);
     },
   );
+
+  testWidgets('a barra avança enquanto carrega sem chegar ao fim', (
+    tester,
+  ) async {
+    final carregamento = Completer<void>();
+    await montar(tester, preparar: () => carregamento.future);
+
+    await tester.pump(const Duration(seconds: 2));
+    final aos2s = progresso(tester);
+    expect(aos2s, greaterThan(0));
+
+    await tester.pump(const Duration(seconds: 3));
+    final aos5s = progresso(tester);
+    expect(aos5s, greaterThan(aos2s));
+    expect(aos5s, lessThan(0.9));
+
+    carregamento.complete();
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(home, findsOneWidget);
+  });
+
+  testWidgets('ao terminar, completa a barra antes de entrar', (tester) async {
+    final carregamento = Completer<void>();
+    await montar(tester, preparar: () => carregamento.future);
+
+    await tester.pump(const Duration(seconds: 1));
+    final antes = progresso(tester);
+
+    carregamento.complete();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(progresso(tester), greaterThan(antes));
+    expect(progresso(tester), lessThan(1));
+    expect(home, findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(progresso(tester), 1);
+
+    await tester.pumpAndSettle();
+    expect(home, findsOneWidget);
+  });
 
   testWidgets('se o carregamento falhar, entra mesmo assim', (tester) async {
     await montar(tester, preparar: () async => throw Exception('sem rede'));
