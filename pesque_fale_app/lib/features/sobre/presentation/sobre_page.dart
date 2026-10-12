@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../data/sobre_conteudo.dart';
 import 'widgets/sobre_hero.dart';
+import 'widgets/sobre_timeline.dart';
 
 class SobrePage extends StatelessWidget {
   const SobrePage({super.key});
@@ -14,7 +16,10 @@ class SobrePage extends StatelessWidget {
           physics: AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [SobreHero()],
+            children: [
+              SobreHero(),
+              SobreTimeline(marcos: marcosCronograma),
+            ],
           ),
         ),
       ),
