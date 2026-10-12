@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'widgets/sobre_hero.dart';
+
 class SobrePage extends StatelessWidget {
   const SobrePage({super.key});
 
@@ -10,7 +12,10 @@ class SobrePage extends StatelessWidget {
       body: const SafeArea(
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
-          child: SizedBox.shrink(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [SobreHero()],
+          ),
         ),
       ),
     );
