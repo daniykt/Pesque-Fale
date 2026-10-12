@@ -74,11 +74,11 @@ import 'features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'features/notificacoes/providers/badge_notificacoes_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
+import 'features/sobre/presentation/sobre_page.dart';
 import 'features/tour/domain/tour_status_storage.dart';
 import 'features/tour/providers/tour_provider.dart';
 import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
 import 'features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
-import 'shared/widgets/app_em_construcao_page.dart';
 
 void main() {
   final tokenStorage = TokenStorage();
@@ -280,7 +280,7 @@ class PesqueFaleApp extends StatelessWidget {
               InboxProvider(repository: ctx.read<ConversasRepository>()),
           child: const InboxPage(),
         ),
-        '/sobre': (_) => const AppEmConstrucaoPage(titulo: 'Sobre Nós'),
+        '/sobre': (_) => const SobrePage(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/home') {
