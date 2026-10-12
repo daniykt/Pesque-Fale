@@ -11,7 +11,6 @@ import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../auth/domain/usuario.dart';
 import '../../data/perfil_exceptions.dart';
 import '../../providers/perfil_provider.dart';
-import 'acoes_header_perfil.dart';
 import 'info_usuario.dart';
 
 class CabecalhoPerfil extends StatefulWidget {
@@ -19,16 +18,10 @@ class CabecalhoPerfil extends StatefulWidget {
     super.key,
     required this.usuario,
     required this.isOwnProfile,
-    this.onEditar,
-    this.onConfiguracoes,
-    this.onSobre,
   });
 
   final Usuario usuario;
   final bool isOwnProfile;
-  final VoidCallback? onEditar;
-  final VoidCallback? onConfiguracoes;
-  final VoidCallback? onSobre;
 
   static const fotoTamanho = 80.0;
   static const _fotoOffset = 40.0;
@@ -142,15 +135,6 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
                 ),
               ),
             ),
-            if (widget.isOwnProfile &&
-                widget.onEditar != null &&
-                widget.onConfiguracoes != null &&
-                widget.onSobre != null)
-              AcoesHeaderPerfil(
-                onEditar: widget.onEditar!,
-                onConfiguracoes: widget.onConfiguracoes!,
-                onSobre: widget.onSobre!,
-              ),
             Positioned(
               bottom: -CabecalhoPerfil._fotoOffset,
               left: AppSpacing.md,
