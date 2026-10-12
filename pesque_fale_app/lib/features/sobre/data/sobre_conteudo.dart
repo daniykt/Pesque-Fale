@@ -92,3 +92,63 @@ const List<MarcoCronograma> marcosCronograma = [
     status: StatusMarco.futuro,
   ),
 ];
+
+class MembroTime {
+  const MembroTime({
+    required this.nome,
+    required this.funcao,
+    required this.fotoAsset,
+  });
+
+  final String nome;
+  final String funcao;
+  final String fotoAsset;
+}
+
+const List<MembroTime> membrosTime = [
+  MembroTime(
+    nome: 'Danilo',
+    funcao: 'Front-end',
+    fotoAsset: 'assets/image/sobrenos/fotodanilo.jpg',
+  ),
+  MembroTime(
+    nome: 'Henrique',
+    funcao: 'Back-end',
+    fotoAsset: 'assets/image/sobrenos/fotohenrique.jpg',
+  ),
+  MembroTime(
+    nome: 'Felipe',
+    funcao: 'Front-end · QA',
+    fotoAsset: 'assets/image/sobrenos/fotofelipe.jpg',
+  ),
+  MembroTime(
+    nome: 'João Pedro',
+    funcao: 'Front-end',
+    fotoAsset: 'assets/image/sobrenos/fotojoao.jpg',
+  ),
+  MembroTime(
+    nome: 'Lucas',
+    funcao: 'Design',
+    fotoAsset: 'assets/image/sobrenos/fotolucas.jpg',
+  ),
+  MembroTime(
+    nome: 'Vinícius',
+    funcao: 'Design',
+    fotoAsset: 'assets/image/sobrenos/fotovinicius.jpg',
+  ),
+  MembroTime(
+    nome: 'Rebeca',
+    funcao: 'Documentação',
+    fotoAsset: 'assets/image/sobrenos/fotorebeca.jpg',
+  ),
+];
+
+const List<String> stackItens = [
+  'Flutter',
+  'Node.js',
+  'PostgreSQL',
+  'Socket.IO',
+  'Cloudinary',
+  'OpenStreetMap',
+  'FATEC Matão',
+];

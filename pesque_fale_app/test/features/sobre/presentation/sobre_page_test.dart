@@ -11,4 +11,15 @@ void main() {
 
     expect(find.text('Sobre Nós'), findsOneWidget);
   });
+
+  testWidgets('SobrePage mostra todos os membros do time', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.light, home: const SobrePage()),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Danilo'), findsOneWidget);
+    expect(find.text('Felipe'), findsOneWidget);
+    expect(find.text('Rebeca'), findsOneWidget);
+  });
 }
