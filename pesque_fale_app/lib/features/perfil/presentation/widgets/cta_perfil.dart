@@ -5,9 +5,10 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../chat/domain/conversa.dart';
 import '../../providers/perfil_provider.dart';
+import 'acoes_proprio_perfil.dart';
 import 'hint_mutual_follow.dart';
 
-/// Botão contextual full-width: Nova Publicação (próprio perfil), Seguir
+/// CTAs contextuais do perfil: Editar perfil + Ajustes (próprio perfil), Seguir
 /// (ou Seguir de volta, quando o outro já me segue), ou Seguindo + Mensagem
 /// quando o chat já está liberado entre os dois.
 class CtaPerfil extends StatefulWidget {
@@ -72,13 +73,9 @@ class _CtaPerfilState extends State<CtaPerfil> {
     final provider = context.watch<PerfilProvider>();
 
     if (provider.isOwnProfile) {
-      return SizedBox(
-        width: double.infinity,
-        child: FilledButton.icon(
-          icon: const Icon(Icons.add_photo_alternate_outlined),
-          label: const Text('Nova Publicação'),
-          onPressed: () => Navigator.pushNamed(context, '/publicacao/nova'),
-        ),
+      return AcoesProprioPerfil(
+        onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
+        onAjustes: () => Navigator.pushNamed(context, '/configuracoes'),
       );
     }
 
