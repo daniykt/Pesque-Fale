@@ -46,27 +46,6 @@ async function marcarComoVistas(chatId, userId) {
   );
 }
 
-async function criarNotificacaoMensagem(remetenteId, destinatarioId, chatId, texto) {
-  try {
-    const remetente = await pool.query(
-      'SELECT nome, username FROM usuarios WHERE id = $1',
-      [remetenteId]
-    );
-    if (remetente.rows.length === 0) return;
-
-    const { nome, username } = remetente.rows[0];
-
-    await pool.query(
-      `INSERT INTO notificacoes
-        (para, de_id, de, de_username, tipo, texto, chat_id)
-       VALUES ($1, $2, $3, $4, 'mensagem', $5, $6)`,
-      [destinatarioId, remetenteId, nome, username, texto.substring(0, 100), chatId]
-    );
-  } catch (err) {
-    console.error('Erro ao criar notificação:', err);
-  }
-}
-
 module.exports = function initChatGateway(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -142,11 +121,6 @@ module.exports = function initChatGateway(io) {
         const mensagem = await salvarMensagem(socket.chatId, usuarioId, nome, texto.trim());
 
         io.to(socket.chatId).emit('nova_mensagem', _formatMensagem(mensagem));
-
-        // Notificar destinatário
-        if (socket.outroId) {
-          await criarNotificacaoMensagem(usuarioId, socket.outroId, socket.chatId, texto.trim());
-        }
       } catch (err) {
         console.error(err);
         socket.emit('erro', { message: 'Erro ao enviar mensagem.' });
