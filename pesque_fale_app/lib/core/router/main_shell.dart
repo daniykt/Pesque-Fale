@@ -97,9 +97,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (_currentIndex != _alertasIndex) {
       context.read<BadgeNotificacoesProvider>().atualizar();
     }
-    if (_currentIndex != _chatIndex) {
-      context.read<BadgeMensagensProvider>().atualizar();
-    }
+    // Chat NÃO pausa o polling: a leitura de mensagens é incremental
+    // (acontece via marcarComoVistas quando a pessoa abre cada conversa),
+    // então o badge precisa continuar atualizando mesmo com a aba aberta.
+    context.read<BadgeMensagensProvider>().atualizar();
   }
 
   @override
