@@ -89,10 +89,6 @@ class _PerfilPageState extends State<PerfilPage> {
           CabecalhoPerfil(
             usuario: usuario,
             isOwnProfile: provider.isOwnProfile,
-            onEditar: () => Navigator.pushNamed(context, '/perfil/editar'),
-            onConfiguracoes: () =>
-                Navigator.pushNamed(context, '/configuracoes'),
-            onSobre: () => Navigator.pushNamed(context, '/sobre'),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
