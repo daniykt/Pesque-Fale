@@ -89,9 +89,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   void _trocarAba(int index) {
     setState(() => _currentIndex = index);
-    if (index == _chatIndex) {
-      context.read<BadgeMensagensProvider>().zerar();
-    }
     _atualizarBadge();
   }
 
