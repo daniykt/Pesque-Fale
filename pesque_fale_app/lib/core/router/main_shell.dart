@@ -9,7 +9,6 @@ import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
 import '../../features/notificacoes/data/notificacoes_repository.dart';
 import '../../features/notificacoes/presentation/notificacoes_page.dart';
-import '../../features/notificacoes/presentation/widgets/botao_limpar_notificacoes.dart';
 import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
 import '../../features/notificacoes/providers/notificacoes_provider.dart';
 import '../../features/perfil/data/perfil_repository.dart';
@@ -120,13 +119,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       child: Scaffold(
         appBar: naTelaDePesquisa || naTelaDeChat
             ? null
-            : AppBar(
-                title: Text(_titles[_currentIndex]),
-                actions: [
-                  if (_currentIndex == _alertasIndex)
-                    const BotaoLimparNotificacoes(),
-                ],
-              ),
+            : AppBar(title: Text(_titles[_currentIndex])),
         body: Stack(
           children: [
             IndexedStack(index: _currentIndex, children: _buildScreens()),

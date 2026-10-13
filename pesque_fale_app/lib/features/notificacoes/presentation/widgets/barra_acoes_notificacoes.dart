@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../providers/badge_notificacoes_provider.dart';
 import '../../providers/notificacoes_provider.dart';
 
-class BotaoLimparNotificacoes extends StatelessWidget {
-  const BotaoLimparNotificacoes({super.key});
+/// Barra discreta embaixo dos chips de filtro com o botão "Limpar"
+/// alinhado à direita. Só aparece quando há notificações carregadas.
+class BarraAcoesNotificacoes extends StatelessWidget {
+  const BarraAcoesNotificacoes({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,14 +19,36 @@ class BotaoLimparNotificacoes extends StatelessWidget {
         provider.status == StatusNotificacoes.carregado && provider.temAlguma;
     if (!visivel) return const SizedBox.shrink();
 
-    return IconButton(
-      icon: const Icon(Icons.delete_sweep_outlined),
-      tooltip: 'Limpar todas',
-      onPressed: () => _limparTodas(context),
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xxs,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: OutlinedButton.icon(
+          onPressed: () => _confirmar(context),
+          icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+          label: const Text('Limpar'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: colors.danger,
+            side: BorderSide(color: colors.border),
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xxs,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Future<void> _limparTodas(BuildContext context) async {
+  Future<void> _confirmar(BuildContext context) async {
     final colors = Theme.of(context).extension<AppColors>()!;
     final provider = context.read<NotificacoesProvider>();
     final badge = context.read<BadgeNotificacoesProvider>();
@@ -55,7 +80,10 @@ class BotaoLimparNotificacoes extends StatelessWidget {
     if (limpou) {
       badge.atualizar();
     } else if (context.mounted) {
-      AppSnackbar.showError(context, 'Não foi possível limpar as notificações.');
+      AppSnackbar.showError(
+        context,
+        'Não foi possível limpar as notificações.',
+      );
     }
   }
 }
