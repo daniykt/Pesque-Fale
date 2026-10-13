@@ -11,6 +11,8 @@ void main() {
     WidgetTester tester, {
     int currentIndex = 0,
     int? highlightedIndex,
+    int notifCount = 0,
+    int chatCount = 0,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -20,6 +22,8 @@ void main() {
             currentIndex: currentIndex,
             onDestinationSelected: (_) {},
             highlightedIndex: highlightedIndex,
+            notifCount: notifCount,
+            chatCount: chatCount,
           ),
         ),
       ),
@@ -78,5 +82,25 @@ void main() {
 
     await tester.tap(find.text('Pesquisa'));
     expect(selecionado, 1);
+  });
+
+  testWidgets('sem chatCount o icone de Chat nao mostra badge', (tester) async {
+    await montarWidget(tester);
+
+    // Badge só aparece com isLabelVisible: true, que acontece com chatCount > 0.
+    // Com chatCount default 0, nenhum badge do Chat deve aparecer.
+    expect(find.text('0'), findsNothing);
+  });
+
+  testWidgets('com chatCount > 0 o icone de Chat mostra o numero', (tester) async {
+    await montarWidget(tester, chatCount: 5);
+
+    expect(find.text('5'), findsOneWidget);
+  });
+
+  testWidgets('com chatCount acima de 99 mostra 99+', (tester) async {
+    await montarWidget(tester, chatCount: 150);
+
+    expect(find.text('99+'), findsOneWidget);
   });
 }
