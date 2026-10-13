@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/chat/providers/badge_mensagens_provider.dart';
 import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import 'main_shell.dart';
@@ -19,10 +20,12 @@ class ShellBottomNav extends StatelessWidget {
     final abaAtual =
         MainShell.shellKey.currentState?.abaAtual ?? MainShell.inicioIndex;
     final notifCount = context.watch<BadgeNotificacoesProvider>().naoLidas;
+    final chatCount = context.watch<BadgeMensagensProvider>().naoLidas;
 
     return AppBottomNav(
       currentIndex: abaAtual,
       notifCount: notifCount,
+      chatCount: chatCount,
       onDestinationSelected: (index) {
         final selecionar =
             onSelecionarAba ??

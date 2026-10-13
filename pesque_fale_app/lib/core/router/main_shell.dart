@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../features/chat/data/conversas_repository.dart';
 import '../../features/chat/presentation/inbox_page.dart';
+import '../../features/chat/providers/badge_mensagens_provider.dart';
 import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
 import '../../features/notificacoes/data/notificacoes_repository.dart';
@@ -92,8 +93,14 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   void _atualizarBadge() {
-    if (!mounted || _currentIndex == _alertasIndex) return;
-    context.read<BadgeNotificacoesProvider>().atualizar();
+    if (!mounted) return;
+    if (_currentIndex != _alertasIndex) {
+      context.read<BadgeNotificacoesProvider>().atualizar();
+    }
+    // Chat NÃO pausa o polling: a leitura de mensagens é incremental
+    // (acontece via marcarComoVistas quando a pessoa abre cada conversa),
+    // então o badge precisa continuar atualizando mesmo com a aba aberta.
+    context.read<BadgeMensagensProvider>().atualizar();
   }
 
   @override
@@ -101,6 +108,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final naTelaDePesquisa = _currentIndex == _pesquisaIndex;
     final naTelaDeChat = _currentIndex == _chatIndex;
     final notifCount = context.watch<BadgeNotificacoesProvider>().naoLidas;
+    final chatCount = context.watch<BadgeMensagensProvider>().naoLidas;
 
     final passoDoTour = context.watch<TourProvider>().passoAtual;
     if (passoDoTour != null && passoDoTour.abaAlvo != _currentIndex) {
@@ -129,6 +137,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
         bottomNavigationBar: AppBottomNav(
           currentIndex: _currentIndex,
           notifCount: notifCount,
+          chatCount: chatCount,
           highlightedIndex: passoDoTour?.abaAlvo,
           onDestinationSelected: _trocarAba,
         ),
