@@ -21,6 +21,7 @@ import 'features/chat/data/conversas_repository_mock.dart';
 import 'features/chat/domain/conversa.dart';
 import 'features/chat/presentation/chat_page.dart';
 import 'features/chat/presentation/inbox_page.dart';
+import 'features/chat/providers/badge_mensagens_provider.dart';
 import 'features/chat/providers/inbox_provider.dart';
 import 'features/configuracoes/presentation/configuracoes_page.dart';
 import 'features/configuracoes/providers/preferencias_provider.dart';
@@ -210,6 +211,10 @@ void main() {
           create: (ctx) =>
               BadgeNotificacoesProvider(repository: ctx.read<NotificacoesRepository>())
                 ..atualizar(),
+        ),
+        ChangeNotifierProvider<BadgeMensagensProvider>(
+          create: (ctx) =>
+              BadgeMensagensProvider(repository: ctx.read<ConversasRepository>()),
         ),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
