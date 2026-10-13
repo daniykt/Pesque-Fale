@@ -148,4 +148,50 @@ void main() {
 
     expect(await provider.confirmarRemocao('n2'), isFalse);
   });
+
+  group('filtragem de mensagens', () {
+    test('carregar() descarta itens do tipo mensagem', () async {
+      final repoComMensagens = _FakeNotificacoesRepository()
+        ..servidor = [
+          Notificacao(
+            id: 'social-1',
+            para: 'me',
+            tipo: TipoNotificacao.curtida,
+            lida: false,
+            criadoEm: DateTime(2026, 10, 12),
+          ),
+          Notificacao(
+            id: 'msg-1',
+            para: 'me',
+            tipo: TipoNotificacao.mensagem,
+            texto: 'oi',
+            lida: false,
+            criadoEm: DateTime(2026, 10, 12),
+          ),
+          Notificacao(
+            id: 'social-2',
+            para: 'me',
+            tipo: TipoNotificacao.seguindo,
+            lida: false,
+            criadoEm: DateTime(2026, 10, 12),
+          ),
+        ];
+      final providerFiltrado = NotificacoesProvider(
+        repository: repoComMensagens,
+        perfilRepository: PerfilRepositoryMock(),
+      );
+
+      await providerFiltrado.carregar();
+
+      final idsVisiveis =
+          providerFiltrado.notificacoes.map((n) => n.id).toList();
+      expect(idsVisiveis, ['social-1', 'social-2']);
+      expect(
+        providerFiltrado.notificacoes.any(
+          (n) => n.tipo == TipoNotificacao.mensagem,
+        ),
+        isFalse,
+      );
+    });
+  });
 }
