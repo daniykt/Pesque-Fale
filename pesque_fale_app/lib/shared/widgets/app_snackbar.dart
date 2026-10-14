@@ -8,19 +8,12 @@ class AppSnackbar {
 
   static void showError(BuildContext context, String message) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: colors.onDanger)),
-        backgroundColor: colors.danger,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'X',
-          textColor: colors.onDanger,
-          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-        ),
-      ),
+    _mostrar(
+      context,
+      message,
+      fundo: colors.danger,
+      texto: colors.onDanger,
+      duracao: const Duration(seconds: 4),
     );
   }
 
@@ -30,45 +23,57 @@ class AppSnackbar {
     Duration duration = const Duration(seconds: 4),
   }) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: colors.onSuccess)),
-        backgroundColor: colors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
-        duration: duration,
-        action: SnackBarAction(
-          label: 'X',
-          textColor: colors.onSuccess,
-          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-        ),
-      ),
+    _mostrar(
+      context,
+      message,
+      fundo: colors.success,
+      texto: colors.onSuccess,
+      duracao: duration,
     );
   }
 
   static void showWarning(BuildContext context, String message) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: colors.onWarning)),
-        backgroundColor: colors.warning,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
-        duration: const Duration(seconds: 4),
-      ),
+    _mostrar(
+      context,
+      message,
+      fundo: colors.warning,
+      texto: colors.onWarning,
+      duracao: const Duration(seconds: 4),
     );
   }
 
   static void showInfo(BuildContext context, String message) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: colors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
-        duration: const Duration(seconds: 3),
-      ),
+    _mostrar(
+      context,
+      message,
+      fundo: colors.primary,
+      texto: Colors.white,
+      duracao: const Duration(seconds: 3),
     );
+  }
+
+  static void _mostrar(
+    BuildContext context,
+    String message, {
+    required Color fundo,
+    required Color texto,
+    required Duration duracao,
+  }) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message, style: TextStyle(color: texto)),
+          backgroundColor: fundo,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
+          duration: duracao,
+          persist: false,
+          showCloseIcon: true,
+          closeIconColor: texto,
+        ),
+      );
   }
 }
