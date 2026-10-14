@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 
 class BotaoSeguirDeVolta extends StatefulWidget {
   const BotaoSeguirDeVolta({
@@ -30,9 +31,7 @@ class _BotaoSeguirDeVoltaState extends State<BotaoSeguirDeVolta> {
       if (sucesso) _jaSigo = true;
     });
     if (!sucesso && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível seguir agora.')),
-      );
+      AppSnackbar.showError(context, 'Não foi possível seguir agora.');
     }
   }
 

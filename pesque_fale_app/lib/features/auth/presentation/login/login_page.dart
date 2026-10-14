@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
 import '../../providers/auth_provider.dart';
 import '../widgets/auth_hero.dart';
 import '../widgets/auth_logo_title.dart';
@@ -46,9 +47,7 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.of(context).pushReplacementNamed('/onboarding');
       }
     } else if (auth.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage!)),
-      );
+      AppSnackbar.showError(context, auth.errorMessage!);
     }
   }
 
