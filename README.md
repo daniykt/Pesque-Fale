@@ -182,12 +182,12 @@ Pesque-Fale/
 
 | Nome | Função |
 |------|--------|
-| Danilo | Testes / Front-End Principal / Back-end |
-| Henrique | Back-End / Documentação / Front-end |
+| Danilo | Front-End Principal / QA / Back-end |
+| Henrique | Back-End / QA / Front-end |
 | Felipe   | Back-end / Front-end   |
-| João Pedro | Front-End |
-| Lucas | Designer / Back-End |
-| Vinicius | Designer / Front-End / Documentação |
+| João Pedro | Documentação |
+| Lucas | Documentação |
+| Vinicius |  Documentação |
 | Rebeca | Documentação |
 
 ---
