@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -51,46 +49,6 @@ class _LoginPageState extends State<LoginPage> {
     } else if (auth.errorMessage != null) {
       AppSnackbar.showError(context, auth.errorMessage!);
     }
-  }
-
-  // DEBUG temporario: testa a conexao com a API.
-  Future<String> _executarTesteConexao(String url) async {
-    try {
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 60));
-      final body = response.body;
-      final trecho = body.length > 200 ? body.substring(0, 200) : body;
-      return 'Status: ${response.statusCode}\n\nBody (200 chars):\n$trecho';
-    } catch (e) {
-      return 'Exception: ${e.runtimeType}\n\n$e';
-    }
-  }
-
-  void _testarConexao() {
-    final url = '${AppConfig.apiBaseUrl}/pontos';
-    final resultado = _executarTesteConexao(url);
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Testar Conexão'),
-        content: SingleChildScrollView(
-          child: FutureBuilder<String>(
-            future: resultado,
-            builder: (context, snapshot) => SelectableText(
-              'URL: $url\n\n${snapshot.data ?? 'Aguardando resposta (até 60s)...'}',
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -144,12 +102,6 @@ class _LoginPageState extends State<LoginPage> {
                     AuthPrimaryButton(
                       label: 'Entrar',
                       onPressed: isLoading ? null : _login,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    // DEBUG temporario: remover antes da entrega.
-                    OutlinedButton(
-                      onPressed: _testarConexao,
-                      child: const Text('🔧 Testar Conexão'),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     AuthSwitchLink(
