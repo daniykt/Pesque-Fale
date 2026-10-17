@@ -43,6 +43,7 @@ describe('POST /v1/assistente', () => {
     limparLimites();
     process.env.GEMINI_API_KEY = 'chave-teste';
     delete process.env.GEMINI_MODEL;
+    delete process.env.GROQ_API_KEY;
     fetchMock = jest.spyOn(global, 'fetch');
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -128,7 +129,7 @@ describe('POST /v1/assistente', () => {
     expect(res.body.details[0].campo).toBe('historico');
   });
 
-  it('503 sem GEMINI_API_KEY, sem chamar a IA', async () => {
+  it('503 sem GEMINI_API_KEY e sem GROQ_API_KEY, sem chamar a IA', async () => {
     delete process.env.GEMINI_API_KEY;
 
     const res = await perguntar({ mensagem: 'Oi' });
@@ -193,6 +194,7 @@ describe('ferramentas do assistente', () => {
     limparLimites();
     pool.query.mockReset();
     process.env.GEMINI_API_KEY = 'chave-teste';
+    delete process.env.GROQ_API_KEY;
     fetchMock = jest.spyOn(global, 'fetch');
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -292,6 +294,212 @@ describe('ferramentas do assistente', () => {
 
     expect(res.status).toBe(503);
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+function respostaGroq(texto, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => ({ choices: [{ message: { role: 'assistant', content: texto } }] }),
+  };
+}
+
+function chamadaDeFerramentaGroq(name, args) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: null,
+            tool_calls: [
+              { id: 'call-1', type: 'function', function: { name, arguments: JSON.stringify(args) } },
+            ],
+          },
+        },
+      ],
+    }),
+  };
+}
+
+describe('fallback para o Groq', () => {
+  let fetchMock;
+
+  beforeEach(() => {
+    limparLimites();
+    pool.query.mockReset();
+    process.env.GEMINI_API_KEY = 'chave-teste';
+    process.env.GROQ_API_KEY = 'chave-groq';
+    delete process.env.GEMINI_MODEL;
+    delete process.env.GROQ_MODEL;
+    fetchMock = jest.spyOn(global, 'fetch');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    delete process.env.GROQ_API_KEY;
+    jest.restoreAllMocks();
+  });
+
+  it('usa o Groq quando o Gemini atinge o limite', async () => {
+    fetchMock
+      .mockResolvedValueOnce(respostaGemini('', 429))
+      .mockResolvedValueOnce(respostaGroq('Toque em Publicar no Início.'));
+
+    const res = await perguntar({ mensagem: 'Como publico?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ resposta: 'Toque em Publicar no Início.', acoes: [] });
+
+    const [url, opcoes] = fetchMock.mock.calls[1];
+    const corpo = JSON.parse(opcoes.body);
+    expect(url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(opcoes.headers.Authorization).toBe('Bearer chave-groq');
+    expect(corpo.model).toBe('openai/gpt-oss-120b');
+    expect(corpo.messages[0].role).toBe('system');
+    expect(corpo.messages[0].content).toContain('Pesque & Fale');
+    expect(corpo.messages.at(-1)).toEqual({ role: 'user', content: 'Como publico?' });
+    expect(corpo.tools.map((f) => f.function.name)).toEqual(['buscar_locais', 'sugerir_tela']);
+  });
+
+  it('usa o Groq quando o Gemini demora demais', async () => {
+    const erro = new Error('abortado');
+    erro.name = 'AbortError';
+    fetchMock.mockRejectedValueOnce(erro).mockResolvedValueOnce(respostaGroq('Olá!'));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.resposta).toBe('Olá!');
+  });
+
+  it('não chama o Groq quando o Gemini responde', async () => {
+    fetchMock.mockResolvedValueOnce(respostaGemini('Olá!'));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('usa só o Groq quando não há GEMINI_API_KEY', async () => {
+    delete process.env.GEMINI_API_KEY;
+    fetchMock.mockResolvedValueOnce(respostaGroq('Olá!'));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('api.groq.com');
+  });
+
+  it('usa o modelo definido em GROQ_MODEL e converte o histórico', async () => {
+    process.env.GROQ_MODEL = 'outro-modelo-groq';
+    fetchMock.mockResolvedValueOnce(respostaGemini('', 500)).mockResolvedValueOnce(respostaGroq('Certo.'));
+
+    await perguntar({
+      mensagem: 'E agora?',
+      historico: [
+        { papel: 'usuario', texto: 'Oi' },
+        { papel: 'assistente', texto: 'Olá!' },
+      ],
+    });
+
+    const corpo = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(corpo.model).toBe('outro-modelo-groq');
+    expect(corpo.messages.slice(1)).toEqual([
+      { role: 'user', content: 'Oi' },
+      { role: 'assistant', content: 'Olá!' },
+      { role: 'user', content: 'E agora?' },
+    ]);
+  });
+
+  it('executa as ferramentas pelo Groq e devolve as ações', async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [
+        { id: 'ponto-1', nome: 'Lago Azul', tipo: 'lago', cidade: 'Matão', estado: 'SP', avg_nota: '4.5' },
+      ],
+    });
+    fetchMock
+      .mockResolvedValueOnce(respostaGemini('', 429))
+      .mockResolvedValueOnce(chamadaDeFerramentaGroq('buscar_locais', { busca: 'Lago Azul' }))
+      .mockResolvedValueOnce(respostaGroq('O Lago Azul fica em Matão.'));
+
+    const res = await perguntar({ mensagem: 'Onde fica o Lago Azul?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      resposta: 'O Lago Azul fica em Matão.',
+      acoes: [{ tipo: 'abrir_local', pontoId: 'ponto-1', rotulo: 'Ver Lago Azul' }],
+    });
+
+    const mensagens = JSON.parse(fetchMock.mock.calls[2][1].body).messages;
+    expect(mensagens.at(-2).tool_calls[0].function.name).toBe('buscar_locais');
+    expect(mensagens.at(-1).role).toBe('tool');
+    expect(mensagens.at(-1).tool_call_id).toBe('call-1');
+    expect(JSON.parse(mensagens.at(-1).content).locais[0]).toMatchObject({ nome: 'Lago Azul' });
+  });
+
+  it('não repete as ações da tentativa do Gemini que falhou', async () => {
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('sugerir_tela', { tela: 'chat' }))
+      .mockResolvedValueOnce(respostaGemini('', 500))
+      .mockResolvedValueOnce(respostaGroq('Pronto.'));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.acoes).toEqual([]);
+  });
+
+  it('ignora argumentos inválidos enviados pelo Groq', async () => {
+    delete process.env.GEMINI_API_KEY;
+    pool.query.mockResolvedValueOnce({ rows: [] });
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: null,
+                tool_calls: [
+                  { id: 'call-1', type: 'function', function: { name: 'buscar_locais', arguments: '{quebrado' } },
+                ],
+              },
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce(respostaGroq('Não encontrei locais.'));
+
+    const res = await perguntar({ mensagem: 'Locais?' });
+
+    expect(res.status).toBe(200);
+    expect(pool.query.mock.calls[0][1]).toEqual([5]);
+  });
+
+  it('503 quando o Gemini e o Groq falham', async () => {
+    fetchMock.mockResolvedValueOnce(respostaGemini('', 429)).mockResolvedValueOnce(respostaGroq('', 429));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('ASSISTENTE_INDISPONIVEL');
+  });
+
+  it('503 quando o Groq devolve resposta vazia', async () => {
+    delete process.env.GEMINI_API_KEY;
+    fetchMock.mockResolvedValueOnce(respostaGroq('  '));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(503);
   });
 });
 
