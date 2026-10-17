@@ -1,7 +1,6 @@
 const { montarInstrucoes } = require('./assistente.prompt');
-const { geminiConfigurado, gerarResposta } = require('./gemini.client');
+const { iaConfigurada, responder } = require('./assistente.ia');
 const { consumir } = require('./limite');
-const { criarFerramentas } = require('./assistente.ferramentas');
 
 const TAMANHO_MAXIMO_MENSAGEM = 500;
 const TAMANHO_MAXIMO_HISTORICO = 6;
@@ -53,7 +52,7 @@ async function conversar(req, res) {
     return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Verifique os campos.', details });
   }
 
-  if (!geminiConfigurado()) {
+  if (!iaConfigurada()) {
     return res.status(503).json({
       error: 'ASSISTENTE_INDISPONIVEL',
       message: 'O assistente não está disponível no momento.',
@@ -67,16 +66,13 @@ async function conversar(req, res) {
     });
   }
 
-  const ferramentas = criarFerramentas();
-
   try {
-    const resposta = await gerarResposta({
+    const { resposta, acoes } = await responder({
       instrucoes: montarInstrucoes(tela),
       historico: (historico ?? []).slice(-TAMANHO_MAXIMO_HISTORICO),
       mensagem: mensagem.trim(),
-      ferramentas,
     });
-    return res.status(200).json({ data: { resposta, acoes: ferramentas.acoes } });
+    return res.status(200).json({ data: { resposta, acoes } });
   } catch (err) {
     console.error('Erro no assistente:', err.codigo ?? 'DESCONHECIDO', err.message);
     return res.status(503).json({
