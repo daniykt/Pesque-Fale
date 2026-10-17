@@ -5,6 +5,12 @@ import 'core/config/app_config.dart';
 import 'core/router/main_shell.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'features/assistente/data/assistente_api_client.dart';
+import 'features/assistente/data/assistente_repository.dart';
+import 'features/assistente/data/assistente_repository_http.dart';
+import 'features/assistente/data/assistente_repository_mock.dart';
+import 'features/assistente/presentation/assistente_page.dart';
+import 'features/assistente/providers/assistente_provider.dart';
 import 'features/auth/data/auth_api_client.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/auth_repository_http.dart';
@@ -178,6 +184,15 @@ void main() {
           ),
         );
 
+  final AssistenteRepository assistenteRepository = AppConfig.useMock
+      ? AssistenteRepositoryMock()
+      : AssistenteRepositoryHttp(
+          apiClient: AssistenteApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
+        );
+
   runApp(
     MultiProvider(
       providers: [
@@ -219,6 +234,7 @@ void main() {
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
         ),
+        Provider<AssistenteRepository>.value(value: assistenteRepository),
         ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
           create: (context) => FeedProvider(
             publicacoesRepo: publicacoesRepository,
@@ -286,6 +302,11 @@ class PesqueFaleApp extends StatelessWidget {
           child: const InboxPage(),
         ),
         '/sobre': (_) => const SobrePage(),
+        '/assistente': (context) => ChangeNotifierProvider<AssistenteProvider>(
+          create: (ctx) =>
+              AssistenteProvider(repository: ctx.read<AssistenteRepository>()),
+          child: const AssistentePage(),
+        ),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/home') {

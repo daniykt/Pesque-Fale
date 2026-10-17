@@ -134,6 +134,18 @@ class ConfiguracoesPage extends StatelessWidget {
               ),
             ],
           ),
+          ConfiguracoesSecao(
+            titulo: 'Ajuda',
+            itens: [
+              ListTile(
+                leading: const Icon(Icons.support_agent),
+                title: const Text('Assistente virtual'),
+                subtitle: const Text('Tire dúvidas sobre como usar o app.'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.pushNamed(context, '/assistente'),
+              ),
+            ],
+          ),
         ],
       ),
     );
