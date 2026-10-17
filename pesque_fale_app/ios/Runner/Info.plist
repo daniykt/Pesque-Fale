@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Precisamos acessar suas fotos para atualizar sua foto de perfil e banner.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Precisamos do microfone para você fazer perguntas ao Pirá falando.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Usamos o reconhecimento de voz para transformar sua fala em texto para o Pirá.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
