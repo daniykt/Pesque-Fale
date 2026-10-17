@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../features/chat/data/conversas_repository.dart';
 import '../../features/chat/presentation/inbox_page.dart';
 import '../../features/chat/providers/badge_mensagens_provider.dart';
@@ -141,6 +142,12 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           highlightedIndex: passoDoTour?.abaAlvo,
           onDestinationSelected: _trocarAba,
         ),
+        floatingActionButton: passoDoTour == null
+            ? const BotaoAjudaAssistente()
+            : null,
+        floatingActionButtonLocation: naTelaDePesquisa
+            ? FloatingActionButtonLocation.startFloat
+            : FloatingActionButtonLocation.endFloat,
       ),
     );
   }

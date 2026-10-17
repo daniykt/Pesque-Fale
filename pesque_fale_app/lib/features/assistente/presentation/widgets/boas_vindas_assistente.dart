@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import 'mascote_pira.dart';
 
 class BoasVindasAssistente extends StatelessWidget {
   const BoasVindasAssistente({
@@ -21,10 +22,10 @@ class BoasVindasAssistente extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: [
-        Icon(Icons.support_agent, size: 64, color: colors.primaryAccent),
+        const Center(child: MascotePira(tamanho: 96)),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Olá! Eu ajudo você a usar o Pesque & Fale.',
+          'Olá! Eu sou o ${MascotePira.nome} e ajudo você a usar o Pesque & Fale.',
           textAlign: TextAlign.center,
           style: textTheme.titleLarge?.copyWith(color: colors.textPrimary),
         ),

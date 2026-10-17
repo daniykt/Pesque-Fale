@@ -37,7 +37,7 @@ class BalaoMensagem extends StatelessWidget {
               : CrossAxisAlignment.start,
           children: [
             Semantics(
-              label: doUsuario ? 'Você disse' : 'Assistente respondeu',
+             label: doUsuario ? 'Você disse' : 'Pirá respondeu',
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
