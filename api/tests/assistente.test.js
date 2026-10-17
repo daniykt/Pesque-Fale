@@ -4,6 +4,7 @@ process.env.JWT_EXPIRES_IN = '24h';
 jest.mock('../src/config/database', () => ({ query: jest.fn() }));
 
 const request = require('supertest');
+const pool = require('../src/config/database');
 const app = require('../src/app');
 const { gerarToken } = require('./helpers/token');
 const { MAXIMO_POR_JANELA, consumir, limparLimites } = require('../src/modules/assistente/limite');
@@ -15,6 +16,16 @@ function respostaGemini(texto, status = 200) {
     ok: status >= 200 && status < 300,
     status,
     json: async () => ({ candidates: [{ content: { parts: [{ text: texto }] } }] }),
+  };
+}
+
+function chamadaDeFerramenta(name, args) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      candidates: [{ content: { role: 'model', parts: [{ functionCall: { name, args } }] } }],
+    }),
   };
 }
 
@@ -64,6 +75,8 @@ describe('POST /v1/assistente', () => {
     expect(corpo.systemInstruction.parts[0].text).toContain('Pesque & Fale');
     expect(corpo.systemInstruction.parts[0].text).toContain('inicio');
     expect(corpo.contents).toEqual([{ role: 'user', parts: [{ text: 'Oi' }] }]);
+    const nomes = corpo.tools[0].functionDeclarations.map((f) => f.name);
+    expect(nomes).toEqual(['buscar_locais', 'sugerir_tela']);
   });
 
   it('usa o modelo definido em GEMINI_MODEL', async () => {
@@ -170,6 +183,115 @@ describe('POST /v1/assistente', () => {
     expect(res.status).toBe(429);
     expect(res.body.error).toBe('LIMITE_ASSISTENTE');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('ferramentas do assistente', () => {
+  let fetchMock;
+
+  beforeEach(() => {
+    limparLimites();
+    pool.query.mockReset();
+    process.env.GEMINI_API_KEY = 'chave-teste';
+    fetchMock = jest.spyOn(global, 'fetch');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('buscar_locais consulta o banco e devolve botões para abrir os locais', async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [
+        { id: 'ponto-1', nome: 'Lago Azul', tipo: 'lago', cidade: 'Matão', estado: 'SP', avg_nota: '4.5' },
+      ],
+    });
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('buscar_locais', { busca: 'Lago Azul' }))
+      .mockResolvedValueOnce(respostaGemini('O Lago Azul fica em Matão.'));
+
+    const res = await perguntar({ mensagem: 'Onde fica o Lago Azul?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({
+      resposta: 'O Lago Azul fica em Matão.',
+      acoes: [{ tipo: 'abrir_local', pontoId: 'ponto-1', rotulo: 'Ver Lago Azul' }],
+    });
+
+    const [sql, valores] = pool.query.mock.calls[0];
+    expect(sql).toContain('FROM pontos_de_pesca');
+    expect(sql).toContain('LIMIT');
+    expect(valores).toEqual(['%Lago Azul%', 5]);
+
+    const segundaChamada = JSON.parse(fetchMock.mock.calls[1][1].body);
+    const resultado = segundaChamada.contents.at(-1).parts[0].functionResponse;
+    expect(resultado.name).toBe('buscar_locais');
+    expect(resultado.response.locais[0]).toMatchObject({ nome: 'Lago Azul', nota: 4.5 });
+    expect(segundaChamada.contents.at(-2).parts[0].functionCall.name).toBe('buscar_locais');
+  });
+
+  it('buscar_locais ignora tipo inválido e filtra por cidade', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('buscar_locais', { tipo: 'piscina', cidade: 'Matão' }))
+      .mockResolvedValueOnce(respostaGemini('Ainda não há locais cadastrados em Matão.'));
+
+    const res = await perguntar({ mensagem: 'Tem lugar pra pescar em Matão?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.acoes).toEqual([]);
+    const [sql, valores] = pool.query.mock.calls[0];
+    expect(sql).not.toContain('tipo =');
+    expect(valores).toEqual(['Matão', 5]);
+  });
+
+  it('sugerir_tela devolve um botão para a tela pedida', async () => {
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('sugerir_tela', { tela: 'nova_publicacao' }))
+      .mockResolvedValueOnce(respostaGemini('Toque no botão abaixo e preencha a publicação.'));
+
+    const res = await perguntar({ mensagem: 'Como publico uma pescaria?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.acoes).toEqual([
+      { tipo: 'abrir_tela', tela: 'nova_publicacao', rotulo: 'Abrir tela de publicar' },
+    ]);
+  });
+
+  it('sugerir_tela com tela inventada não gera botão', async () => {
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('sugerir_tela', { tela: 'painel_admin' }))
+      .mockResolvedValueOnce(respostaGemini('Essa tela não existe no app.'));
+
+    const res = await perguntar({ mensagem: 'Abre o painel de admin' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.acoes).toEqual([]);
+    const resultado = JSON.parse(fetchMock.mock.calls[1][1].body).contents.at(-1).parts[0]
+      .functionResponse.response;
+    expect(resultado).toHaveProperty('erro');
+  });
+
+  it('erro no banco vira aviso para a IA, sem derrubar a resposta', async () => {
+    pool.query.mockRejectedValueOnce(new Error('banco fora'));
+    fetchMock
+      .mockResolvedValueOnce(chamadaDeFerramenta('buscar_locais', { busca: 'Lago' }))
+      .mockResolvedValueOnce(respostaGemini('Não consegui consultar os locais agora.'));
+
+    const res = await perguntar({ mensagem: 'Onde fica o Lago Azul?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.acoes).toEqual([]);
+  });
+
+  it('503 se a IA continuar pedindo ferramentas sem concluir', async () => {
+    fetchMock.mockResolvedValue(chamadaDeFerramenta('sugerir_tela', { tela: 'chat' }));
+
+    const res = await perguntar({ mensagem: 'Oi' });
+
+    expect(res.status).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
 
