@@ -8,6 +8,7 @@ import 'navegacao_assistente.dart';
 import 'widgets/balao_mensagem.dart';
 import 'widgets/boas_vindas_assistente.dart';
 import 'widgets/campo_pergunta.dart';
+import 'widgets/mascote_pira.dart';
 
 class AssistentePage extends StatelessWidget {
   const AssistentePage({super.key});
@@ -19,7 +20,24 @@ class AssistentePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(title: const Text('Assistente virtual')),
+      appBar: AppBar(
+        title: const Row(
+          children: [
+            MascotePira(tamanho: 32, cor: Colors.white),
+            SizedBox(width: AppSpacing.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(MascotePira.nome),
+                Text(
+                  'assistente virtual',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           const _AvisoAssistenteVirtual(),
@@ -56,7 +74,7 @@ class _AvisoAssistenteVirtual extends StatelessWidget {
       ),
       color: colors.surfaceVariant,
       child: Text(
-        'Assistente virtual. Ele pode errar, confira as informações importantes.',
+        'O ${MascotePira.nome} é um assistente virtual e pode errar. Confira as informações importantes.',
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: colors.textSecondary,
@@ -117,20 +135,13 @@ class _Pensando extends StatelessWidget {
       liveRegion: true,
       child: Row(
         children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: colors.primaryAccent,
-            ),
-          ),
+          const MascotePira(tamanho: 32, animando: true),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               demorando
-                  ? 'Acordando o assistente... a primeira resposta pode levar até 1 minuto.'
-                  : 'Pensando...',
+                  ? 'Acordando o ${MascotePira.nome}... a primeira resposta pode levar até 1 minuto.'
+                  : 'O ${MascotePira.nome} está pensando...',
               style: estilo,
             ),
           ),

@@ -78,7 +78,7 @@ void main() {
   ) async {
     await montar(tester);
 
-    expect(find.textContaining('Assistente virtual. Ele pode errar'), findsOneWidget);
+    expect(find.textContaining('é um assistente virtual e pode errar'), findsOneWidget);
     for (final sugestao in AssistenteProvider.sugestoes) {
       expect(find.text(sugestao), findsOneWidget);
     }
@@ -110,21 +110,21 @@ void main() {
     expect(find.text('Como sigo alguém?'), findsOneWidget);
   });
 
-  testWidgets('mostra "Pensando..." e depois o aviso de demora', (tester) async {
+  testWidgets('mostra que o Pirá está pensando e depois o aviso de demora', (tester) async {
     repo.pendente = Completer();
     await montar(tester);
 
     await tester.tap(find.text(AssistenteProvider.sugestoes.first));
     await tester.pump();
-    expect(find.text('Pensando...'), findsOneWidget);
+    expect(find.text('O Pirá está pensando...'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 6));
-    expect(find.textContaining('Acordando o assistente'), findsOneWidget);
+    expect(find.textContaining('Acordando o Pirá'), findsOneWidget);
 
     repo.pendente!.complete(const RespostaAssistente(resposta: 'Pronto.'));
     await tester.pumpAndSettle();
     expect(find.text('Pronto.'), findsOneWidget);
-    expect(find.textContaining('Acordando o assistente'), findsNothing);
+    expect(find.textContaining('Acordando o Pirá'), findsNothing);
   });
 
   testWidgets('botão de local abre o detalhe do ponto', (tester) async {
