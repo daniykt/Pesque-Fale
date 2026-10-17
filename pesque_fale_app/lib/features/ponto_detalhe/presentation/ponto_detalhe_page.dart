@@ -26,7 +26,11 @@ class _PontoDetalhePageState extends State<PontoDetalhePage> {
   @override
   void initState() {
     super.initState();
-    context.read<PontoDetalheProvider>().carregar(widget.pontoId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PontoDetalheProvider>().carregar(widget.pontoId);
+      }
+    });
   }
 
   @override
