@@ -1,6 +1,7 @@
 const { montarInstrucoes } = require('./assistente.prompt');
 const { geminiConfigurado, gerarResposta } = require('./gemini.client');
 const { consumir } = require('./limite');
+const { criarFerramentas } = require('./assistente.ferramentas');
 
 const TAMANHO_MAXIMO_MENSAGEM = 500;
 const TAMANHO_MAXIMO_HISTORICO = 6;
@@ -66,13 +67,16 @@ async function conversar(req, res) {
     });
   }
 
+  const ferramentas = criarFerramentas();
+
   try {
     const resposta = await gerarResposta({
       instrucoes: montarInstrucoes(tela),
       historico: (historico ?? []).slice(-TAMANHO_MAXIMO_HISTORICO),
       mensagem: mensagem.trim(),
+      ferramentas,
     });
-    return res.status(200).json({ data: { resposta, acoes: [] } });
+    return res.status(200).json({ data: { resposta, acoes: ferramentas.acoes } });
   } catch (err) {
     console.error('Erro no assistente:', err.codigo ?? 'DESCONHECIDO', err.message);
     return res.status(503).json({
