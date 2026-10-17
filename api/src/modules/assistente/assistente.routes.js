@@ -39,7 +39,9 @@ const router = Router();
  *                 example: inicio
  *     responses:
  *       200:
- *         description: '{ "data": { "resposta": "...", "acoes": [] } }'
+ *         description: >-
+ *           { "data": { "resposta": "...", "acoes": [...] } }. Cada ação é
+ *           { tipo: abrir_local, pontoId, rotulo } ou { tipo: abrir_tela, tela, rotulo }.
  *       400:
  *         description: Dados inválidos
  *       401:
