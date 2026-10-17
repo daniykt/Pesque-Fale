@@ -10,10 +10,14 @@ class BalaoMensagem extends StatelessWidget {
     super.key,
     required this.mensagem,
     required this.onAcao,
+    this.lendo = false,
+    this.onOuvir,
   });
 
   final MensagemAssistente mensagem;
   final ValueChanged<AcaoAssistente> onAcao;
+  final bool lendo;
+  final VoidCallback? onOuvir;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +41,7 @@ class BalaoMensagem extends StatelessWidget {
               : CrossAxisAlignment.start,
           children: [
             Semantics(
-             label: doUsuario ? 'Você disse' : 'Pirá respondeu',
+              label: doUsuario ? 'Você disse' : 'Pirá respondeu',
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
@@ -50,6 +54,22 @@ class BalaoMensagem extends StatelessWidget {
                 child: Text(mensagem.texto, style: estiloTexto),
               ),
             ),
+            if (!doUsuario && onOuvir != null)
+              TextButton.icon(
+                onPressed: onOuvir,
+                icon: Icon(
+                  lendo ? Icons.stop_circle_outlined : Icons.volume_up_outlined,
+                ),
+                label: Text(lendo ? 'Parar' : 'Ouvir'),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  foregroundColor: colors.primaryAccent,
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             for (final acao in mensagem.acoes)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.xs),

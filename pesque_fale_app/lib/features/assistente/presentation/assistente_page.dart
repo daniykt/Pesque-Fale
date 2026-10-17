@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../data/servico_voz.dart';
+import '../data/servico_voz_dispositivo.dart';
 import '../providers/assistente_provider.dart';
+import '../providers/voz_provider.dart';
 import 'navegacao_assistente.dart';
 import 'widgets/balao_mensagem.dart';
 import 'widgets/boas_vindas_assistente.dart';
@@ -11,11 +14,27 @@ import 'widgets/campo_pergunta.dart';
 import 'widgets/mascote_pira.dart';
 
 class AssistentePage extends StatelessWidget {
-  const AssistentePage({super.key});
+  const AssistentePage({super.key, this.servicoVoz});
+
+  final ServicoVoz? servicoVoz;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          VozProvider(servico: servicoVoz ?? ServicoVozDispositivo()),
+      child: const _TelaAssistente(),
+    );
+  }
+}
+
+class _TelaAssistente extends StatelessWidget {
+  const _TelaAssistente();
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AssistenteProvider>();
+    final aviso = context.select<VozProvider, String?>((voz) => voz.aviso);
     final colors = Theme.of(context).extension<AppColors>()!;
 
     return Scaffold(
@@ -49,6 +68,7 @@ class AssistentePage extends StatelessWidget {
                   )
                 : _Conversa(provider: provider),
           ),
+          if (aviso != null) _AvisoVoz(texto: aviso),
           CampoPergunta(
             habilitado: !provider.enviando,
             onEnviar: provider.enviar,
@@ -84,6 +104,44 @@ class _AvisoAssistenteVirtual extends StatelessWidget {
   }
 }
 
+class _AvisoVoz extends StatelessWidget {
+  const _AvisoVoz({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        color: colors.surfaceVariant,
+        child: Row(
+          children: [
+            Icon(Icons.mic_off_outlined, color: colors.danger),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                texto,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 16,
+                  color: colors.danger,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Conversa extends StatelessWidget {
   const _Conversa({required this.provider});
 
@@ -91,6 +149,7 @@ class _Conversa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final voz = context.watch<VozProvider>();
     final mensagens = provider.mensagens.reversed.toList();
     final temRodape = provider.enviando || provider.erro != null;
 
@@ -112,6 +171,10 @@ class _Conversa extends StatelessWidget {
         return BalaoMensagem(
           mensagem: mensagem,
           onAcao: (acao) => abrirAcaoDoAssistente(context, acao),
+          lendo: voz.estaLendo(mensagem),
+          onOuvir: mensagem.doUsuario
+              ? null
+              : () => voz.alternarLeitura(mensagem),
         );
       },
     );

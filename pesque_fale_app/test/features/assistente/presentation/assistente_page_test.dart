@@ -10,6 +10,9 @@ import 'package:pesque_fale_app/features/assistente/data/assistente_repository.d
 import 'package:pesque_fale_app/features/assistente/domain/mensagem_assistente.dart';
 import 'package:pesque_fale_app/features/assistente/presentation/assistente_page.dart';
 import 'package:pesque_fale_app/features/assistente/providers/assistente_provider.dart';
+import 'package:pesque_fale_app/features/assistente/providers/voz_provider.dart';
+
+import '../support/fake_servico_voz.dart';
 
 class _FakeAssistenteRepository implements AssistenteRepository {
   final List<String> perguntas = [];
@@ -48,8 +51,12 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   late _FakeAssistenteRepository repo;
+  late FakeServicoVoz voz;
 
-  setUp(() => repo = _FakeAssistenteRepository());
+  setUp(() {
+    repo = _FakeAssistenteRepository();
+    voz = FakeServicoVoz();
+  });
 
   Future<void> montar(WidgetTester tester) async {
     tester.view.physicalSize = const Size(800, 1200);
@@ -61,7 +68,7 @@ void main() {
         theme: AppTheme.light,
         home: ChangeNotifierProvider(
           create: (_) => AssistenteProvider(repository: repo),
-          child: const AssistentePage(),
+          child: AssistentePage(servicoVoz: voz),
         ),
         onGenerateRoute: (settings) => MaterialPageRoute(
           settings: settings,
@@ -170,5 +177,73 @@ void main() {
     expect(repo.perguntas, hasLength(2));
     expect(find.text('Toque no botão abaixo.'), findsOneWidget);
     expect(find.text('Tentar de novo'), findsNothing);
+  });
+
+  testWidgets('o microfone escreve a pergunta falada no campo', (tester) async {
+    await montar(tester);
+
+    await tester.tap(find.byTooltip('Falar a pergunta'));
+    await tester.pump();
+    expect(find.byTooltip('Parar de ouvir'), findsOneWidget);
+    expect(find.text('Pode falar, estou ouvindo...'), findsOneWidget);
+
+    voz.onTexto!('Como publico');
+    voz.onTexto!('Como publico uma pescaria?');
+    voz.terminarEscuta();
+    await tester.pump();
+
+    final campo = tester.widget<TextField>(find.byType(TextField));
+    expect(campo.controller!.text, 'Como publico uma pescaria?');
+    expect(find.byTooltip('Falar a pergunta'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Enviar pergunta'));
+    await tester.pumpAndSettle();
+
+    expect(repo.perguntas, ['Como publico uma pescaria?']);
+  });
+
+  testWidgets('avisa quando o microfone não pode ser usado', (tester) async {
+    voz.microfoneLiberado = false;
+    await montar(tester);
+
+    await tester.tap(find.byTooltip('Falar a pergunta'));
+    await tester.pump();
+
+    expect(find.text(VozProvider.avisoMicrofone), findsOneWidget);
+    expect(find.byTooltip('Falar a pergunta'), findsOneWidget);
+  });
+
+  testWidgets('"Ouvir" lê a resposta do Pirá e vira "Parar"', (tester) async {
+    await montar(tester);
+    await tester.tap(find.text(AssistenteProvider.sugestoes.first));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ouvir'), findsOneWidget);
+
+    await tester.tap(find.text('Ouvir'));
+    await tester.pump();
+
+    expect(voz.lidos, ['Toque no botão abaixo.']);
+    expect(find.text('Parar'), findsOneWidget);
+
+    voz.terminarLeitura();
+    await tester.pump();
+
+    expect(find.text('Ouvir'), findsOneWidget);
+    expect(find.text('Parar'), findsNothing);
+  });
+
+  testWidgets('"Parar" interrompe a leitura', (tester) async {
+    await montar(tester);
+    await tester.tap(find.text(AssistenteProvider.sugestoes.first));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Ouvir'));
+    await tester.pump();
+    await tester.tap(find.text('Parar'));
+    await tester.pump();
+
+    expect(voz.paradasLeitura, greaterThan(0));
+    expect(find.text('Ouvir'), findsOneWidget);
   });
 }
