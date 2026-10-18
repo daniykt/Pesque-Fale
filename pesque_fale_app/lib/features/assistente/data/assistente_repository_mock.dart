@@ -15,6 +15,13 @@ class AssistenteRepositoryMock implements AssistenteRepository {
     await Future<void>.delayed(atraso);
     final texto = mensagem.toLowerCase();
 
+    if (texto.contains('sabe fazer') || texto.contains('pode ajudar')) {
+      return const RespostaAssistente(
+        resposta:
+            'Eu explico como usar o Pesque & Fale, como publicar uma pescaria, mudar seu perfil ou seguir pessoas, e abro a tela certa com um botão. Também procuro locais de pesca cadastrados. Você pode falar a pergunta no microfone e tocar em Ouvir para escutar a resposta.',
+      );
+    }
+
     if (texto.contains('public')) {
       return const RespostaAssistente(
         resposta:
