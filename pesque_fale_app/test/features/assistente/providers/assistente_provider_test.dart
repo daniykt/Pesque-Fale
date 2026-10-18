@@ -54,6 +54,14 @@ void main() {
     expect(AssistenteProvider.sugestoes, isNotEmpty);
   });
 
+  test('as sugestões não dependem de locais cadastrados', () {
+    expect(AssistenteProvider.sugestoes, contains('O que você sabe fazer?'));
+    expect(
+      AssistenteProvider.sugestoes.where((s) => s.contains('Lago Azul')),
+      isEmpty,
+    );
+  });
+
   test('envia a pergunta e guarda a resposta com as ações', () async {
     await provider.enviar('  Como publico?  ');
 

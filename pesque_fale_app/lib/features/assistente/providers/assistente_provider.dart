@@ -17,7 +17,7 @@ class AssistenteProvider extends ChangeNotifier {
 
   static const sugestoes = [
     'Como publico uma pescaria?',
-    'Onde fica o Lago Azul?',
+    'O que você sabe fazer?',
     'Como mudo minha foto de perfil?',
     'Como encontro pessoas para seguir?',
   ];
