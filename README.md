@@ -110,39 +110,58 @@ CLOUDINARY_API_SECRET=   # Dashboard Cloudinary → Product Environment Credenti
 
 #### 3. Montar o banco de dados
 
-O schema fica versionado em `api/db/migrations/`, em arquivos numerados que devem ser aplicados **em ordem numérica**. Eles **não** rodam sozinhos: cada pessoa aplica no próprio banco local.
+O schema fica versionado em `api/db/migrations/`, em arquivos numerados. Quem aplica é o script `npm run migrate`: ele roda os arquivos em ordem e registra cada um na tabela `schema_migrations` (criada automaticamente na primeira execução).
 
 | Migration | O que faz |
 |---|---|
 | `001_schema_inicial.sql` | Cria as extensões (pgcrypto, PostGIS) e as tabelas base: usuários, seguidores, pontos de pesca, avaliações, publicações, eventos, chats, mensagens e notificações |
-| `003_curtidas_comentarios.sql` | Cria curtidas e comentários, com os triggers de contagem |
+| `003_curtidas_comentarios.sql` | Cria curtidas e comentários, com os triggers de contagem (e remove os triggers de nome antigo, que causavam contagem dupla em bancos montados antes dela) |
 | `004_notificacoes_de_volta.sql` | Adiciona a coluna `de_volta` em notificações |
+| `005_limpar_notificacoes_mensagem.sql` | Apaga as notificações antigas do tipo `mensagem` (o chat passou a ter aba e badge próprios) |
 
-Os comandos abaixo usam `psql` e `createdb`. Se o terminal não reconhecer esses comandos, adicione a pasta `bin` do PostgreSQL ao PATH (no PowerShell: `$env:Path += ";C:\Program Files\PostgreSQL\18\bin"`).
-
-**Banco novo (primeira vez)** — de dentro da pasta `api`:
+**Banco novo (primeira vez)** — de dentro da pasta `api`, com o `.env` já configurado:
 
 ```bash
 createdb -U postgres pesqueefale
-psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/001_schema_inicial.sql
-psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/003_curtidas_comentarios.sql
-psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/004_notificacoes_de_volta.sql
+npm install
+npm run migrate
 ```
 
-A `001` roda dentro de uma transação e só deve ser aplicada em um banco **vazio**. Se falhar (por exemplo, com o PostGIS não instalado), nada é criado pela metade: corrija o problema e rode de novo.
+Saída esperada: uma linha `✅ aplicada: <arquivo>` por migration. Rodando de novo, cada uma aparece como `⏭️  já aplicada: <arquivo>`, e nada é executado: o script é idempotente e pode rodar quantas vezes quiser.
 
-**Banco que já existia** — **não** rode a `001`. Aplique apenas as migrations a partir da `003`:
+Cada migration roda em uma transação própria, junto com o seu registro em `schema_migrations`. Se uma falhar (por exemplo, com o PostGIS não instalado), ela é desfeita, o script mostra `❌ erro em <arquivo>: <mensagem>`, para ali e sai com código 1. Corrija o problema e rode de novo. A `001` é uma exceção parcial: ela tem `BEGIN`/`COMMIT` próprios, que fecham a transação do script antes do registro em `schema_migrations`. O conteúdo dela continua sendo desfeito se falhar.
+
+> ⚠️ **Nota de operação.** O script é idempotente a partir da primeira execução, mas a migration `001_schema_inicial.sql` não é: ela foi escrita antes do runner existir. Se o banco já foi montado manualmente (produção via DBeaver, ou dev local seguindo o fluxo antigo com `psql -f`), rodar `npm run migrate` nele vai falhar, porque o script tenta recriar objetos que já existem. Antes da primeira execução nesses bancos, crie a `schema_migrations` e registre à mão as migrations já aplicadas:
+>
+> ```sql
+> CREATE TABLE IF NOT EXISTS schema_migrations (
+>   id SERIAL PRIMARY KEY,
+>   filename VARCHAR(255) NOT NULL UNIQUE,
+>   executed_at TIMESTAMP NOT NULL DEFAULT NOW()
+> );
+>
+> INSERT INTO schema_migrations (filename) VALUES
+>   ('001_schema_inicial.sql'),
+>   ('003_curtidas_comentarios.sql'),
+>   ('004_notificacoes_de_volta.sql'),
+>   ('005_limpar_notificacoes_mensagem.sql');
+> ```
+>
+> Registre só as que de fato foram aplicadas naquele banco; as que ficarem de fora o `npm run migrate` aplica em seguida. Em banco limpo (dev novo, CI, QA zerado) nada disso é necessário: o runner aplica tudo do zero.
+
+**Criando uma migration nova:** adicione um arquivo `NNN_descricao_curta.sql` em `api/db/migrations/`, com o próximo número livre (ex.: `006_adiciona_coluna_x.sql`). O nome do arquivo é o que fica registrado em `schema_migrations`, então nunca renomeie nem edite uma migration já aplicada: para corrigir algo, crie uma nova.
+
+**Aplicação manual (só em casos excepcionais)** — para depurar ou aplicar uma migration isolada, dá para rodar o arquivo direto com `psql` (ou colar o conteúdo no **Query Tool** do pgAdmin e apertar **F5**):
 
 ```bash
-psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/003_curtidas_comentarios.sql
 psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/004_notificacoes_de_volta.sql
 ```
 
-A partir da `003`, as migrations usam `IF NOT EXISTS` / `CREATE OR REPLACE` / `DROP ... IF EXISTS`, então é seguro rodá-las de novo. A `003` também substitui os triggers de contagem com nome antigo (`trigger_curtidas_count` / `trigger_comentarios_count`), que existiam em bancos montados antes dela, evitando contagem dupla de curtidas e comentários.
+Esse caminho **não** registra nada em `schema_migrations`. Depois de aplicar à mão, registre o arquivo (`INSERT INTO schema_migrations (filename) VALUES ('004_notificacoes_de_volta.sql');`); senão o próximo `npm run migrate` tenta aplicá-lo de novo.
 
-Também é possível aplicar pelo pgAdmin: clique com o botão direito no banco `pesqueefale` → **Query Tool** → cole o conteúdo de cada arquivo → **F5**.
+Os comandos `psql` e `createdb` precisam da pasta `bin` do PostgreSQL no PATH. Se o terminal não os reconhecer, no PowerShell: `$env:Path += ";C:\Program Files\PostgreSQL\18\bin"`.
 
-> ⚠️ **Atenção:** a cada `git pull` na `dev`, confira se entrou arquivo novo em `api/db/migrations/`. Com o banco desatualizado, a API sobe normalmente, mas algumas operações falham em silêncio. Exemplo: sem a `004`, **nenhuma notificação é criada** — seguir, curtir e comentar continuam respondendo `201`, e o erro só aparece no terminal da API como `Erro ao criar notificação` com `code: '42703'` (coluna inexistente).
+> ⚠️ **Atenção:** a cada `git pull` na `dev`, rode `npm run migrate` dentro de `api/`. Com o banco desatualizado, a API sobe normalmente, mas algumas operações falham em silêncio. Exemplo: sem a `004`, **nenhuma notificação é criada** — seguir, curtir e comentar continuam respondendo `201`, e o erro só aparece no terminal da API como `Erro ao criar notificação` com `code: '42703'` (coluna inexistente).
 
 #### 4. Instalar dependências e rodar
 
