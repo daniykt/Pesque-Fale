@@ -8,6 +8,7 @@ import '../../chat/domain/conversa.dart';
 import '../domain/notificacao.dart';
 import '../providers/badge_notificacoes_provider.dart';
 import '../providers/notificacoes_provider.dart';
+import 'widgets/barra_acoes_notificacoes.dart';
 import 'widgets/empty_state_notificacoes.dart';
 import 'widgets/erro_state_notificacoes.dart';
 import 'widgets/filtro_chips.dart';
@@ -73,6 +74,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
                   onSelecionar: provider.setFiltro,
                 ),
               ),
+              const BarraAcoesNotificacoes(),
               Expanded(child: _buildConteudo(provider)),
             ],
           ),

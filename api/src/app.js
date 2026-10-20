@@ -11,6 +11,7 @@ const publicacoesRoutes = require('./modules/publicacoes/publicacoes.routes');
 const eventosRoutes = require('./modules/eventos/eventos.routes');
 const chatRoutes = require('./modules/chat/chat.routes');
 const notificacoesRoutes = require('./modules/notificacoes/notificacoes.routes');
+const assistenteRoutes = require('./modules/assistente/assistente.routes');
 const curtidasRoutes = require('./modules/curtidas/curtidas.routes');
 const comentariosRoutes = require('./modules/comentarios/comentarios.routes');
 const comentariosStandaloneRoutes = require('./modules/comentarios/comentarios-standalone.routes');
@@ -57,5 +58,6 @@ app.use('/v1/comentarios', comentariosStandaloneRoutes);
 app.use('/v1/eventos', eventosRoutes);
 app.use('/v1/chats', chatRoutes);
 app.use('/v1/notificacoes', notificacoesRoutes);
+app.use('/v1/assistente', assistenteRoutes);
 
 module.exports = app;

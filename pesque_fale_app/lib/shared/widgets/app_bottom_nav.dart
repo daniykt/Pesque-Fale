@@ -10,6 +10,7 @@ class AppBottomNav extends StatelessWidget {
     required this.currentIndex,
     required this.onDestinationSelected,
     this.notifCount = 0,
+    this.chatCount = 0,
     this.highlightedIndex,
   });
 
@@ -17,6 +18,7 @@ class AppBottomNav extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
 
   final int notifCount;
+  final int chatCount;
 
   /// Índice do item a destacar com uma borda (usado pelo tour guiado).
   /// `null` mantém o comportamento normal.
@@ -56,8 +58,24 @@ class AppBottomNav extends StatelessWidget {
           label: 'Pesquisa',
         ),
         NavigationDestination(
-          icon: destacar(const Icon(Icons.chat_bubble_outline), 2),
-          selectedIcon: destacar(const Icon(Icons.chat_bubble_outline), 2),
+          icon: destacar(
+            Badge(
+              backgroundColor: badgeColor,
+              isLabelVisible: chatCount > 0,
+              label: Text(chatCount > 99 ? '99+' : '$chatCount'),
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            2,
+          ),
+          selectedIcon: destacar(
+            Badge(
+              backgroundColor: badgeColor,
+              isLabelVisible: chatCount > 0,
+              label: Text(chatCount > 99 ? '99+' : '$chatCount'),
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            2,
+          ),
           label: 'Chat',
         ),
         NavigationDestination(

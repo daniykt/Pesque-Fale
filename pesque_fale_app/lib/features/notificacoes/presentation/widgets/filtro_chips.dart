@@ -19,7 +19,6 @@ class FiltroChips extends StatelessWidget {
     MapEntry(TipoNotificacao.seguindo, 'Seguidores'),
     MapEntry(TipoNotificacao.curtida, 'Curtidas'),
     MapEntry(TipoNotificacao.comentario, 'Comentários'),
-    MapEntry(TipoNotificacao.mensagem, 'Mensagens'),
   ];
 
   @override

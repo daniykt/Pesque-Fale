@@ -6,7 +6,7 @@ import 'package:pesque_fale_app/core/theme/app_colors.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository.dart';
 import 'package:pesque_fale_app/features/notificacoes/domain/notificacao.dart';
-import 'package:pesque_fale_app/features/notificacoes/presentation/widgets/botao_limpar_notificacoes.dart';
+import 'package:pesque_fale_app/features/notificacoes/presentation/widgets/barra_acoes_notificacoes.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
@@ -59,6 +59,8 @@ void main() {
 
   setUp(() => repo = _FakeNotificacoesRepository());
 
+  final finderBotao = find.widgetWithText(OutlinedButton, 'Limpar');
+
   Future<void> montar(WidgetTester tester, {ThemeData? tema}) async {
     final provider = NotificacoesProvider(
       repository: repo,
@@ -76,9 +78,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: tema ?? AppTheme.light,
-          home: Scaffold(
-            appBar: AppBar(actions: const [BotaoLimparNotificacoes()]),
-          ),
+          home: const Scaffold(body: BarraAcoesNotificacoes()),
         ),
       ),
     );
@@ -86,22 +86,29 @@ void main() {
   }
 
   Future<void> abrirConfirmacao(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Limpar todas'));
+    await tester.tap(finderBotao);
     await tester.pumpAndSettle();
   }
+
+  // Pega o "Limpar" dentro do diálogo (há dois com esse texto quando ele abre:
+  // o da barra e o da ação do dialog).
+  Finder botaoLimparDoDialogo() => find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.widgetWithText(TextButton, 'Limpar'),
+  );
 
   testWidgets('não aparece quando não há notificações', (tester) async {
     repo.servidor = [];
 
     await montar(tester);
 
-    expect(find.byTooltip('Limpar todas'), findsNothing);
+    expect(finderBotao, findsNothing);
   });
 
   testWidgets('aparece quando há notificações', (tester) async {
     await montar(tester);
 
-    expect(find.byTooltip('Limpar todas'), findsOneWidget);
+    expect(finderBotao, findsOneWidget);
   });
 
   testWidgets('Cancelar fecha a confirmação sem apagar nada', (tester) async {
@@ -115,33 +122,36 @@ void main() {
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(repo.chamadasApagarTodas, 0);
-    expect(find.byTooltip('Limpar todas'), findsOneWidget);
+    expect(finderBotao, findsOneWidget);
   });
 
-  testWidgets('confirmar apaga tudo, atualiza o badge e esconde o botão', (
+  testWidgets('confirmar apaga tudo, atualiza o badge e esconde a barra', (
     tester,
   ) async {
     await montar(tester);
     await abrirConfirmacao(tester);
 
-    await tester.tap(find.text('Limpar'));
+    await tester.tap(botaoLimparDoDialogo());
     await tester.pumpAndSettle();
 
     expect(repo.chamadasApagarTodas, 1);
     expect(repo.chamadasContar, greaterThan(0));
-    expect(find.byTooltip('Limpar todas'), findsNothing);
+    expect(finderBotao, findsNothing);
   });
 
-  testWidgets('falha ao limpar mostra erro e mantém o botão', (tester) async {
+  testWidgets('falha ao limpar mostra erro e mantém a barra', (tester) async {
     repo.falharApagarTodas = true;
     await montar(tester);
     await abrirConfirmacao(tester);
 
-    await tester.tap(find.text('Limpar'));
+    await tester.tap(botaoLimparDoDialogo());
     await tester.pumpAndSettle();
 
-    expect(find.text('Não foi possível limpar as notificações.'), findsOneWidget);
-    expect(find.byTooltip('Limpar todas'), findsOneWidget);
+    expect(
+      find.text('Não foi possível limpar as notificações.'),
+      findsOneWidget,
+    );
+    expect(finderBotao, findsOneWidget);
   });
 
   testWidgets('no tema escuro, o Cancelar usa a cor de destaque clara', (

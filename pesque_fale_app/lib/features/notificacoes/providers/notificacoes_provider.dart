@@ -33,7 +33,11 @@ class NotificacoesProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final resultado = await repository.listar();
-      _todas = _semPendentes(resultado.lista);
+      // TODO(8.4.4): remover este filtro quando o backend parar de criar
+      // notificações do tipo `mensagem` em chat.gateway.js. Mensagens têm sua
+      // própria aba (Chat) com badge próprio no bottom nav — não devem
+      // aparecer na lista de alertas sociais.
+      _todas = _semPendentes(_semMensagens(resultado.lista));
       status = StatusNotificacoes.carregado;
       if (_todas.any((n) => !n.lida)) {
         await repository.marcarTodasComoLidas();
@@ -48,7 +52,7 @@ class NotificacoesProvider extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       final resultado = await repository.listar();
-      _todas = _semPendentes(resultado.lista);
+      _todas = _semPendentes(_semMensagens(resultado.lista));
       notifyListeners();
     } catch (_) {
       // Silencia erro no refresh — mantém os dados já carregados na tela.
@@ -124,6 +128,9 @@ class NotificacoesProvider extends ChangeNotifier {
 
   List<Notificacao> _semPendentes(List<Notificacao> lista) =>
       lista.where((n) => !_remocoesPendentes.containsKey(n.id)).toList();
+
+  List<Notificacao> _semMensagens(List<Notificacao> lista) =>
+      lista.where((n) => n.tipo != TipoNotificacao.mensagem).toList();
 
   @override
   void notifyListeners() {

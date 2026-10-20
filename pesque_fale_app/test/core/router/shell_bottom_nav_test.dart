@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import 'package:pesque_fale_app/core/router/shell_bottom_nav.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
+import 'package:pesque_fale_app/features/chat/data/conversas_repository_mock.dart';
+import 'package:pesque_fale_app/features/chat/providers/badge_mensagens_provider.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
 
@@ -19,9 +21,17 @@ void main() {
     String rotaInicial = '/home',
   }) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<BadgeNotificacoesProvider>(
-        create: (_) =>
-            BadgeNotificacoesProvider(repository: NotificacoesRepositoryMock()),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<BadgeNotificacoesProvider>(
+            create: (_) =>
+                BadgeNotificacoesProvider(repository: NotificacoesRepositoryMock()),
+          ),
+          ChangeNotifierProvider<BadgeMensagensProvider>(
+            create: (_) =>
+                BadgeMensagensProvider(repository: ConversasRepositoryMock()),
+          ),
+        ],
         child: MaterialApp(
           theme: AppTheme.light,
           initialRoute: rotaInicial,

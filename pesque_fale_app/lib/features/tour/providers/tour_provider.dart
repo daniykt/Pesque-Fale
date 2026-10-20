@@ -62,10 +62,10 @@ class TourProvider extends ChangeNotifier {
     ),
     TourPasso(
       index: 6,
-      titulo: 'Menu de Opções',
+      titulo: 'Editar perfil e Ajustes',
       descricao:
-          'Aqui você acessa as Configurações do app, com Modo Escuro, '
-          'notificações e a opção de sair da conta.',
+          'Use o botão "Editar perfil" para mudar suas informações e o botão '
+          '"Ajustes" para o Modo Escuro, as notificações e sair da conta.',
       abaAlvo: 4,
     ),
   ];

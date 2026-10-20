@@ -14,6 +14,8 @@ import 'package:pesque_fale_app/core/theme/theme_provider.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
+import 'package:pesque_fale_app/features/chat/data/conversas_repository_mock.dart';
+import 'package:pesque_fale_app/features/chat/providers/badge_mensagens_provider.dart';
 import 'package:pesque_fale_app/features/configuracoes/presentation/configuracoes_page.dart';
 import 'package:pesque_fale_app/features/configuracoes/providers/preferencias_provider.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository.dart';
@@ -119,6 +121,10 @@ void main() {
             create: (_) => BadgeNotificacoesProvider(
               repository: _FakeNotificacoesRepository(),
             ),
+          ),
+          ChangeNotifierProvider<BadgeMensagensProvider>(
+            create: (_) =>
+                BadgeMensagensProvider(repository: ConversasRepositoryMock()),
           ),
         ],
         child: MaterialApp(
@@ -396,6 +402,10 @@ void main() {
             ),
             ChangeNotifierProvider<BadgeNotificacoesProvider>.value(
               value: badge,
+            ),
+            ChangeNotifierProvider<BadgeMensagensProvider>(
+              create: (_) =>
+                  BadgeMensagensProvider(repository: ConversasRepositoryMock()),
             ),
           ],
           child: MaterialApp(
