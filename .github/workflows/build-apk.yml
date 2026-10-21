@@ -1,0 +1,72 @@
+name: Build APK (release)
+
+# Dispara quando uma release é publicada no GitHub (inclui pre-release;
+# rascunho não dispara). Gera o APK de release e anexa como asset da
+# própria release, com o nome pesque-fale-<tag>.apk.
+#
+# Separado do ci.yml de propósito: o ci.yml roda em PR/push e só faz
+# analyze + testes; o build do APK é lento e só interessa na release.
+#
+# Assinatura: o APK sai assinado com a chave de debug do runner, que é
+# uma máquina nova a cada execução. Por isso cada APK tem assinatura
+# diferente e, para atualizar o app, é preciso desinstalar antes.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: pesque_fale_app
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 17 fixo + cache do Gradle: reduz o download de dependências
+      # (o build saiu do ci.yml por causa de 429 no plugins.gradle.org).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      # v1.0.0 -> 1.0.0 | v0.9.1-test -> 0.9.1-test
+      - name: Calcular versão a partir da tag
+        id: versao
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: echo "build_name=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build do APK (release)
+        run: >
+          flutter build apk --release
+          --build-name=${{ steps.versao.outputs.build_name }}
+          --build-number=${{ github.run_number }}
+
+      - name: Renomear APK
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/pesque-fale-${TAG}.apk"
+
+      - name: Anexar APK na release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pesque_fale_app/build/app/outputs/flutter-apk/pesque-fale-${{ github.event.release.tag_name }}.apk
+          fail_on_unmatched_files: true

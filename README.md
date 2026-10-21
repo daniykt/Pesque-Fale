@@ -183,6 +183,18 @@ Rodar **uma única vez, após o deploy do fix do #114**. As fotos de perfil e ba
 
 ---
 
+## 📲 Instalar o app (APK)
+
+O APK Android é gerado **automaticamente** pelo workflow `.github/workflows/build-apk.yml` sempre que uma release é publicada no GitHub. Ele aparece em **Assets** da release como `pesque-fale-<tag>.apk` (ex.: `pesque-fale-v1.0.0.apk`). Não é preciso ter Flutter instalado para baixar e testar.
+
+**Como instalar:** abra a aba [Releases](https://github.com/daniykt/Pesque-Fale/releases), baixe o `.apk` da versão desejada no celular e permita "instalar apps de fontes desconhecidas" quando o Android pedir. O app já aponta para a API de produção.
+
+> ⚠️ **Para atualizar, desinstale a versão anterior antes.** Por enquanto o APK é assinado com uma chave de debug gerada a cada build, então cada versão tem uma assinatura diferente e o Android recusa instalar por cima ("App não instalado"). Desinstalar apaga só o login salvo no celular; conta, publicações e mensagens ficam no servidor.
+
+**Como publicar uma release (time):** em Releases → **Draft a new release**, crie a tag (ex.: `v1.0.0`) apontando para a branch certa e clique em **Publish release**. O workflow roda na aba **Actions** e anexa o APK em alguns minutos. Rascunho (draft) não dispara o build. Inclua no texto da release o aviso de desinstalar antes de atualizar.
+
+---
+
 ## 📦 Estrutura do Repositório
 
 Pesque-Fale/
