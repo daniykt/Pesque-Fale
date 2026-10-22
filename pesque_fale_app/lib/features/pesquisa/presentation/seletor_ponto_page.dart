@@ -14,7 +14,8 @@ import 'widgets/busca_bar.dart';
 import 'widgets/ponto_marker.dart';
 import 'widgets/skeletons/mapa_skeleton.dart';
 
-const _posicaoPadrao = LatLng(-15.7801, -47.9292);
+// Centro de Matão/SP, região dos pontos oficiais (migration 006).
+const _posicaoPadrao = LatLng(-21.6013, -48.3614);
 
 class SeletorPontoPage extends StatelessWidget {
   const SeletorPontoPage({super.key});
@@ -92,7 +93,7 @@ class _SeletorMapaViewState extends State<_SeletorMapaView> {
           mapController: _mapController,
           options: const MapOptions(
             initialCenter: _posicaoPadrao,
-            initialZoom: 12,
+            initialZoom: 10,
           ),
           children: [
             TileLayer(
