@@ -36,6 +36,7 @@ class _ListaMensagensState extends State<ListaMensagens> {
   // no didUpdateWidget `oldWidget.mensagens` é o mesmo objeto que
   // `widget.mensagens`. A contagem anterior precisa ficar guardada aqui.
   int _qtdMensagens = 0;
+  double? _alturaVisivel;
 
   @override
   void initState() {
@@ -83,6 +84,20 @@ class _ListaMensagensState extends State<ListaMensagens> {
     }
   }
 
+  // Quando o teclado abre, a área da lista encolhe e as últimas mensagens saem
+  // da tela. Se o usuário estava no fim, mantém o fim visível.
+  bool _aoMudarMetricas(ScrollMetricsNotification notificacao) {
+    final altura = notificacao.metrics.viewportDimension;
+    final anterior = _alturaVisivel;
+    _alturaVisivel = altura;
+    if (anterior != null && altura < anterior && _pertoDoFim) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _irParaFim(animado: false),
+      );
+    }
+    return false;
+  }
+
   Future<void> _irParaFim({bool animado = true}) async {
     if (!_controller.hasClients) return;
     final destino = _controller.position.maxScrollExtent;
@@ -110,14 +125,17 @@ class _ListaMensagensState extends State<ListaMensagens> {
 
     return Stack(
       children: [
-        ListView.builder(
-          controller: _controller,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.sm,
+        NotificationListener<ScrollMetricsNotification>(
+          onNotification: _aoMudarMetricas,
+          child: ListView.builder(
+            controller: _controller,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
+            ),
+            itemCount: itens.length,
+            itemBuilder: (context, i) => itens[i],
           ),
-          itemCount: itens.length,
-          itemBuilder: (context, i) => itens[i],
         ),
         Positioned(
           right: AppSpacing.md,

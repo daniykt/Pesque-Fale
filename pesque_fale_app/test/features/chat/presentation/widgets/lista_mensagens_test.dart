@@ -302,5 +302,31 @@ void main() {
 
       expect(posicao(tester).pixels, 0);
     });
+
+    Future<void> abrirTeclado(WidgetTester tester) async {
+      reconstruir(() => altura = 250);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('teclado abrindo no fim mantém a última mensagem visível', (
+      tester,
+    ) async {
+      await montarNoFim(tester);
+
+      await abrirTeclado(tester);
+
+      expect(distanciaDoFim(tester), lessThan(1));
+    });
+
+    testWidgets('teclado abrindo lendo o histórico não mexe na lista', (
+      tester,
+    ) async {
+      await montarNoFim(tester);
+      await lerHistorico(tester);
+
+      await abrirTeclado(tester);
+
+      expect(posicao(tester).pixels, 0);
+    });
   });
 }
