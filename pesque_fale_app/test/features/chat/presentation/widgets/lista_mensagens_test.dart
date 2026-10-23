@@ -201,4 +201,106 @@ void main() {
       expect(fab.foregroundColor, AppColors.dark.primary);
     });
   });
+
+  group('auto-scroll com a lista alterada no lugar (como o ChatProvider faz)', () {
+    // O ChatProvider faz `mensagens.add(msg)` e repassa a MESMA lista. Este
+    // harness reproduz isso: o pai é reconstruído com a mesma instância.
+    late List<Mensagem> lista;
+    late StateSetter reconstruir;
+    var altura = 400.0;
+
+    Future<void> montarNoFim(WidgetTester tester) async {
+      altura = 400;
+      lista = List.generate(
+        40,
+        (i) => mensagem(
+          id: '$i',
+          userId: i.isEven ? 'eu' : 'outro',
+          criadoEm: DateTime(2026, 5, 28, 9, i),
+        ),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                reconstruir = setState;
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    height: altura,
+                    child: ListaMensagens(
+                      mensagens: lista,
+                      usuarioLogadoId: 'eu',
+                      outroDigitando: false,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    ScrollPosition posicao(WidgetTester tester) =>
+        tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+
+    double distanciaDoFim(WidgetTester tester) {
+      final p = posicao(tester);
+      return p.maxScrollExtent - p.pixels;
+    }
+
+    Future<void> lerHistorico(WidgetTester tester) async {
+      posicao(tester).jumpTo(0);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> chegar(WidgetTester tester, {required String de}) async {
+      reconstruir(
+        () => lista.add(
+          mensagem(
+            id: 'nova-${lista.length}',
+            userId: de,
+            criadoEm: DateTime(2026, 5, 28, 10),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('ao enviar, desce até a nova mensagem mesmo lendo o histórico', (
+      tester,
+    ) async {
+      await montarNoFim(tester);
+      await lerHistorico(tester);
+
+      await chegar(tester, de: 'eu');
+
+      expect(distanciaDoFim(tester), lessThan(1));
+    });
+
+    testWidgets('ao receber estando no fim, acompanha a nova mensagem', (
+      tester,
+    ) async {
+      await montarNoFim(tester);
+
+      await chegar(tester, de: 'outro');
+
+      expect(distanciaDoFim(tester), lessThan(1));
+    });
+
+    testWidgets('ao receber lendo o histórico, não mexe na lista', (
+      tester,
+    ) async {
+      await montarNoFim(tester);
+      await lerHistorico(tester);
+
+      await chegar(tester, de: 'outro');
+
+      expect(posicao(tester).pixels, 0);
+    });
+  });
 }
