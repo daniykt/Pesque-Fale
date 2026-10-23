@@ -32,10 +32,15 @@ class _ListaMensagensState extends State<ListaMensagens> {
   final _controller = ScrollController();
   bool _pertoDoFim = true;
   bool _mostrarBotaoIrParaFim = false;
+  // O ChatProvider adiciona mensagens na MESMA lista (mensagens.add), então
+  // no didUpdateWidget `oldWidget.mensagens` é o mesmo objeto que
+  // `widget.mensagens`. A contagem anterior precisa ficar guardada aqui.
+  int _qtdMensagens = 0;
 
   @override
   void initState() {
     super.initState();
+    _qtdMensagens = widget.mensagens.length;
     _controller.addListener(_atualizarPertoDoFim);
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _irParaFim(animado: false),
@@ -45,11 +50,17 @@ class _ListaMensagensState extends State<ListaMensagens> {
   @override
   void didUpdateWidget(covariant ListaMensagens oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final chegouMensagemNova =
-        widget.mensagens.length > oldWidget.mensagens.length;
-    // Só acompanha o fim se o usuário já estava lendo as mensagens recentes —
-    // não interrompe quem rolou pra cima pra ler o histórico.
-    if (chegouMensagemNova && _pertoDoFim) {
+    final qtdAtual = widget.mensagens.length;
+    final chegouMensagemNova = qtdAtual > _qtdMensagens;
+    _qtdMensagens = qtdAtual;
+    if (!chegouMensagemNova) return;
+
+    final ultimaEhMinha =
+        widget.mensagens.last.userId == widget.usuarioLogadoId;
+    // Quem acabou de enviar sempre vê a própria mensagem. Mensagem do outro só
+    // puxa a lista se o usuário já estava no fim: não interrompe quem rolou
+    // pra cima pra ler o histórico.
+    if (ultimaEhMinha || _pertoDoFim) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _irParaFim());
     }
   }
