@@ -233,6 +233,62 @@ void main() {
     });
   });
 
+  group('RealtimeManager.removerOnReconnect', () {
+    void cairEVoltar() {
+      ultimo().simular('disconnect');
+      ultimo().simular('connect');
+    }
+
+    test('callback removido não dispara mais; os outros seguem', () async {
+      var removido = 0;
+      var mantido = 0;
+      void cbRemovido() => removido++;
+      manager.onReconnect(cbRemovido);
+      manager.onReconnect(() => mantido++);
+      await logar();
+      ultimo().simular('connect');
+
+      manager.removerOnReconnect(cbRemovido);
+      cairEVoltar();
+
+      expect(removido, 0);
+      expect(mantido, 1);
+    });
+
+    test('callback não registrado é no-op', () {
+      expect(() => manager.removerOnReconnect(() {}), returnsNormally);
+    });
+
+    test('remover duas vezes o mesmo callback é seguro', () async {
+      var chamadas = 0;
+      void cb() => chamadas++;
+      manager.onReconnect(cb);
+
+      manager.removerOnReconnect(cb);
+      expect(() => manager.removerOnReconnect(cb), returnsNormally);
+
+      await logar();
+      ultimo().simular('connect');
+      cairEVoltar();
+      expect(chamadas, 0);
+    });
+
+    test('assina → remove → login → remove de novo não quebra', () async {
+      var chamadas = 0;
+      void cb() => chamadas++;
+      manager.onReconnect(cb);
+      manager.removerOnReconnect(cb);
+
+      await logar();
+      ultimo().simular('connect');
+      expect(() => manager.removerOnReconnect(cb), returnsNormally);
+      cairEVoltar();
+
+      expect(chamadas, 0);
+      expect(manager.conectado, isTrue);
+    });
+  });
+
   test('dispose descarta o socket aberto', () async {
     await logar();
     manager.dispose();

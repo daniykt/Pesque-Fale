@@ -15,7 +15,16 @@ typedef CriarSocket = io.Socket Function(String token);
 /// Assinaturas feitas com [subscribe] e [onReconnect] ficam guardadas aqui e
 /// são reaplicadas em cada socket novo — sobrevivem a quedas, logout e troca
 /// de conta. No logout só o socket (e os handlers registrados nele) é
-/// descartado.
+/// descartado. Assim, providers globais (ex.: badges) assinam uma vez só.
+///
+/// **Contrato pros assinantes:** como a mesma assinatura atravessa sessões
+/// de contas diferentes, os callbacks passados pra [subscribe] e
+/// [onReconnect] NÃO podem capturar no closure dados do usuário logado
+/// (`userId`, nome etc.). Eles devem reagir ao payload do evento recebido
+/// do backend, ou ler o estado do [AuthProvider] no momento em que rodam.
+/// Quem tem ciclo de vida menor que o app (ex.: provider criado por rota)
+/// deve desfazer as assinaturas no próprio `dispose` com [unsubscribe] e
+/// [removerOnReconnect].
 class RealtimeManager extends ChangeNotifier {
   RealtimeManager({CriarSocket? criarSocket})
     : _criarSocket = criarSocket ?? _socketPadrao;
@@ -75,6 +84,13 @@ class RealtimeManager extends ChangeNotifier {
   /// primeira conexão da sessão. É o gancho pra re-sincronizar estado.
   void onReconnect(void Function() callback) {
     _callbacksReconexao.add(callback);
+  }
+
+  /// Remove um callback previamente registrado via [onReconnect].
+  /// A comparação é por identidade de referência da função.
+  /// Chamadas com um callback que não está registrado são no-op.
+  void removerOnReconnect(void Function() callback) {
+    _callbacksReconexao.remove(callback);
   }
 
   void _conectar(String token) {
