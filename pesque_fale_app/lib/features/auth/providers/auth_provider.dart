@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/auth_exceptions.dart';
 import '../data/auth_repository.dart';
+import '../domain/auth_result.dart';
 import '../domain/usuario.dart';
 
 enum AuthStatus { idle, loading, success, error }
@@ -15,11 +16,18 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   Map<String, String> _fieldErrors = const {};
   Usuario? _usuario;
+  String? _token;
 
   AuthStatus get status => _status;
   String? get errorMessage => _errorMessage;
   Map<String, String> get fieldErrors => _fieldErrors;
   Usuario? get usuario => _usuario;
+  bool get estaLogado => _usuario != null;
+
+  /// Cópia em memória do JWT da sessão atual, pra quem precisa dele de forma
+  /// síncrona (ex.: handshake do socket). O `TokenStorage` segue sendo a fonte
+  /// persistida.
+  String? get token => _token;
 
   Future<void> cadastrar({
     required String nome,
@@ -35,7 +43,7 @@ class AuthProvider extends ChangeNotifier {
         senha: senha,
         confirmarSenha: confirmarSenha,
       );
-      _setSuccess(result.usuario);
+      _setSuccess(result);
     } on ValidationException catch (e) {
       _setValidationError(e);
     } on AuthException catch (e) {
@@ -47,7 +55,7 @@ class AuthProvider extends ChangeNotifier {
     _setLoading();
     try {
       final result = await repository.login(email: email, senha: senha);
-      _setSuccess(result.usuario);
+      _setSuccess(result);
     } on ValidationException catch (e) {
       _setValidationError(e);
     } on AuthException catch (e) {
@@ -58,6 +66,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     await repository.logout();
     _usuario = null;
+    _token = null;
     _status = AuthStatus.idle;
     _errorMessage = null;
     _fieldErrors = const {};
@@ -85,8 +94,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _setSuccess(Usuario usuario) {
-    _usuario = usuario;
+  void _setSuccess(AuthResult result) {
+    _usuario = result.usuario;
+    _token = result.accessToken;
     _status = AuthStatus.success;
     notifyListeners();
   }
