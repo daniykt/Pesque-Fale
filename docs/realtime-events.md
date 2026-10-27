@@ -80,6 +80,27 @@
 - **Consumidor no app:** `NotificacoesProvider` (via `RealtimeManager`). Coloca no topo da lista com `lida: false` e ignora ids que já estão nela. Notificações do tipo `mensagem` são filtradas (TODO 8.4.4). O evento não marca nada como lido: isso continua acontecendo quando a aba Alertas abre. O `BadgeNotificacoesProvider` deriva da lista, então o badge sobe sozinho.
 - **Introduzido em:** sub-issue 9.6.4 (#208)
 
+### `seguidor_adicionado`
+- **Room:** `user:<seguidoId>` (o perfil que ganhou um seguidor)
+- **Quando:** `POST /usuarios/:id/seguir` resulta em follow novo (não dispara em follow idempotente). Se a contagem falhar depois do INSERT, o follow continua salvo e o evento só não é emitido.
+- **Payload:**
+  ```json
+  {
+    "totalSeguidores": 42,
+    "seguidorId": "uuid",
+    "acao": "adicionado"
+  }
+  ```
+- **Consumidor no app:** `PerfilProvider` global. Atualiza `_perfil.seguidores` pelo valor autoritativo de `totalSeguidores` **se** o perfil carregado é o próprio (`isOwnProfile`); se o total bate com o atual, é no-op. Perfis de outros usuários (rota `/perfil`) NÃO consomem — o `PerfilProvider` dessa rota é criado sem `RealtimeManager`.
+- **Introduzido em:** sub-issue 9.6.5 (#209)
+
+### `seguidor_removido`
+- **Room:** `user:<seguidoId>` (o perfil que perdeu um seguidor)
+- **Quando:** `DELETE /usuarios/:id/seguir` remove um registro de fato (`DELETE ... RETURNING`; não dispara em unfollow idempotente).
+- **Payload:** idêntico ao `seguidor_adicionado`, com `"acao": "removido"`.
+- **Consumidor no app:** mesmo `PerfilProvider` global, mesmo handler (`_onSeguidorMudou` assinado em ambos os eventos).
+- **Introduzido em:** sub-issue 9.6.5 (#209)
+
 ### `nova_mensagem` (pré-existente)
 - **Room:** `<chatId>`
 - **Quando:** mensagem enviada em um chat

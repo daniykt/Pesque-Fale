@@ -211,12 +211,21 @@ void main() {
           update: (context, auth, previous) => previous!..reagirAuth(auth),
         ),
         Provider<PerfilRepository>.value(value: perfilRepository),
-        ChangeNotifierProxyProvider<AuthProvider, PerfilProvider>(
-          create: (context) => PerfilProvider(
+        ChangeNotifierProxyProvider2<
+          AuthProvider,
+          RealtimeManager,
+          PerfilProvider
+        >(
+          // Precisa estar vivo pra receber eventos de seguidor mesmo quando o
+          // usuário está em outra aba (abriu Chat, mas alguém o seguiu).
+          lazy: false,
+          create: (ctx) => PerfilProvider(
             repository: perfilRepository,
-            authProvider: context.read<AuthProvider>(),
+            authProvider: ctx.read<AuthProvider>(),
+            realtime: ctx.read<RealtimeManager>(),
           ),
-          update: (context, auth, previous) => previous!..rebindAuth(auth),
+          update: (ctx, auth, realtime, previous) =>
+              previous!..rebindAuth(auth),
         ),
         Provider<PontosRepository>.value(value: pontosRepository),
         Provider<AvaliacoesRepository>.value(value: avaliacoesRepository),

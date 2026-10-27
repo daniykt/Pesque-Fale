@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/realtime/realtime_manager.dart';
 import '../../auth/domain/usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/perfil_exceptions.dart';
@@ -9,11 +10,21 @@ import '../domain/publicacao.dart';
 enum PerfilStatus { idle, loading, success, error }
 
 class PerfilProvider extends ChangeNotifier {
-  PerfilProvider({required this.repository, required this.authProvider}) {
+  PerfilProvider({
+    required this.repository,
+    required this.authProvider,
+    this.realtime,
+  }) {
     authProvider.addListener(_onAuthChanged);
+    realtime?.subscribe('seguidor_adicionado', _onSeguidorMudou);
+    realtime?.subscribe('seguidor_removido', _onSeguidorMudou);
   }
 
   final PerfilRepository repository;
+
+  /// Só o provider global (aba Perfil do próprio usuário) recebe o manager.
+  /// O da rota `/perfil` (perfil de outro) não passa e fica sem realtime.
+  final RealtimeManager? realtime;
   AuthProvider authProvider;
 
   PerfilStatus _status = PerfilStatus.idle;
@@ -187,8 +198,23 @@ class PerfilProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// `seguidor_adicionado` e `seguidor_removido` trazem o total contado no
+  /// banco, então ele vale mais que o update otimista: se bater, é no-op;
+  /// se divergir (ex.: follows simultâneos), corrige.
+  void _onSeguidorMudou(dynamic payload) {
+    if (payload is! Map) return;
+    if (!isOwnProfile) return;
+    final total = payload['totalSeguidores'];
+    if (total is! int) return;
+    if (total == _perfil!.seguidores) return;
+    _perfil = _perfil!.copyWith(seguidores: total);
+    notifyListeners();
+  }
+
   @override
   void dispose() {
+    realtime?.unsubscribe('seguidor_adicionado', _onSeguidorMudou);
+    realtime?.unsubscribe('seguidor_removido', _onSeguidorMudou);
     authProvider.removeListener(_onAuthChanged);
     super.dispose();
   }

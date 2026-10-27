@@ -26,7 +26,8 @@ describe('POST /v1/usuarios/:id/seguir', () => {
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] }) // INSERT pivot
       .mockResolvedValueOnce({ rows: [] }) // SELECT recíproco
       .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] }) // remetente
-      .mockResolvedValueOnce({ rows: [] }); // INSERT notificacoes
+      .mockResolvedValueOnce({ rows: [] }) // INSERT notificacoes
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] }); // COUNT seguidores (realtime)
 
     const res = await request(app)
       .post('/v1/usuarios/user-2/seguir')
@@ -45,7 +46,8 @@ describe('POST /v1/usuarios/:id/seguir', () => {
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] })
       .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
       .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ count: '1' }] });
 
     const res = await request(app)
       .post('/v1/usuarios/user-2/seguir')
