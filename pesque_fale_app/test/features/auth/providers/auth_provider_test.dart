@@ -36,6 +36,28 @@ class _FakeAuthRepository implements AuthRepository {
 }
 
 void main() {
+  group('AuthProvider sessão (estaLogado/token)', () {
+    test('antes do login não está logado e não tem token', () {
+      final provider = AuthProvider(repository: _FakeAuthRepository());
+
+      expect(provider.estaLogado, isFalse);
+      expect(provider.token, isNull);
+    });
+
+    test('login expõe o token da sessão; logout limpa', () async {
+      final provider = AuthProvider(repository: _FakeAuthRepository());
+      await provider.login(email: 'pescador@teste.com', senha: '123456');
+
+      expect(provider.estaLogado, isTrue);
+      expect(provider.token, 'token');
+
+      await provider.signOut();
+
+      expect(provider.estaLogado, isFalse);
+      expect(provider.token, isNull);
+    });
+  });
+
   group('AuthProvider.atualizarUsuario', () {
     test('substitui o usuario compartilhado e notifica listeners', () async {
       final provider = AuthProvider(repository: _FakeAuthRepository());

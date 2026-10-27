@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/config/app_config.dart';
+import 'core/realtime/realtime_manager.dart';
 import 'core/router/main_shell.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
@@ -200,6 +201,13 @@ void main() {
         ChangeNotifierProvider(create: (_) => PreferenciasProvider()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, RealtimeManager>(
+          // Ninguém lê o manager ainda; sem lazy: false ele nunca seria
+          // criado e o socket não conectaria no login.
+          lazy: false,
+          create: (_) => RealtimeManager(),
+          update: (context, auth, previous) => previous!..reagirAuth(auth),
         ),
         Provider<PerfilRepository>.value(value: perfilRepository),
         ChangeNotifierProxyProvider<AuthProvider, PerfilProvider>(

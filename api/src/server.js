@@ -1,6 +1,7 @@
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./app');
+const socketEmitter = require('./config/socket-emitter');
 const initChatGateway = require('./modules/chat/chat.gateway');
 require('dotenv').config();
 
@@ -15,6 +16,7 @@ const io = new Server(server, {
   },
 });
 
+socketEmitter.init(io);
 initChatGateway(io);
 
 server.listen(PORT, () => {
