@@ -6,7 +6,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../chat/domain/conversa.dart';
 import '../domain/notificacao.dart';
-import '../providers/badge_notificacoes_provider.dart';
 import '../providers/notificacoes_provider.dart';
 import 'widgets/barra_acoes_notificacoes.dart';
 import 'widgets/empty_state_notificacoes.dart';
@@ -43,15 +42,15 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _abrir());
   }
 
+  /// O provider é global e já recebe novas em tempo real; abrir a aba ainda
+  /// refaz a busca (sincroniza o que mudou em outro dispositivo) e marca
+  /// tudo como lido — o badge zera junto, porque deriva do provider.
   Future<void> _abrir() async {
     if (!mounted) return;
     final provider = context.read<NotificacoesProvider>();
-    final badge = context.read<BadgeNotificacoesProvider>();
-    badge.zerar();
-    await provider.carregar();
+    await provider.carregar(marcarComoLidas: true);
     if (!mounted) return;
     _capturarDestaque(provider);
-    badge.zerar();
   }
 
   void _capturarDestaque(NotificacoesProvider provider) {
@@ -88,7 +87,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
       case StatusNotificacoes.carregando:
         return const SkeletonNotificacoes();
       case StatusNotificacoes.erro:
-        return ErroStateNotificacoes(onTentarNovamente: provider.carregar);
+        return ErroStateNotificacoes(onTentarNovamente: _abrir);
       case StatusNotificacoes.carregado:
         if (!provider.temAlguma) {
           return const EmptyStateNotificacoes(comFiltro: false);
@@ -124,7 +123,6 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
 
   void _apagar(Notificacao n, NotificacoesProvider provider) {
     if (!provider.removerLocal(n.id)) return;
-    final badge = context.read<BadgeNotificacoesProvider>();
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     final snackbar = messenger.showSnackBar(
       SnackBar(
@@ -141,9 +139,7 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
     snackbar.closed.then((motivo) async {
       if (motivo == SnackBarClosedReason.action) return;
       final apagou = await provider.confirmarRemocao(n.id);
-      if (apagou) {
-        badge.atualizar();
-      } else if (mounted) {
+      if (!apagou && mounted) {
         AppSnackbar.showError(context, 'Não foi possível apagar a notificação.');
       }
     });

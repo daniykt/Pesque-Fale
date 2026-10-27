@@ -80,6 +80,7 @@ import 'features/notificacoes/data/notificacoes_repository.dart';
 import 'features/notificacoes/data/notificacoes_repository_http.dart';
 import 'features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'features/notificacoes/providers/badge_notificacoes_provider.dart';
+import 'features/notificacoes/providers/notificacoes_provider.dart';
 import 'features/ponto_detalhe/presentation/ponto_detalhe_page.dart';
 import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/sobre/presentation/sobre_page.dart';
@@ -230,10 +231,31 @@ void main() {
         Provider<EventosRepository>.value(value: eventosRepository),
         Provider<ConversasRepository>.value(value: conversasRepository),
         Provider<NotificacoesRepository>.value(value: notificacoesRepository),
-        ChangeNotifierProvider<BadgeNotificacoesProvider>(
-          create: (ctx) =>
-              BadgeNotificacoesProvider(repository: ctx.read<NotificacoesRepository>())
-                ..atualizar(),
+        ChangeNotifierProxyProvider2<
+          AuthProvider,
+          RealtimeManager,
+          NotificacoesProvider
+        >(
+          // Precisa estar vivo pra receber eventos mesmo sem a aba Alertas
+          // aberta — é dele que o badge de notificações deriva.
+          lazy: false,
+          create: (ctx) => NotificacoesProvider(
+            repository: ctx.read<NotificacoesRepository>(),
+            perfilRepository: ctx.read<PerfilRepository>(),
+            realtime: ctx.read<RealtimeManager>(),
+          ),
+          update: (ctx, auth, realtime, previous) =>
+              previous!..reagirAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<
+          NotificacoesProvider,
+          BadgeNotificacoesProvider
+        >(
+          create: (ctx) => BadgeNotificacoesProvider(
+            notificacoes: ctx.read<NotificacoesProvider>(),
+          ),
+          update: (ctx, notificacoes, previous) =>
+              previous ?? BadgeNotificacoesProvider(notificacoes: notificacoes),
         ),
         ChangeNotifierProxyProvider2<
           AuthProvider,

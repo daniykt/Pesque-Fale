@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,11 +5,8 @@ import '../../features/assistente/presentation/widgets/botao_ajuda_assistente.da
 import '../../features/chat/presentation/inbox_page.dart';
 import '../../features/chat/providers/badge_mensagens_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
-import '../../features/notificacoes/data/notificacoes_repository.dart';
 import '../../features/notificacoes/presentation/notificacoes_page.dart';
 import '../../features/notificacoes/providers/badge_notificacoes_provider.dart';
-import '../../features/notificacoes/providers/notificacoes_provider.dart';
-import '../../features/perfil/data/perfil_repository.dart';
 import '../../features/perfil/presentation/perfil_page.dart';
 import '../../features/pesquisa/presentation/pesquisa_page.dart';
 import '../../features/tour/presentation/widgets/tour_overlay.dart';
@@ -29,15 +24,13 @@ class MainShell extends StatefulWidget {
   static const int pesquisaIndex = 1;
   static const int alertasIndex = 3;
   static const int perfilIndex = 4;
-  static const Duration intervaloBadge = Duration(seconds: 30);
 
   @override
   State<MainShell> createState() => MainShellState();
 }
 
-class MainShellState extends State<MainShell> with WidgetsBindingObserver {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
-  Timer? _timerBadge;
 
   static const _titles = ['Início', 'Pesquisa', 'Chat', 'Alertas', 'Perfil'];
 
@@ -59,40 +52,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   /// precisam destacar a aba de origem no próprio menu inferior.
   int get abaAtual => _currentIndex;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _timerBadge = Timer.periodic(
-      MainShell.intervaloBadge,
-      (_) => _atualizarBadge(),
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _atualizarBadge());
-  }
-
-  @override
-  void dispose() {
-    _timerBadge?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _atualizarBadge();
-  }
-
+  // Badges de chat e notificações derivam de providers globais mantidos via
+  // realtime — o shell não faz polling.
   void _trocarAba(int index) {
     setState(() => _currentIndex = index);
-    _atualizarBadge();
-  }
-
-  void _atualizarBadge() {
-    if (!mounted) return;
-    if (_currentIndex != _alertasIndex) {
-      context.read<BadgeNotificacoesProvider>().atualizar();
-    }
-    // Badge de chat é derivado do InboxProvider via realtime — sem polling.
   }
 
   @override
@@ -111,35 +74,29 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       });
     }
 
-    return ChangeNotifierProvider<NotificacoesProvider>(
-      create: (ctx) => NotificacoesProvider(
-        repository: ctx.read<NotificacoesRepository>(),
-        perfilRepository: ctx.read<PerfilRepository>(),
+    return Scaffold(
+      appBar: naTelaDePesquisa || naTelaDeChat
+          ? null
+          : AppBar(title: Text(_titles[_currentIndex])),
+      body: Stack(
+        children: [
+          IndexedStack(index: _currentIndex, children: _buildScreens()),
+          const TourOverlay(),
+        ],
       ),
-      child: Scaffold(
-        appBar: naTelaDePesquisa || naTelaDeChat
-            ? null
-            : AppBar(title: Text(_titles[_currentIndex])),
-        body: Stack(
-          children: [
-            IndexedStack(index: _currentIndex, children: _buildScreens()),
-            const TourOverlay(),
-          ],
-        ),
-        bottomNavigationBar: AppBottomNav(
-          currentIndex: _currentIndex,
-          notifCount: notifCount,
-          chatCount: chatCount,
-          highlightedIndex: passoDoTour?.abaAlvo,
-          onDestinationSelected: _trocarAba,
-        ),
-        floatingActionButton: passoDoTour == null
-            ? const BotaoAjudaAssistente()
-            : null,
-        floatingActionButtonLocation: naTelaDePesquisa
-            ? FloatingActionButtonLocation.startFloat
-            : FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _currentIndex,
+        notifCount: notifCount,
+        chatCount: chatCount,
+        highlightedIndex: passoDoTour?.abaAlvo,
+        onDestinationSelected: _trocarAba,
       ),
+      floatingActionButton: passoDoTour == null
+          ? const BotaoAjudaAssistente()
+          : null,
+      floatingActionButtonLocation: naTelaDePesquisa
+          ? FloatingActionButtonLocation.startFloat
+          : FloatingActionButtonLocation.endFloat,
     );
   }
 }

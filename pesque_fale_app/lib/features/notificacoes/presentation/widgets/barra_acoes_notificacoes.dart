@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
-import '../../providers/badge_notificacoes_provider.dart';
 import '../../providers/notificacoes_provider.dart';
 
 /// Barra discreta embaixo dos chips de filtro com o botão "Limpar"
@@ -51,7 +50,6 @@ class BarraAcoesNotificacoes extends StatelessWidget {
   Future<void> _confirmar(BuildContext context) async {
     final colors = Theme.of(context).extension<AppColors>()!;
     final provider = context.read<NotificacoesProvider>();
-    final badge = context.read<BadgeNotificacoesProvider>();
     final messenger = ScaffoldMessenger.of(context);
 
     final confirmou = await showDialog<bool>(
@@ -77,9 +75,7 @@ class BarraAcoesNotificacoes extends StatelessWidget {
 
     messenger.hideCurrentSnackBar();
     final limpou = await provider.limparTodas();
-    if (limpou) {
-      badge.atualizar();
-    } else if (context.mounted) {
+    if (!limpou && context.mounted) {
       AppSnackbar.showError(
         context,
         'Não foi possível limpar as notificações.',

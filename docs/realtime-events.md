@@ -41,6 +41,31 @@
 - **Consumidor no app:** `InboxProvider`. Atualiza o preview, move a conversa pro topo e soma 1 em `naoLidas` quando o usuário não é o remetente. Ignora conversas que ainda não estão na lista e eventos com `timestamp` que não seja mais novo que o da última mensagem conhecida. Assim a primeira mensagem não conta duas vezes.
 - **Introduzido em:** sub-issue 9.6.3 (#207)
 
+### `nova_notificacao`
+- **Room:** `user:<destinatarioId>`
+- **Quando:** uma notificação é inserida no banco pelo helper `criarNotificacao` (follow, curtida, comentário — qualquer caller atual ou futuro). Não sai quando `para === deId`. Se a montagem do payload falhar depois do INSERT, a notificação continua salva e o evento só não é emitido.
+- **Payload:** shape idêntico ao `_format` do `notificacoes.controller.js` (o mesmo item do `GET /v1/notificacoes`):
+  ```json
+  {
+    "id": "uuid",
+    "para": "uuid",
+    "deId": "uuid",
+    "de": "nome",
+    "deUsername": "username",
+    "deFoto": "url?",
+    "jaSigoDe": true,
+    "deVolta": false,
+    "tipo": "seguindo|curtida|comentario|mensagem|sistema",
+    "texto": "...",
+    "postId": "uuid?",
+    "chatId": "string?",
+    "lida": false,
+    "criadoEm": "ISO-8601"
+  }
+  ```
+- **Consumidor no app:** `NotificacoesProvider` (via `RealtimeManager`). Coloca no topo da lista com `lida: false` e ignora ids que já estão nela. Notificações do tipo `mensagem` são filtradas (TODO 8.4.4). O evento não marca nada como lido: isso continua acontecendo quando a aba Alertas abre. O `BadgeNotificacoesProvider` deriva da lista, então o badge sobe sozinho.
+- **Introduzido em:** sub-issue 9.6.4 (#208)
+
 ### `nova_mensagem` (pré-existente)
 - **Room:** `<chatId>`
 - **Quando:** mensagem enviada em um chat

@@ -11,19 +11,17 @@ import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificaco
 import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
 
+import '../../chat/support/fake_realtime_manager.dart';
+
 class _FakeNotificacoesRepository implements NotificacoesRepository {
   int naoLidas = 3;
   int chamadasListar = 0;
   int chamadasMarcarLidas = 0;
-  int chamadasContar = 0;
   final List<String> apagadas = [];
   final Set<String> _removidas = {};
 
   @override
-  Future<int> contarNaoLidas() async {
-    chamadasContar++;
-    return naoLidas;
-  }
+  Future<int> contarNaoLidas() async => naoLidas;
 
   @override
   Future<({List<Notificacao> lista, int naoLidas})> listar({
@@ -74,26 +72,32 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   late _FakeNotificacoesRepository repo;
+  late FakeRealtimeManager realtime;
+  late NotificacoesProvider provider;
   late BadgeNotificacoesProvider badge;
 
+  // Provider e badge sobrevivem entre montagens, como no app (globais).
   setUp(() {
     repo = _FakeNotificacoesRepository();
-    badge = BadgeNotificacoesProvider(repository: repo);
+    realtime = FakeRealtimeManager();
+    provider = NotificacoesProvider(
+      repository: repo,
+      perfilRepository: PerfilRepositoryMock(),
+      realtime: realtime,
+    );
+    badge = BadgeNotificacoesProvider(notificacoes: provider);
   });
 
   Future<void> montar(WidgetTester tester, {required bool ativa}) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<BadgeNotificacoesProvider>.value(
-        value: badge,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<NotificacoesProvider>.value(value: provider),
+          ChangeNotifierProvider<BadgeNotificacoesProvider>.value(value: badge),
+        ],
         child: MaterialApp(
           theme: AppTheme.light,
-          home: ChangeNotifierProvider<NotificacoesProvider>(
-            create: (_) => NotificacoesProvider(
-              repository: repo,
-              perfilRepository: PerfilRepositoryMock(),
-            ),
-            child: NotificacoesPage(ativa: ativa),
-          ),
+          home: NotificacoesPage(ativa: ativa),
         ),
       ),
     );
@@ -109,26 +113,59 @@ void main() {
   testWidgets('inativa não carrega, não marca como lidas e mantém o badge', (
     tester,
   ) async {
-    await badge.atualizar();
+    // Carga do login (reagirAuth), antes de a aba abrir.
+    await provider.carregar();
 
     await montar(tester, ativa: false);
 
-    expect(repo.chamadasListar, 0);
+    expect(repo.chamadasListar, 1);
     expect(repo.chamadasMarcarLidas, 0);
-    expect(badge.naoLidas, 3);
+    expect(badge.naoLidas, 2);
   });
 
   testWidgets('ao ficar ativa carrega, marca como lidas e zera o badge', (
     tester,
   ) async {
-    await badge.atualizar();
+    await provider.carregar();
     await montar(tester, ativa: false);
 
     await montar(tester, ativa: true);
 
-    expect(repo.chamadasListar, 1);
+    expect(repo.chamadasListar, 2);
     expect(repo.chamadasMarcarLidas, 1);
     expect(badge.naoLidas, 0);
+  });
+
+  testWidgets('ao abrir destaca as que estavam não lidas', (tester) async {
+    await montar(tester, ativa: true);
+
+    final itens = tester.widgetList<ItemNotificacao>(
+      find.byType(ItemNotificacao),
+    );
+    expect(itens.map((i) => i.destacar), [true, true]);
+  });
+
+  testWidgets('notificação em tempo real entra no topo com a aba aberta', (
+    tester,
+  ) async {
+    await montar(tester, ativa: true);
+
+    realtime.emitir('nova_notificacao', {
+      'id': 'n-nova',
+      'para': 'me',
+      'tipo': 'curtida',
+      'de': 'Fulano',
+      'deUsername': 'fulano',
+      'postId': 'pub-1',
+      'lida': false,
+      'criadoEm': '2026-10-27T12:00:00.000Z',
+    });
+    await tester.pump();
+
+    final itens = tester.widgetList<ItemNotificacao>(
+      find.byType(ItemNotificacao),
+    );
+    expect(itens.map((i) => i.notif.id), ['n-nova', 'n1', 'n2']);
   });
 
   testWidgets('recarrega a cada vez que volta a ficar ativa', (tester) async {
@@ -167,12 +204,11 @@ void main() {
     expect(repo.apagadas, isEmpty);
   });
 
-  testWidgets('sem Desfazer, apaga na API depois de 4 segundos e atualiza o badge', (
+  testWidgets('sem Desfazer, apaga na API depois de 4 segundos', (
     tester,
   ) async {
     await montar(tester, ativa: true);
     await arrastarPrimeiroItem(tester);
-    final contagensAntes = repo.chamadasContar;
 
     await tester.pump(const Duration(seconds: 3));
     expect(repo.apagadas, isEmpty);
@@ -181,7 +217,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.apagadas, ['n1']);
-    expect(repo.chamadasContar, greaterThan(contagensAntes));
     expect(find.byType(ItemNotificacao), findsOneWidget);
   });
 }

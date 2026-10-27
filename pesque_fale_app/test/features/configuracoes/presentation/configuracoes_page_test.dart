@@ -23,6 +23,8 @@ import 'package:pesque_fale_app/features/configuracoes/providers/preferencias_pr
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository.dart';
 import 'package:pesque_fale_app/features/notificacoes/domain/notificacao.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
 import 'package:pesque_fale_app/shared/widgets/app_bottom_nav.dart';
 import 'package:pesque_fale_app/features/tour/domain/tour_status_storage.dart';
 import 'package:pesque_fale_app/features/tour/providers/tour_provider.dart';
@@ -66,20 +68,20 @@ class _FakeFlutterSecureStorageChannel {
 }
 
 class _FakeNotificacoesRepository implements NotificacoesRepository {
-  final List<Completer<int>> buscas = [];
+  final List<Completer<List<Notificacao>>> buscas = [];
 
   @override
-  Future<int> contarNaoLidas() {
-    final busca = Completer<int>();
-    buscas.add(busca);
-    return busca.future;
-  }
+  Future<int> contarNaoLidas() async => 0;
 
   @override
   Future<({List<Notificacao> lista, int naoLidas})> listar({
     int pagina = 1,
     int porPagina = 20,
-  }) async => (lista: const <Notificacao>[], naoLidas: 0);
+  }) async {
+    final busca = Completer<List<Notificacao>>();
+    buscas.add(busca);
+    return (lista: await busca.future, naoLidas: 0);
+  }
 
   @override
   Future<void> marcarTodasComoLidas() async {}
@@ -121,7 +123,11 @@ void main() {
           ),
           ChangeNotifierProvider<BadgeNotificacoesProvider>(
             create: (_) => BadgeNotificacoesProvider(
-              repository: _FakeNotificacoesRepository(),
+              notificacoes: NotificacoesProvider(
+                repository: _FakeNotificacoesRepository(),
+                perfilRepository: PerfilRepositoryMock(),
+                realtime: RealtimeManager(),
+              ),
             ),
           ),
           ChangeNotifierProvider<BadgeMensagensProvider>(
@@ -382,7 +388,25 @@ void main() {
     'trocar de conta zera o badge e ignora a busca da conta anterior',
     (tester) async {
       final repo = _FakeNotificacoesRepository();
-      final badge = BadgeNotificacoesProvider(repository: repo);
+      final auth = AuthProvider(
+        repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+      );
+      final notificacoes = NotificacoesProvider(
+        repository: repo,
+        perfilRepository: PerfilRepositoryMock(),
+        realtime: RealtimeManager(),
+      );
+      final badge = BadgeNotificacoesProvider(notificacoes: notificacoes);
+      List<Notificacao> naoLidas(int n) => [
+        for (var i = 0; i < n; i++)
+          Notificacao(
+            id: 'n$i',
+            para: 'mock-id',
+            tipo: TipoNotificacao.curtida,
+            lida: false,
+            criadoEm: DateTime(2026, 10, 1),
+          ),
+      ];
 
       await tester.pumpWidget(
         MultiProvider(
@@ -393,11 +417,7 @@ void main() {
             ChangeNotifierProvider<PreferenciasProvider>(
               create: (_) => PreferenciasProvider(),
             ),
-            ChangeNotifierProvider<AuthProvider>(
-              create: (_) => AuthProvider(
-                repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
-              ),
-            ),
+            ChangeNotifierProvider<AuthProvider>.value(value: auth),
             ChangeNotifierProvider<TourProvider>(
               create: (ctx) => TourProvider(
                 storage: TourStatusStorage(
@@ -405,6 +425,12 @@ void main() {
                 ),
                 authProvider: ctx.read<AuthProvider>(),
               ),
+            ),
+            // Mesma fiação do main.dart: o auth dirige o provider global.
+            ChangeNotifierProxyProvider<AuthProvider, NotificacoesProvider>(
+              lazy: false,
+              create: (_) => notificacoes,
+              update: (_, auth, previous) => previous!..reagirAuth(auth),
             ),
             ChangeNotifierProvider<BadgeNotificacoesProvider>.value(
               value: badge,
@@ -441,12 +467,16 @@ void main() {
       bool badgeVisivel() =>
           tester.widget<Badge>(find.byType(Badge).first).isLabelVisible;
 
-      unawaited(badge.atualizar());
-      repo.buscas.last.complete(5);
+      // Login → reagirAuth → carregar().
+      unawaited(auth.login(email: 'a@teste.com', senha: '123456'));
+      await tester.pump(const Duration(seconds: 1));
+      expect(repo.buscas, hasLength(1));
+      repo.buscas.last.complete(naoLidas(5));
       await tester.pump();
       expect(badge.naoLidas, 5);
 
-      unawaited(badge.atualizar());
+      // Ex.: refresh de reconexão ainda em voo quando a conta sai.
+      unawaited(notificacoes.refresh());
       final buscaDaContaAnterior = repo.buscas.last;
 
       await tester.tap(find.text('Sair da conta'));
@@ -458,17 +488,10 @@ void main() {
       expect(badge.naoLidas, 0);
       expect(badgeVisivel(), isFalse);
 
-      unawaited(badge.atualizar());
-      expect(repo.buscas, hasLength(3));
-
-      buscaDaContaAnterior.complete(5);
+      buscaDaContaAnterior.complete(naoLidas(5));
       await tester.pump();
       expect(badge.naoLidas, 0);
-      expect(badgeVisivel(), isFalse);
-
-      repo.buscas.last.complete(0);
-      await tester.pump();
-      expect(badge.naoLidas, 0);
+      expect(notificacoes.temAlguma, isFalse);
       expect(badgeVisivel(), isFalse);
     },
   );
