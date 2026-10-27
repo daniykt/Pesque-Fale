@@ -1,6 +1,7 @@
 const pool = require('../../config/database');
 const jwt = require('jsonwebtoken');
 const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
+const { emitToUser } = require('../../config/socket-emitter');
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]{3,20}$/;
 
@@ -209,6 +210,22 @@ async function seguir(req, res) {
         tipo: 'seguindo',
         deVolta: reciproco.rows.length > 0,
       });
+
+      // Follow já salvo: falha aqui só custa o contador em tempo real.
+      try {
+        const total = await pool.query(
+          'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
+          [seguidoId]
+        );
+        const totalSeguidores = parseInt(total.rows[0].count, 10);
+        emitToUser(seguidoId, 'seguidor_adicionado', {
+          totalSeguidores,
+          seguidorId,
+          acao: 'adicionado',
+        });
+      } catch (err) {
+        console.error('[usuarios] erro ao emitir seguidor_adicionado:', err);
+      }
     }
 
     return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
@@ -223,10 +240,32 @@ async function deixarDeSeguir(req, res) {
   const seguidoId = req.params.id;
 
   try {
-    await pool.query(
-      'DELETE FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
+    const removido = await pool.query(
+      `DELETE FROM usuario_seguidores
+       WHERE seguidor_id = $1 AND seguido_id = $2
+       RETURNING seguidor_id`,
       [seguidorId, seguidoId]
     );
+
+    // Só emite se de fato removeu — "deixar de seguir" quem já não
+    // seguia é idempotente e silencioso (mesmo padrão do seguir).
+    if (removido.rows.length > 0) {
+      try {
+        const total = await pool.query(
+          'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
+          [seguidoId]
+        );
+        const totalSeguidores = parseInt(total.rows[0].count, 10);
+        emitToUser(seguidoId, 'seguidor_removido', {
+          totalSeguidores,
+          seguidorId,
+          acao: 'removido',
+        });
+      } catch (err) {
+        console.error('[usuarios] erro ao emitir seguidor_removido:', err);
+      }
+    }
+
     return res.status(204).send();
   } catch (err) {
     console.error(err);

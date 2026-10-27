@@ -55,6 +55,7 @@ function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), fal
     }
     if (sql.includes('SELECT id FROM usuarios')) return { rows: [{ id: 'user-b' }] };
     if (sql.includes('INSERT INTO usuario_seguidores')) return { rows: [{ seguidor_id: 'user-a' }] };
+    if (sql.includes('SELECT COUNT(*) FROM usuario_seguidores')) return { rows: [{ count: '1' }] };
     if (sql.includes('INSERT INTO comentarios')) return { rows: [{ id: 'com-1' }] };
     if (sql.includes('FROM comentarios c')) {
       return {
@@ -92,10 +93,11 @@ describe('nova_notificacao via criarNotificacao', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(201);
-    expect(emitToUser).toHaveBeenCalledTimes(1);
-    const [destino, evento, payload] = emitToUser.mock.calls[0];
+    // O follow também emite seguidor_adicionado (coberto em seguidores-realtime).
+    const notificacoes = emitToUser.mock.calls.filter(([, evento]) => evento === 'nova_notificacao');
+    expect(notificacoes).toHaveLength(1);
+    const [destino, , payload] = notificacoes[0];
     expect(destino).toBe('user-b');
-    expect(evento).toBe('nova_notificacao');
     expect(payload.tipo).toBe('seguindo');
   });
 

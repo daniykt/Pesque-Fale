@@ -11,6 +11,8 @@ import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 import 'package:pesque_fale_app/features/perfil/providers/perfil_provider.dart';
 
+import '../../chat/support/fake_realtime_manager.dart';
+
 class _FakeAuthRepository implements AuthRepository {
   @override
   Future<AuthResult> cadastrar({
@@ -326,6 +328,109 @@ void main() {
       expect(ok, isTrue);
       expect(provider.podeSeguirDeVolta, isFalse);
       expect(provider.chatLiberado, isTrue);
+    });
+  });
+
+  group('PerfilProvider realtime de seguidores', () {
+    late FakeRealtimeManager realtime;
+
+    setUp(() => realtime = FakeRealtimeManager(conectado: true));
+
+    void disparar(String evento, dynamic payload) {
+      for (final cb in List.of(realtime.assinantes[evento] ?? const [])) {
+        cb(payload);
+      }
+    }
+
+    Map<String, dynamic> payload(dynamic total, {String acao = 'adicionado'}) =>
+        {'totalSeguidores': total, 'seguidorId': 'fulano', 'acao': acao};
+
+    PerfilProvider criar({String usuarioId = 'eu'}) => PerfilProvider(
+      repository: _FakePerfilRepository(usuarioId: usuarioId),
+      authProvider: authProvider,
+      realtime: realtime,
+    );
+
+    test('seguidor_adicionado no próprio perfil atualiza o contador', () async {
+      final provider = criar();
+      await provider.carregarPerfil('eu');
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      disparar('seguidor_adicionado', payload(11));
+
+      expect(provider.perfil?.seguidores, 11);
+      expect(notificacoes, 1);
+    });
+
+    test('seguidor_adicionado no perfil de outro é no-op', () async {
+      final provider = criar(usuarioId: 'outro');
+      await provider.carregarPerfil('outro');
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      disparar('seguidor_adicionado', payload(99));
+
+      expect(provider.perfil?.seguidores, 10);
+      expect(notificacoes, 0);
+    });
+
+    test('seguidor_removido no próprio perfil atualiza o contador', () async {
+      final provider = criar();
+      await provider.carregarPerfil('eu');
+
+      disparar('seguidor_removido', payload(9, acao: 'removido'));
+
+      expect(provider.perfil?.seguidores, 9);
+    });
+
+    test('evento sem perfil carregado é no-op', () {
+      final provider = criar();
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      disparar('seguidor_adicionado', payload(11));
+
+      expect(provider.perfil, isNull);
+      expect(notificacoes, 0);
+    });
+
+    test('total igual ao atual não notifica', () async {
+      final provider = criar();
+      await provider.carregarPerfil('eu');
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      disparar('seguidor_adicionado', payload(10));
+
+      expect(provider.perfil?.seguidores, 10);
+      expect(notificacoes, 0);
+    });
+
+    test('payload inválido é no-op', () async {
+      final provider = criar();
+      await provider.carregarPerfil('eu');
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      disparar('seguidor_adicionado', payload(null));
+      disparar('seguidor_adicionado', payload('11'));
+      disparar('seguidor_removido', 'lixo');
+      disparar('seguidor_removido', null);
+
+      expect(provider.perfil?.seguidores, 10);
+      expect(notificacoes, 0);
+    });
+
+    test('dispose desinscreve dos dois eventos', () {
+      final provider = criar();
+      expect(realtime.assinantes['seguidor_adicionado'], hasLength(1));
+      expect(realtime.assinantes['seguidor_removido'], hasLength(1));
+
+      provider.dispose();
+
+      expect(realtime.assinantes['seguidor_adicionado'], isEmpty);
+      expect(realtime.assinantes['seguidor_removido'], isEmpty);
     });
   });
 }
