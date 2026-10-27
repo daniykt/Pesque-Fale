@@ -1,9 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pesque_fale_app/features/chat/data/conversas_repository.dart';
 import 'package:pesque_fale_app/features/chat/domain/conversa.dart';
 import 'package:pesque_fale_app/features/chat/providers/badge_mensagens_provider.dart';
+import 'package:pesque_fale_app/features/chat/providers/inbox_provider.dart';
+
+import '../support/fake_realtime_manager.dart';
 
 Conversa _conv(String id, {required int naoLidas}) => Conversa(
   id: id,
@@ -12,86 +13,95 @@ Conversa _conv(String id, {required int naoLidas}) => Conversa(
   outroUsername: 'user_$id',
   outroFoto: null,
   ultimaMensagem: 'oi',
-  ultimaMensagemEm: DateTime(2026, 10, 1),
+  ultimaMensagemEm: DateTime.utc(2026, 10, 1),
   naoLidas: naoLidas,
   criadoEm: DateTime(2026, 9, 1),
 );
 
+Map<String, dynamic> _preview(String conversaId) => {
+  'conversaId': conversaId,
+  'previewTexto': 'nova',
+  'timestamp': '2026-10-27T13:00:00.000Z',
+  'remetenteId': 'u-$conversaId',
+};
+
 class _FakeConversasRepository implements ConversasRepository {
   List<Conversa> conversas = const [];
-  bool falhar = false;
-  int chamadas = 0;
-  Completer<List<Conversa>>? pendente;
 
   @override
-  Future<List<Conversa>> listar() async {
-    chamadas++;
-    if (pendente != null) return pendente!.future;
-    if (falhar) throw Exception('falha');
-    return conversas;
-  }
+  Future<List<Conversa>> listar() async => conversas;
 }
 
 void main() {
   late _FakeConversasRepository repo;
+  late FakeRealtimeManager realtime;
+  late InboxProvider inbox;
   late BadgeMensagensProvider provider;
   late int notificacoes;
 
   setUp(() {
     repo = _FakeConversasRepository();
-    provider = BadgeMensagensProvider(repository: repo);
+    realtime = FakeRealtimeManager();
+    inbox = InboxProvider(repository: repo, realtime: realtime);
+    provider = BadgeMensagensProvider(inbox: inbox);
     notificacoes = 0;
     provider.addListener(() => notificacoes++);
   });
 
-  test('atualizar conta conversas com nao-lidas > 0 e notifica', () async {
-    repo.conversas = [
-      _conv('a', naoLidas: 3),
-      _conv('b', naoLidas: 0),
-      _conv('c', naoLidas: 1),
-    ];
+  test(
+    'conta conversas com nao-lidas > 0 quando a lista do inbox carrega',
+    () async {
+      repo.conversas = [
+        _conv('a', naoLidas: 3),
+        _conv('b', naoLidas: 0),
+        _conv('c', naoLidas: 1),
+      ];
 
-    await provider.atualizar();
+      await inbox.carregar();
 
-    expect(provider.naoLidas, 2); // 2 conversas com não-lidas, não 4 mensagens
-    expect(notificacoes, 1);
+      // 2 conversas com não-lidas, não 4 mensagens.
+      expect(provider.naoLidas, 2);
+      expect(notificacoes, 1);
+    },
+  );
+
+  test('ja nasce com a contagem do inbox', () async {
+    repo.conversas = [_conv('a', naoLidas: 1)];
+    await inbox.carregar();
+
+    final outro = BadgeMensagensProvider(inbox: inbox);
+
+    expect(outro.naoLidas, 1);
   });
 
-  test('atualizar nao notifica quando a contagem nao muda', () async {
-    repo.conversas = [_conv('a', naoLidas: 2)];
-    await provider.atualizar();
-    expect(notificacoes, 1);
-
-    await provider.atualizar();
-    expect(notificacoes, 1);
-  });
-
-  test('atualizar com falha nao propaga nem notifica', () async {
-    repo.falhar = true;
-
-    await provider.atualizar();
-
+  test('recalcula quando um evento realtime muda a lista do inbox', () async {
+    repo.conversas = [_conv('a', naoLidas: 0), _conv('b', naoLidas: 0)];
+    await inbox.carregar();
     expect(provider.naoLidas, 0);
-    expect(notificacoes, 0);
+
+    realtime.emitir('nova_mensagem_em_conversa', _preview('a'));
+    expect(provider.naoLidas, 1);
+
+    realtime.emitir('nova_mensagem_em_conversa', _preview('b'));
+    expect(provider.naoLidas, 2);
   });
 
-  test('duas chamadas concorrentes de atualizar nao fazem busca em dobro', () async {
-    repo.pendente = Completer<List<Conversa>>();
+  test('nao notifica quando a contagem nao muda', () async {
+    repo.conversas = [_conv('a', naoLidas: 2)];
+    await inbox.carregar();
+    expect(notificacoes, 1);
 
-    final f1 = provider.atualizar();
-    final f2 = provider.atualizar();
-
-    expect(repo.chamadas, 1);
-
-    repo.pendente!.complete([_conv('a', naoLidas: 1)]);
-    await Future.wait([f1, f2]);
+    // Mais uma não-lida na mesma conversa: lista muda, contagem não.
+    realtime.emitir('nova_mensagem_em_conversa', _preview('a'));
+    inbox.setTermoBusca('user');
 
     expect(provider.naoLidas, 1);
+    expect(notificacoes, 1);
   });
 
   test('zerar coloca em 0 e notifica se estava diferente', () async {
     repo.conversas = [_conv('a', naoLidas: 1)];
-    await provider.atualizar();
+    await inbox.carregar();
     expect(provider.naoLidas, 1);
 
     provider.zerar();
@@ -106,15 +116,21 @@ void main() {
     expect(notificacoes, 0);
   });
 
-  test('resetar invalida a geracao em andamento', () async {
-    repo.pendente = Completer<List<Conversa>>();
+  test('resetar zera sem depender do inbox', () async {
+    repo.conversas = [_conv('a', naoLidas: 1)];
+    await inbox.carregar();
 
-    final f = provider.atualizar();
     provider.resetar();
 
-    repo.pendente!.complete([_conv('a', naoLidas: 5)]);
-    await f;
+    expect(provider.naoLidas, 0);
+    expect(inbox.conversasInternas, hasLength(1));
+  });
 
-    expect(provider.naoLidas, 0); // o resultado tardio foi descartado
+  test('dispose para de escutar o inbox', () async {
+    provider.dispose();
+    repo.conversas = [_conv('a', naoLidas: 1)];
+
+    // Se ainda escutasse, notificaria um ChangeNotifier descartado e lançaria.
+    await inbox.carregar();
   });
 }

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../../config/database');
+const { emitToUser } = require('../../config/socket-emitter');
 
 function gerarChatId(uid1, uid2) {
   return [uid1, uid2].sort().join('_');
@@ -36,6 +37,22 @@ async function salvarMensagem(chatId, userId, nome, texto) {
     [chatId, userId, nome, texto]
   );
   return result.rows[0];
+}
+
+async function contarMensagens(chatId) {
+  const result = await pool.query(
+    'SELECT COUNT(*) FROM mensagens WHERE chat_id = $1',
+    [chatId]
+  );
+  return parseInt(result.rows[0].count, 10);
+}
+
+async function buscarDadosRemetente(userId) {
+  const result = await pool.query(
+    'SELECT id, nome, username, foto_perfil FROM usuarios WHERE id = $1',
+    [userId]
+  );
+  return result.rows[0] ?? null;
 }
 
 async function marcarComoVistas(chatId, userId) {
@@ -120,6 +137,46 @@ module.exports = function initChatGateway(io) {
         const nome = usuario.rows[0]?.nome ?? 'Usuário';
 
         const mensagem = await salvarMensagem(socket.chatId, usuarioId, nome, texto.trim());
+
+        // Calcula se é a primeira mensagem do chat (count ANTES deste insert = 0,
+        // agora = 1 — já que o insert aconteceu uma linha acima).
+        const totalMensagens = await contarMensagens(socket.chatId);
+        const primeiraMensagem = totalMensagens === 1;
+
+        // Descobre o destinatário a partir do chatId (formato "<uidA>_<uidB>" ordenado).
+        const [a, b] = socket.chatId.split('_');
+        const destinatarioId = a === usuarioId ? b : a;
+
+        if (primeiraMensagem) {
+          const remetente = await buscarDadosRemetente(usuarioId);
+          if (remetente) {
+            const payloadNovaConversa = {
+              conversaId: socket.chatId,
+              remetente: {
+                id: remetente.id,
+                nome: remetente.nome,
+                username: remetente.username,
+                fotoUrl: remetente.foto_perfil,
+              },
+              ultimaMensagem: _formatMensagem(mensagem),
+            };
+            // Emite pro destinatário E pro próprio remetente — ambos precisam ver
+            // a nova conversa aparecer na lista (o remetente também mantém uma
+            // lista de conversas na aba Chat).
+            emitToUser(destinatarioId, 'nova_conversa', payloadNovaConversa);
+            emitToUser(usuarioId, 'nova_conversa', payloadNovaConversa);
+          }
+        }
+
+        // Sempre emite pros dois lados pra manter a lista de conversas sincronizada.
+        const payloadPreview = {
+          conversaId: socket.chatId,
+          previewTexto: mensagem.texto,
+          timestamp: mensagem.criado_em,
+          remetenteId: usuarioId,
+        };
+        emitToUser(destinatarioId, 'nova_mensagem_em_conversa', payloadPreview);
+        emitToUser(usuarioId, 'nova_mensagem_em_conversa', payloadPreview);
 
         io.to(socket.chatId).emit('nova_mensagem', _formatMensagem(mensagem));
       } catch (err) {

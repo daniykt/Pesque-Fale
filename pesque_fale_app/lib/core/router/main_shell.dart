@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/assistente/presentation/widgets/botao_ajuda_assistente.dart';
-import '../../features/chat/data/conversas_repository.dart';
 import '../../features/chat/presentation/inbox_page.dart';
 import '../../features/chat/providers/badge_mensagens_provider.dart';
-import '../../features/chat/providers/inbox_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
 import '../../features/notificacoes/data/notificacoes_repository.dart';
 import '../../features/notificacoes/presentation/notificacoes_page.dart';
@@ -50,11 +48,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   List<Widget> _buildScreens() => [
     const FeedPage(),
     const PesquisaPage(),
-    ChangeNotifierProvider<InboxProvider>(
-      create: (ctx) =>
-          InboxProvider(repository: ctx.read<ConversasRepository>()),
-      child: const InboxPage(),
-    ),
+    const InboxPage(),
     NotificacoesPage(ativa: _currentIndex == _alertasIndex),
     const PerfilPage(),
   ];
@@ -98,10 +92,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (_currentIndex != _alertasIndex) {
       context.read<BadgeNotificacoesProvider>().atualizar();
     }
-    // Chat NÃO pausa o polling: a leitura de mensagens é incremental
-    // (acontece via marcarComoVistas quando a pessoa abre cada conversa),
-    // então o badge precisa continuar atualizando mesmo com a aba aberta.
-    context.read<BadgeMensagensProvider>().atualizar();
+    // Badge de chat é derivado do InboxProvider via realtime — sem polling.
   }
 
   @override

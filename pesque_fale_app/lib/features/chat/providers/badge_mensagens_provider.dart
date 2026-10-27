@@ -1,47 +1,38 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/conversas_repository.dart';
+import 'inbox_provider.dart';
 
 /// Mantém a contagem de **conversas com mensagens não-lidas** para o badge
-/// do ícone de Chat no bottom nav. Espelha o padrão do
-/// [BadgeNotificacoesProvider]: polling com proteção de concorrência via
-/// geração, notifica só quando a contagem muda.
+/// do ícone de Chat no bottom nav. Não busca nada sozinho: deriva da lista
+/// do [InboxProvider] global, que se mantém em dia via realtime, e notifica
+/// só quando a contagem muda.
 ///
 /// A contagem é por conversa, não por mensagem — padrão WhatsApp. Mantém
 /// o número estável e evita o visual de "99+" o tempo todo em usuários
 /// com muitas mensagens em uma única conversa.
 class BadgeMensagensProvider extends ChangeNotifier {
-  BadgeMensagensProvider({required this.repository});
+  BadgeMensagensProvider({required this.inbox}) {
+    // Escuta o inbox só pra LER a lista. Nenhum listener aqui pode alterar
+    // o InboxProvider: isso reentraria no notifyListeners dele.
+    inbox.addListener(_recalcular);
+    _recalcular();
+  }
 
-  final ConversasRepository repository;
-
+  final InboxProvider inbox;
   int _naoLidas = 0;
-  int _geracao = 0;
-  int? _geracaoEmBusca;
 
   /// Número de conversas (não de mensagens) que tem pelo menos uma mensagem
   /// não lida pra esse usuário.
   int get naoLidas => _naoLidas;
 
-  Future<void> atualizar() async {
-    final geracao = _geracao;
-    if (_geracaoEmBusca == geracao) return;
-    _geracaoEmBusca = geracao;
-    try {
-      final conversas = await repository.listar();
-      final n = conversas.where((c) => c.naoLidas > 0).length;
-      if (geracao != _geracao || n == _naoLidas) return;
-      _naoLidas = n;
-      notifyListeners();
-    } catch (_) {
-      return;
-    } finally {
-      if (_geracaoEmBusca == geracao) _geracaoEmBusca = null;
-    }
+  void _recalcular() {
+    final n = inbox.conversasInternas.where((c) => c.naoLidas > 0).length;
+    if (n == _naoLidas) return;
+    _naoLidas = n;
+    notifyListeners();
   }
 
   void zerar() {
-    _geracao++;
     if (_naoLidas != 0) {
       _naoLidas = 0;
       notifyListeners();
@@ -49,9 +40,13 @@ class BadgeMensagensProvider extends ChangeNotifier {
   }
 
   void resetar() {
-    _geracao++;
-    _geracaoEmBusca = null;
     _naoLidas = 0;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    inbox.removeListener(_recalcular);
+    super.dispose();
   }
 }
