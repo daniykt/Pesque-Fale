@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../data/chat_socket_service.dart';
+import '../../../core/realtime/realtime_manager.dart';
 import '../domain/mensagem.dart';
 
 enum StatusChat { conectando, conectado, semMutualFollow, erroConexao }
@@ -10,14 +10,20 @@ enum StatusChat { conectando, conectado, semMutualFollow, erroConexao }
 const _mensagemErroMutualFollow =
     'Vocês precisam se seguir mutuamente para conversar.';
 
+/// Estado de uma conversa aberta. Vive enquanto a tela de chat existe e
+/// conversa com o backend pelo socket global do [RealtimeManager].
+///
+/// O socket global continua nos rooms de conversas abertas antes (o backend
+/// não tem `sair_chat`), então eventos de room de outros chats também chegam
+/// aqui: os handlers filtram pelo `chatId` desta conversa.
 class ChatProvider extends ChangeNotifier {
   ChatProvider({
-    required this.socketService,
+    required this.realtime,
     required this.usuarioLogadoId,
     required this.outroId,
   });
 
-  final ChatSocketService socketService;
+  final RealtimeManager realtime;
   final String usuarioLogadoId;
   final String outroId;
 
@@ -26,99 +32,117 @@ class ChatProvider extends ChangeNotifier {
   bool outroDigitando = false;
   String? chatId;
 
+  /// Id desta conversa, conhecido a partir do `historico`. Antes disso o
+  /// filtro dos handlers é permissivo. É campo da instância, não closure —
+  /// mesmo contrato stateless do `_meuId` no `InboxProvider`.
+  String? _chatIdAtivo;
+
   Timer? _debounceDigitando;
   Timer? _timerParouDigitando;
   bool _emitiuDigitando = false;
 
-  /// Inicia a conexão e registra os handlers dos eventos do gateway.
+  /// Registra os handlers no manager e entra no chat assim que houver
+  /// conexão (agora, se já conectado, ou no próximo `conectado == true`).
   void iniciar() {
-    socketService.connect();
-    _registrarHandlers();
-    socketService.on('connect', (_) {
-      socketService.emit('entrar_chat', {'outroId': outroId});
-    });
+    realtime.subscribe('historico', _onHistorico);
+    realtime.subscribe('nova_mensagem', _onNovaMensagem);
+    realtime.subscribe('mensagens_vistas', _onMensagensVistas);
+    realtime.subscribe('outro_digitando', _onOutroDigitando);
+    realtime.subscribe('outro_parou_digitando', _onOutroParouDigitando);
+    realtime.subscribe('erro', _onErro);
+    realtime.addListener(_onConexaoMudou);
+    if (realtime.conectado) _entrarChat();
   }
 
-  void _registrarHandlers() {
-    socketService.on('historico', (data) {
-      final map = data as Map<String, dynamic>;
-      chatId = map['chatId'] as String;
-      mensagens = (map['mensagens'] as List)
-          .map((e) => Mensagem.fromJson(e as Map<String, dynamic>))
-          .toList();
-      status = StatusChat.conectado;
-      notifyListeners();
-    });
+  void _entrarChat() => realtime.emit('entrar_chat', {'outroId': outroId});
 
-    socketService.on('nova_mensagem', (data) {
-      final msg = Mensagem.fromJson(data as Map<String, dynamic>);
-      mensagens.add(msg);
-      // Mensagem recebida do outro enquanto a tela está visível: marca vista.
-      if (msg.userId != usuarioLogadoId) {
-        socketService.emit('marcar_visto');
-      }
-      notifyListeners();
-    });
-
-    socketService.on('mensagens_vistas', (data) {
-      final map = data as Map<String, dynamic>;
-      final porId = map['porId'] as String;
-      // Só atualiza as PRÓPRIAS mensagens quando foi o outro quem as marcou.
-      if (porId == usuarioLogadoId) return;
-
-      for (var i = 0; i < mensagens.length; i++) {
-        final m = mensagens[i];
-        if (m.userId == usuarioLogadoId && m.status == StatusMensagem.enviado) {
-          mensagens[i] = m.copyWith(status: StatusMensagem.visto);
-        }
-      }
-      notifyListeners();
-    });
-
-    socketService.on('outro_digitando', (data) {
-      final map = data as Map<String, dynamic>;
-      if (map['userId'] == outroId) {
-        outroDigitando = true;
-        notifyListeners();
-      }
-    });
-
-    socketService.on('outro_parou_digitando', (data) {
-      final map = data as Map<String, dynamic>;
-      if (map['userId'] == outroId) {
-        outroDigitando = false;
-        notifyListeners();
-      }
-    });
-
-    socketService.on('erro', (data) {
-      final map = data as Map<String, dynamic>;
-      final msg = map['message'] as String? ?? '';
-      status = msg == _mensagemErroMutualFollow
-          ? StatusChat.semMutualFollow
-          : StatusChat.erroConexao;
-      notifyListeners();
-    });
-
-    // A reconexão automática do socket_io_client cuida de reabrir a conexão;
-    // o 'connect' registrado em iniciar() reemite 'entrar_chat' quando reconectar.
-    socketService.on('disconnect', (_) {
-      if (status == StatusChat.conectado) {
-        status = StatusChat.erroConexao;
-        notifyListeners();
-      }
-    });
-
-    socketService.on('connect_error', (_) {
+  /// O manager só notifica quando `conectado` muda. Conectar — pela primeira
+  /// vez ou depois de uma queda — reemite `entrar_chat`, que devolve o
+  /// histórico atualizado. O backend é idempotente, então um `entrar_chat`
+  /// duplicado por corrida com o [iniciar] é inofensivo.
+  void _onConexaoMudou() {
+    if (realtime.conectado) {
+      _entrarChat();
+    } else if (status == StatusChat.conectado) {
       status = StatusChat.erroConexao;
       notifyListeners();
-    });
+    }
+  }
+
+  /// `true` se o evento é de outra conversa e deve ser descartado.
+  bool _deOutroChat(Map data) =>
+      _chatIdAtivo != null && data['chatId'] != _chatIdAtivo;
+
+  void _onHistorico(dynamic data) {
+    if (data is! Map) return;
+    final id = data['chatId'] as String;
+    // Resposta atrasada de um `entrar_chat` de outra tela (ex.: abriu e
+    // fechou outra conversa logo antes): o chatId não tem este participante.
+    if (!id.split('_').contains(outroId)) return;
+    chatId = id;
+    _chatIdAtivo = id;
+    mensagens = (data['mensagens'] as List)
+        .map((e) => Mensagem.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    status = StatusChat.conectado;
+    notifyListeners();
+  }
+
+  void _onNovaMensagem(dynamic data) {
+    if (data is! Map || _deOutroChat(data)) return;
+    final msg = Mensagem.fromJson(Map<String, dynamic>.from(data));
+    mensagens.add(msg);
+    // Mensagem recebida do outro enquanto a tela está visível: marca vista.
+    if (msg.userId != usuarioLogadoId) {
+      realtime.emit('marcar_visto');
+    }
+    notifyListeners();
+  }
+
+  void _onMensagensVistas(dynamic data) {
+    if (data is! Map || _deOutroChat(data)) return;
+    final porId = data['porId'] as String;
+    // Só atualiza as PRÓPRIAS mensagens quando foi o outro quem as marcou.
+    if (porId == usuarioLogadoId) return;
+
+    for (var i = 0; i < mensagens.length; i++) {
+      final m = mensagens[i];
+      if (m.userId == usuarioLogadoId && m.status == StatusMensagem.enviado) {
+        mensagens[i] = m.copyWith(status: StatusMensagem.visto);
+      }
+    }
+    notifyListeners();
+  }
+
+  // `outro_digitando` / `outro_parou_digitando` não trazem `chatId`: o backend
+  // emite só no room do chat. Se o socket ainda estiver no room de uma
+  // conversa anterior, o filtro por `userId == outroId` descarta o evento.
+
+  void _onOutroDigitando(dynamic data) {
+    if (data is! Map || data['userId'] != outroId) return;
+    outroDigitando = true;
+    notifyListeners();
+  }
+
+  void _onOutroParouDigitando(dynamic data) {
+    if (data is! Map || data['userId'] != outroId) return;
+    outroDigitando = false;
+    notifyListeners();
+  }
+
+  void _onErro(dynamic data) {
+    if (data is! Map) return;
+    final msg = data['message'] as String? ?? '';
+    status = msg == _mensagemErroMutualFollow
+        ? StatusChat.semMutualFollow
+        : StatusChat.erroConexao;
+    notifyListeners();
   }
 
   void enviarMensagem(String texto) {
     final trimmed = texto.trim();
     if (trimmed.isEmpty || trimmed.length > 500) return;
-    socketService.emit('enviar_mensagem', {'texto': trimmed});
+    realtime.emit('enviar_mensagem', {'texto': trimmed});
     _emitirParouDigitando();
   }
 
@@ -133,7 +157,7 @@ class ChatProvider extends ChangeNotifier {
     // cada nova tecla — senão uma digitação contínua nunca dispararia.
     if (!_emitiuDigitando && _debounceDigitando == null) {
       _debounceDigitando = Timer(const Duration(milliseconds: 300), () {
-        socketService.emit('digitando');
+        realtime.emit('digitando');
         _emitiuDigitando = true;
         _debounceDigitando = null;
       });
@@ -152,22 +176,29 @@ class ChatProvider extends ChangeNotifier {
     _timerParouDigitando?.cancel();
     _timerParouDigitando = null;
     if (_emitiuDigitando) {
-      socketService.emit('parou_digitando');
+      realtime.emit('parou_digitando');
       _emitiuDigitando = false;
     }
   }
 
   /// Chamado quando o app volta pro foreground com a tela de chat visível.
   void marcarVistoManual() {
-    socketService.emit('marcar_visto');
+    realtime.emit('marcar_visto');
   }
 
+  /// Desfaz as assinaturas no manager. Não descarta o manager: ele é global.
   @override
   void dispose() {
     _debounceDigitando?.cancel();
     _timerParouDigitando?.cancel();
-    if (_emitiuDigitando) socketService.emit('parou_digitando');
-    socketService.dispose();
+    if (_emitiuDigitando) realtime.emit('parou_digitando');
+    realtime.unsubscribe('historico', _onHistorico);
+    realtime.unsubscribe('nova_mensagem', _onNovaMensagem);
+    realtime.unsubscribe('mensagens_vistas', _onMensagensVistas);
+    realtime.unsubscribe('outro_digitando', _onOutroDigitando);
+    realtime.unsubscribe('outro_parou_digitando', _onOutroParouDigitando);
+    realtime.unsubscribe('erro', _onErro);
+    realtime.removeListener(_onConexaoMudou);
     super.dispose();
   }
 }

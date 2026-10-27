@@ -4,6 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
+import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
+import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
+import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
+import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/chat/data/conversas_repository.dart';
 import 'package:pesque_fale_app/features/chat/domain/conversa.dart';
 import 'package:pesque_fale_app/features/chat/presentation/inbox_page.dart';
@@ -17,9 +21,40 @@ class _FakeConversasRepository implements ConversasRepository {
   _FakeConversasRepository(this.conversas);
 
   List<Conversa> conversas;
+  int chamadas = 0;
 
   @override
-  Future<List<Conversa>> listar() async => conversas;
+  Future<List<Conversa>> listar() async {
+    chamadas++;
+    return conversas;
+  }
+}
+
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Future<AuthResult> cadastrar({
+    required String nome,
+    required String email,
+    required String senha,
+    required String confirmarSenha,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<AuthResult> login({
+    required String email,
+    required String senha,
+  }) async => AuthResult(
+    accessToken: 'token-eu',
+    usuario: Usuario(
+      id: 'eu',
+      nome: 'Pescador',
+      email: email,
+      onboardingConcluido: true,
+    ),
+  );
+
+  @override
+  Future<void> logout() async {}
 }
 
 Conversa _conversa({required String ultimaMensagem, required int naoLidas}) {
@@ -36,7 +71,7 @@ Conversa _conversa({required String ultimaMensagem, required int naoLidas}) {
   );
 }
 
-/// Substitui a ChatPage real (que abre socket e lê token) — o que está em
+/// Substitui a ChatPage real (que entra no chat pelo socket) — o que está em
 /// teste é a InboxPage reagindo ao fechamento da conversa.
 class _ChatFalsa extends StatelessWidget {
   const _ChatFalsa();
@@ -51,19 +86,24 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   late FakeRealtimeManager realtime;
+  late AuthProvider auth;
 
-  setUp(() => realtime = FakeRealtimeManager());
+  setUp(() async {
+    realtime = FakeRealtimeManager();
+    auth = AuthProvider(repository: _FakeAuthRepository());
+    await auth.login(email: 'eu@teste.com', senha: '123456');
+  });
 
   Future<void> montar(WidgetTester tester, ConversasRepository repository) {
     return tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
         home: ChangeNotifierProvider(
-          // O load inicial é do provider global (via reagirAuth); aqui o
-          // teste faz o papel dele.
+          // No app o proxy do main.dart chama reagirAuth; aqui o teste faz
+          // o papel dele (dispara o load inicial e define o usuário logado).
           create: (_) =>
               InboxProvider(repository: repository, realtime: realtime)
-                ..carregar(),
+                ..reagirAuth(auth),
           child: const InboxPage(),
         ),
         onGenerateRoute: (settings) => settings.name == '/chat/conversa'
@@ -74,7 +114,7 @@ void main() {
   }
 
   testWidgets(
-    'ao voltar da conversa, recarrega badge de não lidas e última mensagem',
+    'ao voltar da conversa o badge já zerou via conversa_lida, sem refresh',
     (tester) async {
       final repository = _FakeConversasRepository([
         _conversa(ultimaMensagem: 'fala comigo', naoLidas: 1),
@@ -86,20 +126,23 @@ void main() {
       expect(find.text('fala comigo'), findsOneWidget);
       expect(find.byType(BadgeNaoLidas), findsOneWidget);
 
-      // Enquanto a conversa está aberta, o backend marca como visto e o
-      // usuário envia uma mensagem nova.
-      repository.conversas = [_conversa(ultimaMensagem: 'eeee', naoLidas: 0)];
-
       await tester.tap(find.byType(ItemConversa));
       await tester.pumpAndSettle();
       expect(find.text('chat falso'), findsOneWidget);
 
+      // Abrir a conversa marca como visto no backend, que avisa o inbox.
+      realtime.emitir('conversa_lida', {
+        'conversaId': 'chat-1',
+        'lidaPor': 'eu',
+        'quandoEm': '2026-10-27T12:00:00.000Z',
+      });
+
       await tester.pageBack();
       await tester.pumpAndSettle();
 
-      expect(find.text('eeee'), findsOneWidget);
-      expect(find.text('fala comigo'), findsNothing);
+      expect(find.text('fala comigo'), findsOneWidget);
       expect(find.byType(BadgeNaoLidas), findsNothing);
+      expect(repository.chamadas, 1);
     },
   );
 

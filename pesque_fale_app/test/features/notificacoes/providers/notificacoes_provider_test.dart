@@ -334,6 +334,28 @@ void main() {
 
       expect(provider.naoVistas, 1);
     });
+
+    test('marcarTodasComoVistas zera naoVistas só localmente', () {
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      provider.marcarTodasComoVistas();
+
+      expect(provider.naoVistas, 0);
+      expect(notificacoes, 1);
+      expect(repo.marcacoesTodasLidas, 0);
+      expect(provider.notificacoes.where((n) => !n.lida), hasLength(2));
+    });
+
+    test('marcarTodasComoVistas sem nada novo não notifica', () {
+      provider.marcarTodasComoVistas();
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      provider.marcarTodasComoVistas();
+
+      expect(notificacoes, 0);
+    });
   });
 
   group('nova_notificacao', () {

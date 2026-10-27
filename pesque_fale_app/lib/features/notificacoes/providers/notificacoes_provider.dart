@@ -192,6 +192,17 @@ class NotificacoesProvider extends ChangeNotifier {
     }
   }
 
+  /// Marca TODAS as notificações atuais como vistas localmente (não como
+  /// lidas no servidor — isso é do [carregar] com `marcarComoLidas: true`).
+  /// A `NotificacoesPage` chama enquanto está ativa, pra o badge não subir
+  /// com o usuário já olhando a lista. Só notifica se algo mudou.
+  void marcarTodasComoVistas() {
+    final antes = _vistas.length;
+    _vistas.addAll(_todas.map((n) => n.id));
+    if (_vistas.length == antes) return;
+    notifyListeners();
+  }
+
   /// Marca como vistas as não lidas da lista atual. Retorna se havia alguma.
   bool _marcarVistas() {
     final naoLidas = _todas.where((n) => !n.lida).map((n) => n.id);

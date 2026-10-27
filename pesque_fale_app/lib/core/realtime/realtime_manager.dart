@@ -80,6 +80,27 @@ class RealtimeManager extends ChangeNotifier {
     _socket?.off(evento, callback);
   }
 
+  /// Envia um evento pro backend pelo socket global.
+  ///
+  /// Simétrico com [subscribe]: features que consomem eventos via
+  /// `subscribe` usam `emit` pra responder. O payload segue direto pro
+  /// `socket.io_client` (map vira JSON, primitivos passam como estão).
+  ///
+  /// **Semântica de "sem conexão":** se o manager está desconectado no
+  /// momento da chamada, o emit é **descartado silenciosamente** — não há
+  /// fila interna. Features devem reemitir estado após [onReconnect] ou
+  /// escutar o manager com `addListener` (ele notifica a cada mudança de
+  /// [conectado]) pra re-sincronizar quando a conexão voltar.
+  void emit(String evento, [dynamic payload]) {
+    final socket = _socket;
+    if (socket == null || !_conectado) return;
+    if (payload == null) {
+      socket.emit(evento);
+    } else {
+      socket.emit(evento, payload);
+    }
+  }
+
   /// [callback] roda quando o socket volta depois de uma queda — não na
   /// primeira conexão da sessão. É o gancho pra re-sincronizar estado.
   void onReconnect(void Function() callback) {

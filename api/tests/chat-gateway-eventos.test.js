@@ -76,6 +76,18 @@ function comBanco({ mensagensExistentes = 0, falharEm = null } = {}) {
     if (/SELECT id, nome, username, foto_perfil FROM usuarios/.test(sql)) {
       return { rows: [{ id: A, nome: 'Ana', username: 'ana', foto_perfil: 'http://foto/ana.png' }] };
     }
+    if (/UPDATE mensagens SET status = 'visto'/.test(sql)) {
+      return { rows: [] };
+    }
+    if (/AS mutuo/.test(sql)) {
+      return { rows: [{ mutuo: true }] };
+    }
+    if (/INSERT INTO chats/.test(sql)) {
+      return { rows: [] };
+    }
+    if (/SELECT \* FROM mensagens/.test(sql)) {
+      return { rows: [] };
+    }
     throw new Error(`query inesperada: ${sql}`);
   });
 }
@@ -245,5 +257,124 @@ describe('chat.gateway — enviar_mensagem emite eventos realtime', () => {
 
     expect(emitToUser).not.toHaveBeenCalled();
     expect(io.emitidosEmRoom).toHaveLength(0);
+  });
+});
+
+describe('chat.gateway — leitura emite conversa_lida', () => {
+  beforeEach(() => {
+    pool.query.mockReset();
+    emitToUser.mockReset();
+  });
+
+  async function marcarVistoComo(usuarioId) {
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(usuarioId);
+    io.conectar(socket);
+    socket.chatId = CHAT_ID;
+    await socket.disparar('marcar_visto');
+    return { io, socket };
+  }
+
+  it('marcar_visto emite conversa_lida pros rooms pessoais dos dois', async () => {
+    comBanco();
+
+    await marcarVistoComo(B);
+
+    const chamadas = eventosEmitidos('conversa_lida');
+    expect(chamadas.map(([userId]) => userId).sort()).toEqual([A, B]);
+  });
+
+  it('payload de conversa_lida tem conversaId, lidaPor e quandoEm', async () => {
+    comBanco();
+
+    await marcarVistoComo(B);
+
+    for (const [, , payload] of eventosEmitidos('conversa_lida')) {
+      expect(payload).toEqual({
+        conversaId: CHAT_ID,
+        lidaPor: B,
+        quandoEm: expect.any(String),
+      });
+      expect(new Date(payload.quandoEm).toISOString()).toBe(payload.quandoEm);
+    }
+  });
+
+  it('mensagens_vistas continua indo pro room do chat', async () => {
+    comBanco();
+
+    const { io } = await marcarVistoComo(B);
+
+    expect(io.emitidosEmRoom).toEqual([
+      { room: CHAT_ID, evento: 'mensagens_vistas', payload: { chatId: CHAT_ID, porId: B } },
+    ]);
+  });
+
+  it('entrar_chat também emite conversa_lida (abrir a conversa marca como vista)', async () => {
+    comBanco();
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(B);
+    io.conectar(socket);
+
+    await socket.disparar('entrar_chat', { outroId: A });
+
+    expect(socket.emit).toHaveBeenCalledWith('historico', { chatId: CHAT_ID, mensagens: [] });
+    const chamadas = eventosEmitidos('conversa_lida');
+    expect(chamadas.map(([userId]) => userId).sort()).toEqual([A, B]);
+    expect(chamadas[0][2]).toEqual(expect.objectContaining({ conversaId: CHAT_ID, lidaPor: B }));
+  });
+
+  it('sem chat aberto, marcar_visto não faz nada', async () => {
+    comBanco();
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(B);
+    io.conectar(socket);
+
+    await socket.disparar('marcar_visto');
+
+    expect(pool.query).not.toHaveBeenCalled();
+    expect(emitToUser).not.toHaveBeenCalled();
+    expect(io.emitidosEmRoom).toHaveLength(0);
+  });
+
+  describe('falhas', () => {
+    let consoleError;
+
+    beforeEach(() => {
+      consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => consoleError.mockRestore());
+
+    it('quando marcarComoVistas falha, não emite mensagens_vistas nem conversa_lida', async () => {
+      comBanco({ falharEm: /UPDATE mensagens SET status = 'visto'/ });
+
+      const { io, socket } = await marcarVistoComo(B);
+
+      expect(io.emitidosEmRoom).toHaveLength(0);
+      expect(emitToUser).not.toHaveBeenCalled();
+      expect(socket.emit).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalled();
+    });
+
+    it('falha no emit de conversa_lida só loga; mensagens_vistas já saiu', async () => {
+      comBanco();
+      emitToUser.mockImplementation(() => {
+        throw new Error('falha simulada no emit');
+      });
+
+      const { io, socket } = await marcarVistoComo(B);
+
+      expect(io.emitidosEmRoom).toEqual([
+        expect.objectContaining({ room: CHAT_ID, evento: 'mensagens_vistas' }),
+      ]);
+      expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+      expect(consoleError).toHaveBeenCalledWith(
+        '[chat] erro pós-update ao emitir conversa_lida:',
+        expect.any(Error)
+      );
+    });
   });
 });

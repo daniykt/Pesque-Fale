@@ -25,6 +25,7 @@ class NotificacoesPage extends StatefulWidget {
 
 class _NotificacoesPageState extends State<NotificacoesPage> {
   final Set<String> _destaqueSessao = {};
+  NotificacoesProvider? _providerAtual;
 
   @override
   void initState() {
@@ -33,9 +34,38 @@ class _NotificacoesPageState extends State<NotificacoesPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _rebind();
+  }
+
+  @override
   void didUpdateWidget(covariant NotificacoesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.ativa && !oldWidget.ativa) _agendarAbertura();
+    _rebind();
+  }
+
+  /// Escuta o provider pra marcar como vistas as que chegam com a aba
+  /// aberta. Se a instância do provider mudar, troca o listener de dono.
+  void _rebind() {
+    final atual = context.read<NotificacoesProvider>();
+    if (identical(_providerAtual, atual)) return;
+    _providerAtual?.removeListener(_marcarVistasSeAtiva);
+    _providerAtual = atual..addListener(_marcarVistasSeAtiva);
+  }
+
+  /// Sem isso o badge sobe com uma notificação que o usuário já está vendo.
+  /// Não marca como lida no servidor: isso fica com o [_abrir].
+  void _marcarVistasSeAtiva() {
+    if (!mounted || !widget.ativa) return;
+    _providerAtual!.marcarTodasComoVistas();
+  }
+
+  @override
+  void dispose() {
+    _providerAtual?.removeListener(_marcarVistasSeAtiva);
+    super.dispose();
   }
 
   void _agendarAbertura() {

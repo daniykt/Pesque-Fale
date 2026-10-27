@@ -91,14 +91,12 @@ class InboxPage extends StatelessWidget {
             itemCount: lista.length,
             itemBuilder: (context, i) => ItemConversa(
               conversa: lista[i],
-              onTap: () async {
-                await Navigator.of(
-                  context,
-                ).pushNamed('/chat/conversa', arguments: lista[i]);
-                // Ao abrir, o backend marcou as mensagens como vistas; o
-                // provider é global, então atualiza mesmo se a página saiu.
-                provider.refresh();
-              },
+              // Abrir a conversa marca as mensagens como vistas no backend,
+              // que emite `conversa_lida`: o provider global já zera o
+              // contador sem refresh ao voltar.
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed('/chat/conversa', arguments: lista[i]),
             ),
           ),
         );
