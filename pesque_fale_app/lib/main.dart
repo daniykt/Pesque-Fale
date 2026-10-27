@@ -291,15 +291,24 @@ void main() {
           value: uploadPublicacaoImagemRepository,
         ),
         Provider<AssistenteRepository>.value(value: assistenteRepository),
-        ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+        ChangeNotifierProxyProvider2<
+          AuthProvider,
+          RealtimeManager,
+          FeedProvider
+        >(
+          // Precisa receber eventos mesmo com a aba Feed fora da tela (usuário
+          // está no Chat, alguém que ele segue publica, ele volta e vê o chip).
+          lazy: false,
           create: (context) => FeedProvider(
             publicacoesRepo: publicacoesRepository,
             curtidasRepo: curtidasRepository,
             eventosRepo: eventosRepository,
             pontosRepo: pontosRepository,
             authProvider: context.read<AuthProvider>(),
+            realtime: context.read<RealtimeManager>(),
           ),
-          update: (context, auth, previous) => previous!..reagirAuth(auth),
+          update: (context, auth, realtime, previous) =>
+              previous!..reagirAuth(auth),
         ),
         Provider<TourStatusStorage>(create: (_) => TourStatusStorage()),
         ChangeNotifierProvider<TourProvider>(

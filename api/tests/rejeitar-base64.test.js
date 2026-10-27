@@ -83,7 +83,10 @@ describe('Rejeição de imagem em base64 no corpo JSON', () => {
   });
 
   it('POST /v1/publicacoes com corpo legítimo continua criando a publicação', async () => {
-    pool.query.mockResolvedValueOnce({ rows: [publicacaoMock] });
+    pool.query
+      .mockResolvedValueOnce({ rows: [publicacaoMock] })
+      // SELECT de seguidores pro emit de nova_publicacao_feed
+      .mockResolvedValueOnce({ rows: [] });
 
     const res = await request(app)
       .post('/v1/publicacoes')
@@ -99,7 +102,8 @@ describe('Rejeição de imagem em base64 no corpo JSON', () => {
     expect(res.body.data.imagemUrl).toBe(
       'https://res.cloudinary.com/demo/image/upload/sample.jpg'
     );
-    expect(pool.query).toHaveBeenCalledTimes(1);
+    const inserts = pool.query.mock.calls.filter(([sql]) => sql.includes('INSERT INTO publicacoes'));
+    expect(inserts).toHaveLength(1);
   });
 
   it('rejeita base64 antes da autenticação: sem token responde 400, não 401', async () => {

@@ -5,8 +5,11 @@ import 'package:provider/provider.dart';
 
 import 'package:pesque_fale_app/core/data/paged_result.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
+import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
+import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
+import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/feed/data/comentarios_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/curtidas_repository.dart';
@@ -16,11 +19,14 @@ import 'package:pesque_fale_app/features/feed/domain/comentario.dart';
 import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/presentation/feed_page.dart';
+import 'package:pesque_fale_app/features/feed/presentation/widgets/novas_publicacoes_button.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/ponto.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/tipo_ponto.dart';
+
+import '../../chat/support/fake_realtime_manager.dart';
 
 // Fakes locais sem nenhuma URL de imagem — os testes aqui verificam
 // navegação entre abas e conteúdo textual, não carregamento de imagem de
@@ -39,13 +45,16 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
     ),
   ];
 
+  /// O que o feed Seguindo devolve, mais recente primeiro (página única).
+  final List<Publicacao> seguindoItens = [];
+
   @override
   Future<PagedResult<Publicacao>> listar({
     int pagina = 1,
     int porPagina = 20,
     bool seguindo = false,
   }) async {
-    final itens = seguindo ? const <Publicacao>[] : todas;
+    final itens = seguindo ? List.of(seguindoItens) : todas;
     return PagedResult(
       items: itens,
       total: itens.length,
@@ -151,8 +160,53 @@ class _FakePontosRepository implements PontosRepository {
   Future<Ponto> buscarPorId(String id) async => throw UnimplementedError();
 }
 
-Widget _harness({required AuthProvider authProvider}) {
-  final publicacoesRepo = _FakePublicacoesRepository();
+class _FakeAuthRepository implements AuthRepository {
+  @override
+  Future<AuthResult> cadastrar({
+    required String nome,
+    required String email,
+    required String senha,
+    required String confirmarSenha,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<AuthResult> login({
+    required String email,
+    required String senha,
+  }) async {
+    return const AuthResult(
+      accessToken: 'token',
+      usuario: Usuario(
+        id: 'eu',
+        nome: 'Ana',
+        email: 'ana@teste.com',
+        onboardingConcluido: true,
+      ),
+    );
+  }
+
+  @override
+  Future<void> logout() async {}
+}
+
+Publicacao _publicacaoSeguindo(String id) {
+  return Publicacao(
+    id: id,
+    autorId: 'autor-seguido',
+    autorNome: 'Pescador Seguido',
+    descricao: 'Publicação $id do feed Seguindo.',
+    criadoEm: DateTime(2026, 1, 1),
+    atualizadoEm: DateTime(2026, 1, 1),
+  );
+}
+
+Widget _harness({
+  required AuthProvider authProvider,
+  _FakePublicacoesRepository? publicacoes,
+  FakeRealtimeManager? realtime,
+}) {
+  final publicacoesRepo = publicacoes ?? _FakePublicacoesRepository();
+  final realtimeManager = realtime ?? FakeRealtimeManager();
   final curtidasRepo = _FakeCurtidasRepository();
   final comentariosRepo = _FakeComentariosRepository();
   final eventosRepo = _FakeEventosRepository();
@@ -173,6 +227,7 @@ Widget _harness({required AuthProvider authProvider}) {
           eventosRepo: eventosRepo,
           pontosRepo: pontosRepo,
           authProvider: authProvider,
+          realtime: realtimeManager,
         ),
         update: (context, auth, previous) => previous!..reagirAuth(auth),
       ),
@@ -285,5 +340,95 @@ void main() {
       find.text('Nenhum comentário ainda. Seja o primeiro!'),
       findsOneWidget,
     );
+  });
+
+  group('chip de novas publicações na aba Seguindo', () {
+    late _FakePublicacoesRepository publicacoesRepo;
+    late FakeRealtimeManager realtime;
+
+    /// Monta logado, com 10 publicações no Seguindo, e abre a aba.
+    Future<void> abrirSeguindo(WidgetTester tester) async {
+      final authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      publicacoesRepo = _FakePublicacoesRepository();
+      publicacoesRepo.seguindoItens.addAll(
+        List.generate(10, (i) => _publicacaoSeguindo('s$i')),
+      );
+      realtime = FakeRealtimeManager();
+
+      await tester.pumpWidget(
+        _harness(
+          authProvider: authProvider,
+          publicacoes: publicacoesRepo,
+          realtime: realtime,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Seguindo'));
+      await tester.pumpAndSettle();
+    }
+
+    /// O autor seguido publica: entra no servidor e o evento chega.
+    Future<void> chegaPublicacao(WidgetTester tester, String id) async {
+      publicacoesRepo.seguindoItens.insert(0, _publicacaoSeguindo(id));
+      realtime.emitir('nova_publicacao_feed', {
+        'publicacaoId': id,
+        'autorId': 'autor-seguido',
+        'timestamp': '2026-10-27T12:00:00.000Z',
+      });
+      await tester.pumpAndSettle();
+    }
+
+    // A barra de abas também é Scrollable; mira o da lista do feed.
+    double offsetDaLista(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position
+        .pixels;
+
+    testWidgets('rolado pra baixo: chip aparece e acumula a contagem', (
+      tester,
+    ) async {
+      await abrirSeguindo(tester);
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(offsetDaLista(tester), greaterThan(100));
+
+      await chegaPublicacao(tester, 'nova-1');
+      expect(find.text('1 nova publicação'), findsOneWidget);
+      expect(find.text('Publicação nova-1 do feed Seguindo.'), findsNothing);
+
+      await chegaPublicacao(tester, 'nova-2');
+      expect(find.text('2 novas publicações'), findsOneWidget);
+    });
+
+    testWidgets('clique no chip rola pro topo, aplica e o chip some', (
+      tester,
+    ) async {
+      await abrirSeguindo(tester);
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await chegaPublicacao(tester, 'nova-1');
+
+      await tester.tap(find.byType(NovasPublicacoesButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NovasPublicacoesButton), findsNothing);
+      expect(offsetDaLista(tester), 0);
+      expect(find.text('Publicação nova-1 do feed Seguindo.'), findsOneWidget);
+    });
+
+    testWidgets('no topo: publicação entra direto, sem chip', (tester) async {
+      await abrirSeguindo(tester);
+
+      await chegaPublicacao(tester, 'nova-1');
+
+      expect(find.byType(NovasPublicacoesButton), findsNothing);
+      expect(find.text('Publicação nova-1 do feed Seguindo.'), findsOneWidget);
+    });
   });
 }

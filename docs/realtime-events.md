@@ -101,6 +101,20 @@
 - **Consumidor no app:** mesmo `PerfilProvider` global, mesmo handler (`_onSeguidorMudou` assinado em ambos os eventos).
 - **Introduzido em:** sub-issue 9.6.5 (#209)
 
+### `nova_publicacao_feed`
+- **Room:** `user:<seguidorId>` (um emit por seguidor do autor)
+- **Quando:** `POST /publicacoes` resulta em INSERT bem-sucedido. O autor não recebe (ninguém segue a si mesmo). Se a query de seguidores falhar, a publicação continua salva (201) e o evento só não é emitido.
+- **Payload:**
+  ```json
+  {
+    "publicacaoId": "uuid",
+    "autorId": "uuid",
+    "timestamp": "ISO-8601"
+  }
+  ```
+- **Consumidor no app:** `FeedProvider` global. Guarda o id em `_pendentesSeguindo` (ignora o próprio usuário como autor e ids já na lista). A `FeedPage` decide pelo scroll da aba Seguindo: com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo (ou ao voltar pra ele), aplica direto sem chip. Aplicar = buscar a página 1 do Seguindo e fazer prepend do que ainda não está na lista. Pendentes zeram em pull-to-refresh, carregamento inicial da aba, logout e reconexão do socket.
+- **Introduzido em:** sub-issue 9.6.6 (#210)
+
 ### `nova_mensagem` (pré-existente)
 - **Room:** `<chatId>`
 - **Quando:** mensagem enviada em um chat

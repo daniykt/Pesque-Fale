@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { emitToUser } = require('../../config/socket-emitter');
 
 async function listarPorUsuario(req, res) {
   const { id } = req.params;
@@ -99,6 +100,7 @@ async function criar(req, res) {
   const autorId = req.usuario.id;
   const { descricao, imagemUrl, localTexto, avaliacaoNota, pontoId, tags } = req.body;
 
+  let publicacao;
   try {
     const result = await pool.query(
       `INSERT INTO publicacoes (autor_id, ponto_id, descricao, imagem_url, local_texto, avaliacao_nota, tags)
@@ -106,12 +108,33 @@ async function criar(req, res) {
        RETURNING *`,
       [autorId, pontoId ?? null, descricao ?? null, imagemUrl ?? null, localTexto ?? null, avaliacaoNota ?? null, tags ?? []]
     );
-
-    return res.status(201).json({ data: _format(result.rows[0]) });
+    publicacao = result.rows[0];
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
+
+  // A partir daqui a publicação já está no banco. Falha nos emits é só log.
+  // Ninguém segue a si mesmo, então o autor não recebe o próprio emit — o app
+  // dele já insere a publicação no topo via adicionarPublicacao.
+  try {
+    const seguidores = await pool.query(
+      'SELECT seguidor_id FROM usuario_seguidores WHERE seguido_id = $1',
+      [autorId]
+    );
+    const payload = {
+      publicacaoId: publicacao.id,
+      autorId,
+      timestamp: publicacao.criado_em,
+    };
+    for (const row of seguidores.rows) {
+      emitToUser(row.seguidor_id, 'nova_publicacao_feed', payload);
+    }
+  } catch (err) {
+    console.error('[publicacoes] erro ao emitir nova_publicacao_feed:', err);
+  }
+
+  return res.status(201).json({ data: _format(publicacao) });
 }
 
 async function buscarPorId(req, res) {
