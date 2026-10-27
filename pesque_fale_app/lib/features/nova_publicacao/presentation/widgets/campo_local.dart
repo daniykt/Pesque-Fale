@@ -40,14 +40,14 @@ class CampoLocal extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Toque para selecionar no mapa',
+                      'Toque para escolher um ponto',
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      'Escolha um ponto de pesca cadastrado',
+                      'Lista dos pontos oficiais cadastrados',
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: 12,
