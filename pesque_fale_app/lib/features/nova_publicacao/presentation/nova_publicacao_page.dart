@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_snackbar.dart';
-import '../../pesquisa/domain/ponto.dart';
-import '../../pesquisa/presentation/seletor_ponto_page.dart';
 import '../providers/nova_publicacao_provider.dart';
 import 'widgets/botao_publicar.dart';
 import 'widgets/campo_avaliacao.dart';
@@ -13,6 +11,7 @@ import 'widgets/campo_descricao.dart';
 import 'widgets/campo_foto.dart';
 import 'widgets/campo_local.dart';
 import 'widgets/campo_tags.dart';
+import 'widgets/selecao_ponto_bottom_sheet.dart';
 
 class NovaPublicacaoPage extends StatelessWidget {
   const NovaPublicacaoPage({super.key});
@@ -116,9 +115,7 @@ class NovaPublicacaoPage extends StatelessWidget {
     BuildContext context,
     NovaPublicacaoProvider provider,
   ) async {
-    final ponto = await Navigator.of(
-      context,
-    ).push<Ponto>(MaterialPageRoute(builder: (_) => const SeletorPontoPage()));
+    final ponto = await SelecaoPontoBottomSheet.show(context);
     if (ponto != null) provider.setPonto(ponto);
   }
 
