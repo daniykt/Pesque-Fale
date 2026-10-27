@@ -90,6 +90,59 @@ void main() {
     },
   );
 
+  group('ressincronização (CHAT_FORA_DE_SINCRONIA)', () {
+    const banner = 'Sem conexão. Tentando reconectar...';
+
+    void historico() => realtime.emitir('historico', {
+      'chatId': 'u1_u2',
+      'mensagens': [
+        {
+          'id': 'm1',
+          'chatId': 'u1_u2',
+          'userId': 'u2',
+          'nome': 'Guilherme Souza',
+          'texto': 'bom dia',
+          'status': 'enviado',
+          'criadoEm': '2026-09-01T09:00:00Z',
+        },
+      ],
+    });
+
+    bool inputHabilitado(WidgetTester tester) =>
+        tester.widget<InputMensagem>(find.byType(InputMensagem)).habilitado;
+
+    testWidgets('load inicial não mostra o banner', (tester) async {
+      await montar(tester);
+      await tester.pump();
+
+      expect(find.text(banner), findsNothing);
+      expect(inputHabilitado(tester), isFalse);
+    });
+
+    testWidgets('mostra o banner, mantém a lista e desabilita o envio até o '
+        'próximo historico', (tester) async {
+      await montar(tester);
+      historico();
+      await tester.pump();
+      expect(find.text(banner), findsNothing);
+      expect(inputHabilitado(tester), isTrue);
+
+      realtime.emitir('erro', {'code': 'CHAT_FORA_DE_SINCRONIA'});
+      await tester.pump();
+
+      expect(find.text(banner), findsOneWidget);
+      expect(find.text('bom dia'), findsOneWidget);
+      expect(find.byType(SkeletonMensagens), findsNothing);
+      expect(inputHabilitado(tester), isFalse);
+
+      historico();
+      await tester.pump();
+
+      expect(find.text(banner), findsNothing);
+      expect(inputHabilitado(tester), isTrue);
+    });
+  });
+
   testWidgets('entra no chat pelo socket global e sai limpando as assinaturas', (
     tester,
   ) async {
