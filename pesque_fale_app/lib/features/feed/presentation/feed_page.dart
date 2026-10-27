@@ -10,6 +10,7 @@ import 'widgets/abas_scroll.dart';
 import 'widgets/dicas_view.dart';
 import 'widgets/eventos_carrossel.dart';
 import 'widgets/locais_carrossel.dart';
+import 'widgets/novas_publicacoes_button.dart';
 import 'widgets/publicacao_card.dart';
 import 'widgets/publicar_header_bar.dart';
 import 'widgets/skeletons/carrossel_skeleton.dart';
@@ -181,16 +182,34 @@ class _FeedListaView extends StatefulWidget {
 }
 
 class _FeedListaViewState extends State<_FeedListaView> {
+  /// Até essa distância do topo o usuário conta como "no topo": publicações
+  /// novas da aba Seguindo entram direto, sem chip.
+  static const _limiteTopo = 100.0;
+
   final _scrollController = ScrollController();
+
+  /// Guardado pra remover o listener no dispose sem consultar o context.
+  /// Só existe na aba Seguindo — as outras não recebem realtime.
+  FeedProvider? _feedOuvido;
+
+  bool get _ehSeguindo => widget.aba == AbaFeed.seguindo;
+
+  bool get _estaNoTopo =>
+      !_scrollController.hasClients || _scrollController.offset <= _limiteTopo;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    if (_ehSeguindo) {
+      _feedOuvido = context.read<FeedProvider>()
+        ..addListener(_aplicarPendentesSeNoTopo);
+    }
   }
 
   @override
   void dispose() {
+    _feedOuvido?.removeListener(_aplicarPendentesSeNoTopo);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -202,6 +221,40 @@ class _FeedListaViewState extends State<_FeedListaView> {
     if (position.pixels >= position.maxScrollExtent - 400) {
       context.read<FeedProvider>().carregarMais();
     }
+    // Voltou pro topo com o chip na tela: aplica e o chip some.
+    if (_ehSeguindo) _aplicarPendentesSeNoTopo();
+  }
+
+  /// Roda a cada notify do provider (não só quando os pendentes mudam) e a
+  /// cada scroll; sai cedo quando não há pendente.
+  void _aplicarPendentesSeNoTopo() {
+    final feed = _feedOuvido;
+    if (feed == null || feed.pendentesSeguindoCount == 0) return;
+    // Lista ainda não carregada/em erro: o próximo carregamento já zera.
+    switch (feed.estadoDe(AbaFeed.seguindo).status) {
+      case StatusAba.sucesso:
+      case StatusAba.carregandoMais:
+      case StatusAba.vazio:
+        break;
+      case StatusAba.inicial:
+      case StatusAba.carregando:
+      case StatusAba.erro:
+        return;
+    }
+    if (_estaNoTopo) feed.aplicarPendentesSeguindo();
+  }
+
+  Future<void> _irProTopoEAplicar() async {
+    final feed = _feedOuvido;
+    if (_scrollController.hasClients) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    // Normalmente o _onScroll já aplicou ao cruzar o limite; aí é no-op.
+    await feed?.aplicarPendentesSeguindo();
   }
 
   @override
@@ -255,7 +308,33 @@ class _FeedListaViewState extends State<_FeedListaView> {
         break;
     }
 
-    return RefreshIndicator(onRefresh: provider.pullRefresh, child: conteudo);
+    final mostraChip =
+        _ehSeguindo &&
+        (estado.status == StatusAba.sucesso ||
+            estado.status == StatusAba.carregandoMais) &&
+        provider.pendentesSeguindoCount > 0 &&
+        !_estaNoTopo;
+
+    return RefreshIndicator(
+      onRefresh: provider.pullRefresh,
+      child: Stack(
+        children: [
+          Positioned.fill(child: conteudo),
+          if (mostraChip)
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: NovasPublicacoesButton(
+                  quantidade: provider.pendentesSeguindoCount,
+                  onTap: _irProTopoEAplicar,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _scrollableCentro(Widget child) {

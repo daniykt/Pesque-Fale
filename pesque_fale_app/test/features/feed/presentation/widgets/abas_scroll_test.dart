@@ -20,6 +20,8 @@ import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/ponto.dart';
 
+import '../../../chat/support/fake_realtime_manager.dart';
+
 // Fakes no mesmo padrão de feed_page_test.dart. O AbasScroll só lê a aba
 // ativa do FeedProvider, então nenhum deles precisa devolver dados.
 
@@ -99,6 +101,7 @@ void main() {
       authProvider: AuthProvider(
         repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
       ),
+      realtime: FakeRealtimeManager(),
     );
 
     await tester.pumpWidget(

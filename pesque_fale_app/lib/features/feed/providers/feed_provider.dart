@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/realtime/realtime_manager.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../pesquisa/data/pontos_repository.dart';
 import '../../pesquisa/domain/filtros_locais.dart';
@@ -29,13 +30,26 @@ class FeedProvider extends ChangeNotifier {
     required this.eventosRepo,
     required this.pontosRepo,
     required this.authProvider,
-  });
+    required this.realtime,
+  }) {
+    realtime.subscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.onReconnect(_onReconnect);
+  }
 
   final PublicacoesRepository publicacoesRepo;
   final CurtidasRepository curtidasRepo;
   final EventosRepository eventosRepo;
   final PontosRepository pontosRepo;
+  final RealtimeManager realtime;
   AuthProvider authProvider;
+
+  /// Ids de publicações que chegaram via realtime mas ainda não foram
+  /// renderizadas na lista Seguindo. O provider guarda só o contador bruto:
+  /// é a `FeedPage`, que conhece o scroll, quem decide entre mostrar o chip
+  /// "X novas publicações" ou aplicar direto ([aplicarPendentesSeguindo]).
+  final Set<String> _pendentesSeguindo = {};
+
+  int get pendentesSeguindoCount => _pendentesSeguindo.length;
 
   AbaFeed _abaAtiva = AbaFeed.paraVoce;
   AbaFeed get abaAtiva => _abaAtiva;
@@ -83,6 +97,7 @@ class FeedProvider extends ChangeNotifier {
           );
           break;
         case AbaFeed.seguindo:
+          _pendentesSeguindo.clear();
           if (authProvider.usuario == null) {
             _atualizarEstado(aba, StatusAba.vazio);
             break;
@@ -94,6 +109,10 @@ class FeedProvider extends ChangeNotifier {
           seguindo
             ..clear()
             ..addAll(result.items);
+          // Evento que chegou com a requisição em voo pode já ter vindo nela.
+          _pendentesSeguindo.removeWhere(
+            (id) => seguindo.any((p) => p.id == id),
+          );
           _paginaSeguindo = 1;
           _temMaisSeguindo = result.temMais;
           _atualizarEstado(
@@ -151,7 +170,10 @@ class FeedProvider extends ChangeNotifier {
         seguindo: ehSeguindo,
       );
       if (ehSeguindo) {
-        seguindo.addAll(result.items);
+        // Paginação por offset: publicações aplicadas no topo via realtime
+        // empurram itens já carregados pra próxima página.
+        final idsAtuais = seguindo.map((p) => p.id).toSet();
+        seguindo.addAll(result.items.where((p) => !idsAtuais.contains(p.id)));
         _paginaSeguindo = proximaPagina;
         _temMaisSeguindo = result.temMais;
       } else {
@@ -166,6 +188,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> pullRefresh() async {
+    if (_abaAtiva == AbaFeed.seguindo) _pendentesSeguindo.clear();
     _estados[_abaAtiva] = EstadoAba.inicial();
     await _carregarInicial(_abaAtiva);
   }
@@ -225,6 +248,57 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onNovaPublicacaoFeed(dynamic payload) {
+    if (payload is! Map) return;
+    final id = payload['publicacaoId'];
+    final autor = payload['autorId'];
+    if (id is! String || autor is! String) return;
+
+    // O autor não ganha chip no próprio feed: a tela de nova publicação já
+    // chamou adicionarPublicacao. O backend nem emite pra ele (ninguém segue
+    // a si mesmo) — isto é defesa em profundidade.
+    if (autor == authProvider.usuario?.id) return;
+    if (seguindo.any((p) => p.id == id)) return;
+    if (!_pendentesSeguindo.add(id)) return;
+    notifyListeners();
+  }
+
+  /// Drena os pendentes buscando a página 1 do Seguindo e colocando no topo
+  /// as publicações que ainda não estão na lista. Chamado pela UI no clique
+  /// do chip, ou direto quando o usuário já está no topo.
+  Future<void> aplicarPendentesSeguindo() async {
+    if (_pendentesSeguindo.isEmpty) return;
+    _pendentesSeguindo.clear();
+    final usuarioId = authProvider.usuario?.id;
+    try {
+      final result = await publicacoesRepo.listar(pagina: 1, seguindo: true);
+      // Logout/troca de conta com a requisição em voo: descarta.
+      if (authProvider.usuario?.id != usuarioId) return;
+      final idsAtuais = seguindo.map((p) => p.id).toSet();
+      seguindo.insertAll(
+        0,
+        result.items.where((p) => !idsAtuais.contains(p.id)),
+      );
+      // A paginação continua de onde estava; o carregarMais dedupa o que
+      // o prepend empurrou pra próxima página.
+      _atualizarEstado(
+        AbaFeed.seguindo,
+        seguindo.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
+      );
+    } catch (_) {
+      // Silencia: o pull-to-refresh continua disponível pra reconciliar.
+      notifyListeners();
+    }
+  }
+
+  void _onReconnect() {
+    // Eventos podem ter se perdido na queda; o contador deixa de ser
+    // confiável. O próximo pull-to-refresh (ou troca de aba) reconcilia.
+    if (_pendentesSeguindo.isEmpty) return;
+    _pendentesSeguindo.clear();
+    notifyListeners();
+  }
+
   void _substituirEmTodasListas(Publicacao nova) {
     for (final lista in [paraVoce, seguindo]) {
       final idx = lista.indexWhere((p) => p.id == nova.id);
@@ -244,8 +318,16 @@ class FeedProvider extends ChangeNotifier {
     authProvider = auth;
     if (auth.usuario == null) {
       seguindo.clear();
+      _pendentesSeguindo.clear();
       _estados[AbaFeed.seguindo] = EstadoAba.inicial();
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    realtime.unsubscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.removerOnReconnect(_onReconnect);
+    super.dispose();
   }
 }
