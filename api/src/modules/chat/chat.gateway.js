@@ -83,6 +83,22 @@ function emitirConversaLida(chatId, leitorId) {
   }
 }
 
+// Rejeita emits de uma conversa diferente da que o socket tem registrada.
+// Protege contra race do entrar_chat quando o usuário troca rápido de
+// conversa (o backend tem UMA conversa ativa por socket).
+// Retorna true se o emit deve prosseguir, false se foi rejeitado.
+function validarChatSincronizado(socket, chatIdDoPayload) {
+  if (!socket.chatId) return false;
+  if (chatIdDoPayload && chatIdDoPayload !== socket.chatId) {
+    socket.emit('erro', {
+      code: 'CHAT_FORA_DE_SINCRONIA',
+      message: 'A conversa mudou. Tente novamente.',
+    });
+    return false;
+  }
+  return true;
+}
+
 module.exports = function initChatGateway(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -148,8 +164,9 @@ module.exports = function initChatGateway(io) {
     });
 
     // Enviar mensagem
-    socket.on('enviar_mensagem', async ({ texto }) => {
-      if (!socket.chatId || !texto?.trim()) return;
+    socket.on('enviar_mensagem', async ({ texto, chatId }) => {
+      if (!texto?.trim()) return;
+      if (!validarChatSincronizado(socket, chatId)) return;
 
       let mensagem;
       try {
@@ -225,8 +242,8 @@ module.exports = function initChatGateway(io) {
     });
 
     // Marcar como visto
-    socket.on('marcar_visto', async () => {
-      if (!socket.chatId) return;
+    socket.on('marcar_visto', async ({ chatId } = {}) => {
+      if (!validarChatSincronizado(socket, chatId)) return;
       try {
         await marcarComoVistas(socket.chatId, usuarioId);
       } catch (err) {
@@ -241,14 +258,14 @@ module.exports = function initChatGateway(io) {
     });
 
     // Indicador de digitação
-    socket.on('digitando', () => {
-      if (!socket.chatId) return;
+    socket.on('digitando', ({ chatId } = {}) => {
+      if (!validarChatSincronizado(socket, chatId)) return;
       socket.to(socket.chatId).emit('outro_digitando', { userId: usuarioId });
     });
 
     // Indicador de parou de digitar
-    socket.on('parou_digitando', () => {
-      if (!socket.chatId) return;
+    socket.on('parou_digitando', ({ chatId } = {}) => {
+      if (!validarChatSincronizado(socket, chatId)) return;
       socket.to(socket.chatId).emit('outro_parou_digitando', { userId: usuarioId });
     });
 

@@ -33,7 +33,9 @@ class ChatProvider extends ChangeNotifier {
   String? chatId;
 
   /// Id desta conversa, conhecido a partir do `historico`. Antes disso o
-  /// filtro dos handlers é permissivo. É campo da instância, não closure —
+  /// filtro dos handlers é permissivo e os emits que dependem da conversa
+  /// (que levam o `chatId` pro backend validar) são descartados. É campo da
+  /// instância, não closure —
   /// mesmo contrato stateless do `_meuId` no `InboxProvider`.
   String? _chatIdAtivo;
 
@@ -93,8 +95,8 @@ class ChatProvider extends ChangeNotifier {
     final msg = Mensagem.fromJson(Map<String, dynamic>.from(data));
     mensagens.add(msg);
     // Mensagem recebida do outro enquanto a tela está visível: marca vista.
-    if (msg.userId != usuarioLogadoId) {
-      realtime.emit('marcar_visto');
+    if (msg.userId != usuarioLogadoId && _chatIdAtivo != null) {
+      realtime.emit('marcar_visto', {'chatId': _chatIdAtivo});
     }
     notifyListeners();
   }
@@ -132,7 +134,17 @@ class ChatProvider extends ChangeNotifier {
 
   void _onErro(dynamic data) {
     if (data is! Map) return;
+    final code = data['code'] as String?;
     final msg = data['message'] as String? ?? '';
+
+    if (code == 'CHAT_FORA_DE_SINCRONIA') {
+      // Backend tem um chatId diferente do que estamos tratando como ativo.
+      // Reemitir entrar_chat sincroniza — e o historico que vier por último
+      // sobrescreve _chatIdAtivo. Silencioso: o usuário não vê erro.
+      _entrarChat();
+      return;
+    }
+
     status = msg == _mensagemErroMutualFollow
         ? StatusChat.semMutualFollow
         : StatusChat.erroConexao;
@@ -142,7 +154,14 @@ class ChatProvider extends ChangeNotifier {
   void enviarMensagem(String texto) {
     final trimmed = texto.trim();
     if (trimmed.isEmpty || trimmed.length > 500) return;
-    realtime.emit('enviar_mensagem', {'texto': trimmed});
+    // Antes de receber `historico`, o backend ainda não terminou de nos
+    // colocar numa conversa — não há `chatId` conhecido. Nessa janela
+    // curta (ms), descartar é mais seguro do que enviar sem `chatId`.
+    if (_chatIdAtivo == null) return;
+    realtime.emit('enviar_mensagem', {
+      'texto': trimmed,
+      'chatId': _chatIdAtivo,
+    });
     _emitirParouDigitando();
   }
 
@@ -157,9 +176,10 @@ class ChatProvider extends ChangeNotifier {
     // cada nova tecla — senão uma digitação contínua nunca dispararia.
     if (!_emitiuDigitando && _debounceDigitando == null) {
       _debounceDigitando = Timer(const Duration(milliseconds: 300), () {
-        realtime.emit('digitando');
-        _emitiuDigitando = true;
         _debounceDigitando = null;
+        if (_chatIdAtivo == null) return;
+        realtime.emit('digitando', {'chatId': _chatIdAtivo});
+        _emitiuDigitando = true;
       });
     }
 
@@ -175,15 +195,17 @@ class ChatProvider extends ChangeNotifier {
     _debounceDigitando = null;
     _timerParouDigitando?.cancel();
     _timerParouDigitando = null;
+    // `_emitiuDigitando` só fica true depois de um `digitando` com chatId.
     if (_emitiuDigitando) {
-      realtime.emit('parou_digitando');
+      realtime.emit('parou_digitando', {'chatId': _chatIdAtivo});
       _emitiuDigitando = false;
     }
   }
 
   /// Chamado quando o app volta pro foreground com a tela de chat visível.
   void marcarVistoManual() {
-    realtime.emit('marcar_visto');
+    if (_chatIdAtivo == null) return;
+    realtime.emit('marcar_visto', {'chatId': _chatIdAtivo});
   }
 
   /// Desfaz as assinaturas no manager. Não descarta o manager: ele é global.
@@ -191,7 +213,9 @@ class ChatProvider extends ChangeNotifier {
   void dispose() {
     _debounceDigitando?.cancel();
     _timerParouDigitando?.cancel();
-    if (_emitiuDigitando) realtime.emit('parou_digitando');
+    if (_emitiuDigitando && _chatIdAtivo != null) {
+      realtime.emit('parou_digitando', {'chatId': _chatIdAtivo});
+    }
     realtime.unsubscribe('historico', _onHistorico);
     realtime.unsubscribe('nova_mensagem', _onNovaMensagem);
     realtime.unsubscribe('mensagens_vistas', _onMensagensVistas);

@@ -87,9 +87,23 @@
 - **Consumidor no app:** `ChatProvider` (tela de conversa aberta, via `RealtimeManager` desde a 9.6.4.1 (#215)). Descarta eventos cujo `chatId` não é o da conversa aberta: o socket global continua nos rooms de conversas abertas antes.
 - **Introduzido em:** fase anterior à epic #183
 
-### `historico`, `mensagens_vistas`, `outro_digitando`, `outro_parou_digitando`, `erro`
+### `historico`, `mensagens_vistas`, `outro_digitando`, `outro_parou_digitando`
 Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`. Consumidos pelo `ChatProvider` via `RealtimeManager`: `mensagens_vistas` é filtrado pelo `chatId`; `outro_digitando`/`outro_parou_digitando` não trazem `chatId` e são filtrados pelo `userId` do outro participante.
+
+### `erro`
+- **Room:** socket específico do emissor (via `socket.emit`)
+- **Payload:** `{ message, code? }`
+- **Códigos conhecidos:**
+  - `CHAT_CONSIGO_MESMO` — tentou abrir chat com o próprio id
+  - `CHAT_FORA_DE_SINCRONIA` — o `chatId` enviado no payload de
+    `enviar_mensagem` / `marcar_visto` / `digitando` / `parou_digitando`
+    não bate com `socket.chatId`. Introduzido em 9.6.4.2 pra evitar
+    corrupção por race do `entrar_chat`.
+- **Consumidor no app:** `ChatProvider`. `CHAT_FORA_DE_SINCRONIA` reemite `entrar_chat` em silêncio (sem mudar o status); os outros erros viram `semMutualFollow` ou `erroConexao`.
+- **Introduzido em:** fase anterior à epic #183 (code CHAT_FORA_DE_SINCRONIA em 9.6.4.2)
 
 ## Client → Server
 
 Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`. Desde a 9.6.4.1 (#215) o app emite todos pelo `RealtimeManager.emit` (descartado em silêncio se desconectado). O `ChatProvider` reemite `entrar_chat` toda vez que o manager volta a `conectado`.
+
+Desde a 9.6.4.2, `enviar_mensagem`, `marcar_visto`, `digitando` e `parou_digitando` aceitam um `chatId` opcional no payload. Se vier e não bater com `socket.chatId`, o backend descarta o emit e responde `erro` com `CHAT_FORA_DE_SINCRONIA`; sem `chatId`, segue o comportamento antigo (compatibilidade com builds anteriores). O app só emite esses eventos depois do `historico`, sempre com o `chatId` dele.
