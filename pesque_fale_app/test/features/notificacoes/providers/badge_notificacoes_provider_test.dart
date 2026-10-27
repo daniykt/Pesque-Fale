@@ -1,29 +1,43 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository.dart';
 import 'package:pesque_fale_app/features/notificacoes/domain/notificacao.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
+
+import '../../chat/support/fake_realtime_manager.dart';
+
+Notificacao _notif(String id, {required bool lida}) => Notificacao(
+  id: id,
+  para: 'me',
+  tipo: TipoNotificacao.curtida,
+  lida: lida,
+  criadoEm: DateTime(2026, 10, 1),
+);
+
+Map<String, dynamic> _payload(String id) => {
+  'id': id,
+  'para': 'me',
+  'deId': 'user-a',
+  'de': 'Fulano',
+  'deUsername': 'fulano',
+  'tipo': 'curtida',
+  'postId': 'pub-1',
+  'lida': false,
+  'criadoEm': '2026-10-27T12:00:00.000Z',
+};
 
 class _FakeNotificacoesRepository implements NotificacoesRepository {
-  int naoLidas = 0;
-  bool falhar = false;
-  int chamadasContar = 0;
-  Completer<int>? pendente;
-
-  @override
-  Future<int> contarNaoLidas() async {
-    chamadasContar++;
-    if (pendente != null) return pendente!.future;
-    if (falhar) throw Exception('falha');
-    return naoLidas;
-  }
+  List<Notificacao> servidor = const [];
 
   @override
   Future<({List<Notificacao> lista, int naoLidas})> listar({
     int pagina = 1,
     int porPagina = 20,
-  }) async => (lista: const <Notificacao>[], naoLidas: naoLidas);
+  }) async => (lista: servidor, naoLidas: 0);
+
+  @override
+  Future<int> contarNaoLidas() async => 0;
 
   @override
   Future<void> marcarTodasComoLidas() async {}
@@ -37,58 +51,108 @@ class _FakeNotificacoesRepository implements NotificacoesRepository {
 
 void main() {
   late _FakeNotificacoesRepository repo;
+  late FakeRealtimeManager realtime;
+  late NotificacoesProvider notificacoesProvider;
   late BadgeNotificacoesProvider provider;
   late int notificacoes;
 
   setUp(() {
     repo = _FakeNotificacoesRepository();
-    provider = BadgeNotificacoesProvider(repository: repo);
+    realtime = FakeRealtimeManager();
+    notificacoesProvider = NotificacoesProvider(
+      repository: repo,
+      perfilRepository: PerfilRepositoryMock(),
+      realtime: realtime,
+    );
+    provider = BadgeNotificacoesProvider(notificacoes: notificacoesProvider);
     notificacoes = 0;
     provider.addListener(() => notificacoes++);
   });
 
-  test('atualizar busca a contagem de não lidas e notifica', () async {
-    repo.naoLidas = 3;
+  test('conta as não lidas quando a lista do provider carrega', () async {
+    repo.servidor = [
+      _notif('a', lida: false),
+      _notif('b', lida: true),
+      _notif('c', lida: false),
+    ];
 
-    await provider.atualizar();
-
-    expect(provider.naoLidas, 3);
-    expect(notificacoes, 1);
-  });
-
-  test('atualizar não notifica quando a contagem não muda', () async {
-    repo.naoLidas = 2;
-    await provider.atualizar();
-
-    await provider.atualizar();
+    await notificacoesProvider.carregar();
 
     expect(provider.naoLidas, 2);
     expect(notificacoes, 1);
   });
 
-  test('atualizar reflete notificações novas que chegam depois', () async {
-    repo.naoLidas = 1;
-    await provider.atualizar();
+  test('já nasce com a contagem do provider', () async {
+    repo.servidor = [_notif('a', lida: false)];
+    await notificacoesProvider.carregar();
 
-    repo.naoLidas = 4;
-    await provider.atualizar();
+    final outro = BadgeNotificacoesProvider(notificacoes: notificacoesProvider);
 
-    expect(provider.naoLidas, 4);
+    expect(outro.naoLidas, 1);
   });
 
-  test('atualizar mantém o contador atual quando o repositório falha', () async {
-    repo.naoLidas = 5;
-    await provider.atualizar();
+  test('sobe quando chega nova_notificacao em tempo real', () async {
+    await notificacoesProvider.carregar();
+    expect(provider.naoLidas, 0);
 
-    repo.falhar = true;
-    await provider.atualizar();
+    realtime.emitir('nova_notificacao', _payload('n1'));
+    expect(provider.naoLidas, 1);
 
-    expect(provider.naoLidas, 5);
+    realtime.emitir('nova_notificacao', _payload('n2'));
+    expect(provider.naoLidas, 2);
   });
 
-  test('zerar zera o contador e notifica', () async {
-    repo.naoLidas = 2;
-    await provider.atualizar();
+  test('zera quando a aba Alertas abre e marca como lidas', () async {
+    repo.servidor = [_notif('a', lida: false), _notif('b', lida: false)];
+    await notificacoesProvider.carregar();
+    expect(provider.naoLidas, 2);
+
+    await notificacoesProvider.carregar(marcarComoLidas: true);
+
+    expect(provider.naoLidas, 0);
+  });
+
+  test(
+    'não volta a subir com as já vistas quando o provider notifica de novo',
+    () async {
+      repo.servidor = [_notif('a', lida: false)];
+      await notificacoesProvider.carregar(marcarComoLidas: true);
+      expect(provider.naoLidas, 0);
+
+      // Filtro e swipe notificam o provider; a contagem tem que ficar em 0.
+      notificacoesProvider.setFiltro(TipoNotificacao.curtida);
+      notificacoesProvider.setFiltro(null);
+
+      expect(provider.naoLidas, 0);
+    },
+  );
+
+  test('não notifica quando a contagem não muda', () async {
+    repo.servidor = [_notif('a', lida: false)];
+    await notificacoesProvider.carregar();
+    expect(notificacoes, 1);
+
+    // Lista muda, contagem não.
+    notificacoesProvider.setFiltro(TipoNotificacao.seguindo);
+    realtime.emitir('nova_notificacao', _payload('a'));
+
+    expect(provider.naoLidas, 1);
+    expect(notificacoes, 1);
+  });
+
+  test('desce quando uma não lida é apagada', () async {
+    repo.servidor = [_notif('a', lida: false), _notif('b', lida: false)];
+    await notificacoesProvider.carregar();
+
+    notificacoesProvider.removerLocal('a');
+
+    expect(provider.naoLidas, 1);
+  });
+
+  test('zerar coloca em 0 e notifica se estava diferente', () async {
+    repo.servidor = [_notif('a', lida: false)];
+    await notificacoesProvider.carregar();
+    expect(provider.naoLidas, 1);
 
     provider.zerar();
 
@@ -96,88 +160,27 @@ void main() {
     expect(notificacoes, 2);
   });
 
-  test('zerar descarta a resposta de um atualizar que já estava em andamento', () async {
-    repo.pendente = Completer<int>();
-    final emAndamento = provider.atualizar();
-
+  test('zerar não notifica se já era 0', () {
     provider.zerar();
-    repo.pendente!.complete(7);
-    await emAndamento;
 
-    expect(provider.naoLidas, 0);
+    expect(notificacoes, 0);
   });
 
-  test('ignora chamadas de atualizar enquanto outra está em andamento', () async {
-    repo.pendente = Completer<int>();
-    final primeira = provider.atualizar();
-    final segunda = provider.atualizar();
-
-    repo.pendente!.complete(1);
-    await Future.wait([primeira, segunda]);
-
-    expect(repo.chamadasContar, 1);
-    expect(provider.naoLidas, 1);
-  });
-
-  test('resetar zera o contador e notifica', () async {
-    repo.naoLidas = 4;
-    await provider.atualizar();
+  test('resetar zera sem depender do provider', () async {
+    repo.servidor = [_notif('a', lida: false)];
+    await notificacoesProvider.carregar();
 
     provider.resetar();
 
     expect(provider.naoLidas, 0);
-    expect(notificacoes, 2);
+    expect(notificacoesProvider.notificacoes, hasLength(1));
   });
 
-  test('resetar descarta a resposta de uma busca da conta anterior', () async {
-    repo.pendente = Completer<int>();
-    final buscaAnterior = provider.atualizar();
+  test('dispose para de escutar o provider', () async {
+    provider.dispose();
+    repo.servidor = [_notif('a', lida: false)];
 
-    provider.resetar();
-    repo.pendente!.complete(9);
-    await buscaAnterior;
-
-    expect(provider.naoLidas, 0);
-  });
-
-  test('resetar libera a trava para a primeira busca da conta nova', () async {
-    final anterior = Completer<int>();
-    repo.pendente = anterior;
-    final buscaAnterior = provider.atualizar();
-
-    provider.resetar();
-    repo.pendente = null;
-    repo.naoLidas = 2;
-    await provider.atualizar();
-
-    expect(repo.chamadasContar, 2);
-    expect(provider.naoLidas, 2);
-
-    anterior.complete(9);
-    await buscaAnterior;
-
-    expect(provider.naoLidas, 2);
-  });
-
-  test('busca antiga que termina depois do resetar não libera a trava da conta nova', () async {
-    final anterior = Completer<int>();
-    repo.pendente = anterior;
-    final buscaAnterior = provider.atualizar();
-
-    provider.resetar();
-    final novaPendente = Completer<int>();
-    repo.pendente = novaPendente;
-    final buscaNova = provider.atualizar();
-
-    anterior.complete(9);
-    await buscaAnterior;
-    await provider.atualizar();
-
-    expect(repo.chamadasContar, 2);
-
-    novaPendente.complete(1);
-    await buscaNova;
-
-    expect(provider.naoLidas, 1);
+    // Se ainda escutasse, notificaria um ChangeNotifier descartado e lançaria.
+    await notificacoesProvider.carregar();
   });
 }

@@ -1,36 +1,32 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/notificacoes_repository.dart';
+import 'notificacoes_provider.dart';
 
+/// Mantém a contagem de notificações não vistas para o badge do ícone de
+/// Alertas no bottom nav. Não busca nada sozinho: deriva do
+/// [NotificacoesProvider] global, que se mantém em dia via realtime, e
+/// notifica só quando a contagem muda.
 class BadgeNotificacoesProvider extends ChangeNotifier {
-  BadgeNotificacoesProvider({required this.repository});
+  BadgeNotificacoesProvider({required this.notificacoes}) {
+    // Escuta o provider só pra LER a contagem. Nenhum listener aqui pode
+    // alterar o NotificacoesProvider: isso reentraria no notifyListeners dele.
+    notificacoes.addListener(_recalcular);
+    _recalcular();
+  }
 
-  final NotificacoesRepository repository;
-
+  final NotificacoesProvider notificacoes;
   int _naoLidas = 0;
-  int _geracao = 0;
-  int? _geracaoEmBusca;
 
   int get naoLidas => _naoLidas;
 
-  Future<void> atualizar() async {
-    final geracao = _geracao;
-    if (_geracaoEmBusca == geracao) return;
-    _geracaoEmBusca = geracao;
-    try {
-      final n = await repository.contarNaoLidas();
-      if (geracao != _geracao || n == _naoLidas) return;
-      _naoLidas = n;
-      notifyListeners();
-    } catch (_) {
-      return;
-    } finally {
-      if (_geracaoEmBusca == geracao) _geracaoEmBusca = null;
-    }
+  void _recalcular() {
+    final n = notificacoes.naoVistas;
+    if (n == _naoLidas) return;
+    _naoLidas = n;
+    notifyListeners();
   }
 
   void zerar() {
-    _geracao++;
     if (_naoLidas != 0) {
       _naoLidas = 0;
       notifyListeners();
@@ -38,9 +34,13 @@ class BadgeNotificacoesProvider extends ChangeNotifier {
   }
 
   void resetar() {
-    _geracao++;
-    _geracaoEmBusca = null;
     _naoLidas = 0;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    notificacoes.removeListener(_recalcular);
+    super.dispose();
   }
 }

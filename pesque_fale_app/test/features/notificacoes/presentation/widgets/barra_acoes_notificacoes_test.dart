@@ -11,6 +11,8 @@ import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificaco
 import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
 
+import '../../../chat/support/fake_realtime_manager.dart';
+
 class _FakeNotificacoesRepository implements NotificacoesRepository {
   List<Notificacao> servidor = [
     Notificacao(
@@ -23,7 +25,6 @@ class _FakeNotificacoesRepository implements NotificacoesRepository {
     ),
   ];
   int chamadasApagarTodas = 0;
-  int chamadasContar = 0;
   bool falharApagarTodas = false;
 
   @override
@@ -33,10 +34,7 @@ class _FakeNotificacoesRepository implements NotificacoesRepository {
   }) async => (lista: servidor, naoLidas: 0);
 
   @override
-  Future<int> contarNaoLidas() async {
-    chamadasContar++;
-    return 0;
-  }
+  Future<int> contarNaoLidas() async => 0;
 
   @override
   Future<void> marcarTodasComoLidas() async {}
@@ -56,6 +54,7 @@ void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   late _FakeNotificacoesRepository repo;
+  late BadgeNotificacoesProvider badge;
 
   setUp(() => repo = _FakeNotificacoesRepository());
 
@@ -65,16 +64,16 @@ void main() {
     final provider = NotificacoesProvider(
       repository: repo,
       perfilRepository: PerfilRepositoryMock(),
+      realtime: FakeRealtimeManager(),
     );
     await provider.carregar();
+    badge = BadgeNotificacoesProvider(notificacoes: provider);
 
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider<NotificacoesProvider>.value(value: provider),
-          ChangeNotifierProvider<BadgeNotificacoesProvider>(
-            create: (_) => BadgeNotificacoesProvider(repository: repo),
-          ),
+          ChangeNotifierProvider<BadgeNotificacoesProvider>.value(value: badge),
         ],
         child: MaterialApp(
           theme: tema ?? AppTheme.light,
@@ -125,17 +124,27 @@ void main() {
     expect(finderBotao, findsOneWidget);
   });
 
-  testWidgets('confirmar apaga tudo, atualiza o badge e esconde a barra', (
+  testWidgets('confirmar apaga tudo, zera o badge e esconde a barra', (
     tester,
   ) async {
+    repo.servidor = [
+      Notificacao(
+        id: 'n1',
+        para: 'me',
+        tipo: TipoNotificacao.curtida,
+        lida: false,
+        criadoEm: DateTime(2026, 9, 1),
+      ),
+    ];
     await montar(tester);
+    expect(badge.naoLidas, 1);
     await abrirConfirmacao(tester);
 
     await tester.tap(botaoLimparDoDialogo());
     await tester.pumpAndSettle();
 
     expect(repo.chamadasApagarTodas, 1);
-    expect(repo.chamadasContar, greaterThan(0));
+    expect(badge.naoLidas, 0);
     expect(finderBotao, findsNothing);
   });
 

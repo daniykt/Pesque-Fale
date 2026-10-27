@@ -11,6 +11,8 @@ import 'package:pesque_fale_app/features/chat/providers/badge_mensagens_provider
 import 'package:pesque_fale_app/features/chat/providers/inbox_provider.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/notificacoes/providers/notificacoes_provider.dart';
+import 'package:pesque_fale_app/features/perfil/data/perfil_repository_mock.dart';
 
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
@@ -26,8 +28,13 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider<BadgeNotificacoesProvider>(
-            create: (_) =>
-                BadgeNotificacoesProvider(repository: NotificacoesRepositoryMock()),
+            create: (_) => BadgeNotificacoesProvider(
+              notificacoes: NotificacoesProvider(
+                repository: NotificacoesRepositoryMock(),
+                perfilRepository: PerfilRepositoryMock(),
+                realtime: RealtimeManager(),
+              ),
+            ),
           ),
           ChangeNotifierProvider<BadgeMensagensProvider>(
             create: (_) => BadgeMensagensProvider(
