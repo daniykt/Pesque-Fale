@@ -24,6 +24,25 @@ class Conversa {
   bool get temMensagem =>
       ultimaMensagem != null && ultimaMensagem!.trim().isNotEmpty;
 
+  /// Só expõe os campos que o realtime altera; o resto da conversa é fixo.
+  Conversa copyWith({
+    String? ultimaMensagem,
+    DateTime? ultimaMensagemEm,
+    int? naoLidas,
+  }) {
+    return Conversa(
+      id: id,
+      outroId: outroId,
+      outroNome: outroNome,
+      outroUsername: outroUsername,
+      outroFoto: outroFoto,
+      ultimaMensagem: ultimaMensagem ?? this.ultimaMensagem,
+      ultimaMensagemEm: ultimaMensagemEm ?? this.ultimaMensagemEm,
+      naoLidas: naoLidas ?? this.naoLidas,
+      criadoEm: criadoEm,
+    );
+  }
+
   factory Conversa.fromJson(Map<String, dynamic> json) {
     return Conversa(
       id: json['id'] as String,

@@ -11,6 +11,8 @@ import 'package:pesque_fale_app/features/chat/presentation/widgets/badge_nao_lid
 import 'package:pesque_fale_app/features/chat/presentation/widgets/item_conversa.dart';
 import 'package:pesque_fale_app/features/chat/providers/inbox_provider.dart';
 
+import '../support/fake_realtime_manager.dart';
+
 class _FakeConversasRepository implements ConversasRepository {
   _FakeConversasRepository(this.conversas);
 
@@ -48,12 +50,20 @@ class _ChatFalsa extends StatelessWidget {
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
 
+  late FakeRealtimeManager realtime;
+
+  setUp(() => realtime = FakeRealtimeManager());
+
   Future<void> montar(WidgetTester tester, ConversasRepository repository) {
     return tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
         home: ChangeNotifierProvider(
-          create: (_) => InboxProvider(repository: repository),
+          // O load inicial é do provider global (via reagirAuth); aqui o
+          // teste faz o papel dele.
+          create: (_) =>
+              InboxProvider(repository: repository, realtime: realtime)
+                ..carregar(),
           child: const InboxPage(),
         ),
         onGenerateRoute: (settings) => settings.name == '/chat/conversa'
@@ -90,6 +100,35 @@ void main() {
       expect(find.text('eeee'), findsOneWidget);
       expect(find.text('fala comigo'), findsNothing);
       expect(find.byType(BadgeNaoLidas), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'conversa nova aparece na lista vazia sem sair da aba (bug da #183)',
+    (tester) async {
+      await montar(tester, _FakeConversasRepository([]));
+      await tester.pumpAndSettle();
+      expect(find.byType(ItemConversa), findsNothing);
+
+      realtime.emitir('nova_conversa', {
+        'conversaId': 'chat-1',
+        'remetente': {
+          'id': 'user-henrique',
+          'nome': 'Henrique',
+          'username': 'rique',
+          'fotoUrl': null,
+        },
+        'ultimaMensagem': {
+          'id': 'msg-1',
+          'texto': 'bora pescar?',
+          'criadoEm': '2026-10-27T12:00:00.000Z',
+        },
+      });
+      await tester.pump();
+
+      expect(find.byType(ItemConversa), findsOneWidget);
+      expect(find.text('bora pescar?'), findsOneWidget);
+      expect(find.byType(BadgeNaoLidas), findsOneWidget);
     },
   );
 }

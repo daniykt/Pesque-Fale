@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pesque_fale_app/core/realtime/realtime_manager.dart';
 import 'package:pesque_fale_app/core/router/shell_bottom_nav.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/chat/data/conversas_repository_mock.dart';
 import 'package:pesque_fale_app/features/chat/providers/badge_mensagens_provider.dart';
+import 'package:pesque_fale_app/features/chat/providers/inbox_provider.dart';
 import 'package:pesque_fale_app/features/notificacoes/data/notificacoes_repository_mock.dart';
 import 'package:pesque_fale_app/features/notificacoes/providers/badge_notificacoes_provider.dart';
 
@@ -28,8 +30,12 @@ void main() {
                 BadgeNotificacoesProvider(repository: NotificacoesRepositoryMock()),
           ),
           ChangeNotifierProvider<BadgeMensagensProvider>(
-            create: (_) =>
-                BadgeMensagensProvider(repository: ConversasRepositoryMock()),
+            create: (_) => BadgeMensagensProvider(
+              inbox: InboxProvider(
+                repository: ConversasRepositoryMock(),
+                realtime: RealtimeManager(),
+              ),
+            ),
           ),
         ],
         child: MaterialApp(

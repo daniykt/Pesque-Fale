@@ -235,9 +235,26 @@ void main() {
               BadgeNotificacoesProvider(repository: ctx.read<NotificacoesRepository>())
                 ..atualizar(),
         ),
-        ChangeNotifierProvider<BadgeMensagensProvider>(
+        ChangeNotifierProxyProvider2<
+          AuthProvider,
+          RealtimeManager,
+          InboxProvider
+        >(
+          // Precisa estar vivo pra receber eventos mesmo sem a aba Chat
+          // aberta — é dele que o badge de mensagens deriva.
+          lazy: false,
+          create: (ctx) => InboxProvider(
+            repository: ctx.read<ConversasRepository>(),
+            realtime: ctx.read<RealtimeManager>(),
+          ),
+          update: (ctx, auth, realtime, previous) =>
+              previous!..reagirAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<InboxProvider, BadgeMensagensProvider>(
           create: (ctx) =>
-              BadgeMensagensProvider(repository: ctx.read<ConversasRepository>()),
+              BadgeMensagensProvider(inbox: ctx.read<InboxProvider>()),
+          update: (ctx, inbox, previous) =>
+              previous ?? BadgeMensagensProvider(inbox: inbox),
         ),
         Provider<UploadPublicacaoImagemRepository>.value(
           value: uploadPublicacaoImagemRepository,
@@ -304,11 +321,7 @@ class PesqueFaleApp extends StatelessWidget {
               ),
               child: const NovaPublicacaoPage(),
             ),
-        '/chat': (context) => ChangeNotifierProvider<InboxProvider>(
-          create: (ctx) =>
-              InboxProvider(repository: ctx.read<ConversasRepository>()),
-          child: const InboxPage(),
-        ),
+        '/chat': (_) => const InboxPage(),
         '/sobre': (_) => const SobrePage(),
         '/assistente': (context) => ChangeNotifierProvider<AssistenteProvider>(
           create: (ctx) =>

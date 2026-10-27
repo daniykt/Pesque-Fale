@@ -10,31 +10,10 @@ import 'widgets/erro_state_inbox.dart';
 import 'widgets/inbox_skeleton.dart';
 import 'widgets/item_conversa.dart';
 
-class InboxPage extends StatefulWidget {
+/// Só renderiza o [InboxProvider] global — o load inicial e as atualizações
+/// realtime ficam com o provider.
+class InboxPage extends StatelessWidget {
   const InboxPage({super.key});
-
-  @override
-  State<InboxPage> createState() => _InboxPageState();
-}
-
-class _InboxPageState extends State<InboxPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<InboxProvider>().carregar();
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final provider = context.read<InboxProvider>();
-    if (provider.status == StatusInbox.carregado) {
-      provider.refresh();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +95,8 @@ class _InboxPageState extends State<InboxPage> {
                 await Navigator.of(
                   context,
                 ).pushNamed('/chat/conversa', arguments: lista[i]);
-                if (!mounted) return;
+                // Ao abrir, o backend marcou as mensagens como vistas; o
+                // provider é global, então atualiza mesmo se a página saiu.
                 provider.refresh();
               },
             ),
