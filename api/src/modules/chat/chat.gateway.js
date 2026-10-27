@@ -129,6 +129,7 @@ module.exports = function initChatGateway(io) {
     socket.on('enviar_mensagem', async ({ texto }) => {
       if (!socket.chatId || !texto?.trim()) return;
 
+      let mensagem;
       try {
         const usuario = await pool.query(
           'SELECT nome FROM usuarios WHERE id = $1',
@@ -136,16 +137,26 @@ module.exports = function initChatGateway(io) {
         );
         const nome = usuario.rows[0]?.nome ?? 'Usuário';
 
-        const mensagem = await salvarMensagem(socket.chatId, usuarioId, nome, texto.trim());
+        mensagem = await salvarMensagem(socket.chatId, usuarioId, nome, texto.trim());
+      } catch (err) {
+        console.error(err);
+        socket.emit('erro', { message: 'Erro ao enviar mensagem.' });
+        return;
+      }
 
+      // A partir daqui a mensagem já está no banco. Qualquer falha é problema
+      // operacional (log) — NÃO emite 'erro' pro cliente, que veria como não
+      // enviada uma mensagem persistida.
+
+      // Descobre o destinatário a partir do chatId (formato "<uidA>_<uidB>" ordenado).
+      const [a, b] = socket.chatId.split('_');
+      const destinatarioId = a === usuarioId ? b : a;
+
+      try {
         // Calcula se é a primeira mensagem do chat (count ANTES deste insert = 0,
-        // agora = 1 — já que o insert aconteceu uma linha acima).
+        // agora = 1 — já que o insert aconteceu acima).
         const totalMensagens = await contarMensagens(socket.chatId);
         const primeiraMensagem = totalMensagens === 1;
-
-        // Descobre o destinatário a partir do chatId (formato "<uidA>_<uidB>" ordenado).
-        const [a, b] = socket.chatId.split('_');
-        const destinatarioId = a === usuarioId ? b : a;
 
         if (primeiraMensagem) {
           const remetente = await buscarDadosRemetente(usuarioId);
@@ -167,7 +178,12 @@ module.exports = function initChatGateway(io) {
             emitToUser(usuarioId, 'nova_conversa', payloadNovaConversa);
           }
         }
+      } catch (err) {
+        console.error('[chat] erro pós-insert, mensagem já salva:', err);
+      }
 
+      // Try próprio: falha ao detectar a 1ª mensagem não pode impedir o preview.
+      try {
         // Sempre emite pros dois lados pra manter a lista de conversas sincronizada.
         const payloadPreview = {
           conversaId: socket.chatId,
@@ -177,12 +193,13 @@ module.exports = function initChatGateway(io) {
         };
         emitToUser(destinatarioId, 'nova_mensagem_em_conversa', payloadPreview);
         emitToUser(usuarioId, 'nova_mensagem_em_conversa', payloadPreview);
-
-        io.to(socket.chatId).emit('nova_mensagem', _formatMensagem(mensagem));
       } catch (err) {
-        console.error(err);
-        socket.emit('erro', { message: 'Erro ao enviar mensagem.' });
+        console.error('[chat] erro pós-insert, mensagem já salva:', err);
       }
+
+      // Sempre dispara, mesmo se os emits globais acima falharam: é o retorno
+      // de sucesso pra tela de chat aberta.
+      io.to(socket.chatId).emit('nova_mensagem', _formatMensagem(mensagem));
     });
 
     // Marcar como visto

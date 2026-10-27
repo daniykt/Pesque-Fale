@@ -45,9 +45,13 @@ function fakeSocket(usuarioId) {
 
 // Fake de `mensagens`: responde as queries do handler pelo SQL, contando as
 // linhas inseridas pra que o COUNT(*) reflita o histórico do chat.
-function comBanco({ mensagensExistentes = 0 } = {}) {
+// `falharEm` (regex) faz a query correspondente lançar, simulando queda do banco.
+function comBanco({ mensagensExistentes = 0, falharEm = null } = {}) {
   let total = mensagensExistentes;
   pool.query.mockImplementation(async (sql, params) => {
+    if (falharEm && falharEm.test(sql)) {
+      throw new Error('falha simulada no banco');
+    }
     if (/SELECT nome FROM usuarios/.test(sql)) {
       return { rows: [{ nome: 'Ana' }] };
     }
@@ -170,6 +174,62 @@ describe('chat.gateway — enviar_mensagem emite eventos realtime', () => {
         payload: expect.objectContaining({ id: 'msg-1', texto: 'oi', userId: A }),
       }),
     ]);
+  });
+
+  describe('falhas', () => {
+    let consoleError;
+
+    beforeEach(() => {
+      consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => consoleError.mockRestore());
+
+    function inseriu() {
+      return pool.query.mock.calls.some(([sql]) => /INSERT INTO mensagens/.test(sql));
+    }
+
+    it('quando contarMensagens falha após o insert, a mensagem continua salva e nova_mensagem é emitido', async () => {
+      comBanco({ mensagensExistentes: 0, falharEm: /SELECT COUNT\(\*\) FROM mensagens/ });
+
+      const { io, socket } = await enviarComo(A, 'oi');
+
+      expect(inseriu()).toBe(true);
+      expect(io.emitidosEmRoom).toEqual([
+        expect.objectContaining({ room: CHAT_ID, evento: 'nova_mensagem' }),
+      ]);
+      expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+      expect(eventosEmitidos('nova_conversa')).toHaveLength(0);
+      expect(consoleError).toHaveBeenCalledWith(
+        '[chat] erro pós-insert, mensagem já salva:',
+        expect.any(Error)
+      );
+    });
+
+    it('quando buscarDadosRemetente falha na primeira mensagem, nova_mensagem_em_conversa ainda é emitido', async () => {
+      comBanco({
+        mensagensExistentes: 0,
+        falharEm: /SELECT id, nome, username, foto_perfil FROM usuarios/,
+      });
+
+      const { io, socket } = await enviarComo(A, 'oi');
+
+      expect(eventosEmitidos('nova_conversa')).toHaveLength(0);
+      expect(eventosEmitidos('nova_mensagem_em_conversa').map(([userId]) => userId).sort())
+        .toEqual([A, B]);
+      expect(io.emitidosEmRoom).toHaveLength(1);
+      expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+    });
+
+    it('quando o insert falha, emite erro pro remetente e nada mais', async () => {
+      comBanco({ falharEm: /INSERT INTO mensagens/ });
+
+      const { io, socket } = await enviarComo(A, 'oi');
+
+      expect(socket.emit).toHaveBeenCalledWith('erro', { message: 'Erro ao enviar mensagem.' });
+      expect(emitToUser).not.toHaveBeenCalled();
+      expect(io.emitidosEmRoom).toHaveLength(0);
+    });
   });
 
   it('sem chat aberto ou texto vazio não emite nada', async () => {
