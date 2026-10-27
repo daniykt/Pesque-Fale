@@ -63,6 +63,26 @@ async function marcarComoVistas(chatId, userId) {
   );
 }
 
+// Avisa os rooms pessoais dos dois participantes que `leitorId` leu a
+// conversa. Roda depois do UPDATE de marcarComoVistas: falha aqui é só log.
+function emitirConversaLida(chatId, leitorId) {
+  try {
+    const [a, b] = chatId.split('_');
+    const outroId = a === leitorId ? b : a;
+    const payload = {
+      conversaId: chatId,
+      lidaPor: leitorId,
+      quandoEm: new Date().toISOString(),
+    };
+    // O leitor zera o próprio badge (em todos os dispositivos); o outro
+    // participante recebe e ignora no app.
+    emitToUser(leitorId, 'conversa_lida', payload);
+    emitToUser(outroId, 'conversa_lida', payload);
+  } catch (err) {
+    console.error('[chat] erro pós-update ao emitir conversa_lida:', err);
+  }
+}
+
 module.exports = function initChatGateway(io) {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -119,6 +139,8 @@ module.exports = function initChatGateway(io) {
         });
 
         io.to(chatId).emit('mensagens_vistas', { chatId, porId: usuarioId });
+        // Abrir a conversa já marcou tudo como visto acima: avisa o inbox.
+        emitirConversaLida(chatId, usuarioId);
       } catch (err) {
         console.error(err);
         socket.emit('erro', { message: 'Erro ao entrar no chat.' });
@@ -207,10 +229,15 @@ module.exports = function initChatGateway(io) {
       if (!socket.chatId) return;
       try {
         await marcarComoVistas(socket.chatId, usuarioId);
-        io.to(socket.chatId).emit('mensagens_vistas', { chatId: socket.chatId, porId: usuarioId });
       } catch (err) {
         console.error(err);
+        return; // DB falhou — nada a emitir
       }
+
+      // UPDATE commitou. Qualquer falha de emit daqui pra frente é só log,
+      // seguindo o padrão do erro pós-insert de enviar_mensagem.
+      io.to(socket.chatId).emit('mensagens_vistas', { chatId: socket.chatId, porId: usuarioId });
+      emitirConversaLida(socket.chatId, usuarioId);
     });
 
     // Indicador de digitação

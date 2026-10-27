@@ -14,6 +14,7 @@ class _FakeSocket extends Fake implements io.Socket {
 
   final String token;
   final Map<String, List<dynamic Function(dynamic)>> handlers = {};
+  final List<List<dynamic>> emitidos = [];
   int conectarChamado = 0;
   bool disposeChamado = false;
 
@@ -26,6 +27,11 @@ class _FakeSocket extends Fake implements io.Socket {
   @override
   void off(String event, [dynamic Function(dynamic)? handler]) {
     handler == null ? handlers.remove(event) : handlers[event]?.remove(handler);
+  }
+
+  @override
+  void emit(String event, [dynamic data]) {
+    emitidos.add([event, ?data]);
   }
 
   @override
@@ -286,6 +292,57 @@ void main() {
 
       expect(chamadas, 0);
       expect(manager.conectado, isTrue);
+    });
+  });
+
+  group('RealtimeManager.emit', () {
+    test('sem sessão é no-op e não lança', () {
+      expect(() => manager.emit('marcar_visto'), returnsNormally);
+      expect(sockets, isEmpty);
+    });
+
+    test('socket criado mas ainda não conectado descarta (sem fila)', () async {
+      await logar();
+
+      manager.emit('entrar_chat', {'outroId': 'x'});
+      ultimo().simular('connect');
+
+      expect(ultimo().emitidos, isEmpty);
+    });
+
+    test('conectado repassa evento e payload pro socket', () async {
+      await logar();
+      ultimo().simular('connect');
+
+      manager.emit('entrar_chat', {'outroId': 'x'});
+
+      expect(ultimo().emitidos, [
+        [
+          'entrar_chat',
+          {'outroId': 'x'},
+        ],
+      ]);
+    });
+
+    test('sem payload emite só o evento', () async {
+      await logar();
+      ultimo().simular('connect');
+
+      manager.emit('marcar_visto');
+
+      expect(ultimo().emitidos, [
+        ['marcar_visto'],
+      ]);
+    });
+
+    test('depois de cair, volta a descartar', () async {
+      await logar();
+      ultimo().simular('connect');
+      ultimo().simular('disconnect');
+
+      manager.emit('marcar_visto');
+
+      expect(ultimo().emitidos, isEmpty);
     });
   });
 

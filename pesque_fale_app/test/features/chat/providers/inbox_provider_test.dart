@@ -464,6 +464,70 @@ void main() {
       },
     );
 
+    Map<String, dynamic> conversaLida(String conversaId, String lidaPor) => {
+      'conversaId': conversaId,
+      'lidaPor': lidaPor,
+      'quandoEm': '2026-10-27T14:00:00.000Z',
+    };
+
+    test('conversa_lida por mim zera naoLidas da conversa', () async {
+      final provider = await logadoCom([
+        _conversa(id: 'a', nome: 'Ana', username: 'ana', naoLidas: 3),
+        _conversa(id: 'b', nome: 'Bia', username: 'bia', naoLidas: 1),
+      ]);
+      final antes = provider.conversasInternas;
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('conversa_lida', conversaLida('a', 'eu'));
+
+      expect(provider.conversas.map((c) => (c.id, c.naoLidas)), [
+        ('a', 0),
+        ('b', 1),
+      ]);
+      expect(notificacoes, 1);
+      // Instância nova da lista (padrão imutável dos outros handlers).
+      expect(antes.first.naoLidas, 3);
+    });
+
+    test('conversa_lida pelo outro participante não altera nada', () async {
+      final provider = await logadoCom([
+        _conversa(id: 'a', nome: 'Ana', username: 'ana', naoLidas: 2),
+      ]);
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('conversa_lida', conversaLida('a', 'user-a'));
+
+      expect(provider.conversas.single.naoLidas, 2);
+      expect(notificacoes, 0);
+    });
+
+    test('conversa_lida de conversa desconhecida é no-op', () async {
+      final provider = await logadoCom([
+        _conversa(id: 'a', nome: 'Ana', username: 'ana', naoLidas: 2),
+      ]);
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('conversa_lida', conversaLida('x', 'eu'));
+
+      expect(provider.conversas.single.naoLidas, 2);
+      expect(notificacoes, 0);
+    });
+
+    test('conversa_lida em conversa já zerada não notifica', () async {
+      final provider = await logadoCom([
+        _conversa(id: 'a', nome: 'Ana', username: 'ana'),
+      ]);
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('conversa_lida', conversaLida('a', 'eu'));
+
+      expect(notificacoes, 0);
+    });
+
     test('onReconnect dispara refresh()', () async {
       final repo = _FakeConversasRepository();
       final provider = await logadoCom([], repo: repo);
@@ -480,12 +544,14 @@ void main() {
       final provider = criar(_FakeConversasRepository());
       expect(realtime.assinantes['nova_conversa'], hasLength(1));
       expect(realtime.assinantes['nova_mensagem_em_conversa'], hasLength(1));
+      expect(realtime.assinantes['conversa_lida'], hasLength(1));
       expect(realtime.callbacksReconexao, hasLength(1));
 
       provider.dispose();
 
       expect(realtime.assinantes['nova_conversa'], isEmpty);
       expect(realtime.assinantes['nova_mensagem_em_conversa'], isEmpty);
+      expect(realtime.assinantes['conversa_lida'], isEmpty);
       expect(realtime.callbacksReconexao, isEmpty);
     });
   });
@@ -542,6 +608,21 @@ void main() {
       expect(find.text('badge 0'), findsOneWidget);
 
       realtime.emitir('nova_conversa', _novaConversa());
+      await tester.pump();
+      expect(find.text('badge 1'), findsOneWidget);
+
+      realtime.emitir('conversa_lida', {
+        'conversaId': 'eu_henrique',
+        'lidaPor': 'eu',
+        'quandoEm': '2026-10-27T14:00:00.000Z',
+      });
+      await tester.pump();
+      expect(find.text('badge 0'), findsOneWidget);
+
+      realtime.emitir(
+        'nova_mensagem_em_conversa',
+        _preview(conversaId: 'eu_henrique', remetenteId: 'henrique'),
+      );
       await tester.pump();
       expect(find.text('badge 1'), findsOneWidget);
 

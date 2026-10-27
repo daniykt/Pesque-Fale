@@ -41,6 +41,20 @@
 - **Consumidor no app:** `InboxProvider`. Atualiza o preview, move a conversa pro topo e soma 1 em `naoLidas` quando o usuário não é o remetente. Ignora conversas que ainda não estão na lista e eventos com `timestamp` que não seja mais novo que o da última mensagem conhecida. Assim a primeira mensagem não conta duas vezes.
 - **Introduzido em:** sub-issue 9.6.3 (#207)
 
+### `conversa_lida`
+- **Room:** `user:<leitorId>` + `user:<outroParticipanteId>`
+- **Quando:** depois do `UPDATE mensagens SET status = 'visto'` (`marcarComoVistas`) nos handlers `marcar_visto` e `entrar_chat` do gateway, ou seja, quando o usuário abre a conversa ou recebe mensagem com ela aberta. Se o UPDATE falhar, não sai (nem `mensagens_vistas`); se o emit falhar depois do UPDATE, só loga.
+- **Payload:**
+  ```json
+  {
+    "conversaId": "uuidA_uuidB",
+    "lidaPor": "uuid",
+    "quandoEm": "ISO-8601"
+  }
+  ```
+- **Consumidor no app:** `InboxProvider`. Quando `lidaPor == meuId`, zera `naoLidas` da conversa afetada (reflete no `BadgeMensagensProvider` sem refresh HTTP, inclusive nos outros dispositivos do leitor). Quando `lidaPor != meuId`, no-op: o outro usuário leu, e o contador local não muda. O "visto" nas mensagens da tela aberta continua vindo de `mensagens_vistas`.
+- **Introduzido em:** sub-issue 9.6.4.1 (#215)
+
 ### `nova_notificacao`
 - **Room:** `user:<destinatarioId>`
 - **Quando:** uma notificação é inserida no banco pelo helper `criarNotificacao` (follow, curtida, comentário — qualquer caller atual ou futuro). Não sai quando `para === deId`. Se a montagem do payload falhar depois do INSERT, a notificação continua salva e o evento só não é emitido.
@@ -70,12 +84,12 @@
 - **Room:** `<chatId>`
 - **Quando:** mensagem enviada em um chat
 - **Payload:** objeto `Mensagem` completo
-- **Consumidor no app:** `ChatProvider` (tela de conversa aberta, via `ChatSocketService`)
+- **Consumidor no app:** `ChatProvider` (tela de conversa aberta, via `RealtimeManager` desde a 9.6.4.1 (#215)). Descarta eventos cujo `chatId` não é o da conversa aberta: o socket global continua nos rooms de conversas abertas antes.
 - **Introduzido em:** fase anterior à epic #183
 
 ### `historico`, `mensagens_vistas`, `outro_digitando`, `outro_parou_digitando`, `erro`
-Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`.
+Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`. Consumidos pelo `ChatProvider` via `RealtimeManager`: `mensagens_vistas` é filtrado pelo `chatId`; `outro_digitando`/`outro_parou_digitando` não trazem `chatId` e são filtrados pelo `userId` do outro participante.
 
 ## Client → Server
 
-Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`.
+Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`. Desde a 9.6.4.1 (#215) o app emite todos pelo `RealtimeManager.emit` (descartado em silêncio se desconectado). O `ChatProvider` reemite `entrar_chat` toda vez que o manager volta a `conectado`.

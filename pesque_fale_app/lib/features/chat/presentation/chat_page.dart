@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/realtime/realtime_manager.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../auth/data/token_storage.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../data/chat_socket_service.dart';
 import '../domain/conversa.dart';
 import '../providers/chat_provider.dart';
 import 'widgets/chat_app_bar.dart';
@@ -23,74 +22,41 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
-  ChatProvider? _provider;
-  bool _tokenAusente = false;
+  late final ChatProvider _provider;
   bool _erroMostrado = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _inicializar();
-  }
-
-  Future<void> _inicializar() async {
-    final token = await TokenStorage().readToken();
-    if (!mounted) return;
-
-    if (token == null) {
-      setState(() => _tokenAusente = true);
-      return;
-    }
-
-    final auth = context.read<AuthProvider>();
-    final provider = ChatProvider(
-      socketService: ChatSocketService(token: token),
-      usuarioLogadoId: auth.usuario!.id,
+    // O socket é o global do RealtimeManager, que já cuida do token e da
+    // reconexão; o provider entra no chat assim que houver conexão.
+    _provider = ChatProvider(
+      realtime: context.read<RealtimeManager>(),
+      usuarioLogadoId: context.read<AuthProvider>().usuario!.id,
       outroId: widget.conversa.outroId,
-    );
-    provider.iniciar();
-    setState(() => _provider = provider);
+    )..iniciar();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
-        _provider?.status == StatusChat.conectado) {
-      _provider!.marcarVistoManual();
+        _provider.status == StatusChat.conectado) {
+      _provider.marcarVistoManual();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _provider?.dispose();
+    _provider.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_tokenAusente) {
-      return const _ChatIndisponivel();
-    }
-
-    final provider = _provider;
-    if (provider == null) {
-      return Scaffold(
-        appBar: ChatAppBar(conversa: widget.conversa, outroDigitando: false),
-        body: Column(
-          children: [
-            const Expanded(child: SkeletonMensagens()),
-            IgnorePointer(
-              child: InputMensagem(onEnviar: (_) {}, onDigitando: (_) {}),
-            ),
-          ],
-        ),
-      );
-    }
-
     return ChangeNotifierProvider.value(
-      value: provider,
+      value: _provider,
       child: Consumer<ChatProvider>(
         builder: (context, provider, _) {
           if (provider.status == StatusChat.semMutualFollow &&
@@ -192,34 +158,6 @@ class _EstadoVazio extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ChatIndisponivel extends StatelessWidget {
-  const _ChatIndisponivel();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    return Scaffold(
-      appBar: AppBar(),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: colors.textSecondary),
-              const SizedBox(height: 16),
-              const Text(
-                'Não foi possível conectar. Faça login novamente.',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

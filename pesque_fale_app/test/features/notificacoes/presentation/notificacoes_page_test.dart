@@ -168,6 +168,53 @@ void main() {
     expect(itens.map((i) => i.notif.id), ['n-nova', 'n1', 'n2']);
   });
 
+  Map<String, dynamic> novaCurtida(String id) => {
+    'id': id,
+    'para': 'me',
+    'tipo': 'curtida',
+    'de': 'Fulano',
+    'deUsername': 'fulano',
+    'postId': 'pub-1',
+    'lida': false,
+    'criadoEm': '2026-10-27T12:00:00.000Z',
+  };
+
+  testWidgets('com a aba ativa, notificação nova já entra vista e o badge '
+      'não sobe', (tester) async {
+    await montar(tester, ativa: true);
+    expect(badge.naoLidas, 0);
+    final marcacoesAntes = repo.chamadasMarcarLidas;
+
+    realtime.emitir('nova_notificacao', novaCurtida('n-nova'));
+    await tester.pump();
+
+    expect(provider.naoVistas, 0);
+    expect(badge.naoLidas, 0);
+    // Só local: marcar como lida no servidor continua sendo do _abrir.
+    expect(repo.chamadasMarcarLidas, marcacoesAntes);
+  });
+
+  testWidgets('com a aba inativa, notificação nova sobe o badge', (
+    tester,
+  ) async {
+    await montar(tester, ativa: true);
+    await montar(tester, ativa: false);
+
+    realtime.emitir('nova_notificacao', novaCurtida('n-nova'));
+    await tester.pump();
+
+    expect(badge.naoLidas, 1);
+  });
+
+  testWidgets('desmontada, para de marcar como vistas', (tester) async {
+    await montar(tester, ativa: true);
+    await tester.pumpWidget(const SizedBox());
+
+    realtime.emitir('nova_notificacao', novaCurtida('n-nova'));
+
+    expect(badge.naoLidas, 1);
+  });
+
   testWidgets('recarrega a cada vez que volta a ficar ativa', (tester) async {
     await montar(tester, ativa: true);
     await montar(tester, ativa: false);

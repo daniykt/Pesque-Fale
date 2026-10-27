@@ -12,11 +12,13 @@ enum StatusInbox { carregando, carregado, erro }
 /// da tela — o badge do bottom nav deriva desta lista.
 ///
 /// Carrega sozinho quando o auth passa a ter sessão ([reagirAuth]) e se
-/// mantém em dia via `nova_conversa` / `nova_mensagem_em_conversa`.
+/// mantém em dia via `nova_conversa` / `nova_mensagem_em_conversa` /
+/// `conversa_lida`.
 class InboxProvider extends ChangeNotifier {
   InboxProvider({required this.repository, required this.realtime}) {
     realtime.subscribe('nova_conversa', _onNovaConversa);
     realtime.subscribe('nova_mensagem_em_conversa', _onNovaMensagemEmConversa);
+    realtime.subscribe('conversa_lida', _onConversaLida);
     realtime.onReconnect(_onReconnect);
   }
 
@@ -169,6 +171,20 @@ class InboxProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onConversaLida(dynamic payload) {
+    if (payload is! Map) return;
+    // O evento vai pros dois participantes; só a leitura feita por mim (em
+    // qualquer dispositivo) mexe no meu contador.
+    if (payload['lidaPor'] != _meuId) return;
+    final i = _todas.indexWhere((c) => c.id == payload['conversaId']);
+    if (i == -1) return;
+    final atual = _todas[i];
+    if (atual.naoLidas == 0) return;
+    // Lista nova em vez de mutar no lugar, como nos outros handlers.
+    _todas = List.of(_todas)..[i] = atual.copyWith(naoLidas: 0);
+    notifyListeners();
+  }
+
   void _onReconnect() {
     if (_meuId != null) refresh();
   }
@@ -183,6 +199,7 @@ class InboxProvider extends ChangeNotifier {
       'nova_mensagem_em_conversa',
       _onNovaMensagemEmConversa,
     );
+    realtime.unsubscribe('conversa_lida', _onConversaLida);
     realtime.removerOnReconnect(_onReconnect);
     super.dispose();
   }
