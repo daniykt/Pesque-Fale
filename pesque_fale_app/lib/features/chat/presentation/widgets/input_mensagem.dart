@@ -11,10 +11,17 @@ class InputMensagem extends StatefulWidget {
     super.key,
     required this.onEnviar,
     required this.onDigitando,
+    this.habilitado = true,
   });
 
   final ValueChanged<String> onEnviar;
   final ValueChanged<String> onDigitando;
+
+  /// Quando `false`, o botão de enviar fica desabilitado (visual + sem
+  /// `onTap`). O campo de texto continua aceitando digitação — o usuário
+  /// pode preparar a mensagem enquanto o chat ressincroniza; quando
+  /// `habilitado` volta pra true, o botão fica clicável de novo.
+  final bool habilitado;
 
   @override
   State<InputMensagem> createState() => _InputMensagemState();
@@ -24,6 +31,7 @@ class _InputMensagemState extends State<InputMensagem> {
   final _controller = TextEditingController();
 
   bool get _podeEnviar {
+    if (!widget.habilitado) return false;
     final texto = _controller.text.trim();
     return texto.isNotEmpty && texto.length <= _limiteCaracteres;
   }

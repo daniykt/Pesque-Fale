@@ -79,12 +79,18 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             ),
             body: Column(
               children: [
-                if (provider.status == StatusChat.erroConexao)
+                // Sincronização (CHAT_FORA_DE_SINCRONIA) usa o mesmo visual de
+                // queda de rede. `chatId != null` separa a ressincronização do
+                // load inicial, que já tem o skeleton.
+                if (provider.status == StatusChat.erroConexao ||
+                    (provider.status == StatusChat.conectando &&
+                        provider.chatId != null))
                   const _BannerReconectando(),
                 Expanded(child: _buildConteudo(provider)),
                 InputMensagem(
                   onEnviar: provider.enviarMensagem,
                   onDigitando: provider.notificarDigitando,
+                  habilitado: provider.status == StatusChat.conectado,
                 ),
               ],
             ),
@@ -95,7 +101,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   Widget _buildConteudo(ChatProvider provider) {
-    if (provider.status == StatusChat.conectando) {
+    // Só no load inicial: ressincronizando, a lista atual continua na tela.
+    if (provider.status == StatusChat.conectando && provider.chatId == null) {
       return const SkeletonMensagens();
     }
     if (provider.mensagens.isEmpty) {

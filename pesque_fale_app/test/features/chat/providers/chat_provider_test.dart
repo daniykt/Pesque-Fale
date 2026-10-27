@@ -262,7 +262,8 @@ void main() {
       expect(provider.status, StatusChat.erroConexao);
     });
 
-    test('CHAT_FORA_DE_SINCRONIA reemite entrar_chat sem mudar o status', () {
+    test('CHAT_FORA_DE_SINCRONIA conectado muda pra conectando e reemite '
+        'entrar_chat', () {
       entrarNoChat();
       var notificacoes = 0;
       provider.addListener(() => notificacoes++);
@@ -272,10 +273,35 @@ void main() {
         'message': 'A conversa mudou. Tente novamente.',
       });
 
-      expect(provider.status, StatusChat.conectado);
-      expect(notificacoes, 0);
+      expect(provider.status, StatusChat.conectando);
+      expect(provider.chatId, _chatId);
+      expect(notificacoes, 1);
       expect(realtime.emitidos.single.key, 'entrar_chat');
       expect(realtime.emitidos.single.value, {'outroId': 'outro'});
+    });
+
+    test('CHAT_FORA_DE_SINCRONIA fora de conectado não muda o status nem '
+        'notifica', () {
+      provider.iniciar();
+      realtime.emitidos.clear();
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('erro', {'code': 'CHAT_FORA_DE_SINCRONIA'});
+
+      expect(provider.status, StatusChat.conectando);
+      expect(notificacoes, 0);
+      expect(realtime.emitidos.single.key, 'entrar_chat');
+    });
+
+    test('depois do CHAT_FORA_DE_SINCRONIA, o historico seguinte volta pra '
+        'conectado', () {
+      entrarNoChat();
+      realtime.emitir('erro', {'code': 'CHAT_FORA_DE_SINCRONIA'});
+
+      realtime.emitir('historico', _historico());
+
+      expect(provider.status, StatusChat.conectado);
     });
   });
 
@@ -354,6 +380,29 @@ void main() {
   group('enviarMensagem', () {
     test('antes do historico é no-op (sem chatId conhecido)', () {
       provider.iniciar();
+      realtime.emitidos.clear();
+
+      provider.enviarMensagem('oi');
+
+      expect(realtime.emitidos, isEmpty);
+    });
+
+    test('ressincronizando (CHAT_FORA_DE_SINCRONIA) é no-op mesmo com chatId '
+        'conhecido', () {
+      entrarNoChat();
+      realtime.emitir('erro', {'code': 'CHAT_FORA_DE_SINCRONIA'});
+      realtime.emitidos.clear();
+
+      provider.enviarMensagem('oi');
+
+      expect(realtime.emitidos, isEmpty);
+    });
+
+    test('reconectado mas ainda em erroConexao (antes do historico) é no-op', () {
+      entrarNoChat();
+      realtime.definirConectado(false);
+      realtime.definirConectado(true);
+      expect(provider.status, StatusChat.erroConexao);
       realtime.emitidos.clear();
 
       provider.enviarMensagem('oi');

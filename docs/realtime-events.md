@@ -99,7 +99,13 @@ Pré-existentes. Detalhes na seção 2.5 do `realtime-audit.md`. Consumidos pelo
     `enviar_mensagem` / `marcar_visto` / `digitando` / `parou_digitando`
     não bate com `socket.chatId`. Introduzido em 9.6.4.2 pra evitar
     corrupção por race do `entrar_chat`.
-- **Consumidor no app:** `ChatProvider`. `CHAT_FORA_DE_SINCRONIA` reemite `entrar_chat` em silêncio (sem mudar o status); os outros erros viram `semMutualFollow` ou `erroConexao`.
+    **UX cliente (9.6.4.3):** quando recebe este code, o `ChatProvider`
+    muda `status` para `conectando` e dispara `entrar_chat` para
+    ressincronizar. O botão de enviar fica desabilitado e o banner
+    de reconexão ("Sem conexão. Tentando reconectar...") aparece até o próximo `historico` restaurar
+    `status = conectado`. Usuário redigita a mensagem após o atrito
+    visual — não há reenvio automático.
+- **Consumidor no app:** `ChatProvider`. `CHAT_FORA_DE_SINCRONIA` muda o status pra `conectando` (se estava `conectado`) e reemite `entrar_chat`; os outros erros viram `semMutualFollow` ou `erroConexao`.
 - **Introduzido em:** fase anterior à epic #183 (code CHAT_FORA_DE_SINCRONIA em 9.6.4.2)
 
 ## Client → Server

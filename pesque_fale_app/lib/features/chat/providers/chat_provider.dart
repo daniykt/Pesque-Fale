@@ -138,9 +138,13 @@ class ChatProvider extends ChangeNotifier {
     final msg = data['message'] as String? ?? '';
 
     if (code == 'CHAT_FORA_DE_SINCRONIA') {
-      // Backend tem um chatId diferente do que estamos tratando como ativo.
-      // Reemitir entrar_chat sincroniza — e o historico que vier por último
-      // sobrescreve _chatIdAtivo. Silencioso: o usuário não vê erro.
+      // Backend está num chat diferente do nosso. Mostra "sincronizando"
+      // (reaproveitando o visual de reconexão) e desabilita envios até o
+      // próximo historico chegar com _chatIdAtivo correto.
+      if (status == StatusChat.conectado) {
+        status = StatusChat.conectando;
+        notifyListeners();
+      }
       _entrarChat();
       return;
     }
@@ -154,10 +158,9 @@ class ChatProvider extends ChangeNotifier {
   void enviarMensagem(String texto) {
     final trimmed = texto.trim();
     if (trimmed.isEmpty || trimmed.length > 500) return;
-    // Antes de receber `historico`, o backend ainda não terminou de nos
-    // colocar numa conversa — não há `chatId` conhecido. Nessa janela
-    // curta (ms), descartar é mais seguro do que enviar sem `chatId`.
-    if (_chatIdAtivo == null) return;
+    // Só envia quando totalmente sincronizado. Se o botão da UI estiver
+    // habilitado nessa condição, isso é defesa em profundidade.
+    if (status != StatusChat.conectado || _chatIdAtivo == null) return;
     realtime.emit('enviar_mensagem', {
       'texto': trimmed,
       'chatId': _chatIdAtivo,
