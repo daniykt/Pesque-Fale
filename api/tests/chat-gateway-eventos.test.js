@@ -378,3 +378,167 @@ describe('chat.gateway — leitura emite conversa_lida', () => {
     });
   });
 });
+
+describe('chat.gateway — chatId do payload precisa bater com socket.chatId', () => {
+  const C = 'ccc-user';
+  const CHAT_AC = `${A}_${C}`;
+  const foraDeSincronia = {
+    code: 'CHAT_FORA_DE_SINCRONIA',
+    message: 'A conversa mudou. Tente novamente.',
+  };
+
+  beforeEach(() => {
+    pool.query.mockReset();
+    emitToUser.mockReset();
+  });
+
+  function conectado(usuarioId, chatId = CHAT_ID) {
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(usuarioId);
+    io.conectar(socket);
+    socket.chatId = chatId;
+    return { io, socket };
+  }
+
+  function inseridasEm() {
+    return pool.query.mock.calls
+      .filter(([sql]) => /INSERT INTO mensagens/.test(sql))
+      .map(([, [chatId]]) => chatId);
+  }
+
+  it('enviar_mensagem com o chatId certo é aceito', async () => {
+    comBanco();
+    const { io, socket } = conectado(A);
+
+    await socket.disparar('enviar_mensagem', { texto: 'oi', chatId: CHAT_ID });
+
+    expect(inseridasEm()).toEqual([CHAT_ID]);
+    expect(io.emitidosEmRoom).toEqual([
+      expect.objectContaining({ room: CHAT_ID, evento: 'nova_mensagem' }),
+    ]);
+    expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+  });
+
+  it('enviar_mensagem com chatId diferente é rejeitado e nada é salvo', async () => {
+    comBanco();
+    const { io, socket } = conectado(A);
+
+    await socket.disparar('enviar_mensagem', { texto: 'oi', chatId: CHAT_AC });
+
+    expect(socket.emit).toHaveBeenCalledWith('erro', foraDeSincronia);
+    expect(pool.query).not.toHaveBeenCalled();
+    expect(emitToUser).not.toHaveBeenCalled();
+    expect(io.emitidosEmRoom).toHaveLength(0);
+  });
+
+  it('enviar_mensagem sem chatId no payload segue aceito (app antigo)', async () => {
+    comBanco();
+    const { socket } = conectado(A);
+
+    await socket.disparar('enviar_mensagem', { texto: 'oi' });
+
+    expect(inseridasEm()).toEqual([CHAT_ID]);
+    expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+  });
+
+  it('marcar_visto com chatId diferente é rejeitado sem mensagens_vistas nem conversa_lida', async () => {
+    comBanco();
+    const { io, socket } = conectado(B);
+
+    await socket.disparar('marcar_visto', { chatId: CHAT_AC });
+
+    expect(socket.emit).toHaveBeenCalledWith('erro', foraDeSincronia);
+    expect(pool.query).not.toHaveBeenCalled();
+    expect(io.emitidosEmRoom).toHaveLength(0);
+    expect(eventosEmitidos('conversa_lida')).toHaveLength(0);
+  });
+
+  it('marcar_visto com o chatId certo é aceito', async () => {
+    comBanco();
+    const { io, socket } = conectado(B);
+
+    await socket.disparar('marcar_visto', { chatId: CHAT_ID });
+
+    expect(socket.emit).not.toHaveBeenCalledWith('erro', expect.anything());
+    expect(io.emitidosEmRoom).toEqual([
+      expect.objectContaining({ room: CHAT_ID, evento: 'mensagens_vistas' }),
+    ]);
+  });
+
+  it.each(['digitando', 'parou_digitando'])(
+    '%s com chatId diferente é rejeitado e não repassa pro room',
+    (evento) => {
+      const { socket } = conectado(A);
+      const emitNoRoom = jest.fn();
+      socket.to = jest.fn(() => ({ emit: emitNoRoom }));
+
+      socket.disparar(evento, { chatId: CHAT_AC });
+
+      expect(socket.emit).toHaveBeenCalledWith('erro', foraDeSincronia);
+      expect(socket.to).not.toHaveBeenCalled();
+      expect(emitNoRoom).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ['digitando', 'outro_digitando', { chatId: CHAT_ID }],
+    ['digitando', 'outro_digitando', undefined],
+    ['parou_digitando', 'outro_parou_digitando', { chatId: CHAT_ID }],
+    ['parou_digitando', 'outro_parou_digitando', undefined],
+  ])('%s → %s com payload %p é repassado pro room', (evento, repassado, payload) => {
+    const { socket } = conectado(A);
+    const emitNoRoom = jest.fn();
+    socket.to = jest.fn(() => ({ emit: emitNoRoom }));
+
+    socket.disparar(evento, payload);
+
+    expect(socket.to).toHaveBeenCalledWith(CHAT_ID);
+    expect(emitNoRoom).toHaveBeenCalledWith(repassado, { userId: A });
+    expect(socket.emit).not.toHaveBeenCalled();
+  });
+
+  // Regressão do bug: o 1º entrar_chat (com B) fica preso no mutual follow
+  // enquanto o 2º (com C) resolve. Quando o 1º termina, socket.chatId volta
+  // pra A_B, mas o app já está na tela de C.
+  it('race do entrar_chat: mensagem de C nunca é salva em A_B', async () => {
+    comBanco();
+    const responderBanco = pool.query.getMockImplementation();
+    let liberarPrimeiro;
+    const primeiroLento = new Promise((resolve) => {
+      liberarPrimeiro = resolve;
+    });
+    // A 1ª query do teste é o mutual follow do 1º entrar_chat.
+    pool.query.mockImplementationOnce(async (sql, params) => {
+      await primeiroLento;
+      return responderBanco(sql, params);
+    });
+
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(A);
+    io.conectar(socket);
+
+    const entrarComB = socket.disparar('entrar_chat', { outroId: B });
+    await socket.disparar('entrar_chat', { outroId: C });
+    expect(socket.chatId).toBe(CHAT_AC);
+    expect(socket.emit).toHaveBeenCalledWith('historico', { chatId: CHAT_AC, mensagens: [] });
+
+    liberarPrimeiro();
+    await entrarComB;
+    // Estado corrompido que o fix protege: o servidor acha que é A_B.
+    expect(socket.chatId).toBe(CHAT_ID);
+
+    // App está em C (último historico que filtrou) e manda o chatId de C.
+    await socket.disparar('enviar_mensagem', { texto: 'oi', chatId: CHAT_AC });
+
+    expect(socket.emit).toHaveBeenCalledWith('erro', foraDeSincronia);
+    expect(inseridasEm()).toEqual([]);
+
+    // O app reage ao code reemitindo entrar_chat; o reenvio cai em A_C.
+    await socket.disparar('entrar_chat', { outroId: C });
+    await socket.disparar('enviar_mensagem', { texto: 'oi', chatId: CHAT_AC });
+
+    expect(inseridasEm()).toEqual([CHAT_AC]);
+  });
+});

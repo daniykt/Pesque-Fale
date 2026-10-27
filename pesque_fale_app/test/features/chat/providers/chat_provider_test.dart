@@ -31,8 +31,9 @@ Map<String, dynamic> _mensagemJson({
   'criadoEm': '2026-05-28T09:50:00Z',
 };
 
-Map<String, dynamic> _historico([List<Map<String, dynamic>> mensagens = const []]) =>
-    {'chatId': _chatId, 'mensagens': mensagens};
+Map<String, dynamic> _historico([
+  List<Map<String, dynamic>> mensagens = const [],
+]) => {'chatId': _chatId, 'mensagens': mensagens};
 
 void main() {
   late FakeRealtimeManager realtime;
@@ -48,6 +49,14 @@ void main() {
   }
 
   setUp(() => provider = criar());
+
+  /// Inicia e recebe o `historico`: a partir daqui o provider conhece o
+  /// `chatId` e os emits que dependem dele saem. Limpa o `entrar_chat`.
+  void entrarNoChat() {
+    provider.iniciar();
+    realtime.emitir('historico', _historico());
+    realtime.emitidos.clear();
+  }
 
   group('conexão', () {
     test('iniciar registra os 6 handlers e o listener de conexão', () {
@@ -142,20 +151,17 @@ void main() {
   });
 
   group('nova_mensagem', () {
-    setUp(() {
-      provider.iniciar();
-      realtime.emitir('historico', _historico());
-      realtime.emitidos.clear();
-    });
+    setUp(entrarNoChat);
 
-    test('do outro adiciona e marca como vista', () {
+    test('do outro adiciona e marca como vista com o chatId', () {
       realtime.emitir(
         'nova_mensagem',
         _mensagemJson(id: 'm1', userId: 'outro', texto: 'oi'),
       );
 
       expect(provider.mensagens, hasLength(1));
-      expect(realtime.foiEmitido('marcar_visto'), isTrue);
+      expect(realtime.emitidos.single.key, 'marcar_visto');
+      expect(realtime.emitidos.single.value, {'chatId': _chatId});
     });
 
     test('própria não emite marcar_visto', () {
@@ -244,6 +250,33 @@ void main() {
 
       expect(provider.status, StatusChat.erroConexao);
     });
+
+    test('com outro code mantém o fluxo antigo (erroConexao)', () {
+      provider.iniciar();
+
+      realtime.emitir('erro', {
+        'code': 'CHAT_CONSIGO_MESMO',
+        'message': 'Não é possível conversar consigo mesmo.',
+      });
+
+      expect(provider.status, StatusChat.erroConexao);
+    });
+
+    test('CHAT_FORA_DE_SINCRONIA reemite entrar_chat sem mudar o status', () {
+      entrarNoChat();
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('erro', {
+        'code': 'CHAT_FORA_DE_SINCRONIA',
+        'message': 'A conversa mudou. Tente novamente.',
+      });
+
+      expect(provider.status, StatusChat.conectado);
+      expect(notificacoes, 0);
+      expect(realtime.emitidos.single.key, 'entrar_chat');
+      expect(realtime.emitidos.single.value, {'outroId': 'outro'});
+    });
   });
 
   group('digitando', () {
@@ -265,66 +298,95 @@ void main() {
       expect(provider.outroDigitando, isFalse);
     });
 
-    test(
-      'notificarDigitando emite digitando após 300ms mesmo com digitação contínua',
-      () async {
-        provider.notificarDigitando('o');
-        provider.notificarDigitando('oi');
-        provider.notificarDigitando('oi t');
+    test('notificarDigitando emite digitando com chatId após 300ms mesmo com '
+        'digitação contínua', () async {
+      entrarNoChat();
+      provider.notificarDigitando('o');
+      provider.notificarDigitando('oi');
+      provider.notificarDigitando('oi t');
 
-        expect(realtime.foiEmitido('digitando'), isFalse);
+      expect(realtime.foiEmitido('digitando'), isFalse);
 
-        await Future.delayed(const Duration(milliseconds: 350));
+      await Future.delayed(const Duration(milliseconds: 350));
 
-        expect(
-          realtime.emitidos.where((e) => e.key == 'digitando'),
-          hasLength(1),
-        );
-      },
-    );
+      final digitando = realtime.emitidos.where((e) => e.key == 'digitando');
+      expect(digitando, hasLength(1));
+      expect(digitando.single.value, {'chatId': _chatId});
+    });
+
+    test('antes do historico, notificarDigitando não emite nada', () async {
+      provider.iniciar();
+      realtime.emitidos.clear();
+
+      provider.notificarDigitando('oi');
+      await Future.delayed(const Duration(milliseconds: 350));
+      provider.notificarDigitando('');
+
+      expect(realtime.emitidos, isEmpty);
+    });
 
     test('notificarDigitando com texto vazio emite parou_digitando', () async {
+      entrarNoChat();
       provider.notificarDigitando('o');
       await Future.delayed(const Duration(milliseconds: 350));
       expect(realtime.foiEmitido('digitando'), isTrue);
 
       provider.notificarDigitando('');
 
-      expect(realtime.foiEmitido('parou_digitando'), isTrue);
+      final parou = realtime.emitidos.last;
+      expect(parou.key, 'parou_digitando');
+      expect(parou.value, {'chatId': _chatId});
     });
 
     test('dispose emite parou_digitando se estava digitando', () async {
-      provider.iniciar();
+      entrarNoChat();
       provider.notificarDigitando('oi');
       await Future.delayed(const Duration(milliseconds: 350));
 
       provider.dispose();
 
-      expect(realtime.foiEmitido('parou_digitando'), isTrue);
+      final parou = realtime.emitidos.last;
+      expect(parou.key, 'parou_digitando');
+      expect(parou.value, {'chatId': _chatId});
     });
   });
 
   group('enviarMensagem', () {
-    test('emite enviar_mensagem com texto trimado', () {
+    test('antes do historico é no-op (sem chatId conhecido)', () {
+      provider.iniciar();
+      realtime.emitidos.clear();
+
+      provider.enviarMensagem('oi');
+
+      expect(realtime.emitidos, isEmpty);
+    });
+
+    test('emite enviar_mensagem com texto trimado e o chatId do historico', () {
+      entrarNoChat();
+
       provider.enviarMensagem('  oi tudo bem  ');
 
-      final emitido = realtime.emitidos.firstWhere(
-        (e) => e.key == 'enviar_mensagem',
-      );
-      expect(emitido.value, {'texto': 'oi tudo bem'});
+      expect(realtime.emitidos.single.key, 'enviar_mensagem');
+      expect(realtime.emitidos.single.value, {
+        'texto': 'oi tudo bem',
+        'chatId': _chatId,
+      });
     });
 
     test('ignora texto vazio', () {
+      entrarNoChat();
       provider.enviarMensagem('   ');
       expect(realtime.foiEmitido('enviar_mensagem'), isFalse);
     });
 
     test('ignora texto acima de 500 caracteres', () {
+      entrarNoChat();
       provider.enviarMensagem('a' * 501);
       expect(realtime.foiEmitido('enviar_mensagem'), isFalse);
     });
 
     test('emite parou_digitando se estava digitando', () async {
+      entrarNoChat();
       provider.notificarDigitando('oi');
       await Future.delayed(const Duration(milliseconds: 350));
       expect(realtime.foiEmitido('digitando'), isTrue);
@@ -333,11 +395,42 @@ void main() {
 
       expect(realtime.foiEmitido('parou_digitando'), isTrue);
     });
+
+    test('depois de um reemit por CHAT_FORA_DE_SINCRONIA, carrega o chatId '
+        'do historico mais recente', () {
+      entrarNoChat();
+      realtime.emitir('erro', {'code': 'CHAT_FORA_DE_SINCRONIA'});
+      // Resposta atrasada de outra conversa não troca o chatId ativo.
+      realtime.emitir('historico', {'chatId': 'eu_terceiro', 'mensagens': []});
+      realtime.emitir('historico', _historico());
+      realtime.emitidos.clear();
+
+      provider.enviarMensagem('oi');
+
+      expect(realtime.emitidos.single.value, {
+        'texto': 'oi',
+        'chatId': _chatId,
+      });
+    });
   });
 
-  test('marcarVistoManual emite marcar_visto', () {
-    provider.marcarVistoManual();
+  group('marcarVistoManual', () {
+    test('antes do historico é no-op', () {
+      provider.iniciar();
+      realtime.emitidos.clear();
 
-    expect(realtime.emitidos.map((e) => e.key), ['marcar_visto']);
+      provider.marcarVistoManual();
+
+      expect(realtime.emitidos, isEmpty);
+    });
+
+    test('emite marcar_visto com o chatId', () {
+      entrarNoChat();
+
+      provider.marcarVistoManual();
+
+      expect(realtime.emitidos.single.key, 'marcar_visto');
+      expect(realtime.emitidos.single.value, {'chatId': _chatId});
+    });
   });
 }
