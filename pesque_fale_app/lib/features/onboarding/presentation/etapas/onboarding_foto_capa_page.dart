@@ -5,6 +5,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/crop_imagem/crop_imagem_helper.dart';
+import '../../../../shared/widgets/crop_imagem/modo_crop.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../domain/onboarding_etapa.dart';
 import '../../providers/onboarding_provider.dart';
@@ -20,7 +22,13 @@ class OnboardingFotoCapaPage extends StatelessWidget {
     BuildContext context,
     OnboardingProvider provider,
   ) async {
-    final ok = await provider.escolherEEnviarCapa();
+    final bytes = await CropImagemHelper.escolherECortar(
+      context,
+      modo: ModoCrop.banner,
+    );
+    if (bytes == null) return;
+
+    final ok = await provider.enviarBannerCortado(bytes);
     if (!context.mounted || ok) return;
     if (provider.errorMessage != null) {
       AppSnackbar.showError(context, provider.errorMessage!);

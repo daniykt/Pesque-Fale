@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/crop_imagem/crop_imagem_helper.dart';
+import '../../../../shared/widgets/crop_imagem/modo_crop.dart';
 import '../../domain/onboarding_etapa.dart';
 import '../../providers/onboarding_provider.dart';
 import '../widgets/onboarding_botao_principal.dart';
@@ -20,7 +22,13 @@ class OnboardingFotoPerfilPage extends StatelessWidget {
     BuildContext context,
     OnboardingProvider provider,
   ) async {
-    final ok = await provider.escolherEEnviarFoto();
+    final bytes = await CropImagemHelper.escolherECortar(
+      context,
+      modo: ModoCrop.avatar,
+    );
+    if (bytes == null) return;
+
+    final ok = await provider.enviarFotoCortada(bytes);
     if (!context.mounted || ok) return;
     if (provider.errorMessage != null) {
       AppSnackbar.showError(context, provider.errorMessage!);
