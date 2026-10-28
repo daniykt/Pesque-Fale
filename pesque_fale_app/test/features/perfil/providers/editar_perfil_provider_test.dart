@@ -53,6 +53,9 @@ class _FakePerfilRepository implements PerfilRepository {
   final Set<String> usernamesIndisponiveis;
   final bool falharAoEditar;
   int chamadasVerificarUsername = 0;
+  final uploads =
+      <({String tipo, Uint8List bytes, String filename, String mimeType})>[];
+  Map<String, dynamic>? ultimosCamposEditados;
 
   @override
   Future<PerfilCompleto> buscarPerfil(
@@ -73,17 +76,34 @@ class _FakePerfilRepository implements PerfilRepository {
     Uint8List bytes, {
     required String filename,
     required String mimeType,
-  }) async => 'https://x/foto.png';
+  }) async {
+    uploads.add((
+      tipo: 'foto',
+      bytes: bytes,
+      filename: filename,
+      mimeType: mimeType,
+    ));
+    return 'https://x/foto.png';
+  }
 
   @override
   Future<String> atualizarBanner(
     Uint8List bytes, {
     required String filename,
     required String mimeType,
-  }) async => 'https://x/banner.png';
+  }) async {
+    uploads.add((
+      tipo: 'banner',
+      bytes: bytes,
+      filename: filename,
+      mimeType: mimeType,
+    ));
+    return 'https://x/banner.png';
+  }
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async {
+    ultimosCamposEditados = camposAlterados;
     if (falharAoEditar) {
       throw PerfilValidationException({'nome': 'Nome inválido.'});
     }
@@ -154,6 +174,23 @@ void main() {
 
       provider.onNomeChanged('Ana');
       expect(provider.temAlteracoes, isFalse);
+    });
+
+    test('foto e banner cortados marcam alteracao e notificam', () {
+      final provider = EditarPerfilProvider(
+        repository: _FakePerfilRepository(),
+        authProvider: authProvider,
+      );
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      provider.setFotoCortada(Uint8List.fromList([1, 2, 3]));
+      expect(provider.novaFotoBytes, [1, 2, 3]);
+      expect(provider.temAlteracoes, isTrue);
+
+      provider.setBannerCortado(Uint8List.fromList([4, 5, 6]));
+      expect(provider.novoBannerBytes, [4, 5, 6]);
+      expect(notificacoes, 2);
     });
   });
 
@@ -257,6 +294,42 @@ void main() {
       expect(provider.status, SalvamentoStatus.salvo);
       expect(provider.temAlteracoes, isFalse);
       expect(authProvider.usuario?.nome, 'Ana Editada');
+    });
+
+    test('sobe foto e banner cortados como JPEG e limpa os bytes', () async {
+      final repository = _FakePerfilRepository();
+      final provider = EditarPerfilProvider(
+        repository: repository,
+        authProvider: authProvider,
+      );
+      final foto = Uint8List.fromList([1, 2, 3]);
+      final banner = Uint8List.fromList([4, 5, 6]);
+
+      provider.setFotoCortada(foto);
+      provider.setBannerCortado(banner);
+      final ok = await provider.salvar();
+
+      expect(ok, isTrue);
+      expect(repository.uploads, hasLength(2));
+      expect(repository.uploads[0].tipo, 'foto');
+      expect(repository.uploads[0].bytes, same(foto));
+      expect(repository.uploads[0].filename, 'avatar.jpg');
+      expect(repository.uploads[0].mimeType, 'image/jpeg');
+      expect(repository.uploads[1].tipo, 'banner');
+      expect(repository.uploads[1].bytes, same(banner));
+      expect(repository.uploads[1].filename, 'banner.jpg');
+      expect(repository.uploads[1].mimeType, 'image/jpeg');
+      expect(
+        repository.ultimosCamposEditados?['fotoPerfil'],
+        'https://x/foto.png',
+      );
+      expect(
+        repository.ultimosCamposEditados?['banner'],
+        'https://x/banner.png',
+      );
+      expect(provider.novaFotoBytes, isNull);
+      expect(provider.novoBannerBytes, isNull);
+      expect(provider.temAlteracoes, isFalse);
     });
 
     test('hidrata fieldErrors quando o backend recusa a validacao', () async {

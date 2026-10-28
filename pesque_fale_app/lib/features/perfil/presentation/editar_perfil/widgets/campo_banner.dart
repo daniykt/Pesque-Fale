@@ -1,25 +1,25 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
-import '../../../../../shared/widgets/app_snackbar.dart';
+import '../../../../../shared/widgets/crop_imagem/crop_imagem_helper.dart';
+import '../../../../../shared/widgets/crop_imagem/modo_crop.dart';
 import '../../../../auth/providers/auth_provider.dart';
 import '../../../providers/editar_perfil_provider.dart';
 
-/// Preview do banner com gradiente do `primary` quando vazio. Toque abre o
-/// seletor de imagem (upload real só acontece ao salvar).
+/// Preview do banner com gradiente do `primary` quando vazio. Toque abre
+/// câmera/galeria + crop 16:9 (upload real só acontece ao salvar).
 class CampoBanner extends StatelessWidget {
   const CampoBanner({super.key});
 
   Future<void> _escolher(BuildContext context) async {
     final provider = context.read<EditarPerfilProvider>();
-    final ok = await provider.escolherBanner();
-    if (!ok && provider.errorMessage != null && context.mounted) {
-      AppSnackbar.showError(context, provider.errorMessage!);
-    }
+    final bytes = await CropImagemHelper.escolherECortar(
+      context,
+      modo: ModoCrop.banner,
+    );
+    if (bytes != null) provider.setBannerCortado(bytes);
   }
 
   @override
@@ -28,7 +28,7 @@ class CampoBanner extends StatelessWidget {
     final usuario = context.watch<AuthProvider>().usuario;
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    final novoBanner = provider.novoBannerArquivo;
+    final novoBanner = provider.novoBannerBytes;
     final bannerRemoto = usuario?.banner;
 
     return GestureDetector(
@@ -41,26 +41,7 @@ class CampoBanner extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (novoBanner != null)
-                FutureBuilder<Uint8List>(
-                  future: provider.lerBytesNovoBanner(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Image.memory(snapshot.data!, fit: BoxFit.cover);
-                    }
-                    return DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.primary,
-                            Color.lerp(colors.primary, colors.surface, 0.4)!,
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                )
+                Image.memory(novoBanner, fit: BoxFit.cover)
               else if (bannerRemoto != null && bannerRemoto.isNotEmpty)
                 Image.network(bannerRemoto, fit: BoxFit.cover)
               else
