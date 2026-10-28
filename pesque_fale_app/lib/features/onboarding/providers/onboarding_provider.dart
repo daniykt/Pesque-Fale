@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../../shared/utils/upload_imagem_validator.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../perfil/data/perfil_exceptions.dart';
 import '../../perfil/data/perfil_repository.dart';
@@ -136,29 +134,16 @@ class OnboardingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> escolherEEnviarFoto() => _escolherEEnviarImagem(banner: false);
+  /// Sobe a foto de perfil já recortada (JPEG da CropImagemPage).
+  Future<bool> enviarFotoCortada(Uint8List bytes) =>
+      _enviarImagem(bytes, banner: false);
 
-  Future<bool> escolherEEnviarCapa() => _escolherEEnviarImagem(banner: true);
+  /// Sobe a capa já recortada (JPEG da CropImagemPage).
+  Future<bool> enviarBannerCortado(Uint8List bytes) =>
+      _enviarImagem(bytes, banner: true);
 
-  Future<bool> _escolherEEnviarImagem({required bool banner}) async {
-    final XFile? arquivo = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
-    );
-    if (arquivo == null) return false;
-
-    if (!UploadImagemValidator.formatoValido(arquivo)) {
-      errorMessage = const FormatoInvalidoException().message;
-      notifyListeners();
-      return false;
-    }
-
-    if (!await UploadImagemValidator.tamanhoValido(arquivo)) {
-      errorMessage = const FotoMuitoGrandeException().message;
-      notifyListeners();
-      return false;
-    }
-
+  Future<bool> _enviarImagem(Uint8List bytes, {required bool banner}) async {
+    errorMessage = null;
     if (banner) {
       uploadingCapa = true;
     } else {
@@ -167,18 +152,17 @@ class OnboardingProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bytes = await arquivo.readAsBytes();
-      final mimeType = arquivo.mimeType ?? 'image/jpeg';
+      // O crop sempre gera JPEG, então nome e tipo são fixos.
       final url = banner
           ? await perfilRepository.atualizarBanner(
-              Uint8List.fromList(bytes),
-              filename: arquivo.name,
-              mimeType: mimeType,
+              bytes,
+              filename: 'banner.jpg',
+              mimeType: 'image/jpeg',
             )
           : await perfilRepository.atualizarFoto(
-              Uint8List.fromList(bytes),
-              filename: arquivo.name,
-              mimeType: mimeType,
+              bytes,
+              filename: 'avatar.jpg',
+              mimeType: 'image/jpeg',
             );
       if (banner) {
         fotoCapaUrl = url;

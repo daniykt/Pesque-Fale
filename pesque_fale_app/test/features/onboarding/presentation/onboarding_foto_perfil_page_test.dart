@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:pesque_fale_app/core/theme/app_colors.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/core/theme/theme_provider.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
@@ -20,6 +23,7 @@ import 'package:pesque_fale_app/features/onboarding/providers/onboarding_provide
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
+import 'package:pesque_fale_app/shared/widgets/crop_imagem/crop_imagem_page.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
@@ -52,6 +56,8 @@ class _FakeAuthRepository implements AuthRepository {
 
 class _FakePerfilRepository implements PerfilRepository {
   Completer<String>? fotoCompleter;
+  Uint8List? bytesEnviados;
+  String? filenameEnviado;
 
   @override
   Future<PerfilCompleto> buscarPerfil(
@@ -71,6 +77,8 @@ class _FakePerfilRepository implements PerfilRepository {
     required String filename,
     required String mimeType,
   }) {
+    bytesEnviados = bytes;
+    filenameEnviado = filename;
     if (fotoCompleter != null) return fotoCompleter!.future;
     return Future.value('https://x.com/foto-nova.png');
   }
@@ -120,11 +128,41 @@ class _FakeImagePickerChannel {
   }
 }
 
-Future<String> _criarArquivoTemporario({required String extensao}) async {
+/// PNG real em disco — o crop decodifica os bytes, então não serve lixo.
+Future<String> _criarImagemTemporaria() async {
   final dir = await Directory.systemTemp.createTemp('foto_perfil_test_');
-  final arquivo = File('${dir.path}/imagem.$extensao');
-  await arquivo.writeAsBytes(List.filled(100, 0));
+  final arquivo = File('${dir.path}/imagem.png');
+  await arquivo.writeAsBytes(
+    img.encodePng(
+      img.fill(
+        img.Image(width: 64, height: 48),
+        color: img.ColorRgb8(30, 120, 200),
+      ),
+    ),
+  );
   return arquivo.path;
+}
+
+/// Bytes que a página receberia do crop — o repositório é fake, não decodifica.
+final _bytesCortados = Uint8List.fromList([0xFF, 0xD8, 0xFF]);
+
+/// Tema com as cores do app mas sem GoogleFonts, pros testes de fluxo.
+///
+/// As fontes não são empacotadas nos testes: com runAsync longo (picker,
+/// parse e recorte em isolate) o google_fonts chega a tentar carregá-las de
+/// verdade, falha e derruba o teste. Os demais testes usam o AppTheme.light.
+final _temaSemFontes = ThemeData(extensions: const [AppColors.light]);
+
+/// Avança até [condicao]: picker, leitura de arquivo, parse e recorte rodam
+/// em tempo real (runAsync), fora do relógio falso do pump().
+Future<void> _esperar(WidgetTester tester, bool Function() condicao) async {
+  for (var tentativa = 0; !condicao(); tentativa++) {
+    if (tentativa == 500) throw TimeoutException('condição não atingida');
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pump(const Duration(milliseconds: 20));
+  }
 }
 
 /// PNG transparente 1x1, usado para responder `Image.network` nos testes
@@ -207,7 +245,7 @@ void main() {
   Future<
     ({OnboardingProvider provider, _FakePerfilRepository repository})
   >
-  montarWidget(WidgetTester tester) async {
+  montarWidget(WidgetTester tester, {ThemeData? tema}) async {
     final authProvider = AuthProvider(repository: _FakeAuthRepository());
     await authProvider.login(email: 'ana@teste.com', senha: '123456');
 
@@ -229,7 +267,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          theme: AppTheme.light,
+          theme: tema ?? AppTheme.light,
           home: const OnboardingFotoPerfilPage(),
         ),
       ),
@@ -255,32 +293,23 @@ void main() {
     expect(find.text('Pular esta etapa'), findsOneWidget);
   });
 
-  testWidgets('mostra spinner sobreposto durante o upload', (tester) async {
+  testWidgets('mostra spinner sobreposto durante o upload', (
+    tester,
+  ) async {
     debugNetworkImageHttpClientProvider = () => _FakeHttpClient();
     try {
-      final imagePickerChannel = _FakeImagePickerChannel();
       final montado = await montarWidget(tester);
-      // A criacao do arquivo e o toque disparam I/O real (arquivo em disco e
-      // o round-trip do canal do image_picker), que so avanca dentro de
-      // runAsync — o pump() comum usa um relogio falso que nunca libera
-      // Futures apoiados em I/O real.
-      imagePickerChannel.proximoCaminho = await tester.runAsync(
-        () => _criarArquivoTemporario(extensao: 'jpg'),
-      );
       montado.repository.fotoCompleter = Completer<String>();
 
-      await tester.runAsync(() async {
-        await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      });
+      final envio = montado.provider.enviarFotoCortada(_bytesCortados);
       await tester.pump();
 
       expect(montado.provider.uploadingFoto, isTrue);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
       await tester.runAsync(() async {
-        montado.repository.fotoCompleter!.complete('https://x.com/foto.png');
-        await Future<void>.delayed(const Duration(milliseconds: 100));
+        montado.repository.fotoCompleter!.complete('https://x.com/nova.png');
+        await envio;
       });
       await tester.pump();
 
@@ -295,22 +324,81 @@ void main() {
   ) async {
     debugNetworkImageHttpClientProvider = () => _FakeHttpClient();
     try {
-      final imagePickerChannel = _FakeImagePickerChannel();
-      await montarWidget(tester);
-      imagePickerChannel.proximoCaminho = await tester.runAsync(
-        () => _criarArquivoTemporario(extensao: 'jpg'),
-      );
+      final montado = await montarWidget(tester);
 
-      await tester.runAsync(() async {
-        await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      });
+      await tester.runAsync(
+        () => montado.provider.enviarFotoCortada(_bytesCortados),
+      );
       await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
       expect(find.byIcon(Icons.edit), findsOneWidget);
       expect(find.text('Continuar'), findsOneWidget);
       expect(find.text('Continuar sem foto'), findsNothing);
+    } finally {
+      debugNetworkImageHttpClientProvider = null;
+    }
+  });
+
+  testWidgets('tocar no avatar abre o sheet de origem e fechar nao altera nada', (
+    tester,
+  ) async {
+    final montado = await montarWidget(tester);
+
+    await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Tirar foto'), findsOneWidget);
+    expect(find.text('Escolher da galeria'), findsOneWidget);
+
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tirar foto'), findsNothing);
+    expect(montado.provider.fotoPerfilUrl, isNull);
+    expect(montado.repository.bytesEnviados, isNull);
+    expect(find.text('Continuar sem foto'), findsOneWidget);
+  });
+
+  testWidgets('galeria, crop circular e confirmar sobem a foto recortada', (
+    tester,
+  ) async {
+    debugNetworkImageHttpClientProvider = () => _FakeHttpClient();
+    try {
+      final imagePickerChannel = _FakeImagePickerChannel();
+      final montado = await montarWidget(tester, tema: _temaSemFontes);
+      imagePickerChannel.proximoCaminho = await tester.runAsync(
+        _criarImagemTemporaria,
+      );
+
+      await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Escolher da galeria'));
+      await _esperar(
+        tester,
+        () => find.byType(CropImagemPage).evaluate().isNotEmpty,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+
+      expect(find.text('Ajustar foto'), findsOneWidget);
+      final crop = tester.widget<Crop>(find.byType(Crop));
+      expect(crop.withCircleUi, isTrue);
+      expect(crop.aspectRatio, 1.0);
+
+      final confirmar = find.widgetWithText(TextButton, 'Confirmar');
+      await _esperar(
+        tester,
+        () => tester.widget<TextButton>(confirmar).onPressed != null,
+      );
+      await tester.tap(confirmar);
+      await _esperar(tester, () => montado.provider.fotoPerfilUrl != null);
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final enviada = img.decodeJpg(montado.repository.bytesEnviados!)!;
+      expect(enviada.width, 512);
+      expect(enviada.height, 512);
+      expect(montado.repository.filenameEnviado, 'avatar.jpg');
+      expect(find.byType(CropImagemPage), findsNothing);
+      expect(find.byIcon(Icons.edit), findsOneWidget);
     } finally {
       debugNetworkImageHttpClientProvider = null;
     }

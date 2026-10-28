@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
@@ -55,8 +54,10 @@ class _FakePerfilRepository implements PerfilRepository {
 
   final Set<String> usernamesIndisponiveis;
   final bool falharAoEditar;
+  bool falharAoEnviarImagem = false;
   int chamadasVerificarUsername = 0;
   Map<String, dynamic>? ultimosCamposEditados;
+  ({String filename, String mimeType})? ultimoUpload;
 
   @override
   Future<PerfilCompleto> buscarPerfil(
@@ -75,16 +76,22 @@ class _FakePerfilRepository implements PerfilRepository {
     Uint8List bytes, {
     required String filename,
     required String mimeType,
-  }) async =>
-      'https://x.com/foto-nova.png';
+  }) async {
+    if (falharAoEnviarImagem) throw const NetworkException();
+    ultimoUpload = (filename: filename, mimeType: mimeType);
+    return 'https://x.com/foto-nova.png';
+  }
 
   @override
   Future<String> atualizarBanner(
     Uint8List bytes, {
     required String filename,
     required String mimeType,
-  }) async =>
-      'https://x.com/capa-nova.png';
+  }) async {
+    if (falharAoEnviarImagem) throw const NetworkException();
+    ultimoUpload = (filename: filename, mimeType: mimeType);
+    return 'https://x.com/capa-nova.png';
+  }
 
   @override
   Future<Usuario> editarPerfil(Map<String, dynamic> camposAlterados) async {
@@ -126,40 +133,11 @@ class _FakePerfilRepository implements PerfilRepository {
   }) async => throw UnimplementedError();
 }
 
-/// Fake do canal de plataforma do image_picker, devolvendo um caminho de
-/// arquivo configurável (ou nenhum, simulando cancelamento).
-class _FakeImagePickerChannel {
-  _FakeImagePickerChannel() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(_channel, _handle);
-  }
-
-  static const _channel = MethodChannel('plugins.flutter.io/image_picker');
-
-  String? proximoCaminho;
-
-  Future<dynamic> _handle(MethodCall call) async {
-    if (call.method == 'pickImage') return proximoCaminho;
-    return null;
-  }
-}
-
-Future<String> _criarArquivoTemporario({
-  required String extensao,
-  int tamanhoBytes = 100,
-}) async {
-  final dir = await Directory.systemTemp.createTemp('onboarding_test_');
-  final arquivo = File('${dir.path}/imagem.$extensao');
-  await arquivo.writeAsBytes(List.filled(tamanhoBytes, 0));
-  return arquivo.path;
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late AuthProvider authProvider;
   late _FakePerfilRepository perfilRepository;
-  late _FakeImagePickerChannel imagePickerChannel;
 
   Future<OnboardingProvider> montarProvider({
     String nomeInicial = 'Ana',
@@ -180,10 +158,6 @@ void main() {
       authProvider: authProvider,
     );
   }
-
-  setUp(() {
-    imagePickerChannel = _FakeImagePickerChannel();
-  });
 
   group('OnboardingProvider - estado inicial', () {
     test('etapa inicial e boasVindas e nome hidrata do usuario logado', () async {
@@ -328,29 +302,40 @@ void main() {
   });
 
   group('OnboardingProvider - upload de imagens', () {
-    test('escolherEEnviarFoto em sucesso preenche a url e desliga o loading', () async {
-      final provider = await montarProvider();
-      imagePickerChannel.proximoCaminho = await _criarArquivoTemporario(
-        extensao: 'jpg',
-      );
+    final bytesCortados = Uint8List.fromList([0xFF, 0xD8, 0xFF]);
 
-      final ok = await provider.escolherEEnviarFoto();
+    test('enviarFotoCortada em sucesso preenche a url e desliga o loading', () async {
+      final provider = await montarProvider();
+
+      final ok = await provider.enviarFotoCortada(bytesCortados);
 
       expect(ok, isTrue);
       expect(provider.fotoPerfilUrl, 'https://x.com/foto-nova.png');
       expect(provider.uploadingFoto, isFalse);
+      expect(perfilRepository.ultimoUpload?.filename, 'avatar.jpg');
+      expect(perfilRepository.ultimoUpload?.mimeType, 'image/jpeg');
     });
 
-    test('escolherEEnviarFoto em erro de formato preenche errorMessage', () async {
+    test('enviarBannerCortado em sucesso preenche a url da capa', () async {
       final provider = await montarProvider();
-      imagePickerChannel.proximoCaminho = await _criarArquivoTemporario(
-        extensao: 'txt',
-      );
 
-      final ok = await provider.escolherEEnviarFoto();
+      final ok = await provider.enviarBannerCortado(bytesCortados);
+
+      expect(ok, isTrue);
+      expect(provider.fotoCapaUrl, 'https://x.com/capa-nova.png');
+      expect(provider.uploadingCapa, isFalse);
+      expect(perfilRepository.ultimoUpload?.filename, 'banner.jpg');
+      expect(perfilRepository.ultimoUpload?.mimeType, 'image/jpeg');
+    });
+
+    test('enviarFotoCortada em erro de upload preenche errorMessage', () async {
+      final provider = await montarProvider();
+      perfilRepository.falharAoEnviarImagem = true;
+
+      final ok = await provider.enviarFotoCortada(bytesCortados);
 
       expect(ok, isFalse);
-      expect(provider.errorMessage, isNotNull);
+      expect(provider.errorMessage, const NetworkException().message);
       expect(provider.fotoPerfilUrl, isNull);
       expect(provider.uploadingFoto, isFalse);
     });

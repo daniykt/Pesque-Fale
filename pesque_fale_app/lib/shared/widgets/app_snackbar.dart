@@ -32,7 +32,14 @@ class AppSnackbar {
     );
   }
 
-  static void showWarning(BuildContext context, String message) {
+  /// [acaoLabel] e [onAcao] juntos adicionam um botão de ação (ex: "Abrir"
+  /// configurações) ao lado do X.
+  static void showWarning(
+    BuildContext context,
+    String message, {
+    String? acaoLabel,
+    VoidCallback? onAcao,
+  }) {
     final colors = Theme.of(context).extension<AppColors>()!;
     _mostrar(
       context,
@@ -40,6 +47,13 @@ class AppSnackbar {
       fundo: colors.warning,
       texto: colors.onWarning,
       duracao: const Duration(seconds: 4),
+      acao: acaoLabel != null && onAcao != null
+          ? SnackBarAction(
+              label: acaoLabel,
+              textColor: colors.onWarning,
+              onPressed: onAcao,
+            )
+          : null,
     );
   }
 
@@ -60,6 +74,7 @@ class AppSnackbar {
     required Color fundo,
     required Color texto,
     required Duration duracao,
+    SnackBarAction? acao,
   }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -70,6 +85,7 @@ class AppSnackbar {
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: AppRadius.smRadius),
           duration: duracao,
+          action: acao,
           persist: false,
           showCloseIcon: true,
           closeIconColor: texto,

@@ -1,15 +1,15 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../shared/widgets/app_snackbar.dart';
+import '../../../../../shared/widgets/crop_imagem/crop_imagem_helper.dart';
+import '../../../../../shared/widgets/crop_imagem/modo_crop.dart';
 import '../../../../auth/providers/auth_provider.dart';
 import '../../../providers/editar_perfil_provider.dart';
 
 /// Preview da foto de perfil com borda branca de 3px + elevação sutil.
-/// Toque abre o seletor de imagem (upload real só acontece ao salvar).
+/// Toque abre câmera/galeria + crop circular (upload real só acontece ao
+/// salvar).
 class CampoFoto extends StatelessWidget {
   const CampoFoto({super.key, this.tamanho = 88});
 
@@ -17,10 +17,11 @@ class CampoFoto extends StatelessWidget {
 
   Future<void> _escolher(BuildContext context) async {
     final provider = context.read<EditarPerfilProvider>();
-    final ok = await provider.escolherFoto();
-    if (!ok && provider.errorMessage != null && context.mounted) {
-      AppSnackbar.showError(context, provider.errorMessage!);
-    }
+    final bytes = await CropImagemHelper.escolherECortar(
+      context,
+      modo: ModoCrop.avatar,
+    );
+    if (bytes != null) provider.setFotoCortada(bytes);
   }
 
   @override
@@ -29,7 +30,7 @@ class CampoFoto extends StatelessWidget {
     final usuario = context.watch<AuthProvider>().usuario;
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    final novaFoto = provider.novaFotoArquivo;
+    final novaFoto = provider.novaFotoBytes;
     final fotoRemota = usuario?.fotoPerfil;
 
     return GestureDetector(
@@ -48,18 +49,7 @@ class CampoFoto extends StatelessWidget {
               width: tamanho,
               height: tamanho,
               child: novaFoto != null
-                  ? FutureBuilder<Uint8List>(
-                      future: provider.lerBytesNovaFoto(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Image.memory(
-                            snapshot.data!,
-                            fit: BoxFit.cover,
-                          );
-                        }
-                        return Container(color: colors.primary);
-                      },
-                    )
+                  ? Image.memory(novaFoto, fit: BoxFit.cover)
                   : (fotoRemota != null && fotoRemota.isNotEmpty)
                   ? Image.network(fotoRemota, fit: BoxFit.cover)
                   : Center(

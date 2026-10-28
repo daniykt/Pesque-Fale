@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>O Pesque &amp; Fale usa a câmera pra você tirar sua foto de perfil ou banner</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Precisamos acessar suas fotos para atualizar sua foto de perfil e banner.</string>
 	<key>NSMicrophoneUsageDescription</key>

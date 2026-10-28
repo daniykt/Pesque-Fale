@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 
-import '../../../shared/utils/upload_imagem_validator.dart';
 import '../../auth/domain/usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/perfil_exceptions.dart';
@@ -30,8 +28,15 @@ class EditarPerfilProvider extends ChangeNotifier {
   String bio = '';
   String localizacao = '';
   String username = '';
-  XFile? novaFotoArquivo;
-  XFile? novoBannerArquivo;
+
+  /// Bytes JPEG já recortados pela CropImagemPage — só sobem no [salvar].
+  Uint8List? novaFotoBytes;
+  Uint8List? novoBannerBytes;
+
+  // O crop sempre gera JPEG, então nome e tipo são fixos.
+  static const _filenameFoto = 'avatar.jpg';
+  static const _filenameBanner = 'banner.jpg';
+  static const _mimeTypeCortada = 'image/jpeg';
 
   // ── Estado original (dirty tracking e reset) ──
   late String _nomeOriginal;
@@ -58,8 +63,8 @@ class EditarPerfilProvider extends ChangeNotifier {
       bio != _bioOriginal ||
       localizacao != _localizacaoOriginal ||
       username != _usernameOriginal ||
-      novaFotoArquivo != null ||
-      novoBannerArquivo != null;
+      novaFotoBytes != null ||
+      novoBannerBytes != null;
 
   bool get usernameAlterado => username != _usernameOriginal;
 
@@ -155,45 +160,15 @@ class EditarPerfilProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> escolherFoto() => _escolherImagem(banner: false);
-
-  Future<bool> escolherBanner() => _escolherImagem(banner: true);
-
-  Future<bool> _escolherImagem({required bool banner}) async {
-    final XFile? arquivo = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
-    );
-    if (arquivo == null) return false;
-
-    if (!UploadImagemValidator.formatoValido(arquivo)) {
-      _errorMessage = const FormatoInvalidoException().message;
-      notifyListeners();
-      return false;
-    }
-
-    if (!await UploadImagemValidator.tamanhoValido(arquivo)) {
-      _errorMessage = const FotoMuitoGrandeException().message;
-      notifyListeners();
-      return false;
-    }
-
-    if (banner) {
-      novoBannerArquivo = arquivo;
-    } else {
-      novaFotoArquivo = arquivo;
-    }
+  void setFotoCortada(Uint8List bytes) {
+    novaFotoBytes = bytes;
     notifyListeners();
-    return true;
   }
 
-  /// Lê os bytes da nova foto escolhida (para renderizar preview).
-  Future<Uint8List> lerBytesNovaFoto() async =>
-      Uint8List.fromList(await novaFotoArquivo!.readAsBytes());
-
-  /// Lê os bytes do novo banner escolhido (para renderizar preview).
-  Future<Uint8List> lerBytesNovoBanner() async =>
-      Uint8List.fromList(await novoBannerArquivo!.readAsBytes());
+  void setBannerCortado(Uint8List bytes) {
+    novoBannerBytes = bytes;
+    notifyListeners();
+  }
 
   Future<bool> salvar() async {
     if (!podeSalvar) return false;
@@ -212,20 +187,18 @@ class EditarPerfilProvider extends ChangeNotifier {
       }
       if (username != _usernameOriginal) campos['username'] = username;
 
-      if (novaFotoArquivo != null) {
-        final bytes = await novaFotoArquivo!.readAsBytes();
+      if (novaFotoBytes != null) {
         campos['fotoPerfil'] = await repository.atualizarFoto(
-          Uint8List.fromList(bytes),
-          filename: novaFotoArquivo!.name,
-          mimeType: novaFotoArquivo!.mimeType ?? 'image/jpeg',
+          novaFotoBytes!,
+          filename: _filenameFoto,
+          mimeType: _mimeTypeCortada,
         );
       }
-      if (novoBannerArquivo != null) {
-        final bytes = await novoBannerArquivo!.readAsBytes();
+      if (novoBannerBytes != null) {
         campos['banner'] = await repository.atualizarBanner(
-          Uint8List.fromList(bytes),
-          filename: novoBannerArquivo!.name,
-          mimeType: novoBannerArquivo!.mimeType ?? 'image/jpeg',
+          novoBannerBytes!,
+          filename: _filenameBanner,
+          mimeType: _mimeTypeCortada,
         );
       }
 
@@ -265,8 +238,8 @@ class EditarPerfilProvider extends ChangeNotifier {
     _usernameState = _usernameOriginal.isEmpty
         ? UsernameCheckState.idle
         : UsernameCheckState.atual;
-    novaFotoArquivo = null;
-    novoBannerArquivo = null;
+    novaFotoBytes = null;
+    novoBannerBytes = null;
   }
 
   @override
