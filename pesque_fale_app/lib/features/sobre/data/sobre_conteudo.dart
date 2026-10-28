@@ -6,12 +6,16 @@ class MarcoCronograma {
     required this.titulo,
     required this.descricao,
     required this.status,
+    this.selo,
   });
 
   final String data;
   final String titulo;
   final String descricao;
   final StatusMarco status;
+
+  /// Aviso de conclusão exibido abaixo da descrição (ex.: release publicada).
+  final String? selo;
 }
 
 const List<MarcoCronograma> marcosCronograma = [
@@ -104,6 +108,7 @@ const List<MarcoCronograma> marcosCronograma = [
     titulo: 'v1.0.0',
     descricao: 'Release pública da primeira versão estável.',
     status: StatusMarco.feito,
+    selo: 'Publicada e no ar',
   ),
 ];
 

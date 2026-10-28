@@ -155,24 +155,53 @@ class _SobreTimelineItemState extends State<SobreTimelineItem>
           ),
           if (_atual) ...[
             const SizedBox(height: AppSpacing.xs),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xs,
-                vertical: AppSpacing.xxs,
-              ),
-              decoration: BoxDecoration(
-                color: colors.warning.withValues(alpha: 0.2),
-                borderRadius: AppRadius.pillRadius,
-              ),
-              child: Text(
-                'Em andamento',
-                style: textTheme.labelSmall?.copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            _pill(textTheme, colors, 'Em andamento', colors.warning),
+          ],
+          if (marco.selo case final selo?) ...[
+            const SizedBox(height: AppSpacing.xs),
+            _pill(
+              textTheme,
+              colors,
+              selo,
+              colors.success,
+              icone: Icons.check_circle_rounded,
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _pill(
+    TextTheme textTheme,
+    AppColors colors,
+    String texto,
+    Color cor, {
+    IconData? icone,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.2),
+        borderRadius: AppRadius.pillRadius,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icone != null) ...[
+            Icon(icone, size: 14, color: cor),
+            const SizedBox(width: AppSpacing.xxs),
+          ],
+          Text(
+            texto,
+            style: textTheme.labelSmall?.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
