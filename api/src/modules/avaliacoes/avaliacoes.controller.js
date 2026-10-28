@@ -1,5 +1,11 @@
 const pool = require('../../config/database');
 
+// Dados de quem avaliou — mesmas colunas em listar, criar, buscarMinha e
+// atualizar. Sem elas, a própria avaliação voltava sem nome e sem foto.
+const COLUNAS_AUTOR = `u.nome AS usuario_nome,
+         u.username AS usuario_username,
+         u.foto_perfil AS usuario_foto`;
+
 async function criar(req, res) {
   const { nota, comentario } = req.body;
   const usuarioId = req.usuario.id;
@@ -23,9 +29,14 @@ async function criar(req, res) {
     }
 
     const result = await pool.query(
-      `INSERT INTO avaliacoes (usuario_id, ponto_id, nota, comentario)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+      `WITH nova AS (
+         INSERT INTO avaliacoes (usuario_id, ponto_id, nota, comentario)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *
+       )
+       SELECT nova.*, ${COLUNAS_AUTOR}
+       FROM nova
+       JOIN usuarios u ON u.id = nova.usuario_id`,
       [usuarioId, pontoId, nota, comentario ?? null]
     );
 
@@ -56,7 +67,7 @@ async function listar(req, res) {
 
     const [result, total] = await Promise.all([
       pool.query(
-        `SELECT a.*, u.nome AS usuario_nome, u.username AS usuario_username, u.foto_perfil AS usuario_foto
+        `SELECT a.*, ${COLUNAS_AUTOR}
          FROM avaliacoes a
          JOIN usuarios u ON u.id = a.usuario_id
          WHERE a.ponto_id = $1
@@ -83,7 +94,10 @@ async function buscarMinha(req, res) {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM avaliacoes WHERE ponto_id = $1 AND usuario_id = $2',
+      `SELECT a.*, ${COLUNAS_AUTOR}
+       FROM avaliacoes a
+       JOIN usuarios u ON u.id = a.usuario_id
+       WHERE a.ponto_id = $1 AND a.usuario_id = $2`,
       [pontoId, usuarioId]
     );
 
@@ -136,9 +150,14 @@ async function atualizar(req, res) {
     values.push(pontoId, usuarioId);
 
     const result = await pool.query(
-      `UPDATE avaliacoes SET ${fields.join(', ')}
-       WHERE ponto_id = $${i++} AND usuario_id = $${i++}
-       RETURNING *`,
+      `WITH atualizada AS (
+         UPDATE avaliacoes SET ${fields.join(', ')}
+         WHERE ponto_id = $${i++} AND usuario_id = $${i++}
+         RETURNING *
+       )
+       SELECT atualizada.*, ${COLUNAS_AUTOR}
+       FROM atualizada
+       JOIN usuarios u ON u.id = atualizada.usuario_id`,
       values
     );
 

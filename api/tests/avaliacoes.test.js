@@ -100,6 +100,29 @@ describe('POST /v1/pontos/:pontoId/avaliacoes', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('201 devolve nome e foto de quem avaliou', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: 'ponto-1' }] })
+      .mockResolvedValueOnce({
+        rows: [{
+          ...avaliacaoMock,
+          usuario_nome: 'Fulano',
+          usuario_username: 'fulano',
+          usuario_foto: 'https://res.cloudinary.com/demo/image/upload/foto.jpg',
+        }],
+      });
+
+    const res = await request(app)
+      .post('/v1/pontos/ponto-1/avaliacoes')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ nota: 4.5 });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.usuarioNome).toBe('Fulano');
+    expect(res.body.data.usuarioFoto).toBe('https://res.cloudinary.com/demo/image/upload/foto.jpg');
+    expect(pool.query.mock.calls[1][0]).toMatch(/JOIN usuarios u ON u\.id = nova\.usuario_id/);
+  });
 });
 
 describe('GET /v1/pontos/:pontoId/avaliacoes', () => {
@@ -125,6 +148,41 @@ describe('GET /v1/pontos/:pontoId/avaliacoes', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('PONTO_NAO_ENCONTRADO');
+  });
+});
+
+describe('GET /v1/pontos/:pontoId/avaliacoes/minha', () => {
+  beforeEach(() => pool.query.mockReset());
+
+  it('200 devolve a minha avaliação com nome e foto', async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [{
+        ...avaliacaoMock,
+        usuario_nome: 'Fulano',
+        usuario_username: 'fulano',
+        usuario_foto: 'https://res.cloudinary.com/demo/image/upload/foto.jpg',
+      }],
+    });
+
+    const res = await request(app)
+      .get('/v1/pontos/ponto-1/avaliacoes/minha')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.usuarioNome).toBe('Fulano');
+    expect(res.body.data.usuarioFoto).toBe('https://res.cloudinary.com/demo/image/upload/foto.jpg');
+    expect(pool.query.mock.calls[0][0]).toMatch(/JOIN usuarios u ON u\.id = a\.usuario_id/);
+  });
+
+  it('404 quando ainda não avaliou', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .get('/v1/pontos/ponto-1/avaliacoes/minha')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('AVALIACAO_NAO_ENCONTRADA');
   });
 });
 
@@ -155,6 +213,29 @@ describe('PATCH /v1/pontos/:pontoId/avaliacoes/minha', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('AVALIACAO_NAO_ENCONTRADA');
+  });
+
+  it('200 devolve nome e foto de quem avaliou', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: 'aval-1' }] })
+      .mockResolvedValueOnce({
+        rows: [{
+          ...avaliacaoMock,
+          nota: 5.0,
+          usuario_nome: 'Fulano',
+          usuario_username: 'fulano',
+          usuario_foto: 'https://res.cloudinary.com/demo/image/upload/foto.jpg',
+        }],
+      });
+
+    const res = await request(app)
+      .patch('/v1/pontos/ponto-1/avaliacoes/minha')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ nota: 5.0 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.usuarioFoto).toBe('https://res.cloudinary.com/demo/image/upload/foto.jpg');
+    expect(pool.query.mock.calls[1][0]).toMatch(/JOIN usuarios u ON u\.id = atualizada\.usuario_id/);
   });
 });
 
