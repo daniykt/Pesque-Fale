@@ -83,10 +83,24 @@ const List<MarcoCronograma> marcosCronograma = [
     titulo: 'Refinamento pré-release',
     descricao:
         'Reorganização dos CTAs do perfil, nova tela Sobre Nós, animação de login e ajustes finais.',
+    status: StatusMarco.feito,
+  ),
+  MarcoCronograma(
+    data: 'Fase 9 · out 2026',
+    titulo: 'Ajustes pós-deploy pré-release',
+    descricao:
+        'Sprint rumo à v1.0.0 pré-COPEX. Seleção de ponto em bottom sheet, crop interativo de foto e banner, badge de equipe e Pirá no tour guiado.',
     status: StatusMarco.atual,
   ),
   MarcoCronograma(
-    data: '17 out · 2026',
+    data: 'nov · 2026',
+    titulo: 'Apresentação na COPEX',
+    descricao:
+        'Primeira demo pública do app na feira de projetos da FATEC Matão.',
+    status: StatusMarco.futuro,
+  ),
+  MarcoCronograma(
+    data: 'pós-COPEX · 2026',
     titulo: 'v1.0.0',
     descricao: 'Release pública da primeira versão estável.',
     status: StatusMarco.futuro,
