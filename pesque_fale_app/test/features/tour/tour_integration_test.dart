@@ -79,7 +79,7 @@ void main() {
   });
 
   test(
-    'usuario novo: onboarding dispara o tour, percorre os 7 passos, '
+    'usuario novo: onboarding dispara o tour, percorre os 8 passos, '
     'conclui e marca como visto',
     () async {
       final tourProvider = criarProvider();
