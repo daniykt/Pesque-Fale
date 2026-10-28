@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../../auth/domain/usuario.dart';
 
 class InfoUsuario extends StatefulWidget {
@@ -35,7 +36,13 @@ class _InfoUsuarioState extends State<InfoUsuario> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(usuario.nome, style: Theme.of(context).textTheme.titleLarge),
+        BadgeNomeUsuario(
+          userId: usuario.id,
+          nome: Text(
+            usuario.nome,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
         if (usuario.username != null && usuario.username!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xxs),

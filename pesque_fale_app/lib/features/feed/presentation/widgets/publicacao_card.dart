@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/cloudinary_url.dart';
+import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../domain/publicacao.dart';
 import 'acoes_bar.dart';
 import 'comentarios_sheet.dart';
@@ -59,12 +60,15 @@ class PublicacaoCard extends StatelessWidget {
                           '/perfil',
                           arguments: p.autorId,
                         ),
-                        child: Text(
-                          p.autorNome,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: colors.primaryAccent,
+                        child: BadgeNomeUsuario(
+                          userId: p.autorId,
+                          nome: Text(
+                            p.autorNome,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: colors.primaryAccent,
+                            ),
                           ),
                         ),
                       ),
