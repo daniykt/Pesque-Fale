@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../domain/usuario_resumo.dart';
 
 class UsuarioCard extends StatelessWidget {
@@ -57,15 +58,18 @@ class UsuarioCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      usuario.nome,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: colors.primaryAccent,
+                    BadgeNomeUsuario(
+                      userId: usuario.id,
+                      nome: Text(
+                        usuario.nome,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: colors.primaryAccent,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       '@${usuario.username}',
