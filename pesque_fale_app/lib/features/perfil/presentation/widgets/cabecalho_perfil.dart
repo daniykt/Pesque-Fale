@@ -1,15 +1,12 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../shared/utils/upload_imagem_validator.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../../shared/widgets/crop_imagem/crop_imagem_helper.dart';
+import '../../../../shared/widgets/crop_imagem/modo_crop.dart';
 import '../../../auth/domain/usuario.dart';
-import '../../data/perfil_exceptions.dart';
 import '../../providers/perfil_provider.dart';
 import 'info_usuario.dart';
 
@@ -35,23 +32,12 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
   bool _enviandoBanner = false;
 
   Future<void> _selecionarEEnviar({required bool banner}) async {
-    final XFile? arquivo = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
+    final modo = banner ? ModoCrop.banner : ModoCrop.avatar;
+    final bytes = await CropImagemHelper.escolherECortar(
+      context,
+      modo: modo,
     );
-    if (arquivo == null || !mounted) return;
-
-    if (!UploadImagemValidator.formatoValido(arquivo)) {
-      AppSnackbar.showError(context, const FormatoInvalidoException().message);
-      return;
-    }
-
-    final tamanhoOk = await UploadImagemValidator.tamanhoValido(arquivo);
-    if (!mounted) return;
-    if (!tamanhoOk) {
-      AppSnackbar.showError(context, const FotoMuitoGrandeException().message);
-      return;
-    }
+    if (bytes == null || !mounted) return;
 
     setState(() {
       if (banner) {
@@ -62,18 +48,17 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
     });
 
     final provider = context.read<PerfilProvider>();
-    final bytes = await arquivo.readAsBytes();
-    final mimeType = arquivo.mimeType ?? 'image/jpeg';
+    final filename = banner ? 'banner.jpg' : 'avatar.jpg';
     final ok = banner
         ? await provider.atualizarBanner(
-            Uint8List.fromList(bytes),
-            filename: arquivo.name,
-            mimeType: mimeType,
+            bytes,
+            filename: filename,
+            mimeType: 'image/jpeg',
           )
         : await provider.atualizarFoto(
-            Uint8List.fromList(bytes),
-            filename: arquivo.name,
-            mimeType: mimeType,
+            bytes,
+            filename: filename,
+            mimeType: 'image/jpeg',
           );
 
     if (!mounted) return;
