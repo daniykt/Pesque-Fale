@@ -4,7 +4,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../domain/tour_passo.dart';
 import '../domain/tour_status_storage.dart';
 
-/// Controla o tour guiado global (7 passos), disparado automaticamente após
+/// Controla o tour guiado global (8 passos), disparado automaticamente após
 /// o onboarding ou manualmente via Configurações.
 class TourProvider extends ChangeNotifier {
   TourProvider({required this.storage, required this.authProvider});
@@ -67,6 +67,16 @@ class TourProvider extends ChangeNotifier {
           'Use o botão "Editar perfil" para mudar suas informações e o botão '
           '"Ajustes" para o Modo Escuro, as notificações e sair da conta.',
       abaAlvo: 4,
+    ),
+    TourPasso(
+      index: 7,
+      titulo: 'Pira, sua assistente',
+      descricao:
+          'A Pira é a assistente do Pesque & Fale. Toque no botão '
+          '"Ajuda" aqui embaixo pra tirar dúvidas sobre pescaria, '
+          'pedir dicas de iscas e locais, ou aprender a usar o app. '
+          'Ela está disponível em todas as telas.',
+      abaAlvo: 0,
     ),
   ];
 
