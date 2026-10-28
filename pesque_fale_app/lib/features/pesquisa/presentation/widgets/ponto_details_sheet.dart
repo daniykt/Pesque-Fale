@@ -135,11 +135,7 @@ class _ConteudoState extends State<_Conteudo> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        '/pontos',
-                        arguments: ponto.id,
-                      ),
+                      onPressed: _verDetalhes,
                       child: const Text('Ver detalhes'),
                     ),
                   ),
@@ -170,6 +166,20 @@ class _ConteudoState extends State<_Conteudo> {
         ),
       ],
     );
+  }
+
+  // Fecha a folha antes de abrir a tela do ponto e recarrega os locais na
+  // volta: assim a nota e o total aparecem atualizados no mapa e na lista.
+  Future<void> _verDetalhes() async {
+    final locaisProvider = Provider.of<PesquisaLocaisProvider>(
+      widget.rootContext,
+      listen: false,
+    );
+    final navigator = Navigator.of(widget.rootContext);
+    Navigator.of(context).pop();
+    await navigator.pushNamed('/pontos', arguments: widget.ponto.id);
+    if (!widget.rootContext.mounted) return;
+    locaisProvider.recarregar();
   }
 
   Future<void> _avaliar() async {

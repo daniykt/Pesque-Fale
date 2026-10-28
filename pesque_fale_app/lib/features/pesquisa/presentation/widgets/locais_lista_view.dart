@@ -16,7 +16,15 @@ class LocaisListaView extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final provider = context.watch<PesquisaLocaisProvider>();
 
-    switch (provider.status) {
+    // Recarregando com pontos já na tela (ex.: voltando da tela do ponto):
+    // mantém a lista, como o mapa já faz, em vez de piscar o skeleton.
+    final status =
+        provider.status == PesquisaLocaisStatus.carregando &&
+            provider.pontos.isNotEmpty
+        ? PesquisaLocaisStatus.sucesso
+        : provider.status;
+
+    switch (status) {
       case PesquisaLocaisStatus.idle:
       case PesquisaLocaisStatus.carregando:
         return ListView.separated(
@@ -61,8 +69,15 @@ class LocaisListaView extends StatelessWidget {
             final ponto = provider.pontos[index];
             return PontoCard(
               ponto: ponto,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/pontos', arguments: ponto.id),
+              onTap: () async {
+                await Navigator.pushNamed(
+                  context,
+                  '/pontos',
+                  arguments: ponto.id,
+                );
+                if (!context.mounted) return;
+                provider.recarregar();
+              },
             );
           },
         );
