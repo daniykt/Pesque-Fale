@@ -9,7 +9,14 @@ const options = {
       description: 'API REST do aplicativo Pesque & Fale — Fases 0 a 4',
     },
     servers: [
-      { url: 'http://localhost:3333/v1', description: 'Desenvolvimento' },
+      {
+        url: 'https://pesque-fale-api.onrender.com/v1',
+        description: 'Produção',
+      },
+      {
+        url: 'http://localhost:3333/v1',
+        description: 'Desenvolvimento',
+      },
     ],
     components: {
       securitySchemes: {
