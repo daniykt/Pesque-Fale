@@ -118,4 +118,31 @@ void main() {
     expect(find.text('Primeira'), findsNothing);
     expect(find.text('Segunda'), findsOneWidget);
   });
+
+  testWidgets('aviso com acao mostra o botao e chama o callback', (
+    tester,
+  ) async {
+    var acionou = 0;
+    await montar(
+      tester,
+      (c) => AppSnackbar.showWarning(
+        c,
+        'Mensagem',
+        acaoLabel: 'Abrir',
+        onAcao: () => acionou++,
+      ),
+    );
+
+    await tester.tap(find.widgetWithText(SnackBarAction, 'Abrir'));
+    await tester.pumpAndSettle();
+
+    expect(acionou, 1);
+    expect(find.text('Mensagem'), findsNothing);
+  });
+
+  testWidgets('aviso sem acao nao mostra botao de acao', (tester) async {
+    await montar(tester, (c) => AppSnackbar.showWarning(c, 'Mensagem'));
+
+    expect(find.byType(SnackBarAction), findsNothing);
+  });
 }
