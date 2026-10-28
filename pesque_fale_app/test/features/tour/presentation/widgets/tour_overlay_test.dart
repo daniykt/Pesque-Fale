@@ -112,7 +112,7 @@ void main() {
 
     expect(find.text('Tour guiado'), findsOneWidget);
     expect(find.text('Bem-vindo!'), findsOneWidget);
-    expect(find.text('Passo 1 de 7'), findsOneWidget);
+    expect(find.text('Passo 1 de 8'), findsOneWidget);
   });
 
   testWidgets('tocar em Pular encerra o tour e some o overlay', (
@@ -142,6 +142,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Página Inicial'), findsOneWidget);
-    expect(find.text('Passo 2 de 7'), findsOneWidget);
+    expect(find.text('Passo 2 de 8'), findsOneWidget);
   });
 }

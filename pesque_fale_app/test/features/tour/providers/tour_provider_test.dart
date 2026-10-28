@@ -85,8 +85,15 @@ void main() {
     tourProvider = TourProvider(storage: storage, authProvider: authProvider);
   });
 
-  test('roteiro tem 7 passos', () {
-    expect(TourProvider.roteiro, hasLength(7));
+  test('roteiro tem 8 passos', () {
+    expect(TourProvider.roteiro, hasLength(8));
+  });
+
+  test('ultimo passo e sobre a Pira', () {
+    final ultimo = TourProvider.roteiro[7];
+
+    expect(ultimo.titulo, contains('Pira'));
+    expect(ultimo.abaAlvo, 0);
   });
 
   test('passoAtual e passoAtualIndex sao nulos antes de iniciar', () {
@@ -133,6 +140,19 @@ void main() {
 
     expect(tourProvider.passoAtualIndex, isNull);
     expect(await storage.jaViu('user-1'), isTrue);
+  });
+
+  test('avancar a partir do ultimo passo encerra o tour', () async {
+    await tourProvider.iniciarSePendente('user-1');
+    for (var i = 1; i < TourProvider.roteiro.length; i++) {
+      tourProvider.avancar();
+    }
+    expect(tourProvider.passoAtualIndex, 7);
+
+    tourProvider.avancar();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(tourProvider.passoAtualIndex, isNull);
   });
 
   test('voltar retrocede um passo e nao passa do passo 0', () async {

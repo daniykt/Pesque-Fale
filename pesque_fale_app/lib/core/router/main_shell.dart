@@ -66,6 +66,9 @@ class MainShellState extends State<MainShell> {
     final chatCount = context.watch<BadgeMensagensProvider>().naoLidas;
 
     final passoDoTour = context.watch<TourProvider>().passoAtual;
+    final mostrarFabAjuda =
+        passoDoTour == null ||
+        passoDoTour.index == TourProvider.roteiro.length - 1;
     if (passoDoTour != null && passoDoTour.abaAlvo != _currentIndex) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _currentIndex != passoDoTour.abaAlvo) {
@@ -91,7 +94,7 @@ class MainShellState extends State<MainShell> {
         highlightedIndex: passoDoTour?.abaAlvo,
         onDestinationSelected: _trocarAba,
       ),
-      floatingActionButton: passoDoTour == null
+      floatingActionButton: mostrarFabAjuda
           ? const BotaoAjudaAssistente()
           : null,
       floatingActionButtonLocation: naTelaDePesquisa
