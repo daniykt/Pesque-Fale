@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/cloudinary_url.dart';
 import '../../../../core/utils/tempo_relativo.dart';
+import '../../../../shared/widgets/badge_equipe/badge_equipe.dart';
+import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../domain/comentario.dart';
 
 class ComentarioItem extends StatelessWidget {
@@ -41,13 +43,17 @@ class ComentarioItem extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    child: Text(
-                      comentario.autorNome,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    child: BadgeNomeUsuario(
+                      userId: comentario.autorId,
+                      tamanho: BadgeTamanho.sm,
+                      nome: Text(
+                        comentario.autorNome,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (comentario.autorUsername != null) ...[
