@@ -119,6 +119,7 @@ O schema fica versionado em `api/db/migrations/`, em arquivos numerados. Quem ap
 | `004_notificacoes_de_volta.sql` | Adiciona a coluna `de_volta` em notificações |
 | `005_limpar_notificacoes_mensagem.sql` | Apaga as notificações antigas do tipo `mensagem` (o chat passou a ter aba e badge próprios) |
 | `006_seed_pontos.sql` | Cria a conta oficial "Pesque & Fale" e 10 pontos de pesca da região de Matão/SP (5 pesqueiros e 5 em rios); rodar de novo não duplica |
+| `007_fotos_tags_pontos.sql` | Preenche a foto de capa (7 pontos, fotos provisórias até a 008) e as tags (10 pontos) dos pontos oficiais da 006 |
 
 **Banco novo (primeira vez)** — de dentro da pasta `api`, com o `.env` já configurado:
 
