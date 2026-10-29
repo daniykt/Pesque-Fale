@@ -17,8 +17,8 @@ const semComentarios = (texto) =>
 const comandos = semComentarios(sql);
 
 const CONTA_OFICIAL = '69397c7f-3249-451c-98b4-6fb7dda07e3e';
+const TARUMA = '8c04c221-f1cb-479a-8db6-65dcf65c030a';
 const SEM_FOTO = [
-  '8c04c221-f1cb-479a-8db6-65dcf65c030a', // Tarumã
   'aa8c8704-0290-474c-855e-f486b5f64009', // Represa de Ibitinga
   'fcaf3bb0-5313-437e-8691-aff73a0b247e', // Represa de Bariri
 ];
@@ -45,22 +45,30 @@ const updates = comandos
   }));
 
 describe('migration 007_fotos_tags_pontos.sql', () => {
-  it('tem um UPDATE para cada um dos 10 pontos da 006', () => {
+  it('remove o Tarumã com um único DELETE, filtrando pelo UUID e pela conta oficial', () => {
+    const deletes = comandos.match(/DELETE FROM pontos_de_pesca[^;]*;/g) || [];
+    expect(deletes).toHaveLength(1);
+    expect(deletes[0]).toContain(`id = '${TARUMA}'`);
+    expect(deletes[0]).toContain(`criado_por = '${CONTA_OFICIAL}'`);
+  });
+
+  it('tem um UPDATE para cada um dos 9 pontos da 006 que continuam', () => {
     expect(idsDa006).toHaveLength(10);
-    expect(updates).toHaveLength(10);
-    expect(updates.map((u) => u.id).sort()).toEqual([...idsDa006].sort());
+    const mantidos = idsDa006.filter((id) => id !== TARUMA);
+    expect(updates).toHaveLength(9);
+    expect(updates.map((u) => u.id).sort()).toEqual([...mantidos].sort());
   });
 
   it('todo UPDATE filtra pela conta oficial', () => {
     updates.forEach((u) => expect(u.criadoPor).toBe(CONTA_OFICIAL));
   });
 
-  it('7 pontos com foto do Cloudinary de produção; Tarumã, Ibitinga e Bariri sem foto', () => {
+  it('7 pontos com foto do Cloudinary de produção; Ibitinga e Bariri sem foto', () => {
     const comFoto = updates.filter((u) => u.fotoCapa);
     expect(comFoto).toHaveLength(7);
-    comFoto.forEach((u) =>
-      expect(u.fotoCapa).toMatch(/^https:\/\/res\.cloudinary\.com\/luvfmoi2\/image\/upload\//)
-    );
+    comFoto.forEach((u) => {
+      expect(u.fotoCapa).toMatch(/^https:\/\/res\.cloudinary\.com\/luvfmoi2\/image\/upload\/v\d+\/[a-z0-9_-]+\.jpg$/);
+    });
     SEM_FOTO.forEach((id) => {
       expect(updates.find((u) => u.id === id).fotoCapa).toBeUndefined();
     });
@@ -78,8 +86,8 @@ describe('migration 007_fotos_tags_pontos.sql', () => {
     expect(comandos).not.toMatch(/^\s*(BEGIN|COMMIT|ROLLBACK)\b/im);
   });
 
-  it('só UPDATE: não cria, apaga nem altera schema', () => {
-    expect(comandos).not.toMatch(/\b(INSERT|DELETE|ALTER|DROP|CREATE|TRUNCATE)\b/i);
+  it('não cria nem altera schema', () => {
+    expect(comandos).not.toMatch(/\b(INSERT|ALTER|DROP|CREATE|TRUNCATE)\b/i);
   });
 
   it('não mexe em nome, descrição, coordenadas, tipo nem cidade', () => {

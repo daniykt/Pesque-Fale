@@ -1,15 +1,17 @@
 -- Migration 007: foto de capa e tags dos pontos oficiais (Task 9.13, issue #232).
 --
--- Preenche foto_capa e tags dos 10 pontos criados na 006. Sete pontos têm
--- foto; Tarumã, Represa de Ibitinga e Represa de Bariri recebem só tags (o
--- app mostra o ícone padrão quando foto_capa é NULL).
+-- Preenche foto_capa e tags dos pontos criados na 006 e remove o Tarumã
+-- (estabelecimento não existe mais), ficando 9 pontos oficiais. Sete têm
+-- foto; Represa de Ibitinga e Represa de Bariri recebem só tags (o app
+-- mostra o ícone padrão quando foto_capa é NULL).
 --
 -- As fotos são PROVISÓRIAS (recortes do Google Maps, decisão do time para a
 -- demo da COPEX) e serão substituídas por fotos autorizadas numa 008. As URLs
 -- são as mesmas que já estão em produção (conferidas no Supabase em 28/10).
 --
--- Só UPDATE, sempre filtrando pelo UUID do ponto E pela conta oficial.
--- Idempotente: rodar de novo grava os mesmos valores.
+-- UPDATEs e um único DELETE, sempre filtrando pelo UUID do ponto E pela
+-- conta oficial. Idempotente: rodar de novo grava os mesmos valores, e o
+-- DELETE de um ponto que já não existe não faz nada.
 -- Sem BEGIN/COMMIT próprios: o npm run migrate já abre a transação.
 -- Não mexe em nome, descricao, coordenadas, tipo nem cidade (o Pirá depende).
 
@@ -37,10 +39,11 @@ SET foto_capa = 'https://res.cloudinary.com/luvfmoi2/image/upload/v1793225190/03
 WHERE id = '2594f7b1-7ec1-480d-a3eb-c844cddad82c'
   AND criado_por = '69397c7f-3249-451c-98b4-6fb7dda07e3e';
 
--- Pesque Pague & Restaurante Tarumã (sem foto)
-UPDATE pontos_de_pesca
-SET tags = ARRAY['pesque-pague', 'restaurante', 'playground'],
-    atualizado_em = NOW()
+-- Pesque Pague & Restaurante Tarumã: removido dos pontos oficiais (o
+-- estabelecimento não existe mais). Avaliações dele saem em cascata
+-- (FK avaliacoes.ponto_id ON DELETE CASCADE); publicações que o marcaram
+-- ficam com ponto_id NULL (ON DELETE SET NULL).
+DELETE FROM pontos_de_pesca
 WHERE id = '8c04c221-f1cb-479a-8db6-65dcf65c030a'
   AND criado_por = '69397c7f-3249-451c-98b4-6fb7dda07e3e';
 
