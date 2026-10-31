@@ -284,7 +284,7 @@ Pesque-Fale/
 
 | Nome | GitHub | Papel |
 |---|---|---|
-| **Danilo da Silva Pereira** | [@daniykt](https://github.com/daniykt) | Front-end Principal · deploy · Design · QA |
+| **Danilo Silva** | [@daniykt](https://github.com/daniykt) | Front-end Principal · deploy · Design · QA |
 | **Henrique Tavares** | [@HenriqueTavares30](https://github.com/HenriqueTavares30) | Back-end Principal · assistente Pirá · QA |
 | **Felipe Tagliavini** | [@tagliavinifelipe](https://github.com/tagliavinifelipe) | Front-end · Back-end |
 | **João Pedro** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
