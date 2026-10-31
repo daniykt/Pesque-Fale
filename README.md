@@ -282,15 +282,15 @@ Pesque-Fale/
 
 <div align="center">
 
-| Nome | GitHub | Papel |
-|---|---|---|
-| **Danilo Silva** | [@daniykt](https://github.com/daniykt) | Front-end Principal · deploy · Design · QA |
-| **Henrique Tavares** | [@HenriqueTavares30](https://github.com/HenriqueTavares30) | Back-end Principal · assistente Pirá · QA |
-| **Felipe Tagliavini** | [@tagliavinifelipe](https://github.com/tagliavinifelipe) | Front-end · Back-end |
-| **João Pedro** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
-| **Lucas** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
-| **Vinicius** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
-| **Rebeca** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
+| Nome | Papel |
+|---|---|
+| **Danilo Silva** | Front-end Principal · deploy · Design · QA |
+| **Henrique Tavares** | Back-end Principal · assistente Pirá · QA |
+| **Felipe Tagliavini** | Front-end · Back-end |
+| **João Pedro** | Documentação |
+| **Lucas** | Documentação |
+| **Vinicius** | Documentação |
+| **Rebeca** | Documentação |
 
 <sub>Projeto acadêmico do curso de **Desenvolvimento de Software Multiplataforma**, FATEC Matão</sub>
 
