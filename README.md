@@ -274,4 +274,6 @@ Pesque-Fale/
   <img src="docs/assets/timeline.png" alt="Linha do tempo: no 3º semestre, site web em React e Firebase; no 4º semestre, app Flutter com API própria, versão atual v1.0.0" width="100%">
 </picture>
 
+---
+
 <img src="docs/assets/equipe.png" alt="Equipe do Pesque & Fale. Desenvolvimento: Danilo Silva (front-end principal, deploy, design e QA), Henrique Tavares (back-end principal, assistente Pirá e QA) e Felipe Tagliavini (front-end e back-end). Documentação: João Pedro, Lucas, Vinicius e Rebeca. Projeto acadêmico do curso de Desenvolvimento de Software Multiplataforma, FATEC Matão." width="100%">
