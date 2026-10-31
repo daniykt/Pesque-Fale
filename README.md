@@ -1,230 +1,307 @@
-# 🎣 Pesque & Fale
+<div align="center">
 
-## 🌊 Sobre o Projeto
+<img src="docs/assets/banner.png" alt="Pesque & Fale — Projeto Interdisciplinar, FATEC Matão 2026" width="100%">
 
-O Pesque & Fale é uma plataforma inspirada em redes sociais, criada para conectar pescadores e facilitar o compartilhamento de experiências, avaliações e recomendações de locais de pesca.
+<br>
 
-A proposta é centralizar informações úteis e ajudar usuários a encontrarem os melhores ambientes para pesca, promovendo também o lazer e a sustentabilidade.
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL%20+%20PostGIS-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=for-the-badge&logo=openstreetmap&logoColor=white)
 
-O projeto nasceu no 3º semestre como uma aplicação web e, a partir do 4º semestre, está evoluindo para uma plataforma completa: app mobile em Flutter + API própria com integração de mapas.
+[![Release](https://img.shields.io/github/v/release/daniykt/Pesque-Fale?style=flat-square&color=062A6C&label=release)](https://github.com/daniykt/Pesque-Fale/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/daniykt/Pesque-Fale/ci.yml?branch=dev&style=flat-square&label=CI)](https://github.com/daniykt/Pesque-Fale/actions)
+[![API](https://img.shields.io/badge/API-online-46E3B7?style=flat-square&logo=render&logoColor=white)](https://pesque-fale-api.onrender.com/docs)
 
----
+<br>
 
-## 🎯 Objetivos
+<img src="docs/assets/mockup.png" alt="Telas do Pesque & Fale: login, mapa de pontos de pesca, Pirá e perfil" width="100%">
 
-- 🎣 Conectar pescadores
-- 📍 Ajudar na descoberta de novos pontos de pesca
-- ⭐ Permitir avaliações de locais
-- 💬 Compartilhar experiências
-- 🌱 Incentivar práticas sustentáveis
-
----
-
-## ❗ Problema
-
-Encontrar bons locais para pesca nem sempre é fácil. Falta informação centralizada, confiável e acessível para pescadores iniciantes e experientes.
-
-## 💡 Solução
-
-Uma plataforma onde usuários possam:  
-✔ Avaliar locais | ✔ Publicar experiências | ✔ Interagir com outros pescadores | ✔ Descobrir novos pontos recomendados — agora também pelo celular, com mapa interativo mostrando os pontos próximos.
+</div>
 
 ---
 
-## 🕓 3º Semestre — A Plataforma Web
+## 🎣 Pesque & Fale
 
-O 3º semestre entregou a primeira versão funcional do Pesque & Fale: uma aplicação web completa, responsiva e com autenticação real.
+Achar um lugar **bom, agradável e acessível** pra pescar ainda depende de indicação boca a boca. O **Pesque & Fale** junta isso num app: um mapa de pontos de pesca avaliados por quem já foi lá, e uma rede social pra pescadores trocarem experiência e fazerem amizade.
 
-### ⚙️ Funcionalidades entregues
+> **Tema ODS:** 🌊 Vida na Água · 💼 Trabalho decente e crescimento econômico
 
-**Principais:** Cadastro e Login, Pesquisa de locais de pesca, Avaliação de pontos, Sistema de notificações, Perfil do usuário, Feed de publicações.  
-**Extras:** Modo Dark, Responsividade (Mobile + Desktop), Navegação intuitiva.
-
-### 🖥️ Tecnologias & Design
-
-- **Tech Stack:** React, JavaScript, HTML5, CSS3, Firebase (Authentication e banco de dados)
-- **Design:** Foco em simplicidade e usabilidade, identidade visual baseada no universo da pesca, cor principal: Azul escuro (`#062A6C`), interface limpa e intuitiva.
-
-O código do 3º semestre está preservado na branch `3-semestre` deste repositório.
+Pensado pra um público que **não é nativo digital** (muitos pescadores têm 40+), o app prioriza botões grandes, fluxos curtos e páginas no lugar de janelas sobrepostas. Nada de dado falso na tela: só aparece o que o sistema realmente faz.
 
 ---
 
-## 🚀 4º Semestre — API própria + Integração de Mapas
+## ✨ Funcionalidades
 
-Este semestre marca a transformação do Pesque & Fale de uma rede social simples em uma plataforma de descoberta baseada em localização, com arquitetura profissional por trás.
+| | Funcionalidade | O que faz | RF |
+|:-:|---|---|:-:|
+| 🔐 | **Cadastro e login** | Conta própria com JWT; a sessão fica salva com segurança no aparelho | RF01 |
+| 🧭 | **Onboarding + tour guiado** | Primeiro acesso guiado (foto, bio, username) e um tour que apresenta cada aba | — |
+| 🗺️ | **Mapa de pontos de pesca** | Pesqueiros, rios e represas no mapa, com busca por nome e por distância | RF02 |
+| ⭐ | **Avaliações** | Nota de 1 a 5 e comentário por ponto; a média é calculada no banco | RF02 |
+| 📰 | **Feed e publicações** | Posts com foto, ponto de pesca, nota e tags; curtidas e comentários | RF06 |
+| 💬 | **Chat em tempo real** | Conversas 1:1 que chegam na hora, com status de enviado e visto | — |
+| 🔔 | **Notificações em tempo real** | Curtidas, comentários, seguidores e mensagens aparecem na hora, com badge | RF04 |
+| 👤 | **Perfil** | Foto e banner com recorte, bio, seguidores e selos de equipe e conta oficial | RF05 |
+| 🐟 | **Pirá, o assistente de IA** | Mascote que tira dúvidas sobre o app e sobre pesca | — |
+| 🌙 | **Modo escuro + responsivo** | Tema claro e escuro, com layout que se adapta a celular e tablet | RNF01 |
 
-### 🎯 Foco do semestre
+<details>
+<summary><b>📍 Pontos oficiais cadastrados (região de Matão-SP)</b></summary>
 
-- 🛠️ Construir uma API REST própria, substituindo o Firestore por um banco relacional com suporte geoespacial
-- 🗺️ Integrar mapas interativos para geolocalização e busca de pontos de pesca por proximidade
-- 📱 Migrar a experiência mobile de React para Flutter
+<br>
 
-### ⚙️ Tecnologias adicionadas este semestre
+A conta oficial do Pesque & Fale (selo **OFICIAL**) publica 9 pontos verificados pelo time:
 
-- **Mobile:** Flutter, Dart, Provider, `google_fonts`, `shared_preferences`
-- **Mapas:** OpenStreetMap, `flutter_map`, `geolocator`, Nominatim (geocoding)
-- **Backend:** Node.js/Express, PostgreSQL + PostGIS, Cloudinary (upload de imagens), Socket.io (chat)
-- **Versionamento:** Git Flow com `dev` para desenvolvimento e `main` recebendo merges versionados
+| Tipo | Pontos |
+|---|---|
+| 🎣 Pesqueiros | Recanto do Pescador · Rota do Peixe · Marucci · Terra Nostra |
+| 🏞️ Represas | Ibitinga · Bariri |
+| 🌊 Rios | Pedra do Rio Mogi-Guaçu · Cachoeira de Emas · Porto de pesca Ponte do Rio Pardo |
+
+> [!NOTE]
+> Bariri e Cachoeira de Emas têm aviso de regulamentação de pesca na descrição.
+
+</details>
 
 ---
 
-## 🚀 Como rodar o projeto
+## 🧱 Arquitetura
 
-### 📱 Mobile — Flutter
+```mermaid
+flowchart LR
+    subgraph APP["📱 App Flutter"]
+        UI["Telas<br/>(Provider)"]
+        RT["RealtimeManager<br/>(1 conexão por usuário)"]
+    end
+
+    subgraph API["⚙️ API Node.js · Render"]
+        REST["REST /v1<br/>Express + JWT"]
+        WS["Socket.IO<br/>salas user:id"]
+        IA["Pirá 🐟"]
+    end
+
+    DB[("🐘 PostgreSQL + PostGIS<br/>Supabase · São Paulo")]
+    CDN["🖼️ Cloudinary<br/>imagens"]
+    MAP["🗺️ OpenStreetMap<br/>mapa + busca de endereço"]
+    LLM["✨ Gemini Flash<br/>Groq (reserva)"]
+
+    UI -- HTTPS --> REST
+    RT <-- WebSocket --> WS
+    REST --> DB
+    WS --> DB
+    REST -- upload --> CDN
+    REST --- IA
+    IA --> LLM
+    UI -- mapa --> MAP
+    UI -. imagens otimizadas .-> CDN
+```
+
+**Decisões que valem destaque:**
+
+- **API própria no lugar do Firebase.** Só a API conversa com o banco.
+- **PostGIS pra busca por distância.** "Pontos a até X km de mim" é respondido direto no banco.
+- **Imagens nunca em base64.** O app manda o arquivo pra API, a API envia pro Cloudinary e guarda só a URL.
+- **Mapas sem chave e sem cartão.** OpenStreetMap + `flutter_map`: custo zero e sem depender de fornecedor.
+- **Tempo real com uma única conexão.** Um `RealtimeManager` por usuário alimenta chat, notificações, seguidores e feed.
+
+> [!TIP]
+> Detalhes em [`docs/realtime-events.md`](docs/realtime-events.md), [`docs/epic-183-retrospectiva.md`](docs/epic-183-retrospectiva.md), [`docs/CI.md`](docs/CI.md) e [`docs/JWT_E_CLOUDINARY.md`](docs/JWT_E_CLOUDINARY.md).
+
+---
+
+## 🛠️ Stack
+
+| Camada | Escolha | Por quê |
+|---|---|---|
+| 📱 App | **Flutter** + Provider + Material 3 | Um código só e UI consistente; Provider é simples de ensinar pro time |
+| 🎨 Design | Tokens `AppColors` · `AppSpacing` · `AppRadius` | Nada de cor ou espaçamento solto: o tema escuro sai de graça |
+| ⚙️ API | **Node.js + Express** | Stack que o time domina, ecossistema grande |
+| 🔐 Auth | **JWT** + bcrypt + `flutter_secure_storage` | Padrão de mercado, sem depender do Google |
+| 🐘 Banco | **PostgreSQL + PostGIS** (Supabase) | Relacional de verdade + consultas geográficas nativas |
+| ⚡ Tempo real | **Socket.IO** | Chat, notificações e feed sem ficar perguntando ao servidor |
+| 🖼️ Imagens | **Cloudinary** | Recorte e compressão pela própria URL |
+| 🗺️ Mapas | **OpenStreetMap** + `flutter_map` + Nominatim | Gratuito, aberto, sem chave de API |
+| 🐟 IA | **Gemini Flash** (Groq de reserva) | Plano gratuito; a chave fica só na API |
+| ☁️ Deploy | **Render** (API) · **Supabase** (banco) | Planos gratuitos que dão conta do projeto |
+| 🔄 CI/CD | **GitHub Actions** | Análise e testes em todo PR; APK gerado a cada release |
+
+### 📊 Em números
+
+<div align="center">
+
+| 🧪 Testes do app | 🧪 Testes da API | 🗃️ Tabelas | 📍 Pontos oficiais | 🔁 Commits |
+|:-:|:-:|:-:|:-:|:-:|
+| **750+** | **230+** | **11** | **9** | **860+** |
+
+</div>
+
+---
+
+## 👩‍💻 Para devs
+
+> [!IMPORTANT]
+> **Só quer testar?** Baixe o APK na [última release](https://github.com/daniykt/Pesque-Fale/releases/latest): ele já aponta pra API em produção.
+>
+> A API está no plano gratuito do Render: **a primeira requisição pode levar de 30 a 50 segundos** enquanto o servidor acorda.
+>
+> Já tem uma versão anterior instalada? **Desinstale antes de instalar a nova**:
+> cada build é assinado com uma chave diferente e o Android bloqueia a atualização.
+
+<details>
+<summary><b>📱 Como rodar o app (Flutter)</b></summary>
+
+<br>
+
+> **Pré-requisitos:** Flutter SDK 3.44.4 · Android Studio ou um aparelho com depuração USB
 
 ```bash
-git clone https://github.com/daniykt/Pesque-Fale
+git clone https://github.com/daniykt/Pesque-Fale.git
 cd Pesque-Fale/pesque_fale_app
 flutter pub get
-flutter run -d chrome
-# ou um emulador/dispositivo Android conectado
+flutter run
 ```
 
-### ⚙️ Backend — API
-
-#### 1. Pré-requisitos
-- Node.js 18+
-- PostgreSQL 18 com a extensão **PostGIS** (no Windows, instale pelo **Stack Builder**, que abre ao final da instalação do PostgreSQL → *Spatial Extensions* → PostGIS)
-- Conta gratuita no [Cloudinary](https://cloudinary.com/users/register_free)
-
-#### 2. Configurar variáveis de ambiente
+Por padrão, o app usa a API de produção. Pra apontar pra uma API local:
 
 ```bash
+# 10.0.2.2 é o localhost do computador visto de dentro do emulador Android
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3333/v1
+```
+
+</details>
+
+<details>
+<summary><b>⚙️ Como rodar a API (Node.js)</b></summary>
+
+<br>
+
+> **Pré-requisitos:** Node.js 18+ · PostgreSQL com PostGIS · conta gratuita no [Cloudinary](https://cloudinary.com)
+
+```bash
+cd Pesque-Fale/api
+cp .env.example .env      # preencha as variáveis da tabela abaixo
+npm install
+npm run migrate           # aplica as migrations em ordem; pode rodar mais de uma vez
+npm run dev               # sobe em http://localhost:3333
+```
+
+Swagger em **http://localhost:3333/docs** · verificação de saúde em **/health**
+
+| Variável | Pra quê | Obrigatória? |
+|---|---|:-:|
+| `PORT` | Porta da API (padrão `3333`) | opcional |
+| `DATABASE_URL` | Conexão com o Postgres | ✅ |
+| `JWT_SECRET` | Assinatura dos tokens (em produção, uma string longa e aleatória) | ✅ |
+| `JWT_EXPIRES_IN` | Validade do token de acesso | ✅ |
+| `CLOUDINARY_CLOUD_NAME` · `CLOUDINARY_API_KEY` · `CLOUDINARY_API_SECRET` | Upload de fotos e banners | ⚠️ sem elas, o upload falha |
+| `GEMINI_API_KEY` · `GEMINI_MODEL` | Pirá (assistente de IA) | ⚠️ sem elas, o Pirá fica desligado |
+| `GROQ_API_KEY` · `GROQ_MODEL` | Reserva do Pirá | opcional |
+
+> [!WARNING]
+> O `.env` **nunca** vai pro Git. Se uma chave vazar, gere outra no painel do serviço e desative a antiga.
+
+</details>
+
+<details>
+<summary><b>🧪 Testes e qualidade</b></summary>
+
+<br>
+
+```bash
+# App
+cd pesque_fale_app
+flutter analyze
+flutter test
+
+# API
 cd api
-cp .env.example .env
+npm test
 ```
 
-Edita o arquivo `api/.env` com os valores reais:
+São os mesmos comandos que o CI roda: se passa aí, passa no PR.
 
-```env
-PORT=3333
-DATABASE_URL=postgresql://postgres:SUA_SENHA@localhost:5432/pesqueefale
-JWT_SECRET=seu_jwt_secret_aqui
-JWT_EXPIRES_IN=24h
-CLOUDINARY_CLOUD_NAME=   # Dashboard Cloudinary → Product Environment Credentials
-CLOUDINARY_API_KEY=      # Dashboard Cloudinary → Product Environment Credentials
-CLOUDINARY_API_SECRET=   # Dashboard Cloudinary → Product Environment Credentials
-```
+</details>
 
-> ⚠️ **Atenção:** sem as 3 variáveis do Cloudinary preenchidas, o servidor sobe normalmente mas uploads de foto/banner falham com 500. O servidor emite um `console.warn` claro no startup se detectar valores ausentes ou placeholder.
+<details>
+<summary><b>📁 Estrutura de pastas</b></summary>
 
-#### 3. Montar o banco de dados
+<br>
 
-O schema fica versionado em `api/db/migrations/`, em arquivos numerados. Quem aplica é o script `npm run migrate`: ele roda os arquivos em ordem e registra cada um na tabela `schema_migrations` (criada automaticamente na primeira execução).
-
-| Migration | O que faz |
-|---|---|
-| `001_schema_inicial.sql` | Cria as extensões (pgcrypto, PostGIS) e as tabelas base: usuários, seguidores, pontos de pesca, avaliações, publicações, eventos, chats, mensagens e notificações |
-| `003_curtidas_comentarios.sql` | Cria curtidas e comentários, com os triggers de contagem (e remove os triggers de nome antigo, que causavam contagem dupla em bancos montados antes dela) |
-| `004_notificacoes_de_volta.sql` | Adiciona a coluna `de_volta` em notificações |
-| `005_limpar_notificacoes_mensagem.sql` | Apaga as notificações antigas do tipo `mensagem` (o chat passou a ter aba e badge próprios) |
-| `006_seed_pontos.sql` | Cria a conta oficial "Pesque & Fale" e 10 pontos de pesca da região de Matão/SP (5 pesqueiros e 5 em rios); rodar de novo não duplica |
-| `007_fotos_tags_pontos.sql` | Preenche a foto de capa (7 pontos, fotos provisórias até a 008) e as tags (9 pontos) dos pontos oficiais da 006 e remove o Tarumã, que não existe mais |
-
-**Banco novo (primeira vez)** — de dentro da pasta `api`, com o `.env` já configurado:
-
-```bash
-createdb -U postgres pesqueefale
-npm install
-npm run migrate
-```
-
-Saída esperada: uma linha `✅ aplicada: <arquivo>` por migration. Rodando de novo, cada uma aparece como `⏭️  já aplicada: <arquivo>`, e nada é executado: o script é idempotente e pode rodar quantas vezes quiser.
-
-Cada migration roda em uma transação própria, junto com o seu registro em `schema_migrations`. Se uma falhar (por exemplo, com o PostGIS não instalado), ela é desfeita, o script mostra `❌ erro em <arquivo>: <mensagem>`, para ali e sai com código 1. Corrija o problema e rode de novo. A `001` é uma exceção parcial: ela tem `BEGIN`/`COMMIT` próprios, que fecham a transação do script antes do registro em `schema_migrations`. O conteúdo dela continua sendo desfeito se falhar.
-
-> ⚠️ **Nota de operação.** O script é idempotente a partir da primeira execução, mas a migration `001_schema_inicial.sql` não é: ela foi escrita antes do runner existir. Se o banco já foi montado manualmente (produção via DBeaver, ou dev local seguindo o fluxo antigo com `psql -f`), rodar `npm run migrate` nele vai falhar, porque o script tenta recriar objetos que já existem. Antes da primeira execução nesses bancos, crie a `schema_migrations` e registre à mão as migrations já aplicadas:
->
-> ```sql
-> CREATE TABLE IF NOT EXISTS schema_migrations (
->   id SERIAL PRIMARY KEY,
->   filename VARCHAR(255) NOT NULL UNIQUE,
->   executed_at TIMESTAMP NOT NULL DEFAULT NOW()
-> );
->
-> INSERT INTO schema_migrations (filename) VALUES
->   ('001_schema_inicial.sql'),
->   ('003_curtidas_comentarios.sql'),
->   ('004_notificacoes_de_volta.sql'),
->   ('005_limpar_notificacoes_mensagem.sql');
-> ```
->
-> Registre só as que de fato foram aplicadas naquele banco; as que ficarem de fora o `npm run migrate` aplica em seguida. Em banco limpo (dev novo, CI, QA zerado) nada disso é necessário: o runner aplica tudo do zero.
-
-**Criando uma migration nova:** adicione um arquivo `NNN_descricao_curta.sql` em `api/db/migrations/`, com o próximo número livre (ex.: `006_adiciona_coluna_x.sql`). O nome do arquivo é o que fica registrado em `schema_migrations`, então nunca renomeie nem edite uma migration já aplicada: para corrigir algo, crie uma nova.
-
-**Aplicação manual (só em casos excepcionais)** — para depurar ou aplicar uma migration isolada, dá para rodar o arquivo direto com `psql` (ou colar o conteúdo no **Query Tool** do pgAdmin e apertar **F5**):
-
-```bash
-psql -U postgres -d pesqueefale -v ON_ERROR_STOP=1 -f db/migrations/004_notificacoes_de_volta.sql
-```
-
-Esse caminho **não** registra nada em `schema_migrations`. Depois de aplicar à mão, registre o arquivo (`INSERT INTO schema_migrations (filename) VALUES ('004_notificacoes_de_volta.sql');`); senão o próximo `npm run migrate` tenta aplicá-lo de novo.
-
-Os comandos `psql` e `createdb` precisam da pasta `bin` do PostgreSQL no PATH. Se o terminal não os reconhecer, no PowerShell: `$env:Path += ";C:\Program Files\PostgreSQL\18\bin"`.
-
-> ⚠️ **Atenção:** a cada `git pull` na `dev`, rode `npm run migrate` dentro de `api/`. Com o banco desatualizado, a API sobe normalmente, mas algumas operações falham em silêncio. Exemplo: sem a `004`, **nenhuma notificação é criada** — seguir, curtir e comentar continuam respondendo `201`, e o erro só aparece no terminal da API como `Erro ao criar notificação` com `code: '42703'` (coluna inexistente).
-
-#### 4. Instalar dependências e rodar
-
-```bash
-npm install
-npm run dev
-```
-
-A API estará disponível em `http://localhost:3333`.  
-Documentação interativa: `http://localhost:3333/docs`
-
-#### 5. Scripts pontuais
-
-```bash
-node scripts/limpar-imagens-orfas.js
-```
-
-Rodar **uma única vez, após o deploy do fix do #114**. As fotos de perfil e banners enviados antes do fix foram apagados do Cloudinary, então as URLs gravadas no banco respondem 404. O script zera `usuarios.foto_perfil` e `usuarios.banner` para que o app exiba o fallback visual (inicial do nome / gradiente) em vez de imagem quebrada, até os usuários reenviarem.
-
----
-
-## 📲 Instalar o app (APK)
-
-O APK Android é gerado **automaticamente** pelo workflow `.github/workflows/build-apk.yml` sempre que uma release é publicada no GitHub. Ele aparece em **Assets** da release como `pesque-fale-<tag>.apk` (ex.: `pesque-fale-v1.0.0.apk`). Não é preciso ter Flutter instalado para baixar e testar.
-
-**Como instalar:** abra a aba [Releases](https://github.com/daniykt/Pesque-Fale/releases), baixe o `.apk` da versão desejada no celular e permita "instalar apps de fontes desconhecidas" quando o Android pedir. O app já aponta para a API de produção.
-
-> ⚠️ **Para atualizar, desinstale a versão anterior antes.** Por enquanto o APK é assinado com uma chave de debug gerada a cada build, então cada versão tem uma assinatura diferente e o Android recusa instalar por cima ("App não instalado"). Desinstalar apaga só o login salvo no celular; conta, publicações e mensagens ficam no servidor.
-
-**Como publicar uma release (time):** em Releases → **Draft a new release**, crie a tag (ex.: `v1.0.0`) apontando para a branch certa e clique em **Publish release**. O workflow roda na aba **Actions** e anexa o APK em alguns minutos. Rascunho (draft) não dispara o build. Inclua no texto da release o aviso de desinstalar antes de atualizar.
-
----
-
-## 📦 Estrutura do Repositório
-
+```text
 Pesque-Fale/
-├── api/ # Backend Node.js/Express
-│ ├── src/
-│ ├── tests/
-│ ├── scripts/ # Scripts pontuais rodados manualmente
-│ ├── .env.example # Template de variáveis de ambiente
-│ └── package.json
-└── pesque_fale_app/ # App mobile Flutter
+├── .github/workflows/        # CI e build do APK
+├── api/                      # ⚙️ Backend Node.js / Express
+│   ├── src/                  #   módulos (rotas, controllers, socket), middlewares, config
+│   ├── db/migrations/        #   schema + seed dos pontos oficiais
+│   ├── scripts/migrate.js    #   aplica as migrations (npm run migrate)
+│   ├── tests/                #   Jest
+│   └── .env.example
+├── pesque_fale_app/          # 📱 App Flutter
+│   └── lib/
+│       ├── core/             #   tema, tokens, config, tempo real
+│       ├── features/         #   uma pasta por funcionalidade → data / domain / presentation / providers
+│       ├── shared/
+│       │   ├── utils/        #   funções utilitárias
+│       │   └── widgets/      #   componentes reutilizáveis
+│       └── main.dart
+├── docs/                     # 📚 documentação técnica + imagens do README
+└── README.md
+```
 
+</details>
+
+<details>
+<summary><b>🔄 Fluxo de branches e commits</b></summary>
+
+<br>
+
+- 🏃 **Scrum no GitHub Projects:** cada fase vira uma sprint e cada task vira uma issue (ex.: `9.6`).
+- 🌿 **Branches:** tudo nasce da `dev` → PR com CI verde → **squash merge** na `dev` → as versões com tag sobem pra `main`.
+- ✍️ **Commits:** [Conventional Commits](https://www.conventionalcommits.org/pt-br/) em português (`feat:`, `fix:`, `docs:`, `refactor:`…).
+- 📦 **Releases:** cada tag gera um APK anexado na [página de releases](https://github.com/daniykt/Pesque-Fale/releases).
+
+</details>
+
+---
+
+## 🕰️ Linha do tempo
+
+| Semestre | Entrega |
+|---|---|
+| **3º semestre** | 🌐 Web em **React + Firebase**: cadastro, pesquisa de locais, avaliações, feed, notificações e modo escuro. Código na branch [`3-semestre`](https://github.com/daniykt/Pesque-Fale/tree/3-semestre) |
+| **4º semestre** | 📱 Migração para **Flutter + API própria**: PostGIS, mapas, chat e notificações em tempo real, Cloudinary, IA, deploy em produção e CI |
 
 ---
 
 ## 👥 Equipe
 
-| Nome | Função |
-|------|--------|
-| Danilo | Front-End Principal / QA / Back-end |
-| Henrique | Back-End / QA / Front-end |
-| Felipe   | Back-end / Front-end   |
-| João Pedro | Documentação |
-| Lucas | Documentação |
-| Vinicius |  Documentação |
-| Rebeca | Documentação |
+<div align="center">
+
+| Nome | GitHub | Papel |
+|---|---|---|
+| **Danilo da Silva Pereira** | [@daniykt](https://github.com/daniykt) | Front-end Principal · deploy · Design · QA |
+| **Henrique Tavares** | [@HenriqueTavares30](https://github.com/HenriqueTavares30) | Back-end Principal · assistente Pirá · QA |
+| **Felipe Tagliavini** | [@tagliavinifelipe](https://github.com/tagliavinifelipe) | Front-end · Back-end |
+| **João Pedro** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
+| **Lucas** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
+| **Vinicius** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
+| **Rebeca** | <!-- TODO: @ do GitHub (não está no repositório) --> | Documentação |
+
+<sub>Projeto acadêmico do curso de **Desenvolvimento de Software Multiplataforma**, FATEC Matão</sub>
+
+</div>
 
 ---
 
-## 📄 Licença
+<div align="center">
 
-📘 Projeto acadêmico — uso educacional.
+**🎣 Pesque & Fale**: conectando pescadores através da tecnologia 🌊
+
+<sub>Uso educacional · © 2026 Equipe Pesque & Fale</sub>
+
+</div>
