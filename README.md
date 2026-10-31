@@ -25,33 +25,33 @@
 
 ---
 
-## 🎣 Pesque & Fale
+## Pesque & Fale
 
 Achar um lugar **bom, agradável e acessível** pra pescar ainda depende de indicação boca a boca. O **Pesque & Fale** junta isso num app: um mapa de pontos de pesca avaliados por quem já foi lá, e uma rede social pra pescadores trocarem experiência e fazerem amizade.
 
-> **Tema ODS:** 🌊 Vida na Água · 💼 Trabalho decente e crescimento econômico
+> **Tema ODS:** Vida na Água · Trabalho decente e crescimento econômico
 
 Pensado pra um público que **não é nativo digital** (muitos pescadores têm 40+), o app prioriza botões grandes, fluxos curtos e páginas no lugar de janelas sobrepostas. Nada de dado falso na tela: só aparece o que o sistema realmente faz.
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-| | Funcionalidade | O que faz | RF |
-|:-:|---|---|:-:|
-| 🔐 | **Cadastro e login** | Conta própria com JWT; a sessão fica salva com segurança no aparelho | RF01 |
-| 🧭 | **Onboarding + tour guiado** | Primeiro acesso guiado (foto, bio, username) e um tour que apresenta cada aba | — |
-| 🗺️ | **Mapa de pontos de pesca** | Pesqueiros, rios e represas no mapa, com busca por nome e por distância | RF02 |
-| ⭐ | **Avaliações** | Nota de 1 a 5 e comentário por ponto; a média é calculada no banco | RF02 |
-| 📰 | **Feed e publicações** | Posts com foto, ponto de pesca, nota e tags; curtidas e comentários | RF06 |
-| 💬 | **Chat em tempo real** | Conversas 1:1 que chegam na hora, com status de enviado e visto | — |
-| 🔔 | **Notificações em tempo real** | Curtidas, comentários, seguidores e mensagens aparecem na hora, com badge | RF04 |
-| 👤 | **Perfil** | Foto e banner com recorte, bio, seguidores e selos de equipe e conta oficial | RF05 |
-| 🐟 | **Pirá, o assistente de IA** | Mascote que tira dúvidas sobre o app e sobre pesca | — |
-| 🌙 | **Modo escuro + responsivo** | Tema claro e escuro, com layout que se adapta a celular e tablet | RNF01 |
+| Funcionalidade | O que faz | RF |
+|---|---|:-:|
+| **Cadastro e login** | Conta própria com JWT; a sessão fica salva com segurança no aparelho | RF01 |
+| **Onboarding + tour guiado** | Primeiro acesso guiado (foto, bio, username) e um tour que apresenta cada aba | — |
+| **Mapa de pontos de pesca** | Pesqueiros, rios e represas no mapa, com busca por nome e por distância | RF02 |
+| **Avaliações** | Nota de 1 a 5 e comentário por ponto; a média é calculada no banco | RF02 |
+| **Feed e publicações** | Posts com foto, ponto de pesca, nota e tags; curtidas e comentários | RF06 |
+| **Chat em tempo real** | Conversas 1:1 que chegam na hora, com status de enviado e visto | — |
+| **Notificações em tempo real** | Curtidas, comentários, seguidores e mensagens aparecem na hora, com badge | RF04 |
+| **Perfil** | Foto e banner com recorte, bio, seguidores e selos de equipe e conta oficial | RF05 |
+| **Pirá, o assistente de IA** | Mascote que tira dúvidas sobre o app e sobre pesca | — |
+| **Modo escuro + responsivo** | Tema claro e escuro, com layout que se adapta a celular e tablet | RNF01 |
 
 <details>
-<summary><b>📍 Pontos oficiais cadastrados (região de Matão-SP)</b></summary>
+<summary><b>Pontos oficiais cadastrados (região de Matão-SP)</b></summary>
 
 <br>
 
@@ -59,9 +59,9 @@ A conta oficial do Pesque & Fale (selo **OFICIAL**) publica 9 pontos verificados
 
 | Tipo | Pontos |
 |---|---|
-| 🎣 Pesqueiros | Recanto do Pescador · Rota do Peixe · Marucci · Terra Nostra |
-| 🏞️ Represas | Ibitinga · Bariri |
-| 🌊 Rios | Pedra do Rio Mogi-Guaçu · Cachoeira de Emas · Porto de pesca Ponte do Rio Pardo |
+| Pesqueiros | Recanto do Pescador · Rota do Peixe · Marucci · Terra Nostra |
+| Represas | Ibitinga · Bariri |
+| Rios | Pedra do Rio Mogi-Guaçu · Cachoeira de Emas · Porto de pesca Ponte do Rio Pardo |
 
 > [!NOTE]
 > Bariri e Cachoeira de Emas têm aviso de regulamentação de pesca na descrição.
@@ -70,25 +70,25 @@ A conta oficial do Pesque & Fale (selo **OFICIAL**) publica 9 pontos verificados
 
 ---
 
-## 🧱 Arquitetura
+## Arquitetura
 
 ```mermaid
 flowchart LR
-    subgraph APP["📱 App Flutter"]
+    subgraph APP["App Flutter"]
         UI["Telas<br/>(Provider)"]
         RT["RealtimeManager<br/>(1 conexão por usuário)"]
     end
 
-    subgraph API["⚙️ API Node.js · Render"]
+    subgraph API["API Node.js · Render"]
         REST["REST /v1<br/>Express + JWT"]
         WS["Socket.IO<br/>salas user:id"]
-        IA["Pirá 🐟"]
+        IA["Pirá"]
     end
 
-    DB[("🐘 PostgreSQL + PostGIS<br/>Supabase · São Paulo")]
-    CDN["🖼️ Cloudinary<br/>imagens"]
-    MAP["🗺️ OpenStreetMap<br/>mapa + busca de endereço"]
-    LLM["✨ Gemini Flash<br/>Groq (reserva)"]
+    DB[("PostgreSQL + PostGIS<br/>Supabase · São Paulo")]
+    CDN["Cloudinary<br/>imagens"]
+    MAP["OpenStreetMap<br/>mapa + busca de endereço"]
+    LLM["Gemini Flash<br/>Groq (reserva)"]
 
     UI -- HTTPS --> REST
     RT <-- WebSocket --> WS
@@ -114,27 +114,27 @@ flowchart LR
 
 ---
 
-## 🛠️ Stack
+## Stack
 
 | Camada | Escolha | Por quê |
 |---|---|---|
-| 📱 App | **Flutter** + Provider + Material 3 | Um código só e UI consistente; Provider é simples de ensinar pro time |
-| 🎨 Design | Tokens `AppColors` · `AppSpacing` · `AppRadius` | Nada de cor ou espaçamento solto: o tema escuro sai de graça |
-| ⚙️ API | **Node.js + Express** | Stack que o time domina, ecossistema grande |
-| 🔐 Auth | **JWT** + bcrypt + `flutter_secure_storage` | Padrão de mercado, sem depender do Google |
-| 🐘 Banco | **PostgreSQL + PostGIS** (Supabase) | Relacional de verdade + consultas geográficas nativas |
-| ⚡ Tempo real | **Socket.IO** | Chat, notificações e feed sem ficar perguntando ao servidor |
-| 🖼️ Imagens | **Cloudinary** | Recorte e compressão pela própria URL |
-| 🗺️ Mapas | **OpenStreetMap** + `flutter_map` + Nominatim | Gratuito, aberto, sem chave de API |
-| 🐟 IA | **Gemini Flash** (Groq de reserva) | Plano gratuito; a chave fica só na API |
-| ☁️ Deploy | **Render** (API) · **Supabase** (banco) | Planos gratuitos que dão conta do projeto |
-| 🔄 CI/CD | **GitHub Actions** | Análise e testes em todo PR; APK gerado a cada release |
+| App | **Flutter** + Provider + Material 3 | Um código só e UI consistente; Provider é simples de ensinar pro time |
+| Design | Tokens `AppColors` · `AppSpacing` · `AppRadius` | Nada de cor ou espaçamento solto: o tema escuro sai de graça |
+| API | **Node.js + Express** | Stack que o time domina, ecossistema grande |
+| Auth | **JWT** + bcrypt + `flutter_secure_storage` | Padrão de mercado, sem depender do Google |
+| Banco | **PostgreSQL + PostGIS** (Supabase) | Relacional de verdade + consultas geográficas nativas |
+| Tempo real | **Socket.IO** | Chat, notificações e feed sem ficar perguntando ao servidor |
+| Imagens | **Cloudinary** | Recorte e compressão pela própria URL |
+| Mapas | **OpenStreetMap** + `flutter_map` + Nominatim | Gratuito, aberto, sem chave de API |
+| IA | **Gemini Flash** (Groq de reserva) | Plano gratuito; a chave fica só na API |
+| Deploy | **Render** (API) · **Supabase** (banco) | Planos gratuitos que dão conta do projeto |
+| CI/CD | **GitHub Actions** | Análise e testes em todo PR; APK gerado a cada release |
 
-### 📊 Em números
+### Em números
 
 <div align="center">
 
-| 🧪 Testes do app | 🧪 Testes da API | 🗃️ Tabelas | 📍 Pontos oficiais | 🔁 Commits |
+| Testes do app | Testes da API | Tabelas | Pontos oficiais | Commits |
 |:-:|:-:|:-:|:-:|:-:|
 | **750+** | **230+** | **11** | **9** | **860+** |
 
@@ -142,7 +142,7 @@ flowchart LR
 
 ---
 
-## 👩‍💻 Para devs
+## Para devs
 
 > [!IMPORTANT]
 > **Só quer testar?** Baixe o APK na [última release](https://github.com/daniykt/Pesque-Fale/releases/latest): ele já aponta pra API em produção.
@@ -153,7 +153,7 @@ flowchart LR
 > cada build é assinado com uma chave diferente e o Android bloqueia a atualização.
 
 <details>
-<summary><b>📱 Como rodar o app (Flutter)</b></summary>
+<summary><b>Como rodar o app (Flutter)</b></summary>
 
 <br>
 
@@ -176,7 +176,7 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3333/v1
 </details>
 
 <details>
-<summary><b>⚙️ Como rodar a API (Node.js)</b></summary>
+<summary><b>Como rodar a API (Node.js)</b></summary>
 
 <br>
 
@@ -208,7 +208,7 @@ Swagger em **http://localhost:3333/docs** · verificação de saúde em **/healt
 </details>
 
 <details>
-<summary><b>🧪 Testes e qualidade</b></summary>
+<summary><b>Testes e qualidade</b></summary>
 
 <br>
 
@@ -228,20 +228,20 @@ São os mesmos comandos que o CI roda: se passa aí, passa no PR.
 </details>
 
 <details>
-<summary><b>📁 Estrutura de pastas</b></summary>
+<summary><b>Estrutura de pastas</b></summary>
 
 <br>
 
 ```text
 Pesque-Fale/
 ├── .github/workflows/        # CI e build do APK
-├── api/                      # ⚙️ Backend Node.js / Express
+├── api/                      # Backend Node.js / Express
 │   ├── src/                  #   módulos (rotas, controllers, socket), middlewares, config
 │   ├── db/migrations/        #   schema + seed dos pontos oficiais
 │   ├── scripts/migrate.js    #   aplica as migrations (npm run migrate)
 │   ├── tests/                #   Jest
 │   └── .env.example
-├── pesque_fale_app/          # 📱 App Flutter
+├── pesque_fale_app/          # App Flutter
 │   └── lib/
 │       ├── core/             #   tema, tokens, config, tempo real
 │       ├── features/         #   uma pasta por funcionalidade → data / domain / presentation / providers
@@ -249,21 +249,21 @@ Pesque-Fale/
 │       │   ├── utils/        #   funções utilitárias
 │       │   └── widgets/      #   componentes reutilizáveis
 │       └── main.dart
-├── docs/                     # 📚 documentação técnica + imagens do README
+├── docs/                     # documentação técnica + imagens do README
 └── README.md
 ```
 
 </details>
 
 <details>
-<summary><b>🔄 Fluxo de branches e commits</b></summary>
+<summary><b>Fluxo de branches e commits</b></summary>
 
 <br>
 
-- 🏃 **Scrum no GitHub Projects:** cada fase vira uma sprint e cada task vira uma issue (ex.: `9.6`).
-- 🌿 **Branches:** tudo nasce da `dev` → PR com CI verde → **squash merge** na `dev` → as versões com tag sobem pra `main`.
-- ✍️ **Commits:** [Conventional Commits](https://www.conventionalcommits.org/pt-br/) em português (`feat:`, `fix:`, `docs:`, `refactor:`…).
-- 📦 **Releases:** cada tag gera um APK anexado na [página de releases](https://github.com/daniykt/Pesque-Fale/releases).
+- **Scrum no GitHub Projects:** cada fase vira uma sprint e cada task vira uma issue (ex.: `9.6`).
+- **Branches:** tudo nasce da `dev` → PR com CI verde → **squash merge** na `dev` → as versões com tag sobem pra `main`.
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/pt-br/) em português (`feat:`, `fix:`, `docs:`, `refactor:`…).
+- **Releases:** cada tag gera um APK anexado na [página de releases](https://github.com/daniykt/Pesque-Fale/releases).
 
 </details>
 
@@ -276,30 +276,6 @@ Pesque-Fale/
 
 ---
 
-## 👥 Equipe
+## Equipe
 
-<div align="center">
-
-| Nome | Papel |
-|---|---|
-| **Danilo Silva** | Front-end Principal · deploy · Design · QA |
-| **Henrique Tavares** | Back-end Principal · assistente Pirá · QA |
-| **Felipe Tagliavini** | Front-end · Back-end |
-| **João Pedro** | Documentação |
-| **Lucas** | Documentação |
-| **Vinicius** | Documentação |
-| **Rebeca** | Documentação |
-
-<sub>Projeto acadêmico do curso de **Desenvolvimento de Software Multiplataforma**, FATEC Matão</sub>
-
-</div>
-
----
-
-<div align="center">
-
-**🎣 Pesque & Fale**: conectando pescadores através da tecnologia 🌊
-
-<sub>Uso educacional · © 2026 Equipe Pesque & Fale</sub>
-
-</div>
+<img src="docs/assets/equipe.png" alt="Equipe do Pesque & Fale. Desenvolvimento: Danilo Silva (front-end principal, deploy, design e QA), Henrique Tavares (back-end principal, assistente Pirá e QA) e Felipe Tagliavini (front-end e back-end). Documentação: João Pedro, Lucas, Vinicius e Rebeca. Projeto acadêmico do curso de Desenvolvimento de Software Multiplataforma, FATEC Matão." width="100%">
