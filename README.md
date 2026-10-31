@@ -269,12 +269,10 @@ Pesque-Fale/
 
 ---
 
-## 🕰️ Linha do tempo
-
-| Semestre | Entrega |
-|---|---|
-| **3º semestre** | 🌐 Web em **React + Firebase**: cadastro, pesquisa de locais, avaliações, feed, notificações e modo escuro. Código na branch [`3-semestre`](https://github.com/daniykt/Pesque-Fale/tree/3-semestre) |
-| **4º semestre** | 📱 Migração para **Flutter + API própria**: PostGIS, mapas, chat e notificações em tempo real, Cloudinary, IA, deploy em produção e CI |
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/timeline-escuro.png">
+  <img src="docs/assets/timeline.png" alt="Linha do tempo: no 3º semestre, site web em React e Firebase; no 4º semestre, app Flutter com API própria, versão atual v1.0.0" width="100%">
+</picture>
 
 ---
 
