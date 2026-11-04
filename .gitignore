@@ -7,3 +7,8 @@ pesque_fale_app/macos/Flutter/GeneratedPluginRegistrant.swift
 pesque_fale_app/windows/flutter/generated_plugin_registrant.cc
 pesque_fale_app/windows/flutter/generated_plugin_registrant.h
 pesque_fale_app/windows/flutter/generated_plugins.cmake
+
+# Keystore de release (Task 10.1): nunca versionar
+*.jks
+*.keystore
+**/key.properties
