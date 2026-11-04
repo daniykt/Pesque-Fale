@@ -46,7 +46,9 @@ router.get('/', buscar);
  *     tags: [Usuários]
  *     responses:
  *       200:
- *         description: Dados do usuário autenticado
+ *         description: >-
+ *           Dados do usuário autenticado. Diferente do perfil público
+ *           (GET /usuarios/{id}), inclui o email do próprio usuário.
  *       401:
  *         description: Token inválido
  */
@@ -125,7 +127,9 @@ router.get('/username/:username', checkUsername);
  *           type: string
  *     responses:
  *       200:
- *         description: Dados do usuário (souSeguidor e meSegue retornam se autenticado)
+ *         description: >-
+ *           Perfil público do usuário. Não inclui o email: ele só é retornado
+ *           em GET /usuarios/me. souSeguidor e meSegue retornam se autenticado.
  *       404:
  *         description: Usuário não encontrado
  */

@@ -15,7 +15,7 @@ function tryGetUsuario(req) {
   }
 }
 
-async function getPerfil(req, res) {
+async function responderPerfil(req, res, { incluirEmail }) {
   const { id } = req.params;
   const autenticado = tryGetUsuario(req);
 
@@ -56,7 +56,7 @@ async function getPerfil(req, res) {
       data: {
         id: u.id,
         nome: u.nome,
-        email: u.email,
+        ...(incluirEmail ? { email: u.email } : {}),
         username: u.username,
         fotoPerfil: u.foto_perfil,
         banner: u.banner,
@@ -76,9 +76,13 @@ async function getPerfil(req, res) {
   }
 }
 
+async function getPerfil(req, res) {
+  return responderPerfil(req, res, { incluirEmail: false });
+}
+
 async function getMe(req, res) {
   req.params.id = req.usuario.id;
-  return getPerfil(req, res);
+  return responderPerfil(req, res, { incluirEmail: true });
 }
 
 async function updateMe(req, res) {
