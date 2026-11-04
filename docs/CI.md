@@ -83,6 +83,36 @@ Existe um segundo workflow, separado do CI: `.github/workflows/build-apk.yml` (T
 - **O que faz:** gera o APK de release e anexa na própria release com o nome `pesque-fale-<tag>.apk` (ex.: `pesque-fale-v1.0.0.apk`).
 - **Por que separado:** o CI precisa ser rápido e roda em todo PR; o APK só interessa quando sai versão nova.
 
+### Assinatura do APK
+
+O APK de release é assinado com uma **keystore fixa** (Task 10.1). Com isso, a partir da **v1.1.0** o app atualiza por cima, sem desinstalar. A v1.0.0 saiu com outra chave e precisa ser desinstalada uma última vez.
+
+**Secrets do repositório** (só os nomes; os valores ficam no GitHub):
+
+| Secret | O que guarda |
+|---|---|
+| `KEYSTORE_BASE64` | O arquivo `.jks` da keystore, em base64 |
+| `KEYSTORE_PASSWORD` | Senha da keystore |
+| `KEY_ALIAS` | Alias da chave: `pesquefale` |
+| `KEY_PASSWORD` | Senha da chave. É igual ao `KEYSTORE_PASSWORD` (keystore PKCS12) |
+
+O workflow decodifica a keystore e gera o `android/key.properties` na hora do build. Se faltar algum secret, o job falha.
+
+**SHA-256 do certificado oficial** (é público, não é segredo):
+
+- formato keytool: `8F:11:E5:05:C0:1B:06:3C:FC:E0:45:1A:BA:DF:84:F3:6C:A8:C1:35:DB:58:63:A0:9B:1C:4E:61:1D:12:E3:2B`
+- formato apksigner: `8f11e505c01b063cfce0451abadf84f36ca8c135db5863a09b1c4e611d12e32b`
+
+O passo "Conferir assinatura do APK" falha se o APK sair assinado com qualquer outra chave.
+
+**Cuidados:**
+
+- A keystore **não fica no repositório**. Há backup em dois lugares: ver com o Felipe ou o Danilo.
+- Perder a keystore = nunca mais atualizar o app por cima. **Nunca** trocar a keystore nem o `applicationId`.
+- Para regerar o `KEYSTORE_BASE64` a partir do arquivo: `base64 -w 0 arquivo.jks`.
+- Para conferir o SHA-256 localmente: `keytool -J-Duser.language=en -list -v -keystore <arquivo>.jks -alias pesquefale`. O `-J-Duser.language=en` é necessário porque a tradução pt-BR do keytool trava ao imprimir o certificado.
+- Build local sem `android/key.properties` usa a chave de debug: esse APK não instala por cima do APK do CI.
+
 ---
 
 ## Como saber se o CI passou
