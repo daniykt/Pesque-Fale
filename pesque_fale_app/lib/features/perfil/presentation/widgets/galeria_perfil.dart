@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../domain/publicacao.dart';
+import '../../../feed/domain/publicacao.dart';
 
 class GaleriaPerfil extends StatelessWidget {
   const GaleriaPerfil({
@@ -70,13 +70,23 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
 
   @override
   Widget build(BuildContext context) {
+    final imagemUrl = widget.publicacao.imagemUrl;
+
     return GestureDetector(
       onLongPressStart: (_) => setState(() => _pressionado = true),
       onLongPressEnd: (_) => setState(() => _pressionado = false),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(widget.publicacao.imagemUrl, fit: BoxFit.cover),
+          if (imagemUrl == null || imagemUrl.isEmpty)
+            const _PlaceholderImagem()
+          else
+            Image.network(
+              imagemUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  const _PlaceholderImagem(),
+            ),
           if (_pressionado)
             Container(
               color: Colors.black.withValues(alpha: 0.5),
@@ -105,6 +115,25 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _PlaceholderImagem extends StatelessWidget {
+  const _PlaceholderImagem();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Container(
+      color: colors.surfaceVariant,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        color: colors.textSecondary,
+        size: 32,
       ),
     );
   }

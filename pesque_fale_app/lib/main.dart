@@ -55,6 +55,7 @@ import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/aba_feed.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
+import 'features/feed/providers/publicacoes_store.dart';
 import 'features/onboarding/presentation/onboarding_wizard_page.dart';
 import 'features/onboarding/providers/onboarding_provider.dart';
 import 'features/perfil/data/perfil_api_client.dart';
@@ -195,6 +196,8 @@ void main() {
           ),
         );
 
+  final publicacoesStore = PublicacoesStore();
+
   runApp(
     MultiProvider(
       providers: [
@@ -210,6 +213,7 @@ void main() {
           create: (_) => RealtimeManager(),
           update: (context, auth, previous) => previous!..reagirAuth(auth),
         ),
+        ChangeNotifierProvider<PublicacoesStore>.value(value: publicacoesStore),
         Provider<PerfilRepository>.value(value: perfilRepository),
         ChangeNotifierProxyProvider2<
           AuthProvider,

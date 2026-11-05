@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
-import '../domain/publicacao.dart';
+import '../../feed/domain/publicacao.dart';
 import 'perfil_api_client.dart';
 import 'perfil_repository.dart';
 

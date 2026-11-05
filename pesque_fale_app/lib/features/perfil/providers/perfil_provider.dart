@@ -5,7 +5,7 @@ import '../../auth/domain/usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/perfil_exceptions.dart';
 import '../data/perfil_repository.dart';
-import '../domain/publicacao.dart';
+import '../../feed/domain/publicacao.dart';
 
 enum PerfilStatus { idle, loading, success, error }
 
