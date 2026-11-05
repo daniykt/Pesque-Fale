@@ -428,6 +428,7 @@ class PesqueFaleApp extends StatelessWidget {
                 ChangeNotifierProvider<PublicacaoDetalheProvider>(
                   create: (ctx) => PublicacaoDetalheProvider(
                     publicacoesRepository: ctx.read<PublicacoesRepository>(),
+                    store: ctx.read<PublicacoesStore>(),
                     publicacaoInicial: publicacaoInicial,
                     publicacaoId: publicacaoId,
                   )..carregar(),

@@ -16,7 +16,6 @@ import '../../feed/presentation/widgets/comentario_input_bar.dart';
 import '../../feed/presentation/widgets/comentarios_lista.dart';
 import '../../feed/presentation/widgets/publicacao_menu_sheet.dart';
 import '../../feed/providers/comentarios_provider.dart';
-import '../../feed/providers/feed_provider.dart';
 import '../providers/publicacao_detalhe_provider.dart';
 
 class PublicacaoDetalhePage extends StatefulWidget {
@@ -29,6 +28,7 @@ class PublicacaoDetalhePage extends StatefulWidget {
 class _PublicacaoDetalhePageState extends State<PublicacaoDetalhePage> {
   final _scrollController = ScrollController();
   final _comentarioFocusNode = FocusNode();
+  bool _saindo = false;
 
   @override
   void dispose() {
@@ -47,10 +47,23 @@ class _PublicacaoDetalhePageState extends State<PublicacaoDetalhePage> {
     );
   }
 
+  void _sairSeRemovida(PublicacaoDetalheProvider provider) {
+    if (provider.status != StatusDetalhe.removida || _saindo) return;
+    _saindo = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!provider.excluidaAqui) {
+        AppSnackbar.showInfo(context, 'Esta publicação foi excluída.');
+      }
+      Navigator.of(context).maybePop();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<PublicacaoDetalheProvider>();
     final colors = Theme.of(context).extension<AppColors>()!;
+    _sairSeRemovida(provider);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -62,12 +75,7 @@ class _PublicacaoDetalhePageState extends State<PublicacaoDetalhePage> {
               onPressed: () => PublicacaoMenuSheet.show(
                 context,
                 provider.publicacao!,
-                onDeleted: () {
-                  context.read<FeedProvider>().removerPublicacao(
-                    provider.publicacao!.id,
-                  );
-                  Navigator.of(context).pop();
-                },
+                excluir: provider.excluir,
               ),
             ),
         ],
@@ -87,6 +95,7 @@ class _PublicacaoDetalhePageState extends State<PublicacaoDetalhePage> {
           comentarioFocusNode: _comentarioFocusNode,
           onComentarTap: _onComentarTap,
         ),
+        StatusDetalhe.removida => const SizedBox.shrink(),
       },
     );
   }
@@ -144,15 +153,14 @@ class _ConteudoDetalhe extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final comentariosRepo = context.read<ComentariosRepository>();
     final authProvider = context.read<AuthProvider>();
-    final feedProvider = context.read<FeedProvider>();
+    final detalhe = context.read<PublicacaoDetalheProvider>();
 
     return ChangeNotifierProvider<ComentariosProvider>(
       create: (_) => ComentariosProvider(
         repository: comentariosRepo,
         publicacaoId: publicacao.id,
         authProvider: authProvider,
-        onCountChange: (delta) =>
-            feedProvider.atualizarContadorComentarios(publicacao.id, delta),
+        onCountChange: detalhe.aplicarDeltaComentarios,
       )..carregarInicial(),
       child: Column(
         children: [
