@@ -14,6 +14,7 @@ import 'package:pesque_fale_app/features/feed/domain/aba_feed.dart';
 import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
+import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_exceptions.dart'
     hide InternalServerException;
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
@@ -178,6 +179,7 @@ FeedProvider _criarProvider({
   _FakeCurtidasRepository? curtidasRepo,
   AuthProvider? authProvider,
   FakeRealtimeManager? realtime,
+  PublicacoesStore? store,
 }) {
   return FeedProvider(
     publicacoesRepo: publicacoesRepo,
@@ -187,6 +189,7 @@ FeedProvider _criarProvider({
     authProvider:
         authProvider ?? AuthProvider(repository: _FakeAuthRepository()),
     realtime: realtime ?? FakeRealtimeManager(),
+    store: store ?? PublicacoesStore(),
   );
 }
 
@@ -404,6 +407,96 @@ void main() {
 
       expect(provider.paraVoce.any((p) => p.id == 'p1'), isFalse);
       expect(provider.seguindo.any((p) => p.id == 'p1'), isFalse);
+    });
+  });
+
+  group('FeedProvider - PublicacoesStore', () {
+    late PublicacoesStore store;
+    late _FakeCurtidasRepository curtidasRepo;
+    late AuthProvider authProvider;
+    late FeedProvider provider;
+
+    setUp(() async {
+      store = PublicacoesStore();
+      curtidasRepo = _FakeCurtidasRepository();
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider = _criarProvider(
+        publicacoesRepo: _FakePublicacoesRepository(
+          todas: [_publicacao('p1', curtidasCount: 1), _publicacao('p2')],
+          seguindoIds: ['p1'],
+        ),
+        curtidasRepo: curtidasRepo,
+        authProvider: authProvider,
+        store: store,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+      await provider.trocarAba(AbaFeed.seguindo);
+    });
+
+    test('carregar as abas coloca as publicações no store', () {
+      expect(store.porId('p1'), isNotNull);
+      expect(store.porId('p2'), isNotNull);
+    });
+
+    test('curtida feita no store por outra tela aparece nas duas abas', () {
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      store.atualizarCurtida('p1', jaCurtiu: true, curtidasCount: 2);
+
+      expect(notificacoes, greaterThan(0));
+      expect(provider.paraVoce.first.jaCurtiu, isTrue);
+      expect(provider.paraVoce.first.curtidasCount, 2);
+      expect(provider.seguindo.first.jaCurtiu, isTrue);
+    });
+
+    test('publicação removida no store some das duas abas', () {
+      store.remover('p1');
+
+      expect(provider.paraVoce.map((p) => p.id), ['p2']);
+      expect(provider.seguindo, isEmpty);
+    });
+
+    test('curtir usa o estado do store, não a cópia antiga da tela', () async {
+      final copiaAntiga = provider.paraVoce.first;
+      store.atualizarCurtida('p1', jaCurtiu: true, curtidasCount: 2);
+
+      await provider.curtirOuDescurtir(copiaAntiga);
+
+      expect(curtidasRepo.descurtidas, ['p1']);
+      expect(curtidasRepo.curtidas, isEmpty);
+      expect(store.porId('p1')!.jaCurtiu, isFalse);
+      expect(store.porId('p1')!.curtidasCount, 1);
+    });
+
+    test('comentário atualiza o contador no store', () {
+      provider.atualizarContadorComentarios('p1', 1);
+
+      expect(store.porId('p1')!.comentariosCount, 1);
+      expect(provider.seguindo.first.comentariosCount, 1);
+    });
+
+    test('publicação criada entra no store e no topo das abas', () {
+      final nova = Publicacao(
+        id: 'p3',
+        autorId: authProvider.usuario!.id,
+        autorNome: 'Ana',
+        criadoEm: DateTime(2026, 1, 2),
+        atualizadoEm: DateTime(2026, 1, 2),
+      );
+
+      provider.adicionarPublicacao(nova);
+
+      expect(store.porId('p3'), isNotNull);
+      expect(provider.paraVoce.first.id, 'p3');
+      expect(provider.seguindo.first.id, 'p3');
+    });
+
+    test('dispose deixa de escutar o store', () {
+      provider.dispose();
+
+      expect(() => store.upsert(_publicacao('p9')), returnsNormally);
     });
   });
 

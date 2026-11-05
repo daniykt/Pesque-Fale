@@ -310,6 +310,7 @@ void main() {
             pontosRepo: pontosRepository,
             authProvider: context.read<AuthProvider>(),
             realtime: context.read<RealtimeManager>(),
+            store: publicacoesStore,
           ),
           update: (context, auth, realtime, previous) =>
               previous!..reagirAuth(auth),
