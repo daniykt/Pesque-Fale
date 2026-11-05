@@ -67,7 +67,9 @@ class _EntrandoPageState extends State<EntrandoPage>
       duration: widget.limite,
       curve: Curves.easeOutCubic,
     );
-    _entrar();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _entrar();
+    });
   }
 
   @override

@@ -423,9 +423,8 @@ void main() {
             ),
             '/entrando': (context) => EntrandoPage(
               duracaoMinima: Duration.zero,
-              preparar: () => Future(
-                () => context.read<FeedProvider>().trocarAba(AbaFeed.paraVoce),
-              ),
+              preparar: () =>
+                  context.read<FeedProvider>().trocarAba(AbaFeed.paraVoce),
             ),
             '/home': (_) => const Scaffold(body: Text('Home')),
           },
