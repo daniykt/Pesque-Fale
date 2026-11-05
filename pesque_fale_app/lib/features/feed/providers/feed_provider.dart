@@ -16,10 +16,15 @@ import 'publicacoes_store.dart';
 enum StatusAba { inicial, carregando, sucesso, vazio, erro, carregandoMais }
 
 class EstadoAba {
-  const EstadoAba({required this.status, this.mensagemErro});
+  const EstadoAba({
+    required this.status,
+    this.mensagemErro,
+    this.falhouCarregarMais = false,
+  });
 
   final StatusAba status;
   final String? mensagemErro;
+  final bool falhouCarregarMais;
 
   factory EstadoAba.inicial() => const EstadoAba(status: StatusAba.inicial);
 }
@@ -33,7 +38,7 @@ class FeedProvider extends ChangeNotifier {
     required this.authProvider,
     required this.realtime,
     required this.store,
-  }) {
+  }) : _usuarioId = authProvider.usuario?.id {
     store.addListener(_onStoreMudou);
     realtime.subscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
     realtime.onReconnect(_onReconnect);
@@ -46,6 +51,9 @@ class FeedProvider extends ChangeNotifier {
   final RealtimeManager realtime;
   final PublicacoesStore store;
   AuthProvider authProvider;
+  String? _usuarioId;
+  int _sessao = 0;
+  final Map<AbaFeed, Future<void>> _cargasEmVoo = {};
 
   /// Ids de publicações que chegaram via realtime mas ainda não foram
   /// renderizadas na lista Seguindo. O provider guarda só o contador bruto:
@@ -83,12 +91,29 @@ class FeedProvider extends ChangeNotifier {
   Future<void> trocarAba(AbaFeed nova) async {
     _abaAtiva = nova;
     notifyListeners();
-    if (estadoDe(nova).status == StatusAba.inicial) {
+    if (const {
+      StatusAba.inicial,
+      StatusAba.carregando,
+      StatusAba.erro,
+      StatusAba.vazio,
+    }.contains(estadoDe(nova).status)) {
       await _carregarInicial(nova);
     }
   }
 
-  Future<void> _carregarInicial(AbaFeed aba) async {
+  Future<void> _carregarInicial(AbaFeed aba) {
+    final emVoo = _cargasEmVoo[aba];
+    if (emVoo != null) return emVoo;
+    late final Future<void> carga;
+    carga = _buscarInicial(aba).whenComplete(() {
+      if (identical(_cargasEmVoo[aba], carga)) _cargasEmVoo.remove(aba);
+    });
+    _cargasEmVoo[aba] = carga;
+    return carga;
+  }
+
+  Future<void> _buscarInicial(AbaFeed aba) async {
+    final sessao = _sessao;
     _atualizarEstado(aba, StatusAba.carregando);
     try {
       switch (aba) {
@@ -97,6 +122,7 @@ class FeedProvider extends ChangeNotifier {
             pagina: 1,
             seguindo: false,
           );
+          if (sessao != _sessao) return;
           store.upsertTodos(result.items);
           _idsParaVoce
             ..clear()
@@ -119,6 +145,7 @@ class FeedProvider extends ChangeNotifier {
             pagina: 1,
             seguindo: true,
           );
+          if (sessao != _sessao) return;
           store.upsertTodos(result.items);
           _idsSeguindo
             ..clear()
@@ -134,7 +161,9 @@ class FeedProvider extends ChangeNotifier {
           );
           break;
         case AbaFeed.eventos:
-          eventos = await eventosRepo.listar(futuros: true, limite: 10);
+          final novos = await eventosRepo.listar(futuros: true, limite: 10);
+          if (sessao != _sessao) return;
+          eventos = novos;
           _atualizarEstado(
             aba,
             eventos.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
@@ -145,6 +174,7 @@ class FeedProvider extends ChangeNotifier {
             filtros: const FiltrosLocais(),
             ordem: 'nota_desc',
           );
+          if (sessao != _sessao) return;
           topLocais = result.take(10).toList();
           _atualizarEstado(
             aba,
@@ -156,25 +186,29 @@ class FeedProvider extends ChangeNotifier {
           break;
       }
     } catch (e) {
+      if (sessao != _sessao) return;
       _atualizarEstado(aba, StatusAba.erro, e.toString());
     }
   }
 
   Future<void> carregarMais() async {
-    if (_abaAtiva != AbaFeed.paraVoce && _abaAtiva != AbaFeed.seguindo) {
+    final aba = _abaAtiva;
+    if (aba != AbaFeed.paraVoce && aba != AbaFeed.seguindo) {
       return;
     }
-    final atual = estadoDe(_abaAtiva);
+    final atual = estadoDe(aba);
     if (atual.status == StatusAba.carregandoMais ||
-        atual.status == StatusAba.carregando) {
+        atual.status == StatusAba.carregando ||
+        atual.falhouCarregarMais) {
       return;
     }
 
-    final ehSeguindo = _abaAtiva == AbaFeed.seguindo;
+    final ehSeguindo = aba == AbaFeed.seguindo;
     final temMais = ehSeguindo ? _temMaisSeguindo : _temMaisParaVoce;
     if (!temMais) return;
 
-    _atualizarEstado(_abaAtiva, StatusAba.carregandoMais);
+    final sessao = _sessao;
+    _atualizarEstado(aba, StatusAba.carregandoMais);
     try {
       final proximaPagina =
           (ehSeguindo ? _paginaSeguindo : _paginaParaVoce) + 1;
@@ -182,26 +216,37 @@ class FeedProvider extends ChangeNotifier {
         pagina: proximaPagina,
         seguindo: ehSeguindo,
       );
+      if (sessao != _sessao) return;
       store.upsertTodos(result.items);
+      // Paginação por offset: publicações novas no topo empurram itens já
+      // carregados pra próxima página.
+      final ids = ehSeguindo ? _idsSeguindo : _idsParaVoce;
+      final idsAtuais = ids.toSet();
+      ids.addAll(
+        result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
+      );
       if (ehSeguindo) {
-        // Paginação por offset: publicações aplicadas no topo via realtime
-        // empurram itens já carregados pra próxima página.
-        final idsAtuais = _idsSeguindo.toSet();
-        _idsSeguindo.addAll(
-          result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
-        );
         _paginaSeguindo = proximaPagina;
         _temMaisSeguindo = result.temMais;
       } else {
-        _idsParaVoce.addAll(result.items.map((p) => p.id));
         _paginaParaVoce = proximaPagina;
         _temMaisParaVoce = result.temMais;
       }
       _invalidarCache();
-      _atualizarEstado(_abaAtiva, StatusAba.sucesso);
-    } catch (e) {
-      _atualizarEstado(_abaAtiva, StatusAba.erro, e.toString());
+      _atualizarEstado(aba, StatusAba.sucesso);
+    } catch (_) {
+      if (sessao != _sessao) return;
+      _estados[aba] = const EstadoAba(
+        status: StatusAba.sucesso,
+        falhouCarregarMais: true,
+      );
+      notifyListeners();
     }
+  }
+
+  Future<void> tentarCarregarMaisDeNovo() {
+    _atualizarEstado(_abaAtiva, StatusAba.sucesso);
+    return carregarMais();
   }
 
   Future<void> pullRefresh() async {
@@ -335,18 +380,33 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reage a login/logout do usuário: ao deslogar, esvazia a aba Seguindo
-  /// (que exige autenticação) para forçar um novo carregamento na próxima
-  /// vez que for aberta.
   void reagirAuth(AuthProvider auth) {
     authProvider = auth;
-    if (auth.usuario == null) {
-      _idsSeguindo.clear();
-      _invalidarCache();
-      _pendentesSeguindo.clear();
-      _estados[AbaFeed.seguindo] = EstadoAba.inicial();
-      notifyListeners();
+    final id = auth.usuario?.id;
+    if (id == _usuarioId) return;
+    _usuarioId = id;
+    _reiniciarSessao();
+    _carregarInicial(_abaAtiva);
+  }
+
+  void _reiniciarSessao() {
+    _sessao++;
+    _cargasEmVoo.clear();
+    _idsParaVoce.clear();
+    _idsSeguindo.clear();
+    _invalidarCache();
+    _pendentesSeguindo.clear();
+    _paginaParaVoce = 1;
+    _paginaSeguindo = 1;
+    _temMaisParaVoce = true;
+    _temMaisSeguindo = true;
+    eventos = [];
+    topLocais = [];
+    for (final aba in AbaFeed.values) {
+      _estados[aba] = EstadoAba.inicial();
     }
+    store.limpar();
+    notifyListeners();
   }
 
   @override

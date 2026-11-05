@@ -63,9 +63,7 @@ class DropdownFiltro<T> extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (novo) {
-                if (novo != null) onChanged(novo);
-              },
+              onChanged: (novo) => onChanged(novo as T),
             ),
           ),
         ),

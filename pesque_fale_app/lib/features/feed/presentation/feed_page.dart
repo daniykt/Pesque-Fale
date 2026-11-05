@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/aba_feed.dart';
 import '../domain/publicacao.dart';
@@ -113,17 +114,31 @@ class _EventosView extends StatelessWidget {
           child: CarrosselSkeleton(),
         );
       case StatusAba.erro:
-        return _ErroView(
-          mensagem: estado.mensagemErro,
-          onRetry: provider.pullRefresh,
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: _CentroRolavel(
+            child: _ErroView(
+              mensagem: estado.mensagemErro,
+              onRetry: provider.pullRefresh,
+            ),
+          ),
         );
       case StatusAba.vazio:
-        return const _MensagemCentralizada(texto: 'Nenhum evento no momento.');
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: const _CentroRolavel(
+            child: _MensagemCentralizada(texto: 'Nenhum evento no momento.'),
+          ),
+        );
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: EventosCarrossel(eventos: provider.eventos),
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: EventosCarrossel(eventos: provider.eventos),
+          ),
         );
     }
   }
@@ -146,19 +161,31 @@ class _LocaisView extends StatelessWidget {
           child: CarrosselSkeleton(),
         );
       case StatusAba.erro:
-        return _ErroView(
-          mensagem: estado.mensagemErro,
-          onRetry: provider.pullRefresh,
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: _CentroRolavel(
+            child: _ErroView(
+              mensagem: estado.mensagemErro,
+              onRetry: provider.pullRefresh,
+            ),
+          ),
         );
       case StatusAba.vazio:
-        return const _MensagemCentralizada(
-          texto: 'Nenhum local avaliado ainda.',
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: const _CentroRolavel(
+            child: _MensagemCentralizada(texto: 'Nenhum local avaliado ainda.'),
+          ),
         );
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: LocaisCarrossel(pontos: provider.topLocais),
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: LocaisCarrossel(pontos: provider.topLocais),
+          ),
         );
     }
   }
@@ -279,30 +306,41 @@ class _FeedListaViewState extends State<_FeedListaView> {
         );
         break;
       case StatusAba.erro:
-        conteudo = _scrollableCentro(
-          _ErroView(
+        conteudo = _CentroRolavel(
+          child: _ErroView(
             mensagem: estado.mensagemErro,
             onRetry: provider.pullRefresh,
           ),
         );
         break;
       case StatusAba.vazio:
-        conteudo = _scrollableCentro(widget.emptyBuilder(context));
+        conteudo = _CentroRolavel(child: widget.emptyBuilder(context));
         break;
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
         final estaCarregandoMais = estado.status == StatusAba.carregandoMais;
+        final temRodape = estaCarregandoMais || estado.falhouCarregarMais;
         conteudo = ListView.separated(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(12),
-          itemCount: widget.publicacoes.length + (estaCarregandoMais ? 1 : 0),
+          itemCount: widget.publicacoes.length + (temRodape ? 1 : 0),
+          findItemIndexCallback: (key) =>
+              _indicePorChave(widget.publicacoes, key),
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (_, index) {
             if (index >= widget.publicacoes.length) {
-              return const PublicacaoCardSkeleton();
+              return estado.falhouCarregarMais
+                  ? _ErroCarregarMais(
+                      onTentarDeNovo: provider.tentarCarregarMaisDeNovo,
+                    )
+                  : const PublicacaoCardSkeleton();
             }
-            return PublicacaoCard(publicacao: widget.publicacoes[index]);
+            final publicacao = widget.publicacoes[index];
+            return PublicacaoCard(
+              key: ValueKey(publicacao.id),
+              publicacao: publicacao,
+            );
           },
         );
         break;
@@ -336,8 +374,21 @@ class _FeedListaViewState extends State<_FeedListaView> {
       ),
     );
   }
+}
 
-  Widget _scrollableCentro(Widget child) {
+int? _indicePorChave(List<Publicacao> publicacoes, Key key) {
+  if (key is! ValueKey<String>) return null;
+  final indice = publicacoes.indexWhere((p) => p.id == key.value);
+  return indice == -1 ? null : indice;
+}
+
+class _CentroRolavel extends StatelessWidget {
+  const _CentroRolavel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -376,6 +427,44 @@ class _ErroView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErroCarregarMais extends StatelessWidget {
+  const _ErroCarregarMais({required this.onTentarDeNovo});
+
+  final Future<void> Function() onTentarDeNovo;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Column(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 32, color: colors.danger),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Não foi possível carregar mais publicações.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          OutlinedButton.icon(
+            onPressed: onTentarDeNovo,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 48),
+              foregroundColor: colors.primaryAccent,
+              side: BorderSide(color: colors.primaryAccent),
+            ),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Tentar de novo'),
+          ),
+        ],
       ),
     );
   }

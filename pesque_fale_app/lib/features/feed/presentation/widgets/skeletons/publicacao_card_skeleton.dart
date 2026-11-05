@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../shared/widgets/imagem_placeholder.dart';
 
 class PublicacaoCardSkeleton extends StatefulWidget {
   const PublicacaoCardSkeleton({super.key});
@@ -74,10 +75,7 @@ class _PublicacaoCardSkeletonState extends State<PublicacaoCardSkeleton>
                 child: _box(colors, width: double.infinity, height: 14),
               ),
               const SizedBox(height: AppSpacing.xs),
-              AspectRatio(
-                aspectRatio: 4 / 5,
-                child: Container(color: colors.surfaceVariant),
-              ),
+              const AspectRatio(aspectRatio: 4 / 5, child: ImagemCarregando()),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Column(
