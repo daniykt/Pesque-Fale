@@ -320,6 +320,94 @@ void main() {
     List<Publicacao> gerarPublicacoes(int quantidade) =>
         List.generate(quantidade, (i) => _publicacao('p$i'));
 
+    test('erro no carregarMais mantém a lista e marca a falha', () async {
+      final publicacoesRepo = _FakePublicacoesRepository(
+        todas: gerarPublicacoes(25),
+      );
+      final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+      await provider.trocarAba(AbaFeed.paraVoce);
+
+      publicacoesRepo.falhar = true;
+      await provider.carregarMais();
+
+      final estado = provider.estadoDe(AbaFeed.paraVoce);
+      expect(estado.status, StatusAba.sucesso);
+      expect(estado.falhouCarregarMais, isTrue);
+      expect(provider.paraVoce, hasLength(20));
+    });
+
+    test(
+      'com a falha no rodapé, a rolagem não tenta de novo sozinha',
+      () async {
+        final publicacoesRepo = _FakePublicacoesRepository(
+          todas: gerarPublicacoes(25),
+        );
+        final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+        await provider.trocarAba(AbaFeed.paraVoce);
+        publicacoesRepo.falhar = true;
+        await provider.carregarMais();
+        final antes = publicacoesRepo.chamadas;
+
+        await provider.carregarMais();
+
+        expect(publicacoesRepo.chamadas, antes);
+      },
+    );
+
+    test('tentar de novo busca a página e limpa a falha', () async {
+      final publicacoesRepo = _FakePublicacoesRepository(
+        todas: gerarPublicacoes(25),
+      );
+      final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+      await provider.trocarAba(AbaFeed.paraVoce);
+      publicacoesRepo.falhar = true;
+      await provider.carregarMais();
+
+      publicacoesRepo.falhar = false;
+      await provider.tentarCarregarMaisDeNovo();
+
+      final estado = provider.estadoDe(AbaFeed.paraVoce);
+      expect(estado.falhouCarregarMais, isFalse);
+      expect(estado.status, StatusAba.sucesso);
+      expect(provider.paraVoce, hasLength(25));
+    });
+
+    test('pullRefresh limpa a falha do rodapé', () async {
+      final publicacoesRepo = _FakePublicacoesRepository(
+        todas: gerarPublicacoes(25),
+      );
+      final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+      await provider.trocarAba(AbaFeed.paraVoce);
+      publicacoesRepo.falhar = true;
+      await provider.carregarMais();
+
+      publicacoesRepo.falhar = false;
+      await provider.pullRefresh();
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isFalse);
+      expect(provider.paraVoce, hasLength(20));
+    });
+
+    test('erro do carregarMais fica na aba que pediu, não na ativa', () async {
+      final publicacoesRepo = _FakePublicacoesRepository(
+        todas: gerarPublicacoes(25),
+      );
+      final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+      await provider.trocarAba(AbaFeed.paraVoce);
+      publicacoesRepo
+        ..falhar = true
+        ..segurar = Completer<void>();
+
+      final emVoo = provider.carregarMais();
+      await provider.trocarAba(AbaFeed.dicas);
+      publicacoesRepo.segurar!.complete();
+      await emVoo;
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isTrue);
+      expect(provider.estadoDe(AbaFeed.dicas).status, StatusAba.sucesso);
+      expect(provider.estadoDe(AbaFeed.dicas).falhouCarregarMais, isFalse);
+    });
+
     test('carregarMais incrementa a página e concatena os itens', () async {
       final publicacoesRepo = _FakePublicacoesRepository(
         todas: gerarPublicacoes(25),

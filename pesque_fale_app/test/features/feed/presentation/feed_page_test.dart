@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:pesque_fale_app/core/data/paged_result.dart';
+import 'package:pesque_fale_app/core/theme/app_colors.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
@@ -52,6 +53,8 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
   final List<Publicacao> seguindoItens = [];
   int chamadas = 0;
   Duration atraso = Duration.zero;
+  int? total;
+  bool falharProximasPaginas = false;
 
   @override
   Future<PagedResult<Publicacao>> listar({
@@ -61,10 +64,11 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
   }) async {
     chamadas++;
     if (atraso > Duration.zero) await Future<void>.delayed(atraso);
+    if (pagina > 1 && falharProximasPaginas) throw Exception('sem rede');
     final itens = seguindo ? List.of(seguindoItens) : todas;
     return PagedResult(
-      items: itens,
-      total: itens.length,
+      items: pagina > 1 ? const [] : itens,
+      total: total ?? itens.length,
       pagina: pagina,
       porPagina: porPagina,
     );
@@ -219,6 +223,7 @@ Widget _harness({
   FakeRealtimeManager? realtime,
   _FakeEventosRepository? eventos,
   _FakePontosRepository? pontos,
+  ThemeData? tema,
 }) {
   final publicacoesRepo = publicacoes ?? _FakePublicacoesRepository();
   final realtimeManager = realtime ?? FakeRealtimeManager();
@@ -249,7 +254,7 @@ Widget _harness({
       ),
     ],
     child: MaterialApp(
-      theme: AppTheme.light,
+      theme: tema ?? AppTheme.light,
       routes: {'/login': (_) => const Scaffold(body: Text('Tela de login'))},
       home: const FeedPage(),
     ),
@@ -452,6 +457,64 @@ void main() {
     final feed = tester.element(find.text('Home')).read<FeedProvider>();
     expect(feed.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
   });
+
+  for (final (nomeTema, criarTema) in [
+    ('claro', () => AppTheme.light),
+    ('escuro', () => AppTheme.dark),
+  ]) {
+    testWidgets(
+      'erro ao carregar mais mantém os cards e mostra Tentar de novo no '
+      'rodapé (tema $nomeTema)',
+      (tester) async {
+        final tema = criarTema();
+        final publicacoes = _FakePublicacoesRepository()
+          ..total = 40
+          ..falharProximasPaginas = true;
+        await tester.pumpWidget(
+          _harness(
+            authProvider: AuthProvider(
+              repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+            ),
+            publicacoes: publicacoes,
+            tema: tema,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final feed = tester.element(find.byType(FeedPage)).read<FeedProvider>();
+
+        await feed.carregarMais();
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Relato de pescaria número 1.'), findsOneWidget);
+        expect(find.text('Tentar novamente'), findsNothing);
+        expect(
+          find.text('Não foi possível carregar mais publicações.'),
+          findsOneWidget,
+        );
+        final botao = tester.widget<ButtonStyleButton>(
+          find.ancestor(
+            of: find.text('Tentar de novo'),
+            matching: find.byWidgetPredicate((w) => w is OutlinedButton),
+          ),
+        );
+        expect(
+          botao.style!.foregroundColor!.resolve(const {}),
+          tema.extension<AppColors>()!.primaryAccent,
+        );
+        final antes = publicacoes.chamadas;
+
+        publicacoes.falharProximasPaginas = false;
+        await tester.ensureVisible(find.text('Tentar de novo'));
+        await tester.tap(find.text('Tentar de novo'));
+        await tester.pumpAndSettle();
+
+        expect(publicacoes.chamadas, antes + 1);
+        expect(find.text('Tentar de novo'), findsNothing);
+        expect(find.text('Relato de pescaria número 1.'), findsOneWidget);
+      },
+    );
+  }
 
   testWidgets('aba Dicas mostra clima e dica do dia hardcoded', (tester) async {
     final authProvider = AuthProvider(

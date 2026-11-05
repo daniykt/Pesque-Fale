@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/aba_feed.dart';
 import '../domain/publicacao.dart';
@@ -318,15 +319,20 @@ class _FeedListaViewState extends State<_FeedListaView> {
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
         final estaCarregandoMais = estado.status == StatusAba.carregandoMais;
+        final temRodape = estaCarregandoMais || estado.falhouCarregarMais;
         conteudo = ListView.separated(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(12),
-          itemCount: widget.publicacoes.length + (estaCarregandoMais ? 1 : 0),
+          itemCount: widget.publicacoes.length + (temRodape ? 1 : 0),
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (_, index) {
             if (index >= widget.publicacoes.length) {
-              return const PublicacaoCardSkeleton();
+              return estado.falhouCarregarMais
+                  ? _ErroCarregarMais(
+                      onTentarDeNovo: provider.tentarCarregarMaisDeNovo,
+                    )
+                  : const PublicacaoCardSkeleton();
             }
             return PublicacaoCard(publicacao: widget.publicacoes[index]);
           },
@@ -409,6 +415,44 @@ class _ErroView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErroCarregarMais extends StatelessWidget {
+  const _ErroCarregarMais({required this.onTentarDeNovo});
+
+  final Future<void> Function() onTentarDeNovo;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Column(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 32, color: colors.danger),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Não foi possível carregar mais publicações.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          OutlinedButton.icon(
+            onPressed: onTentarDeNovo,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 48),
+              foregroundColor: colors.primaryAccent,
+              side: BorderSide(color: colors.primaryAccent),
+            ),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Tentar de novo'),
+          ),
+        ],
       ),
     );
   }

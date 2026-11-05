@@ -16,10 +16,15 @@ import 'publicacoes_store.dart';
 enum StatusAba { inicial, carregando, sucesso, vazio, erro, carregandoMais }
 
 class EstadoAba {
-  const EstadoAba({required this.status, this.mensagemErro});
+  const EstadoAba({
+    required this.status,
+    this.mensagemErro,
+    this.falhouCarregarMais = false,
+  });
 
   final StatusAba status;
   final String? mensagemErro;
+  final bool falhouCarregarMais;
 
   factory EstadoAba.inicial() => const EstadoAba(status: StatusAba.inicial);
 }
@@ -187,21 +192,23 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> carregarMais() async {
-    if (_abaAtiva != AbaFeed.paraVoce && _abaAtiva != AbaFeed.seguindo) {
+    final aba = _abaAtiva;
+    if (aba != AbaFeed.paraVoce && aba != AbaFeed.seguindo) {
       return;
     }
-    final atual = estadoDe(_abaAtiva);
+    final atual = estadoDe(aba);
     if (atual.status == StatusAba.carregandoMais ||
-        atual.status == StatusAba.carregando) {
+        atual.status == StatusAba.carregando ||
+        atual.falhouCarregarMais) {
       return;
     }
 
-    final ehSeguindo = _abaAtiva == AbaFeed.seguindo;
+    final ehSeguindo = aba == AbaFeed.seguindo;
     final temMais = ehSeguindo ? _temMaisSeguindo : _temMaisParaVoce;
     if (!temMais) return;
 
     final sessao = _sessao;
-    _atualizarEstado(_abaAtiva, StatusAba.carregandoMais);
+    _atualizarEstado(aba, StatusAba.carregandoMais);
     try {
       final proximaPagina =
           (ehSeguindo ? _paginaSeguindo : _paginaParaVoce) + 1;
@@ -226,11 +233,20 @@ class FeedProvider extends ChangeNotifier {
         _temMaisParaVoce = result.temMais;
       }
       _invalidarCache();
-      _atualizarEstado(_abaAtiva, StatusAba.sucesso);
-    } catch (e) {
+      _atualizarEstado(aba, StatusAba.sucesso);
+    } catch (_) {
       if (sessao != _sessao) return;
-      _atualizarEstado(_abaAtiva, StatusAba.erro, e.toString());
+      _estados[aba] = const EstadoAba(
+        status: StatusAba.sucesso,
+        falhouCarregarMais: true,
+      );
+      notifyListeners();
     }
+  }
+
+  Future<void> tentarCarregarMaisDeNovo() {
+    _atualizarEstado(_abaAtiva, StatusAba.sucesso);
+    return carregarMais();
   }
 
   Future<void> pullRefresh() async {
