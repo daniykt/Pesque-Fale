@@ -95,6 +95,40 @@ void main() {
     });
   }
 
+  testWidgets('filtro Tipo: voltar para Todos limpa o filtro no provider', (
+    tester,
+  ) async {
+    final repo = _FakePontosContador(const []);
+    final provider = PesquisaLocaisProvider(repository: repo);
+    await provider.recarregar();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: provider,
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const Scaffold(appBar: _appBarPesquisa, body: LocaisTab()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Todos'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rio').last);
+    await tester.pumpAndSettle();
+    expect(provider.filtros.tipo, TipoPonto.rio);
+    final antes = repo.chamadas;
+
+    await tester.tap(find.text('Rio'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Todos').last);
+    await tester.pumpAndSettle();
+
+    expect(provider.filtros.tipo, isNull);
+    expect(repo.chamadas, antes + 1);
+  });
+
   group('volta da tela do ponto recarrega os locais', () {
     const ponto = Ponto(
       id: 'p1',
