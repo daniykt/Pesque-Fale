@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/cloudinary_url.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/estrelas_readonly.dart';
+import '../../../shared/widgets/imagem_placeholder.dart';
 import '../../../shared/widgets/local_com_pin.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../feed/data/comentarios_repository.dart';
@@ -248,8 +249,6 @@ class _ImagemPost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-
     return InkWell(
       onTap: () => AppSnackbar.showInfo(context, 'Viewer em breve'),
       child: AspectRatio(
@@ -259,17 +258,10 @@ class _ImagemPost extends StatelessWidget {
           fit: BoxFit.cover,
           loadingBuilder: (context, child, progress) {
             if (progress == null) return child;
-            return Container(color: colors.surfaceVariant);
+            return const ImagemCarregando();
           },
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: colors.surfaceVariant,
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.broken_image,
-              color: colors.textSecondary,
-              size: 48,
-            ),
-          ),
+          errorBuilder: (context, error, stackTrace) =>
+              const ImagemIndisponivel(),
         ),
       ),
     );

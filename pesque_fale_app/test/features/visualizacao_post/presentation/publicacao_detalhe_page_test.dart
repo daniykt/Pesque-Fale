@@ -14,6 +14,7 @@ import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 import 'package:pesque_fale_app/features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
 import 'package:pesque_fale_app/features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
+import 'package:pesque_fale_app/shared/widgets/imagem_placeholder.dart';
 
 class _FakePublicacoesRepository implements PublicacoesRepository {
   @override
@@ -126,4 +127,56 @@ void main() {
       expect(find.text('Esta publicação foi excluída.'), findsOneWidget);
     },
   );
+
+  for (final (nomeTema, criarTema) in [
+    ('claro', () => AppTheme.light),
+    ('escuro', () => AppTheme.dark),
+  ]) {
+    testWidgets('imagem que falha mostra Imagem indisponível '
+        '(tema $nomeTema)', (tester) async {
+      final comImagem = Publicacao(
+        id: 'p2',
+        autorId: 'autor-1',
+        autorNome: 'Ana',
+        imagemUrl: 'https://res.cloudinary.com/demo/image/upload/quebrada.jpg',
+        criadoEm: DateTime(2026, 1, 1),
+        atualizadoEm: DateTime(2026, 1, 1),
+      );
+      final store = PublicacoesStore()..upsert(comImagem);
+      final publicacoesRepo = _FakePublicacoesRepository();
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthProvider>(
+              create: (_) => AuthProvider(
+                repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+              ),
+            ),
+            ChangeNotifierProvider<PublicacoesStore>.value(value: store),
+            Provider<PublicacoesRepository>.value(value: publicacoesRepo),
+            Provider<ComentariosRepository>.value(
+              value: _FakeComentariosRepository(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: criarTema(),
+            home: ChangeNotifierProvider<PublicacaoDetalheProvider>(
+              create: (_) => PublicacaoDetalheProvider(
+                publicacoesRepository: publicacoesRepo,
+                store: store,
+                publicacaoInicial: comImagem,
+              )..carregar(),
+              child: const PublicacaoDetalhePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ImagemIndisponivel), findsOneWidget);
+      expect(find.text('Imagem indisponível'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
