@@ -55,6 +55,7 @@ import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/aba_feed.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
+import 'features/feed/providers/publicacoes_store.dart';
 import 'features/onboarding/presentation/onboarding_wizard_page.dart';
 import 'features/onboarding/providers/onboarding_provider.dart';
 import 'features/perfil/data/perfil_api_client.dart';
@@ -195,6 +196,8 @@ void main() {
           ),
         );
 
+  final publicacoesStore = PublicacoesStore();
+
   runApp(
     MultiProvider(
       providers: [
@@ -210,6 +213,7 @@ void main() {
           create: (_) => RealtimeManager(),
           update: (context, auth, previous) => previous!..reagirAuth(auth),
         ),
+        ChangeNotifierProvider<PublicacoesStore>.value(value: publicacoesStore),
         Provider<PerfilRepository>.value(value: perfilRepository),
         ChangeNotifierProxyProvider2<
           AuthProvider,
@@ -222,6 +226,7 @@ void main() {
           create: (ctx) => PerfilProvider(
             repository: perfilRepository,
             authProvider: ctx.read<AuthProvider>(),
+            store: publicacoesStore,
             realtime: ctx.read<RealtimeManager>(),
           ),
           update: (ctx, auth, realtime, previous) =>
@@ -306,6 +311,7 @@ void main() {
             pontosRepo: pontosRepository,
             authProvider: context.read<AuthProvider>(),
             realtime: context.read<RealtimeManager>(),
+            store: publicacoesStore,
           ),
           update: (context, auth, realtime, previous) =>
               previous!..reagirAuth(auth),
@@ -392,6 +398,7 @@ class PesqueFaleApp extends StatelessWidget {
               create: (ctx) => PerfilProvider(
                 repository: ctx.read<PerfilProvider>().repository,
                 authProvider: ctx.read<AuthProvider>(),
+                store: ctx.read<PublicacoesStore>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
             ),
@@ -423,6 +430,7 @@ class PesqueFaleApp extends StatelessWidget {
                 ChangeNotifierProvider<PublicacaoDetalheProvider>(
                   create: (ctx) => PublicacaoDetalheProvider(
                     publicacoesRepository: ctx.read<PublicacoesRepository>(),
+                    store: ctx.read<PublicacoesStore>(),
                     publicacaoInicial: publicacaoInicial,
                     publicacaoId: publicacaoId,
                   )..carregar(),

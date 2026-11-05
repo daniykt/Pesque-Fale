@@ -9,7 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../auth/data/token_storage.dart';
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
-import '../domain/publicacao.dart';
+import '../../feed/domain/publicacao.dart';
 import 'perfil_exceptions.dart';
 
 class UsuarioResumido {

@@ -16,7 +16,7 @@ class PublicacaoMenuSheet {
   static void show(
     BuildContext context,
     Publicacao publicacao, {
-    VoidCallback? onDeleted,
+    Future<void> Function()? excluir,
   }) {
     final feedProvider = context.read<FeedProvider>();
     final publicacoesRepo = context.read<PublicacoesRepository>();
@@ -44,12 +44,15 @@ class PublicacaoMenuSheet {
                   final confirmou = await _confirmarExclusao(context);
                   if (confirmou != true) return;
                   try {
-                    await publicacoesRepo.deletar(publicacao.id);
-                    feedProvider.removerPublicacao(publicacao.id);
+                    if (excluir != null) {
+                      await excluir();
+                    } else {
+                      await publicacoesRepo.deletar(publicacao.id);
+                      feedProvider.removerPublicacao(publicacao.id);
+                    }
                     if (context.mounted) {
                       AppSnackbar.showSuccess(context, 'Publicação excluída.');
                     }
-                    onDeleted?.call();
                   } catch (_) {
                     if (context.mounted) {
                       AppSnackbar.showError(

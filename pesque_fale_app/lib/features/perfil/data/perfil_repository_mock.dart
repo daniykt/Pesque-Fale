@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
 import '../domain/perfil_completo.dart';
-import '../domain/publicacao.dart';
+import '../../feed/domain/publicacao.dart';
 import 'perfil_api_client.dart';
 import 'perfil_exceptions.dart';
 import 'perfil_repository.dart';
@@ -45,17 +45,23 @@ class PerfilRepositoryMock implements PerfilRepository {
     ),
   };
 
+  static final _dataBase = DateTime(2026, 1, 1);
+
   static final _publicacoes = <String, List<Publicacao>>{
     'mock-id': List.generate(
       5,
       (i) => Publicacao(
         id: 'ana-post-$i',
         autorId: 'mock-id',
+        autorNome: 'Ana Pescadora',
+        autorUsername: 'ana_pesca',
         imagemUrl: 'https://picsum.photos/seed/ana-post-$i/400/400',
-        legenda: 'Pescaria do dia ${i + 1}',
+        descricao: 'Pescaria do dia ${i + 1}',
         tags: const ['tilapia', 'rio'],
         curtidasCount: 10 + i,
         comentariosCount: i,
+        criadoEm: _dataBase.subtract(Duration(days: i)),
+        atualizadoEm: _dataBase.subtract(Duration(days: i)),
       ),
     ),
     'mock-2': List.generate(
@@ -63,8 +69,12 @@ class PerfilRepositoryMock implements PerfilRepository {
       (i) => Publicacao(
         id: 'bruno-post-$i',
         autorId: 'mock-2',
+        autorNome: 'Bruno Sem Foto',
+        autorUsername: 'bruno_sf',
         imagemUrl: 'https://picsum.photos/seed/bruno-post-$i/400/400',
         curtidasCount: i,
+        criadoEm: _dataBase.subtract(Duration(days: i)),
+        atualizadoEm: _dataBase.subtract(Duration(days: i)),
       ),
     ),
     'mock-3': const [],

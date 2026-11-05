@@ -21,6 +21,7 @@ import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/presentation/feed_page.dart';
 import 'package:pesque_fale_app/features/feed/presentation/widgets/novas_publicacoes_button.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
+import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/ponto.dart';
@@ -228,6 +229,7 @@ Widget _harness({
           pontosRepo: pontosRepo,
           authProvider: authProvider,
           realtime: realtimeManager,
+          store: PublicacoesStore(),
         ),
         update: (context, auth, previous) => previous!..reagirAuth(auth),
       ),

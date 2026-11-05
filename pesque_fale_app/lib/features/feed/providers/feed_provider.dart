@@ -11,6 +11,7 @@ import '../data/publicacoes_repository.dart';
 import '../domain/aba_feed.dart';
 import '../domain/evento.dart';
 import '../domain/publicacao.dart';
+import 'publicacoes_store.dart';
 
 enum StatusAba { inicial, carregando, sucesso, vazio, erro, carregandoMais }
 
@@ -31,7 +32,9 @@ class FeedProvider extends ChangeNotifier {
     required this.pontosRepo,
     required this.authProvider,
     required this.realtime,
+    required this.store,
   }) {
+    store.addListener(_onStoreMudou);
     realtime.subscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
     realtime.onReconnect(_onReconnect);
   }
@@ -41,6 +44,7 @@ class FeedProvider extends ChangeNotifier {
   final EventosRepository eventosRepo;
   final PontosRepository pontosRepo;
   final RealtimeManager realtime;
+  final PublicacoesStore store;
   AuthProvider authProvider;
 
   /// Ids de publicações que chegaram via realtime mas ainda não foram
@@ -59,8 +63,15 @@ class FeedProvider extends ChangeNotifier {
   };
   EstadoAba estadoDe(AbaFeed aba) => _estados[aba]!;
 
-  final List<Publicacao> paraVoce = [];
-  final List<Publicacao> seguindo = [];
+  final List<String> _idsParaVoce = [];
+  final List<String> _idsSeguindo = [];
+  List<Publicacao>? _cacheParaVoce;
+  List<Publicacao>? _cacheSeguindo;
+
+  List<Publicacao> get paraVoce =>
+      _cacheParaVoce ??= List.unmodifiable(store.resolver(_idsParaVoce));
+  List<Publicacao> get seguindo =>
+      _cacheSeguindo ??= List.unmodifiable(store.resolver(_idsSeguindo));
   List<Evento> eventos = [];
   List<Ponto> topLocais = [];
 
@@ -86,9 +97,11 @@ class FeedProvider extends ChangeNotifier {
             pagina: 1,
             seguindo: false,
           );
-          paraVoce
+          store.upsertTodos(result.items);
+          _idsParaVoce
             ..clear()
-            ..addAll(result.items);
+            ..addAll(result.items.map((p) => p.id));
+          _invalidarCache();
           _paginaParaVoce = 1;
           _temMaisParaVoce = result.temMais;
           _atualizarEstado(
@@ -106,13 +119,13 @@ class FeedProvider extends ChangeNotifier {
             pagina: 1,
             seguindo: true,
           );
-          seguindo
+          store.upsertTodos(result.items);
+          _idsSeguindo
             ..clear()
-            ..addAll(result.items);
+            ..addAll(result.items.map((p) => p.id));
+          _invalidarCache();
           // Evento que chegou com a requisição em voo pode já ter vindo nela.
-          _pendentesSeguindo.removeWhere(
-            (id) => seguindo.any((p) => p.id == id),
-          );
+          _pendentesSeguindo.removeWhere(_idsSeguindo.contains);
           _paginaSeguindo = 1;
           _temMaisSeguindo = result.temMais;
           _atualizarEstado(
@@ -169,18 +182,22 @@ class FeedProvider extends ChangeNotifier {
         pagina: proximaPagina,
         seguindo: ehSeguindo,
       );
+      store.upsertTodos(result.items);
       if (ehSeguindo) {
         // Paginação por offset: publicações aplicadas no topo via realtime
         // empurram itens já carregados pra próxima página.
-        final idsAtuais = seguindo.map((p) => p.id).toSet();
-        seguindo.addAll(result.items.where((p) => !idsAtuais.contains(p.id)));
+        final idsAtuais = _idsSeguindo.toSet();
+        _idsSeguindo.addAll(
+          result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
+        );
         _paginaSeguindo = proximaPagina;
         _temMaisSeguindo = result.temMais;
       } else {
-        paraVoce.addAll(result.items);
+        _idsParaVoce.addAll(result.items.map((p) => p.id));
         _paginaParaVoce = proximaPagina;
         _temMaisParaVoce = result.temMais;
       }
+      _invalidarCache();
       _atualizarEstado(_abaAtiva, StatusAba.sucesso);
     } catch (e) {
       _atualizarEstado(_abaAtiva, StatusAba.erro, e.toString());
@@ -197,54 +214,54 @@ class FeedProvider extends ChangeNotifier {
     if (authProvider.usuario == null) {
       throw StateError('não logado');
     }
-    final atualizado = p.copyWith(
-      jaCurtiu: !p.jaCurtiu,
-      curtidasCount: p.jaCurtiu ? p.curtidasCount - 1 : p.curtidasCount + 1,
+    final atual = store.porId(p.id);
+    if (atual == null) store.upsert(p);
+    final base = atual ?? p;
+    store.atualizarCurtida(
+      base.id,
+      jaCurtiu: !base.jaCurtiu,
+      curtidasCount: base.jaCurtiu
+          ? base.curtidasCount - 1
+          : base.curtidasCount + 1,
     );
-    _substituirEmTodasListas(atualizado);
-    notifyListeners();
     try {
-      if (p.jaCurtiu) {
-        await curtidasRepo.descurtir(p.id);
+      if (base.jaCurtiu) {
+        await curtidasRepo.descurtir(base.id);
       } else {
-        await curtidasRepo.curtir(p.id);
+        await curtidasRepo.curtir(base.id);
       }
     } catch (e) {
-      _substituirEmTodasListas(p);
-      notifyListeners();
+      store.atualizarCurtida(
+        base.id,
+        jaCurtiu: base.jaCurtiu,
+        curtidasCount: base.curtidasCount,
+      );
       rethrow;
     }
   }
 
   /// Chamado pelo [ComentariosProvider] após criar/deletar um comentário.
   void atualizarContadorComentarios(String publicacaoId, int delta) {
-    Publicacao? achado;
-    for (final lista in [paraVoce, seguindo]) {
-      final idx = lista.indexWhere((p) => p.id == publicacaoId);
-      if (idx != -1) {
-        achado = lista[idx].copyWith(
-          comentariosCount: lista[idx].comentariosCount + delta,
-        );
-        lista[idx] = achado;
-      }
-    }
-    if (achado != null) notifyListeners();
+    final atual = store.porId(publicacaoId);
+    if (atual == null) return;
+    store.atualizarComentarios(publicacaoId, atual.comentariosCount + delta);
   }
 
   void removerPublicacao(String id) {
-    paraVoce.removeWhere((p) => p.id == id);
-    seguindo.removeWhere((p) => p.id == id);
-    notifyListeners();
+    store.remover(id);
   }
 
   /// Insere uma publicação recém-criada no topo da aba "Para você" e,
   /// se o autor for o usuário logado, também na "Seguindo".
   /// Chamado pela tela de nova publicação após POST bem-sucedido.
   void adicionarPublicacao(Publicacao publicacao) {
-    paraVoce.insert(0, publicacao);
-    if (seguindo.isNotEmpty && publicacao.autorId == authProvider.usuario?.id) {
-      seguindo.insert(0, publicacao);
+    store.upsert(publicacao);
+    _idsParaVoce.insert(0, publicacao.id);
+    if (_idsSeguindo.isNotEmpty &&
+        publicacao.autorId == authProvider.usuario?.id) {
+      _idsSeguindo.insert(0, publicacao.id);
     }
+    _invalidarCache();
     notifyListeners();
   }
 
@@ -258,7 +275,7 @@ class FeedProvider extends ChangeNotifier {
     // chamou adicionarPublicacao. O backend nem emite pra ele (ninguém segue
     // a si mesmo) — isto é defesa em profundidade.
     if (autor == authProvider.usuario?.id) return;
-    if (seguindo.any((p) => p.id == id)) return;
+    if (_idsSeguindo.contains(id)) return;
     if (!_pendentesSeguindo.add(id)) return;
     notifyListeners();
   }
@@ -274,16 +291,18 @@ class FeedProvider extends ChangeNotifier {
       final result = await publicacoesRepo.listar(pagina: 1, seguindo: true);
       // Logout/troca de conta com a requisição em voo: descarta.
       if (authProvider.usuario?.id != usuarioId) return;
-      final idsAtuais = seguindo.map((p) => p.id).toSet();
-      seguindo.insertAll(
+      store.upsertTodos(result.items);
+      final idsAtuais = _idsSeguindo.toSet();
+      _idsSeguindo.insertAll(
         0,
-        result.items.where((p) => !idsAtuais.contains(p.id)),
+        result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
       );
+      _invalidarCache();
       // A paginação continua de onde estava; o carregarMais dedupa o que
       // o prepend empurrou pra próxima página.
       _atualizarEstado(
         AbaFeed.seguindo,
-        seguindo.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
+        _idsSeguindo.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
       );
     } catch (_) {
       // Silencia: o pull-to-refresh continua disponível pra reconciliar.
@@ -299,11 +318,16 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _substituirEmTodasListas(Publicacao nova) {
-    for (final lista in [paraVoce, seguindo]) {
-      final idx = lista.indexWhere((p) => p.id == nova.id);
-      if (idx != -1) lista[idx] = nova;
-    }
+  void _onStoreMudou() {
+    _idsParaVoce.removeWhere(store.foiRemovida);
+    _idsSeguindo.removeWhere(store.foiRemovida);
+    _invalidarCache();
+    notifyListeners();
+  }
+
+  void _invalidarCache() {
+    _cacheParaVoce = null;
+    _cacheSeguindo = null;
   }
 
   void _atualizarEstado(AbaFeed aba, StatusAba status, [String? erro]) {
@@ -317,7 +341,8 @@ class FeedProvider extends ChangeNotifier {
   void reagirAuth(AuthProvider auth) {
     authProvider = auth;
     if (auth.usuario == null) {
-      seguindo.clear();
+      _idsSeguindo.clear();
+      _invalidarCache();
       _pendentesSeguindo.clear();
       _estados[AbaFeed.seguindo] = EstadoAba.inicial();
       notifyListeners();
@@ -326,6 +351,7 @@ class FeedProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    store.removeListener(_onStoreMudou);
     realtime.unsubscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
     realtime.removerOnReconnect(_onReconnect);
     super.dispose();

@@ -16,6 +16,7 @@ import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/presentation/widgets/abas_scroll.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
+import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 import 'package:pesque_fale_app/features/pesquisa/data/pontos_repository.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/filtros_locais.dart';
 import 'package:pesque_fale_app/features/pesquisa/domain/ponto.dart';
@@ -102,6 +103,7 @@ void main() {
         repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
       ),
       realtime: FakeRealtimeManager(),
+      store: PublicacoesStore(),
     );
 
     await tester.pumpWidget(

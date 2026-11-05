@@ -1,5 +1,5 @@
 import '../../auth/domain/usuario.dart';
-import 'publicacao.dart';
+import '../../feed/domain/publicacao.dart';
 
 class PerfilCompleto {
   const PerfilCompleto({
