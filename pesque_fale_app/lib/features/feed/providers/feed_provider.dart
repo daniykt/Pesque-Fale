@@ -218,17 +218,17 @@ class FeedProvider extends ChangeNotifier {
       );
       if (sessao != _sessao) return;
       store.upsertTodos(result.items);
+      // Paginação por offset: publicações novas no topo empurram itens já
+      // carregados pra próxima página.
+      final ids = ehSeguindo ? _idsSeguindo : _idsParaVoce;
+      final idsAtuais = ids.toSet();
+      ids.addAll(
+        result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
+      );
       if (ehSeguindo) {
-        // Paginação por offset: publicações aplicadas no topo via realtime
-        // empurram itens já carregados pra próxima página.
-        final idsAtuais = _idsSeguindo.toSet();
-        _idsSeguindo.addAll(
-          result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
-        );
         _paginaSeguindo = proximaPagina;
         _temMaisSeguindo = result.temMais;
       } else {
-        _idsParaVoce.addAll(result.items.map((p) => p.id));
         _paginaParaVoce = proximaPagina;
         _temMaisParaVoce = result.temMais;
       }

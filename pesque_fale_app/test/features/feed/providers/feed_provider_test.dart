@@ -320,6 +320,25 @@ void main() {
     List<Publicacao> gerarPublicacoes(int quantidade) =>
         List.generate(quantidade, (i) => _publicacao('p$i'));
 
+    test(
+      'Para você não duplica o item empurrado para a página seguinte',
+      () async {
+        final publicacoesRepo = _FakePublicacoesRepository(
+          todas: gerarPublicacoes(25),
+        );
+        final provider = _criarProvider(publicacoesRepo: publicacoesRepo);
+        await provider.trocarAba(AbaFeed.paraVoce);
+
+        publicacoesRepo.todas.insert(0, _publicacao('nova'));
+        await provider.carregarMais();
+
+        final ids = provider.paraVoce.map((p) => p.id).toList();
+        expect(ids, hasLength(25));
+        expect(ids.toSet(), hasLength(ids.length));
+        expect(ids.where((id) => id == 'p19'), hasLength(1));
+      },
+    );
+
     test('erro no carregarMais mantém a lista e marca a falha', () async {
       final publicacoesRepo = _FakePublicacoesRepository(
         todas: gerarPublicacoes(25),
