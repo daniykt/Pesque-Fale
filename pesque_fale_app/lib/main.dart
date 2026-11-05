@@ -226,6 +226,7 @@ void main() {
           create: (ctx) => PerfilProvider(
             repository: perfilRepository,
             authProvider: ctx.read<AuthProvider>(),
+            store: publicacoesStore,
             realtime: ctx.read<RealtimeManager>(),
           ),
           update: (ctx, auth, realtime, previous) =>
@@ -397,6 +398,7 @@ class PesqueFaleApp extends StatelessWidget {
               create: (ctx) => PerfilProvider(
                 repository: ctx.read<PerfilProvider>().repository,
                 authProvider: ctx.read<AuthProvider>(),
+                store: ctx.read<PublicacoesStore>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
             ),

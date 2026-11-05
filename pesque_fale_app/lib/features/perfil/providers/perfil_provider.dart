@@ -6,6 +6,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../data/perfil_exceptions.dart';
 import '../data/perfil_repository.dart';
 import '../../feed/domain/publicacao.dart';
+import '../../feed/providers/publicacoes_store.dart';
 
 enum PerfilStatus { idle, loading, success, error }
 
@@ -13,14 +14,17 @@ class PerfilProvider extends ChangeNotifier {
   PerfilProvider({
     required this.repository,
     required this.authProvider,
+    required this.store,
     this.realtime,
   }) {
     authProvider.addListener(_onAuthChanged);
+    store.addListener(_onStoreMudou);
     realtime?.subscribe('seguidor_adicionado', _onSeguidorMudou);
     realtime?.subscribe('seguidor_removido', _onSeguidorMudou);
   }
 
   final PerfilRepository repository;
+  final PublicacoesStore store;
 
   /// Só o provider global (aba Perfil do próprio usuário) recebe o manager.
   /// O da rota `/perfil` (perfil de outro) não passa e fica sem realtime.
@@ -30,14 +34,16 @@ class PerfilProvider extends ChangeNotifier {
   PerfilStatus _status = PerfilStatus.idle;
   String? _errorMessage;
   Usuario? _perfil;
-  List<Publicacao> _publicacoes = const [];
+  final List<String> _idsPublicacoes = [];
+  List<Publicacao>? _cachePublicacoes;
   bool _isFollowing = false;
   bool _seguidoPeloOutro = false;
 
   PerfilStatus get status => _status;
   String? get errorMessage => _errorMessage;
   Usuario? get perfil => _perfil;
-  List<Publicacao> get publicacoes => _publicacoes;
+  List<Publicacao> get publicacoes =>
+      _cachePublicacoes ??= List.unmodifiable(store.resolver(_idsPublicacoes));
   bool get isFollowing => _isFollowing;
 
   bool get isOwnProfile =>
@@ -54,7 +60,7 @@ class PerfilProvider extends ChangeNotifier {
   bool get podeSeguirDeVolta =>
       !isOwnProfile && !_isFollowing && _seguidoPeloOutro;
 
-  int get totalPublicacoes => _publicacoes.length;
+  int get totalPublicacoes => publicacoes.length;
 
   Future<void> carregarPerfil(String id) async {
     _status = PerfilStatus.loading;
@@ -65,7 +71,11 @@ class PerfilProvider extends ChangeNotifier {
       final meuId = authProvider.usuario?.id ?? '';
       final completo = await repository.buscarPerfil(id, meuId: meuId);
       _perfil = completo.usuario;
-      _publicacoes = completo.publicacoes;
+      _idsPublicacoes
+        ..clear()
+        ..addAll(completo.publicacoes.map((p) => p.id));
+      _cachePublicacoes = null;
+      _inserirNoStoreComDono(completo.usuario, completo.publicacoes);
       _isFollowing = completo.isFollowing;
       _seguidoPeloOutro = completo.seguidoPeloOutro;
       _status = PerfilStatus.success;
@@ -211,8 +221,65 @@ class PerfilProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // TODO(#267): remover quando GET /usuarios/:id/publicacoes devolver autor e
+  // jaCurtiu; aí basta store.upsertTodos(publicacoes).
+  void _inserirNoStoreComDono(Usuario dono, List<Publicacao> publicacoes) {
+    store.inserirSeAusente(
+      publicacoes.map(
+        (p) => Publicacao(
+          id: p.id,
+          autorId: p.autorId,
+          autorNome: p.autorNome.isEmpty ? dono.nome : p.autorNome,
+          autorUsername: p.autorUsername ?? dono.username,
+          autorFoto: p.autorFoto ?? dono.fotoPerfil,
+          pontoId: p.pontoId,
+          descricao: p.descricao,
+          imagemUrl: p.imagemUrl,
+          localTexto: p.localTexto,
+          avaliacaoNota: p.avaliacaoNota,
+          tags: p.tags,
+          curtidasCount: p.curtidasCount,
+          comentariosCount: p.comentariosCount,
+          jaCurtiu: p.jaCurtiu,
+          criadoEm: p.criadoEm,
+          atualizadoEm: p.atualizadoEm,
+        ),
+      ),
+    );
+  }
+
+  void _onStoreMudou() {
+    _idsPublicacoes.removeWhere(store.foiRemovida);
+    final dono = _perfil?.id;
+    if (dono != null) _idsPublicacoes.insertAll(0, _novasDoDono(dono));
+    _cachePublicacoes = null;
+    notifyListeners();
+  }
+
+  List<String> _novasDoDono(String dono) {
+    final atuais = _idsPublicacoes.toSet();
+    final conhecidas = store.resolver(_idsPublicacoes);
+    final maisRecente = conhecidas.isEmpty
+        ? null
+        : conhecidas
+              .map((p) => p.criadoEm)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+    final novas =
+        store
+            .publicacoesDoAutor(dono)
+            .where(
+              (p) =>
+                  !atuais.contains(p.id) &&
+                  (maisRecente == null || p.criadoEm.isAfter(maisRecente)),
+            )
+            .toList()
+          ..sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
+    return novas.map((p) => p.id).toList();
+  }
+
   @override
   void dispose() {
+    store.removeListener(_onStoreMudou);
     realtime?.unsubscribe('seguidor_adicionado', _onSeguidorMudou);
     realtime?.unsubscribe('seguidor_removido', _onSeguidorMudou);
     authProvider.removeListener(_onAuthChanged);

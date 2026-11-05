@@ -8,11 +8,12 @@ Publicacao _pub(
   int comentarios = 0,
   bool jaCurtiu = false,
   String? descricao,
+  String autorId = 'autor-1',
 }) {
   final data = DateTime(2026, 11, 1);
   return Publicacao(
     id: id,
-    autorId: 'autor-1',
+    autorId: autorId,
     autorNome: 'Autor',
     descricao: descricao,
     curtidasCount: curtidas,
@@ -151,6 +152,53 @@ void main() {
       store.atualizarComentarios('1', 2);
 
       expect(notificacoes, 1);
+    });
+  });
+
+  group('inserirSeAusente', () {
+    test('insere só as ausentes e notifica uma vez', () {
+      store.upsert(_pub('1', jaCurtiu: true, curtidas: 4));
+      notificacoes = 0;
+
+      store.inserirSeAusente([_pub('1'), _pub('2'), _pub('3')]);
+
+      expect(store.porId('1')!.jaCurtiu, isTrue);
+      expect(store.porId('1')!.curtidasCount, 4);
+      expect(store.porId('2'), isNotNull);
+      expect(store.porId('3'), isNotNull);
+      expect(notificacoes, 1);
+    });
+
+    test('ignora removidas', () {
+      store.remover('1');
+      notificacoes = 0;
+
+      store.inserirSeAusente([_pub('1')]);
+
+      expect(store.porId('1'), isNull);
+      expect(notificacoes, 0);
+    });
+
+    test('não notifica quando todas já existem', () {
+      store.upsert(_pub('1'));
+      notificacoes = 0;
+
+      store.inserirSeAusente([_pub('1', curtidas: 9)]);
+
+      expect(store.porId('1')!.curtidasCount, 0);
+      expect(notificacoes, 0);
+    });
+  });
+
+  group('publicacoesDoAutor', () {
+    test('devolve só as publicações do autor', () {
+      store.upsertTodos([
+        _pub('1', autorId: 'ana'),
+        _pub('2', autorId: 'bruno'),
+        _pub('3', autorId: 'ana'),
+      ]);
+
+      expect(store.publicacoesDoAutor('ana').map((p) => p.id), ['1', '3']);
     });
   });
 

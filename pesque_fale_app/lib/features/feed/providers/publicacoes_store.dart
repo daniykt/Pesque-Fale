@@ -11,9 +11,12 @@ class PublicacoesStore extends ChangeNotifier {
   bool foiRemovida(String id) => _removidos.contains(id);
 
   List<Publicacao> resolver(List<String> ids) => [
-        for (final id in ids)
-          if (_porId[id] != null) _porId[id]!,
-      ];
+    for (final id in ids)
+      if (_porId[id] != null) _porId[id]!,
+  ];
+
+  Iterable<Publicacao> publicacoesDoAutor(String autorId) =>
+      _porId.values.where((p) => p.autorId == autorId);
 
   void upsert(Publicacao p) {
     if (_aplicar(p)) notifyListeners();
@@ -23,6 +26,16 @@ class PublicacoesStore extends ChangeNotifier {
     var mudou = false;
     for (final p in lista) {
       if (_aplicar(p)) mudou = true;
+    }
+    if (mudou) notifyListeners();
+  }
+
+  void inserirSeAusente(Iterable<Publicacao> lista) {
+    var mudou = false;
+    for (final p in lista) {
+      if (_removidos.contains(p.id) || _porId.containsKey(p.id)) continue;
+      _porId[p.id] = p;
+      mudou = true;
     }
     if (mudou) notifyListeners();
   }

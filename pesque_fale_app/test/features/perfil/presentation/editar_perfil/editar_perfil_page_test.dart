@@ -15,6 +15,7 @@ import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 import 'package:pesque_fale_app/features/perfil/presentation/editar_perfil/editar_perfil_page.dart';
 import 'package:pesque_fale_app/features/perfil/providers/perfil_provider.dart';
+import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
@@ -112,6 +113,7 @@ void main() {
             create: (ctx) => PerfilProvider(
               repository: _FakePerfilRepository(),
               authProvider: ctx.read<AuthProvider>(),
+              store: PublicacoesStore(),
             ),
             update: (context, auth, previous) => previous!..authProvider = auth,
           ),

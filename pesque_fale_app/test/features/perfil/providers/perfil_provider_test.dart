@@ -5,11 +5,13 @@ import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
+import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_exceptions.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_repository.dart';
 import 'package:pesque_fale_app/features/perfil/data/perfil_api_client.dart';
 import 'package:pesque_fale_app/features/perfil/domain/perfil_completo.dart';
 import 'package:pesque_fale_app/features/perfil/providers/perfil_provider.dart';
+import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 
 import '../../chat/support/fake_realtime_manager.dart';
 
@@ -50,12 +52,14 @@ class _FakePerfilRepository implements PerfilRepository {
     this.isFollowing = false,
     this.seguidoPeloOutro = false,
     this.usuarioId = 'outro',
+    this.publicacoes = const [],
   });
 
   final bool falharAoSeguir;
   final bool isFollowing;
   final bool seguidoPeloOutro;
   final String usuarioId;
+  final List<Publicacao> publicacoes;
 
   Usuario get _outro => Usuario(
     id: usuarioId,
@@ -72,7 +76,7 @@ class _FakePerfilRepository implements PerfilRepository {
   }) async {
     return PerfilCompleto(
       usuario: _outro,
-      publicacoes: const [],
+      publicacoes: publicacoes,
       isFollowing: isFollowing,
       seguidoPeloOutro: seguidoPeloOutro,
     );
@@ -138,6 +142,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
 
       await provider.carregarPerfil('outro');
@@ -153,6 +158,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -169,6 +175,7 @@ void main() {
         final provider = PerfilProvider(
           repository: _FakePerfilRepository(falharAoSeguir: true),
           authProvider: authProvider,
+          store: PublicacoesStore(),
         );
         await provider.carregarPerfil('outro');
 
@@ -187,6 +194,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -202,6 +210,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(isFollowing: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -212,6 +221,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(seguidoPeloOutro: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -225,6 +235,7 @@ void main() {
           seguidoPeloOutro: true,
         ),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -237,6 +248,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(isFollowing: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -250,6 +262,7 @@ void main() {
           seguidoPeloOutro: true,
         ),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -260,6 +273,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(usuarioId: 'eu', isFollowing: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('eu');
 
@@ -273,6 +287,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(seguidoPeloOutro: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -286,6 +301,7 @@ void main() {
           seguidoPeloOutro: true,
         ),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -296,6 +312,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -309,6 +326,7 @@ void main() {
           seguidoPeloOutro: true,
         ),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('eu');
 
@@ -320,6 +338,7 @@ void main() {
       final provider = PerfilProvider(
         repository: _FakePerfilRepository(seguidoPeloOutro: true),
         authProvider: authProvider,
+        store: PublicacoesStore(),
       );
       await provider.carregarPerfil('outro');
 
@@ -348,6 +367,7 @@ void main() {
     PerfilProvider criar({String usuarioId = 'eu'}) => PerfilProvider(
       repository: _FakePerfilRepository(usuarioId: usuarioId),
       authProvider: authProvider,
+      store: PublicacoesStore(),
       realtime: realtime,
     );
 
@@ -431,6 +451,108 @@ void main() {
 
       expect(realtime.assinantes['seguidor_adicionado'], isEmpty);
       expect(realtime.assinantes['seguidor_removido'], isEmpty);
+    });
+  });
+
+  group('PerfilProvider com PublicacoesStore', () {
+    late PublicacoesStore store;
+
+    Publicacao pub(
+      String id, {
+      String autorId = 'outro',
+      String autorNome = '',
+      bool jaCurtiu = false,
+      int dia = 1,
+    }) => Publicacao(
+      id: id,
+      autorId: autorId,
+      autorNome: autorNome,
+      jaCurtiu: jaCurtiu,
+      criadoEm: DateTime(2026, 1, dia),
+      atualizadoEm: DateTime(2026, 1, dia),
+    );
+
+    Future<PerfilProvider> carregar(List<Publicacao> publicacoes) async {
+      final provider = PerfilProvider(
+        repository: _FakePerfilRepository(publicacoes: publicacoes),
+        authProvider: authProvider,
+        store: store,
+      );
+      await provider.carregarPerfil('outro');
+      return provider;
+    }
+
+    setUp(() => store = PublicacoesStore());
+
+    test('coloca as publicações no store com o nome do dono', () async {
+      final provider = await carregar([pub('p1', dia: 2), pub('p2')]);
+
+      expect(provider.publicacoes.map((p) => p.id), ['p1', 'p2']);
+      expect(provider.totalPublicacoes, 2);
+      expect(store.porId('p1')!.autorNome, 'Outro Pescador');
+    });
+
+    test('não sobrescreve o que o feed já trouxe', () async {
+      store.upsert(pub('p1', autorNome: 'Nome do feed', jaCurtiu: true));
+
+      final provider = await carregar([pub('p1')]);
+
+      expect(store.porId('p1')!.jaCurtiu, isTrue);
+      expect(store.porId('p1')!.autorNome, 'Nome do feed');
+      expect(provider.publicacoes.single.jaCurtiu, isTrue);
+    });
+
+    test('excluir em outra tela tira da galeria e do contador', () async {
+      final provider = await carregar([pub('p1', dia: 2), pub('p2')]);
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      store.remover('p1');
+
+      expect(provider.publicacoes.map((p) => p.id), ['p2']);
+      expect(provider.totalPublicacoes, 1);
+      expect(notificacoes, greaterThan(0));
+    });
+
+    test('publicação nova do dono entra no topo e no contador', () async {
+      final provider = await carregar([pub('p1')]);
+
+      store.upsert(pub('p2', autorNome: 'Outro Pescador', dia: 5));
+
+      expect(provider.publicacoes.map((p) => p.id), ['p2', 'p1']);
+      expect(provider.totalPublicacoes, 2);
+    });
+
+    test('publicação antiga do dono vinda do feed não entra', () async {
+      final provider = await carregar([pub('p2', dia: 5)]);
+
+      store.upsert(pub('p1', autorNome: 'Outro Pescador', dia: 1));
+
+      expect(provider.publicacoes.map((p) => p.id), ['p2']);
+    });
+
+    test('publicação de outro autor não entra', () async {
+      final provider = await carregar([pub('p1')]);
+
+      store.upsert(pub('p9', autorId: 'terceiro', autorNome: 'X', dia: 9));
+
+      expect(provider.publicacoes.map((p) => p.id), ['p1']);
+    });
+
+    test('curtida feita em outra tela aparece na galeria', () async {
+      final provider = await carregar([pub('p1')]);
+
+      store.atualizarCurtida('p1', jaCurtiu: true, curtidasCount: 1);
+
+      expect(provider.publicacoes.single.curtidasCount, 1);
+    });
+
+    test('dispose deixa de escutar o store', () async {
+      final provider = await carregar([pub('p1')]);
+
+      provider.dispose();
+
+      expect(() => store.remover('p1'), returnsNormally);
     });
   });
 }
