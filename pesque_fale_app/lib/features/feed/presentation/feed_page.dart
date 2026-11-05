@@ -325,6 +325,8 @@ class _FeedListaViewState extends State<_FeedListaView> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(12),
           itemCount: widget.publicacoes.length + (temRodape ? 1 : 0),
+          findItemIndexCallback: (key) =>
+              _indicePorChave(widget.publicacoes, key),
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (_, index) {
             if (index >= widget.publicacoes.length) {
@@ -334,7 +336,11 @@ class _FeedListaViewState extends State<_FeedListaView> {
                     )
                   : const PublicacaoCardSkeleton();
             }
-            return PublicacaoCard(publicacao: widget.publicacoes[index]);
+            final publicacao = widget.publicacoes[index];
+            return PublicacaoCard(
+              key: ValueKey(publicacao.id),
+              publicacao: publicacao,
+            );
           },
         );
         break;
@@ -368,6 +374,12 @@ class _FeedListaViewState extends State<_FeedListaView> {
       ),
     );
   }
+}
+
+int? _indicePorChave(List<Publicacao> publicacoes, Key key) {
+  if (key is! ValueKey<String>) return null;
+  final indice = publicacoes.indexWhere((p) => p.id == key.value);
+  return indice == -1 ? null : indice;
 }
 
 class _CentroRolavel extends StatelessWidget {

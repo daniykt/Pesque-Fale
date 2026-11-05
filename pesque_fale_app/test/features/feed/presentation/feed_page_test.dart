@@ -516,6 +516,57 @@ void main() {
     );
   }
 
+  testWidgets('cada card do feed tem a chave do id da publicação', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(
+        authProvider: AuthProvider(
+          repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('pub-0')), findsOneWidget);
+  });
+
+  testWidgets('excluir um card não recria os cards seguintes', (tester) async {
+    final publicacoes = _FakePublicacoesRepository();
+    publicacoes.todas.add(
+      Publicacao(
+        id: 'pub-1',
+        autorId: 'autor-1',
+        autorNome: 'Pescador Um',
+        descricao: 'Relato de pescaria número 2.',
+        criadoEm: DateTime(2026, 1, 1),
+        atualizadoEm: DateTime(2026, 1, 1),
+      ),
+    );
+    await tester.pumpWidget(
+      _harness(
+        authProvider: AuthProvider(
+          repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+        ),
+        publicacoes: publicacoes,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final antes = tester.element(find.byKey(const ValueKey('pub-1')));
+
+    tester
+        .element(find.byType(FeedPage))
+        .read<FeedProvider>()
+        .removerPublicacao('pub-0');
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('pub-0')), findsNothing);
+    expect(
+      identical(tester.element(find.byKey(const ValueKey('pub-1'))), antes),
+      isTrue,
+    );
+  });
+
   testWidgets('aba Dicas mostra clima e dica do dia hardcoded', (tester) async {
     final authProvider = AuthProvider(
       repository: AuthRepositoryMock(tokenStorage: TokenStorage()),

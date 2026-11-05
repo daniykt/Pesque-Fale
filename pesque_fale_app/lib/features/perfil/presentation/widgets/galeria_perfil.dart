@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/imagem_placeholder.dart';
 import '../../../feed/domain/publicacao.dart';
 
 class GaleriaPerfil extends StatelessWidget {
@@ -48,8 +49,15 @@ class GaleriaPerfil extends StatelessWidget {
               childAspectRatio: 1,
             ),
             itemCount: publicacoes.length,
-            itemBuilder: (context, index) =>
-                _ItemGaleria(publicacao: publicacoes[index]),
+            findChildIndexCallback: (key) {
+              if (key is! ValueKey<String>) return null;
+              final indice = publicacoes.indexWhere((p) => p.id == key.value);
+              return indice == -1 ? null : indice;
+            },
+            itemBuilder: (context, index) => _ItemGaleria(
+              key: ValueKey(publicacoes[index].id),
+              publicacao: publicacoes[index],
+            ),
           ),
       ],
     );
@@ -57,7 +65,7 @@ class GaleriaPerfil extends StatelessWidget {
 }
 
 class _ItemGaleria extends StatefulWidget {
-  const _ItemGaleria({required this.publicacao});
+  const _ItemGaleria({super.key, required this.publicacao});
 
   final Publicacao publicacao;
 
@@ -79,13 +87,24 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
         fit: StackFit.expand,
         children: [
           if (imagemUrl == null || imagemUrl.isEmpty)
-            const _PlaceholderImagem()
+            const ImagemIndisponivel(
+              icone: Icons.image_not_supported_outlined,
+              tamanhoIcone: 32,
+              mostrarTexto: false,
+            )
           else
             Image.network(
               imagemUrl,
               fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const ImagemCarregando(tamanhoIcone: 32);
+              },
               errorBuilder: (context, error, stackTrace) =>
-                  const _PlaceholderImagem(),
+                  const ImagemIndisponivel(
+                    tamanhoIcone: 32,
+                    mostrarTexto: false,
+                  ),
             ),
           if (_pressionado)
             Container(
@@ -115,25 +134,6 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderImagem extends StatelessWidget {
-  const _PlaceholderImagem();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-
-    return Container(
-      color: colors.surfaceVariant,
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.image_not_supported_outlined,
-        color: colors.textSecondary,
-        size: 32,
       ),
     );
   }

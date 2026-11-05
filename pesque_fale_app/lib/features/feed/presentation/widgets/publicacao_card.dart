@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/cloudinary_url.dart';
 import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
+import '../../../../shared/widgets/imagem_placeholder.dart';
 import '../../domain/publicacao.dart';
 import 'acoes_bar.dart';
 import 'comentarios_sheet.dart';
@@ -132,17 +133,10 @@ class PublicacaoCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-                    return Container(color: colors.surfaceVariant);
+                    return const ImagemCarregando();
                   },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: colors.surfaceVariant,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.broken_image,
-                      color: colors.textSecondary,
-                      size: 48,
-                    ),
-                  ),
+                  errorBuilder: (context, error, stackTrace) =>
+                      const ImagemIndisponivel(),
                 ),
               ),
             ),

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -103,4 +104,35 @@ void main() {
     expect(find.byIcon(Icons.image_not_supported_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'remover uma publicação mantém o toque longo na publicação certa',
+    (tester) async {
+      Publicacao pub(String id, int curtidas) => Publicacao(
+        id: id,
+        autorId: 'u1',
+        autorNome: 'Ana',
+        curtidasCount: curtidas,
+        criadoEm: DateTime(2026, 1, 1),
+        atualizadoEm: DateTime(2026, 1, 1),
+      );
+      final primeira = pub('p1', 3);
+      final segunda = pub('p2', 7);
+      await montar(tester, publicacoes: [primeira, segunda]);
+
+      final itens = find.descendant(
+        of: find.byType(GridView),
+        matching: find.byType(GestureDetector),
+      );
+      final gesto = await tester.startGesture(tester.getCenter(itens.at(1)));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await tester.pump();
+      expect(find.text('7'), findsOneWidget);
+
+      await montar(tester, publicacoes: [segunda]);
+
+      expect(find.text('7'), findsOneWidget);
+      await gesto.up();
+    },
+  );
 }
