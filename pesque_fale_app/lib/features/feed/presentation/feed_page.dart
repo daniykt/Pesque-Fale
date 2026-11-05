@@ -113,17 +113,31 @@ class _EventosView extends StatelessWidget {
           child: CarrosselSkeleton(),
         );
       case StatusAba.erro:
-        return _ErroView(
-          mensagem: estado.mensagemErro,
-          onRetry: provider.pullRefresh,
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: _CentroRolavel(
+            child: _ErroView(
+              mensagem: estado.mensagemErro,
+              onRetry: provider.pullRefresh,
+            ),
+          ),
         );
       case StatusAba.vazio:
-        return const _MensagemCentralizada(texto: 'Nenhum evento no momento.');
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: const _CentroRolavel(
+            child: _MensagemCentralizada(texto: 'Nenhum evento no momento.'),
+          ),
+        );
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: EventosCarrossel(eventos: provider.eventos),
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: EventosCarrossel(eventos: provider.eventos),
+          ),
         );
     }
   }
@@ -146,19 +160,31 @@ class _LocaisView extends StatelessWidget {
           child: CarrosselSkeleton(),
         );
       case StatusAba.erro:
-        return _ErroView(
-          mensagem: estado.mensagemErro,
-          onRetry: provider.pullRefresh,
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: _CentroRolavel(
+            child: _ErroView(
+              mensagem: estado.mensagemErro,
+              onRetry: provider.pullRefresh,
+            ),
+          ),
         );
       case StatusAba.vazio:
-        return const _MensagemCentralizada(
-          texto: 'Nenhum local avaliado ainda.',
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: const _CentroRolavel(
+            child: _MensagemCentralizada(texto: 'Nenhum local avaliado ainda.'),
+          ),
         );
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 16, bottom: 24),
-          child: LocaisCarrossel(pontos: provider.topLocais),
+        return RefreshIndicator(
+          onRefresh: provider.pullRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            child: LocaisCarrossel(pontos: provider.topLocais),
+          ),
         );
     }
   }
@@ -279,15 +305,15 @@ class _FeedListaViewState extends State<_FeedListaView> {
         );
         break;
       case StatusAba.erro:
-        conteudo = _scrollableCentro(
-          _ErroView(
+        conteudo = _CentroRolavel(
+          child: _ErroView(
             mensagem: estado.mensagemErro,
             onRetry: provider.pullRefresh,
           ),
         );
         break;
       case StatusAba.vazio:
-        conteudo = _scrollableCentro(widget.emptyBuilder(context));
+        conteudo = _CentroRolavel(child: widget.emptyBuilder(context));
         break;
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
@@ -336,8 +362,15 @@ class _FeedListaViewState extends State<_FeedListaView> {
       ),
     );
   }
+}
 
-  Widget _scrollableCentro(Widget child) {
+class _CentroRolavel extends StatelessWidget {
+  const _CentroRolavel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),

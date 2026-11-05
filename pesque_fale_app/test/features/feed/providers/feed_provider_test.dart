@@ -688,4 +688,153 @@ void main() {
       expect(realtime.callbacksReconexao, isEmpty);
     });
   });
+
+  group('FeedProvider - abas presas e troca de conta', () {
+    late _FakePublicacoesRepository publicacoesRepo;
+    late AuthProvider authProvider;
+    late PublicacoesStore store;
+    late FeedProvider provider;
+
+    setUp(() async {
+      publicacoesRepo = _FakePublicacoesRepository(
+        todas: [_publicacao('p1')],
+        seguindoIds: ['p1'],
+      );
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      store = PublicacoesStore();
+      provider = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        store: store,
+      );
+    });
+
+    test('voltar para uma aba em erro carrega de novo', () async {
+      publicacoesRepo.falhar = true;
+      await provider.trocarAba(AbaFeed.paraVoce);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.erro);
+
+      publicacoesRepo.falhar = false;
+      await provider.trocarAba(AbaFeed.eventos);
+      await provider.trocarAba(AbaFeed.paraVoce);
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      expect(provider.paraVoce.map((p) => p.id), ['p1']);
+    });
+
+    test('voltar para uma aba vazia carrega de novo', () async {
+      publicacoesRepo.todas.clear();
+      await provider.trocarAba(AbaFeed.paraVoce);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.vazio);
+
+      publicacoesRepo.todas.add(_publicacao('p2'));
+      await provider.trocarAba(AbaFeed.eventos);
+      await provider.trocarAba(AbaFeed.paraVoce);
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      expect(provider.paraVoce.map((p) => p.id), ['p2']);
+    });
+
+    test('logout limpa store, listas e estados de todas as abas', () async {
+      await provider.trocarAba(AbaFeed.seguindo);
+      await provider.trocarAba(AbaFeed.eventos);
+      await provider.trocarAba(AbaFeed.paraVoce);
+      publicacoesRepo.segurar = Completer<void>();
+
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+
+      expect(store.porId('p1'), isNull);
+      expect(provider.paraVoce, isEmpty);
+      expect(provider.seguindo, isEmpty);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.carregando);
+      for (final aba in [AbaFeed.seguindo, AbaFeed.eventos, AbaFeed.locais]) {
+        expect(
+          provider.estadoDe(aba).status,
+          StatusAba.inicial,
+          reason: '$aba',
+        );
+      }
+    });
+
+    test('logout recarrega a aba ativa', () async {
+      await provider.trocarAba(AbaFeed.paraVoce);
+      final antes = publicacoesRepo.chamadas;
+
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, antes + 1);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      expect(store.porId('p1'), isNotNull);
+    });
+
+    test('login recarrega a Para você carregada sem conta', () async {
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+      final antes = publicacoesRepo.chamadas;
+
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, antes + 1);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+    });
+
+    test('trocarAba durante a carga do login espera a mesma chamada', () async {
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+      final antes = publicacoesRepo.chamadas;
+      publicacoesRepo.segurar = Completer<void>();
+
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider.reagirAuth(authProvider);
+      var terminou = false;
+      final troca = provider
+          .trocarAba(AbaFeed.paraVoce)
+          .then((_) => terminou = true);
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, antes + 1);
+      expect(terminou, isFalse);
+
+      publicacoesRepo.segurar!.complete();
+      await troca;
+
+      expect(publicacoesRepo.chamadas, antes + 1);
+      expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+    });
+
+    test('resposta que chega depois do logout é descartada', () async {
+      publicacoesRepo.segurar = Completer<void>();
+      final emVoo = provider.trocarAba(AbaFeed.seguindo);
+
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      publicacoesRepo.segurar!.complete();
+      await emVoo;
+
+      expect(provider.seguindo, isEmpty);
+      expect(provider.estadoDe(AbaFeed.seguindo).status, StatusAba.vazio);
+    });
+
+    test('atualizar o próprio usuário não reinicia o feed', () async {
+      await provider.trocarAba(AbaFeed.paraVoce);
+      final antes = publicacoesRepo.chamadas;
+
+      authProvider.atualizarUsuario(
+        authProvider.usuario!.copyWith(bio: 'Nova bio'),
+      );
+      provider.reagirAuth(authProvider);
+
+      expect(publicacoesRepo.chamadas, antes);
+      expect(provider.paraVoce.map((p) => p.id), ['p1']);
+      expect(store.porId('p1'), isNotNull);
+    });
+  });
 }

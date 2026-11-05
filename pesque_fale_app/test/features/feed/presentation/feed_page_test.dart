@@ -10,11 +10,13 @@ import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
+import 'package:pesque_fale_app/features/auth/presentation/entrando/entrando_page.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/feed/data/comentarios_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/curtidas_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/eventos_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/publicacoes_repository.dart';
+import 'package:pesque_fale_app/features/feed/domain/aba_feed.dart';
 import 'package:pesque_fale_app/features/feed/domain/comentario.dart';
 import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
@@ -48,6 +50,8 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
 
   /// O que o feed Seguindo devolve, mais recente primeiro (página única).
   final List<Publicacao> seguindoItens = [];
+  int chamadas = 0;
+  Duration atraso = Duration.zero;
 
   @override
   Future<PagedResult<Publicacao>> listar({
@@ -55,6 +59,8 @@ class _FakePublicacoesRepository implements PublicacoesRepository {
     int porPagina = 20,
     bool seguindo = false,
   }) async {
+    chamadas++;
+    if (atraso > Duration.zero) await Future<void>.delayed(atraso);
     final itens = seguindo ? List.of(seguindoItens) : todas;
     return PagedResult(
       items: itens,
@@ -117,8 +123,11 @@ class _FakeComentariosRepository implements ComentariosRepository {
 }
 
 class _FakeEventosRepository implements EventosRepository {
+  int chamadas = 0;
+
   @override
   Future<List<Evento>> listar({bool futuros = true, int limite = 10}) async {
+    chamadas++;
     return [
       Evento(
         id: 'evento-0',
@@ -133,6 +142,8 @@ class _FakeEventosRepository implements EventosRepository {
 }
 
 class _FakePontosRepository implements PontosRepository {
+  int chamadas = 0;
+
   @override
   Future<List<Ponto>> buscar({
     required FiltrosLocais filtros,
@@ -141,6 +152,7 @@ class _FakePontosRepository implements PontosRepository {
     bool incluirDistancia = false,
     String? ordem,
   }) async {
+    chamadas++;
     return [
       const Ponto(
         id: 'ponto-0',
@@ -205,13 +217,15 @@ Widget _harness({
   required AuthProvider authProvider,
   _FakePublicacoesRepository? publicacoes,
   FakeRealtimeManager? realtime,
+  _FakeEventosRepository? eventos,
+  _FakePontosRepository? pontos,
 }) {
   final publicacoesRepo = publicacoes ?? _FakePublicacoesRepository();
   final realtimeManager = realtime ?? FakeRealtimeManager();
   final curtidasRepo = _FakeCurtidasRepository();
   final comentariosRepo = _FakeComentariosRepository();
-  final eventosRepo = _FakeEventosRepository();
-  final pontosRepo = _FakePontosRepository();
+  final eventosRepo = eventos ?? _FakeEventosRepository();
+  final pontosRepo = pontos ?? _FakePontosRepository();
 
   return MultiProvider(
     providers: [
@@ -307,6 +321,137 @@ void main() {
 
     expect(find.text('Locais mais bem avaliados'), findsOneWidget);
     expect(find.text('Rio das Pratas'), findsOneWidget);
+  });
+
+  testWidgets('puxar para atualizar na aba Eventos busca de novo', (
+    tester,
+  ) async {
+    final eventos = _FakeEventosRepository();
+    await tester.pumpWidget(
+      _harness(
+        authProvider: AuthProvider(
+          repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+        ),
+        eventos: eventos,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eventos'));
+    await tester.pumpAndSettle();
+    expect(eventos.chamadas, 1);
+
+    await tester.fling(
+      find.text('Próximos eventos'),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    expect(eventos.chamadas, 2);
+  });
+
+  testWidgets('puxar para atualizar na aba Locais busca de novo', (
+    tester,
+  ) async {
+    final pontos = _FakePontosRepository();
+    await tester.pumpWidget(
+      _harness(
+        authProvider: AuthProvider(
+          repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+        ),
+        pontos: pontos,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Locais'));
+    await tester.pumpAndSettle();
+    expect(pontos.chamadas, 1);
+
+    await tester.fling(
+      find.text('Locais mais bem avaliados'),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    expect(pontos.chamadas, 2);
+  });
+
+  testWidgets('login seguido do /entrando busca a Para você uma vez só', (
+    tester,
+  ) async {
+    final publicacoes = _FakePublicacoesRepository()
+      ..atraso = const Duration(seconds: 1);
+    final authProvider = AuthProvider(repository: _FakeAuthRepository());
+    final eventos = _FakeEventosRepository();
+    final pontos = _FakePontosRepository();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+          ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
+            lazy: false,
+            create: (_) => FeedProvider(
+              publicacoesRepo: publicacoes,
+              curtidasRepo: _FakeCurtidasRepository(),
+              eventosRepo: eventos,
+              pontosRepo: pontos,
+              authProvider: authProvider,
+              realtime: FakeRealtimeManager(),
+              store: PublicacoesStore(),
+            ),
+            update: (_, auth, previous) => previous!..reagirAuth(auth),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          routes: {
+            '/': (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  await context.read<AuthProvider>().login(
+                    email: 'ana@teste.com',
+                    senha: '123456',
+                  );
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacementNamed('/entrando');
+                  }
+                },
+                child: const Text('Entrar'),
+              ),
+            ),
+            '/entrando': (context) => EntrandoPage(
+              duracaoMinima: Duration.zero,
+              preparar: () => Future(
+                () => context.read<FeedProvider>().trocarAba(AbaFeed.paraVoce),
+              ),
+            ),
+            '/home': (_) => const Scaffold(body: Text('Home')),
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Entrar'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(EntrandoPage), findsOneWidget);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(
+      find.text('Home'),
+      findsNothing,
+      reason: 'o /entrando espera a Para você carregar',
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home'), findsOneWidget);
+    expect(publicacoes.chamadas, 1);
+    final feed = tester.element(find.text('Home')).read<FeedProvider>();
+    expect(feed.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
   });
 
   testWidgets('aba Dicas mostra clima e dica do dia hardcoded', (tester) async {
