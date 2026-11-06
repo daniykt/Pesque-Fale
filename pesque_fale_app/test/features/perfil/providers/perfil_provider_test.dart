@@ -53,6 +53,7 @@ class _FakePerfilRepository implements PerfilRepository {
     this.seguidoPeloOutro = false,
     this.usuarioId = 'outro',
     this.publicacoes = const [],
+    this.totalPublicacoes,
   });
 
   final bool falharAoSeguir;
@@ -60,6 +61,7 @@ class _FakePerfilRepository implements PerfilRepository {
   final bool seguidoPeloOutro;
   final String usuarioId;
   final List<Publicacao> publicacoes;
+  final int? totalPublicacoes;
 
   Usuario get _outro => Usuario(
     id: usuarioId,
@@ -79,6 +81,7 @@ class _FakePerfilRepository implements PerfilRepository {
       publicacoes: publicacoes,
       isFollowing: isFollowing,
       seguidoPeloOutro: seguidoPeloOutro,
+      totalPublicacoes: totalPublicacoes,
     );
   }
 
@@ -472,9 +475,15 @@ void main() {
       atualizadoEm: DateTime(2026, 1, dia),
     );
 
-    Future<PerfilProvider> carregar(List<Publicacao> publicacoes) async {
+    Future<PerfilProvider> carregar(
+      List<Publicacao> publicacoes, {
+      int? total,
+    }) async {
       final provider = PerfilProvider(
-        repository: _FakePerfilRepository(publicacoes: publicacoes),
+        repository: _FakePerfilRepository(
+          publicacoes: publicacoes,
+          totalPublicacoes: total,
+        ),
         authProvider: authProvider,
         store: store,
       );
@@ -545,6 +554,86 @@ void main() {
       store.atualizarCurtida('p1', jaCurtiu: true, curtidasCount: 1);
 
       expect(provider.publicacoes.single.curtidasCount, 1);
+    });
+
+    group('totalPublicacoes', () {
+      // 12 publicações carregadas (primeira página), dias 1 a 12.
+      List<Publicacao> primeiraPagina() => [
+        for (var i = 12; i >= 1; i--) pub('p$i', dia: i),
+      ];
+
+      test('usa o total da API, não o tamanho da primeira página', () async {
+        final provider = await carregar(primeiraPagina(), total: 30);
+
+        expect(provider.publicacoes, hasLength(12));
+        expect(provider.totalPublicacoes, 30);
+      });
+
+      test('publicação nova do dono soma no total', () async {
+        final provider = await carregar(primeiraPagina(), total: 30);
+
+        store.upsert(pub('nova', autorNome: 'Outro Pescador', dia: 20));
+
+        expect(provider.publicacoes.first.id, 'nova');
+        expect(provider.totalPublicacoes, 31);
+      });
+
+      test('excluir uma publicação carregada subtrai do total', () async {
+        final provider = await carregar(primeiraPagina(), total: 30);
+
+        store.remover('p5');
+
+        expect(provider.publicacoes, hasLength(11));
+        expect(provider.totalPublicacoes, 29);
+      });
+
+      test(
+        'excluir a mesma publicação de novo não subtrai duas vezes',
+        () async {
+          final provider = await carregar(primeiraPagina(), total: 30);
+
+          store.remover('p5');
+          store.remover('p5');
+
+          expect(provider.totalPublicacoes, 29);
+        },
+      );
+
+      test(
+        'excluir publicação que não está no perfil não mexe no total',
+        () async {
+          final provider = await carregar(primeiraPagina(), total: 30);
+          store.upsert(pub('p9x', autorId: 'terceiro', autorNome: 'X', dia: 9));
+
+          store.remover('p9x');
+
+          expect(provider.totalPublicacoes, 30);
+        },
+      );
+
+      test('nunca fica negativo', () async {
+        final provider = await carregar([pub('p1')], total: 0);
+
+        store.remover('p1');
+
+        expect(provider.totalPublicacoes, 0);
+      });
+
+      test('sem total no PerfilCompleto cai para o tamanho da lista', () async {
+        final provider = await carregar([pub('p1', dia: 2), pub('p2')]);
+
+        expect(provider.totalPublicacoes, 2);
+      });
+
+      test('recarregar o perfil volta ao total da API', () async {
+        final provider = await carregar(primeiraPagina(), total: 30);
+        store.remover('p5');
+        expect(provider.totalPublicacoes, 29);
+
+        await provider.carregarPerfil('outro');
+
+        expect(provider.totalPublicacoes, 30);
+      });
     });
 
     test('dispose deixa de escutar o store', () async {

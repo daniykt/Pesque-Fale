@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../core/realtime/realtime_manager.dart';
@@ -38,6 +40,7 @@ class PerfilProvider extends ChangeNotifier {
   List<Publicacao>? _cachePublicacoes;
   bool _isFollowing = false;
   bool _seguidoPeloOutro = false;
+  int _totalPublicacoes = 0;
 
   PerfilStatus get status => _status;
   String? get errorMessage => _errorMessage;
@@ -60,7 +63,9 @@ class PerfilProvider extends ChangeNotifier {
   bool get podeSeguirDeVolta =>
       !isOwnProfile && !_isFollowing && _seguidoPeloOutro;
 
-  int get totalPublicacoes => publicacoes.length;
+  /// Total de publicações do perfil, não só as da primeira página carregada.
+  /// Vem da API e acompanha as criadas e excluídas no app (via store).
+  int get totalPublicacoes => _totalPublicacoes;
 
   Future<void> carregarPerfil(String id) async {
     _status = PerfilStatus.loading;
@@ -75,6 +80,8 @@ class PerfilProvider extends ChangeNotifier {
         ..clear()
         ..addAll(completo.publicacoes.map((p) => p.id));
       _cachePublicacoes = null;
+      _totalPublicacoes =
+          completo.totalPublicacoes ?? completo.publicacoes.length;
       _inserirNoStoreComDono(completo.usuario, completo.publicacoes);
       _isFollowing = completo.isFollowing;
       _seguidoPeloOutro = completo.seguidoPeloOutro;
@@ -249,9 +256,17 @@ class PerfilProvider extends ChangeNotifier {
   }
 
   void _onStoreMudou() {
+    final antes = _idsPublicacoes.length;
     _idsPublicacoes.removeWhere(store.foiRemovida);
+    final removidas = antes - _idsPublicacoes.length;
+
     final dono = _perfil?.id;
-    if (dono != null) _idsPublicacoes.insertAll(0, _novasDoDono(dono));
+    final novas = dono == null ? const <String>[] : _novasDoDono(dono);
+    _idsPublicacoes.insertAll(0, novas);
+
+    // Só conta o que entrou ou saiu desta lista. Exclusão de uma publicação
+    // que não está na página carregada só aparece ao recarregar o perfil.
+    _totalPublicacoes = max(0, _totalPublicacoes - removidas + novas.length);
     _cachePublicacoes = null;
     notifyListeners();
   }

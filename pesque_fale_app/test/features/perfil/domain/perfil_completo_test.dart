@@ -42,5 +42,26 @@ void main() {
       expect(perfil.isFollowing, isFalse);
       expect(perfil.seguidoPeloOutro, isFalse);
     });
+
+    test('lê totalPublicacoes quando vem no JSON', () {
+      final perfil = PerfilCompleto.fromJson({
+        'usuario': {'id': '1', 'nome': 'Pescador', 'email': 'p@teste.com'},
+        'publicacoes': [
+          {'id': 'p1', 'autorId': '1'},
+        ],
+        'totalPublicacoes': 30,
+      });
+
+      expect(perfil.publicacoes, hasLength(1));
+      expect(perfil.totalPublicacoes, 30);
+    });
+
+    test('totalPublicacoes é null quando não vem no JSON', () {
+      final perfil = PerfilCompleto.fromJson({
+        'usuario': {'id': '1', 'nome': 'Pescador', 'email': 'p@teste.com'},
+      });
+
+      expect(perfil.totalPublicacoes, isNull);
+    });
   });
 }

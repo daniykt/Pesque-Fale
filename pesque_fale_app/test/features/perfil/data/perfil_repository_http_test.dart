@@ -128,6 +128,8 @@ void main() {
         expect(perfil.publicacoes.map((p) => p.id), ['pub-1', 'pub-2']);
         expect(perfil.isFollowing, isTrue);
         expect(perfil.seguidoPeloOutro, isFalse);
+        // meta.total da API, não o tamanho da página.
+        expect(perfil.totalPublicacoes, 30);
       },
     );
 

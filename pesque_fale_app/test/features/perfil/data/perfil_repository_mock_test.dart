@@ -15,6 +15,7 @@ void main() {
 
       expect(perfil.usuario.id, 'mock-id');
       expect(perfil.publicacoes, hasLength(5));
+      expect(perfil.totalPublicacoes, 5);
     });
 
     test('cobre o combo de estado vazio total', () async {
@@ -26,6 +27,7 @@ void main() {
       expect(perfil.usuario.localizacao, isNull);
       expect(perfil.usuario.seguidores, 0);
       expect(perfil.publicacoes, isEmpty);
+      expect(perfil.totalPublicacoes, 0);
     });
 
     test('lanca PerfilNaoEncontradoException para id desconhecido', () {

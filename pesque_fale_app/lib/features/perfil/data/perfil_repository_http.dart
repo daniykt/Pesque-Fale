@@ -36,6 +36,7 @@ class PerfilRepositoryHttp implements PerfilRepository {
       publicacoes: paginada.itens,
       isFollowing: completo.isFollowing,
       seguidoPeloOutro: completo.seguidoPeloOutro,
+      totalPublicacoes: paginada.total,
     );
   }
 
