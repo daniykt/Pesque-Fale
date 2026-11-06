@@ -3,6 +3,16 @@
 > Catálogo dos eventos Socket.IO emitidos entre backend e cliente Flutter.
 > Atualize este doc a cada novo evento adicionado (toda sub-issue da epic #183).
 
+## Conexão
+
+- **Autenticação:** o handshake exige o JWT em `auth.token`; sem ele, a conexão é recusada (`TOKEN_INVALIDO`).
+- **Origens aceitas** (`src/config/cors-socket.js`):
+  - sem a variável `CORS_ORIGINS`: qualquer origem (`'*'`), como sempre foi;
+  - com `CORS_ORIGINS` (lista separada por vírgula): aceita as origens da lista, `http://localhost` e `http://127.0.0.1` em qualquer porta (o `flutter run -d chrome` usa porta aleatória) e conexões sem header `Origin` (o app Android não manda). O resto é recusado.
+- A regra vale no `allowRequest` do Socket.IO, que roda em todo handshake, inclusive no WebSocket direto que o app usa. Só o `cors.origin` não bastaria: navegadores não aplicam CORS ao WebSocket, e no polling ele só tira os headers, sem recusar a requisição.
+- O CORS do Express (`app.use(cors())` no `app.js`) não muda e continua aceitando qualquer origem.
+- **Introduzido em:** sub-issue 10.5.8 (#265)
+
 ## Rooms
 
 | Room | Padrão | Entrada |
