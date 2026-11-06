@@ -28,9 +28,6 @@ function mockBanco({ mudou = true, total = '42', falharContagem = false } = {}) 
       if (falharContagem) throw new Error('conexão caiu');
       return { rows: [{ count: total }] };
     }
-    if (sql.includes('SELECT nome, username FROM usuarios')) {
-      return { rows: [{ nome: 'Fulano', username: 'fulano' }] };
-    }
     return { rows: [] };
   });
 }

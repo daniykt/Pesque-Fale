@@ -130,8 +130,7 @@ describe('Gatilhos automáticos de notificação', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'user-2' }] })
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/usuarios/user-2/seguir')
@@ -149,8 +148,7 @@ describe('Gatilhos automáticos de notificação', () => {
     pool.query
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/publicacoes/pub-1/curtir')
@@ -180,8 +178,7 @@ describe('Gatilhos automáticos de notificação', () => {
         }],
       })
       .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/publicacoes/pub-1/comentarios')
