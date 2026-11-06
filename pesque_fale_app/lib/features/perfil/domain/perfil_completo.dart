@@ -7,12 +7,17 @@ class PerfilCompleto {
     this.publicacoes = const [],
     this.isFollowing = false,
     this.seguidoPeloOutro = false,
+    this.totalPublicacoes,
   });
 
   final Usuario usuario;
   final List<Publicacao> publicacoes;
   final bool isFollowing;
   final bool seguidoPeloOutro;
+
+  /// Total de publicações do usuário (`meta.total` da API). [publicacoes] é
+  /// só a primeira página. null quando a origem não informa o total.
+  final int? totalPublicacoes;
 
   factory PerfilCompleto.fromJson(Map<String, dynamic> json) {
     return PerfilCompleto(
@@ -26,6 +31,7 @@ class PerfilCompleto {
           const [],
       isFollowing: json['isFollowing'] as bool? ?? false,
       seguidoPeloOutro: json['seguidoPeloOutro'] as bool? ?? false,
+      totalPublicacoes: json['totalPublicacoes'] as int?,
     );
   }
 }

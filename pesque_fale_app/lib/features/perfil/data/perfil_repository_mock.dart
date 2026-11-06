@@ -95,11 +95,13 @@ class PerfilRepositoryMock implements PerfilRepository {
       throw const PerfilNaoEncontradoException();
     }
 
+    final publicacoes = _publicacoes[id] ?? const <Publicacao>[];
     return PerfilCompleto(
       usuario: usuario,
-      publicacoes: _publicacoes[id] ?? const [],
+      publicacoes: publicacoes,
       isFollowing: id != meuId && _seguindoPorMim.contains(id),
       seguidoPeloOutro: false,
+      totalPublicacoes: publicacoes.length,
     );
   }
 

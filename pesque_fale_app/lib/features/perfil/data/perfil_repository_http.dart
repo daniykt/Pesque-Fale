@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import '../../auth/domain/usuario.dart';
@@ -16,13 +17,26 @@ class PerfilRepositoryHttp implements PerfilRepository {
     String id, {
     required String meuId,
   }) async {
-    final completo = await apiClient.buscarPerfil(id);
-    final paginada = await apiClient.buscarPublicacoes(id);
+    // As duas requisições saem juntas. O await fica em ordem para manter a
+    // prioridade de erro: se o perfil falhar, a exceção é a do perfil.
+    // Future.wait mudaria isso (vence quem falha primeiro no tempo).
+    final perfilFuture = apiClient.buscarPerfil(id);
+    final publicacoesFuture = apiClient.buscarPublicacoes(id);
+
+    // Handler já agora: se as publicações falharem enquanto esperamos o perfil
+    // (ou se o perfil falhar e ninguém mais esperar por elas), o erro não vira
+    // erro assíncrono não tratado. O await abaixo continua recebendo o erro.
+    unawaited(publicacoesFuture.then<void>((_) {}, onError: (Object _) {}));
+
+    final completo = await perfilFuture;
+    final paginada = await publicacoesFuture;
+
     return PerfilCompleto(
       usuario: completo.usuario,
       publicacoes: paginada.itens,
       isFollowing: completo.isFollowing,
       seguidoPeloOutro: completo.seguidoPeloOutro,
+      totalPublicacoes: paginada.total,
     );
   }
 
