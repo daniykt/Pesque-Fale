@@ -164,6 +164,8 @@ router.get('/:id', getPerfil);
  *           Lista paginada de seguidores. Cada item traz souSeguidor = true/false
  *           indicando se o viewer autenticado segue aquele usuário; null quando
  *           não autenticado.
+ *       404:
+ *         description: Usuário não encontrado
  */
 router.get('/:id/seguidores', authOpcional, getSeguidores);
 
@@ -186,6 +188,8 @@ router.get('/:id/seguidores', authOpcional, getSeguidores);
  *           Lista paginada de usuários que o alvo segue. Cada item traz
  *           souSeguidor = true/false indicando se o viewer autenticado segue
  *           aquele usuário; null quando não autenticado.
+ *       404:
+ *         description: Usuário não encontrado
  */
 router.get('/:id/seguindo', authOpcional, getSeguindo);
 
@@ -252,6 +256,8 @@ router.get('/:id/publicacoes', listarPorUsuario);
  *     responses:
  *       204:
  *         description: Deixou de seguir
+ *       404:
+ *         description: Id de usuário inválido
  */
 router.post('/:id/seguir', authMiddleware, seguir);
 router.delete('/:id/seguir', authMiddleware, deixarDeSeguir);

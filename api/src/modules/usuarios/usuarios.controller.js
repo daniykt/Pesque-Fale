@@ -71,6 +71,10 @@ async function responderPerfil(req, res, { incluirEmail }) {
       },
     });
   } catch (err) {
+    // Id que não é UUID: o Postgres rejeita com 22P02. Para o cliente, é um usuário que não existe.
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
@@ -234,6 +238,9 @@ async function seguir(req, res) {
 
     return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
   } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
@@ -272,6 +279,9 @@ async function deixarDeSeguir(req, res) {
 
     return res.status(204).send();
   } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
@@ -318,6 +328,9 @@ async function getSeguidores(req, res) {
       meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
   } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
@@ -364,6 +377,9 @@ async function getSeguindo(req, res) {
       meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
     });
   } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
