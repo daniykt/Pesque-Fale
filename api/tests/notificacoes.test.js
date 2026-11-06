@@ -146,8 +146,7 @@ describe('Gatilhos automáticos de notificação', () => {
 
   it('curtir dispara notificação tipo curtida', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2', nova: true }] }) // CTE curtida
       .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)

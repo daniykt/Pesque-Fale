@@ -46,6 +46,9 @@ function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), fal
       if (falharNotificacao) throw new Error('conexão caiu');
       return { rows: [linha] };
     }
+    if (sql.includes('INSERT INTO curtidas')) {
+      return { rows: [{ autor_id: autorPublicacao, nova: true }] };
+    }
     if (sql.includes('SELECT autor_id FROM publicacoes')) {
       return { rows: [{ autor_id: autorPublicacao }] };
     }
