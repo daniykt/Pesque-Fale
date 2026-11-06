@@ -1,5 +1,5 @@
 const pool = require('../../config/database');
-const { emitToUser } = require('../../config/socket-emitter');
+const { emitToUser, emitToFeed } = require('../../config/socket-emitter');
 
 async function listarPorUsuario(req, res) {
   const { id } = req.params;
@@ -120,6 +120,16 @@ async function criar(req, res) {
   }
 
   // A partir daqui a publicação já está no banco. Falha nos emits é só log.
+  try {
+    emitToFeed('publicacao_criada', {
+      publicacaoId: publicacao.id,
+      autorId,
+      timestamp: publicacao.criado_em,
+    });
+  } catch (err) {
+    console.error('[publicacoes] erro ao emitir publicacao_criada:', err);
+  }
+
   // Ninguém segue a si mesmo, então o autor não recebe o próprio emit — o app
   // dele já insere a publicação no topo via adicionarPublicacao.
   try {
@@ -171,11 +181,18 @@ async function deletar(req, res) {
     }
 
     await pool.query('DELETE FROM publicacoes WHERE id = $1', [id]);
-    return res.status(204).send();
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
+
+  try {
+    emitToFeed('publicacao_removida', { publicacaoId: id, autorId: usuarioId });
+  } catch (err) {
+    console.error('[publicacoes] erro ao emitir publicacao_removida:', err);
+  }
+
+  return res.status(204).send();
 }
 
 function _format(p) {
