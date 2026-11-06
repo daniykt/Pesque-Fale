@@ -5,6 +5,7 @@ jest.mock('../src/config/database', () => ({ query: jest.fn() }));
 jest.mock('../src/config/socket-emitter', () => ({
   init: jest.fn(),
   emitToUser: jest.fn(),
+  emitToFeed: jest.fn(),
 }));
 
 const request = require('supertest');

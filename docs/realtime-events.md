@@ -9,6 +9,23 @@
 |---|---|---|
 | `user:<id>` | prefixo + uuid do usuário | automática no `connection` após handshake JWT |
 | `<chatId>` | `<uidA>_<uidB>` ordenado | ao emitir `entrar_chat` |
+| `feed` | nome fixo | automática no `connection` após handshake JWT (todo socket autenticado). Introduzido em 10.5.2 (#259) |
+
+## Alcance dos eventos da Home (decisão da 10.5.1, #258)
+
+Os eventos de publicação (`publicacao_criada`, `publicacao_removida`, `publicacao_curtidas`, `publicacao_comentarios`) são um **broadcast leve para todos os sockets autenticados**, não um room por publicação.
+
+**Por quê:**
+- A base de usuários é pequena: mandar alguns bytes para todos custa menos que gerenciar inscrições.
+- Room por publicação exigiria `join`/`leave` a cada rolagem do feed (cada card que entra ou sai da tela), mais estado no servidor e mais eventos client → server.
+- O app já filtra: só aplica eventos de publicações que estão no `PublicacoesStore`; o resto é ignorado sem custo.
+
+**Proposta de implementação (10.5.2):**
+- No `io.on('connection')` do gateway, todo socket entra no room `feed`, ao lado do `user:<id>`.
+- Novo helper `emitToFeed(evento, payload)` no `config/socket-emitter.js`, no mesmo padrão do `emitToUser` (sem `io`, só loga e não quebra a request REST).
+- Como o handshake já exige JWT, `io.emit` alcançaria os mesmos sockets. O room `feed` deixa o alcance explícito e continua correto se um dia houver socket sem login.
+
+**Reavaliar se:** a base crescer a ponto de o tráfego de broadcast pesar; aí o caminho é room por publicação visível, com `join`/`leave` em lote.
 
 ## Server → Client
 
@@ -112,8 +129,84 @@
     "timestamp": "ISO-8601"
   }
   ```
-- **Consumidor no app:** `FeedProvider` global. Guarda o id em `_pendentesSeguindo` (ignora o próprio usuário como autor e ids já na lista). A `FeedPage` decide pelo scroll da aba Seguindo: com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo (ou ao voltar pra ele), aplica direto sem chip. Aplicar = buscar a página 1 do Seguindo e fazer prepend do que ainda não está na lista. Pendentes zeram em pull-to-refresh, carregamento inicial da aba, logout e reconexão do socket.
+- **Consumidor no app:** `FeedProvider` global. Guarda o id nos pendentes da Seguindo (ignora o próprio usuário como autor e ids já na lista). A `FeedPage` decide pelo scroll da aba Seguindo: com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo (ou ao voltar pra ele), aplica direto sem chip. Aplicar = buscar a página 1 do Seguindo e fazer prepend do que ainda não está na lista. Pendentes zeram em pull-to-refresh, carregamento inicial da aba, logout/login (troca de usuário) e reconexão do socket.
 - **Introduzido em:** sub-issue 9.6.6 (#210)
+- **Coexiste com `publicacao_criada` (10.5.2):** continua igual e continua sendo o evento da aba Seguindo. Um seguidor do autor recebe os dois: `nova_publicacao_feed` alimenta o chip da Seguindo e `publicacao_criada` alimenta o chip da Para você.
+
+### `publicacao_criada`
+- **Room:** `feed` (broadcast para todos os sockets autenticados, inclusive o do autor)
+- **Quando:** `POST /publicacoes` resulta em INSERT bem-sucedido, logo depois do INSERT. Falha no emit só loga; a resposta continua 201.
+- **Payload:**
+  ```json
+  {
+    "publicacaoId": "uuid",
+    "autorId": "uuid",
+    "timestamp": "ISO-8601"
+  }
+  ```
+- **Consumidor no app:** `FeedProvider` global, para a aba Para você. Mesmo comportamento da Seguindo com `nova_publicacao_feed`: guarda o id em pendentes da Para você (ignora `autorId == usuário logado`, porque a tela de nova publicação já chamou `adicionarPublicacao`, e ignora ids já na lista); com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo, aplica direto (página 1 da Para você + prepend do que ainda não está na lista). Uma resposta que chega depois de uma troca de conta é descartada. Os pendentes das duas abas são separados, e zeram nos mesmos momentos da Seguindo: pull-to-refresh, carregamento inicial da aba, logout/login e reconexão do socket.
+- **Introduzido em:** sub-issue 10.5.2 (#259); consumo em 10.5.5 (#262)
+
+### `publicacao_removida`
+- **Room:** `feed`
+- **Quando:** `DELETE /publicacoes/:id` remove a publicação, emitido depois do `DELETE` (não sai em 404 nem em 403). Falha no emit só loga; a resposta continua 204.
+- **Payload:**
+  ```json
+  {
+    "publicacaoId": "uuid",
+    "autorId": "uuid"
+  }
+  ```
+- **Consumidor no app:** `PublicacoesStore`, via `FeedProvider`: `store.remover(publicacaoId)`. A remoção tira o id de todas as listas (Feed e Perfil) e leva o Detalhe aberto para o estado `removida` (aviso e volta). No dispositivo do autor, a publicação já foi removida pelo próprio fluxo de exclusão; o `remover` repetido não muda nada nem notifica, então o eco não precisa de filtro.
+- **Introduzido em:** sub-issue 10.5.2 (#259); consumo em 10.5.4 (#261)
+
+### `publicacao_curtidas`
+- **Room:** `feed`
+- **Quando:** `POST` ou `DELETE /publicacoes/:publicacaoId/curtir` muda algo de fato. Curtir uma publicação já curtida ou descurtir uma que não estava curtida não emite (mesma regra da notificação de curtida).
+- **Payload:**
+  ```json
+  {
+    "publicacaoId": "uuid",
+    "curtidasCount": 12,
+    "porId": "uuid"
+  }
+  ```
+  `curtidasCount` é sempre o **total** da publicação, nunca "+1"/"-1".
+- **Como obter o total sem outra ida ao banco:** a curtida e a leitura do contador ficam numa query só (CTE). O trigger `trg_curtidas_count` é AFTER ROW e roda no fim do comando, então o `SELECT` da CTE ainda lê o `curtidas_count` de antes da mudança:
+  - **Curtir:** a CTE atual passa a devolver também `p.curtidas_count`. Se `nova = true`, `total = curtidas_count + 1`.
+  - **Descurtir:** o `DELETE` vira uma CTE (`WITH del AS (DELETE ... RETURNING publicacao_id) SELECT p.curtidas_count, EXISTS (SELECT 1 FROM del) AS removida FROM publicacoes p WHERE p.id = $2`). Se `removida = true`, `total = max(curtidas_count - 1, 0)`. Um `DELETE ... RETURNING` sozinho devolve a linha da curtida, não o contador da publicação.
+  - **Limite conhecido:** com duas curtidas simultâneas na mesma publicação, os dois eventos podem sair com o mesmo total. O próximo evento ou carregamento corrige; não vale uma ida extra ao banco para cobrir isso.
+- **Consumidor no app:** `PublicacoesStore`, via `FeedProvider`. Atualiza só o `curtidasCount` da publicação; o `jaCurtiu` não muda, porque é do usuário logado e a curtida foi de outra pessoa. O store hoje só tem `atualizarCurtida(id, jaCurtiu:, curtidasCount:)`, então a 10.5.4 precisa de um método que mude só o contador. Publicação fora do store é ignorada. Eventos com `porId == usuário logado` são ignorados: é o eco da própria ação, que já foi aplicada de forma otimista.
+- **Introduzido em:** sub-issue 10.5.3 (#260); consumo em 10.5.4 (#261)
+
+### `publicacao_comentarios`
+- **Room:** `feed`
+- **Quando:** `POST /publicacoes/:publicacaoId/comentarios` cria um comentário, ou `DELETE /comentarios/:id` exclui um (não sai em 404, 403 nem erro de validação).
+- **Payload:**
+  ```json
+  {
+    "publicacaoId": "uuid",
+    "comentariosCount": 5,
+    "porId": "uuid"
+  }
+  ```
+  `comentariosCount` é sempre o **total** da publicação.
+- **Como obter o total sem outra ida ao banco:** mesmo raciocínio do `trg_comentarios_count` (AFTER ROW):
+  - **Criar:** a CTE atual já faz `JOIN publicacoes p`; passa a devolver também `p.comentarios_count`, e `total = comentarios_count + 1`.
+  - **Excluir:** o `SELECT autor_id FROM comentarios` que já existe (o que confere a permissão) passa a trazer `publicacao_id` e `p.comentarios_count` com `JOIN publicacoes`. Depois do `DELETE`, `total = max(comentarios_count - 1, 0)`. Alternativa equivalente: `DELETE` numa CTE com `RETURNING publicacao_id` e `SELECT` do contador, como no descurtir.
+  - Mesmo limite de ações simultâneas do `publicacao_curtidas`.
+- **Consumidor no app:** `PublicacoesStore`, via `FeedProvider`: `store.atualizarComentarios(publicacaoId, comentariosCount)`, que já existe e ignora publicação fora do store. Eventos com `porId == usuário logado` são ignorados (eco).
+- **Introduzido em:** sub-issue 10.5.3 (#260); consumo em 10.5.4 (#261)
+
+### Reconexão (eventos da Home)
+Ao reconectar, o servidor não reenvia os eventos perdidos durante a queda. Por isso, no `onReconnect` do `RealtimeManager` (que só dispara quando o socket volta depois de uma queda, não na primeira conexão da sessão), o `FeedProvider`:
+- zera os pendentes das duas abas;
+- se a aba ativa é a Para você ou a Seguindo e já está carregada, busca a página 1 e **mescla**: `store.upsertTodos` atualiza o que já está na tela (contadores, por exemplo) e o que é novo entra no topo. A rolagem, a paginação e o estado da aba não mudam (exceto `vazio` → `sucesso` quando chega algo). Uma resposta que chega depois de uma troca de conta é descartada;
+- as outras abas não fazem nada: recarregam quando forem abertas.
+
+**Limite conhecido:** uma publicação excluída durante a queda pode continuar na lista até o próximo pull-to-refresh, porque a mescla só acrescenta e atualiza; ela não sabe o que sumiu do servidor. O mesmo vale para publicações fora da página 1.
+
+Logout e login não deixam listeners duplicados: o `FeedProvider` é global e assina os eventos uma vez só, no construtor; o `RealtimeManager` guarda as assinaturas e as aplica uma vez em cada socket novo. Introduzido em 10.5.6 (#263).
 
 ### `nova_mensagem` (pré-existente)
 - **Room:** `<chatId>`

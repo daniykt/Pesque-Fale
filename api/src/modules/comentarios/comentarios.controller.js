@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
+const { emitToFeed } = require('../../config/socket-emitter');
 
 async function listar(req, res) {
   const { publicacaoId } = req.params;
@@ -55,7 +56,7 @@ async function criar(req, res) {
          RETURNING id, publicacao_id, autor_id, texto, criado_em
        )
        SELECT ins.*, u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto,
-              p.autor_id AS publicacao_autor_id
+              p.autor_id AS publicacao_autor_id, p.comentarios_count
        FROM ins
        JOIN usuarios u ON u.id = ins.autor_id
        JOIN publicacoes p ON p.id = ins.publicacao_id`,
@@ -63,6 +64,7 @@ async function criar(req, res) {
     );
 
     const comentario = result.rows[0];
+    emitirComentarios(publicacaoId, comentario.comentarios_count + 1, autorId);
 
     await criarNotificacao({
       para: comentario.publicacao_autor_id,
@@ -87,7 +89,13 @@ async function deletar(req, res) {
   const usuarioId = req.usuario.id;
 
   try {
-    const existe = await pool.query('SELECT autor_id FROM comentarios WHERE id = $1', [id]);
+    const existe = await pool.query(
+      `SELECT c.autor_id, c.publicacao_id, p.comentarios_count
+       FROM comentarios c
+       JOIN publicacoes p ON p.id = c.publicacao_id
+       WHERE c.id = $1`,
+      [id]
+    );
     if (existe.rows.length === 0) {
       return res.status(404).json({ error: 'COMENTARIO_NAO_ENCONTRADO', message: 'Comentário não encontrado.' });
     }
@@ -96,10 +104,22 @@ async function deletar(req, res) {
     }
 
     await pool.query('DELETE FROM comentarios WHERE id = $1', [id]);
+
+    const { publicacao_id: publicacaoId, comentarios_count: atual } = existe.rows[0];
+    emitirComentarios(publicacaoId, Math.max(atual - 1, 0), usuarioId);
+
     return res.status(204).send();
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+function emitirComentarios(publicacaoId, comentariosCount, porId) {
+  try {
+    emitToFeed('publicacao_comentarios', { publicacaoId, comentariosCount, porId });
+  } catch (err) {
+    console.error('[comentarios] erro ao emitir publicacao_comentarios:', err);
   }
 }
 

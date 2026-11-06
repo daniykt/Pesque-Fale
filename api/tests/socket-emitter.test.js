@@ -31,4 +31,24 @@ describe('socket-emitter', () => {
     expect(to).toHaveBeenCalledWith('user:user-a');
     expect(emit).toHaveBeenCalledWith('nova_notificacao', { id: 1 });
   });
+
+  it('emitToFeed sem init → não lança, só avisa e não emite nada', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(() => emitter.emitToFeed('publicacao_criada', {})).not.toThrow();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('emitToFeed');
+
+    warn.mockRestore();
+  });
+
+  it('emitToFeed após init → emite pro room feed com evento e payload', () => {
+    const { io, to, emit } = fakeIo();
+    emitter.init(io);
+
+    emitter.emitToFeed('publicacao_criada', { publicacaoId: 'pub-1' });
+
+    expect(to).toHaveBeenCalledWith('feed');
+    expect(emit).toHaveBeenCalledWith('publicacao_criada', { publicacaoId: 'pub-1' });
+  });
 });

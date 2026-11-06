@@ -944,4 +944,533 @@ void main() {
       expect(store.porId('p1'), isNotNull);
     });
   });
+
+  group('FeedProvider - eventos realtime de publicações', () {
+    late FakeRealtimeManager realtime;
+    late PublicacoesStore store;
+    late AuthProvider authProvider;
+    late FeedProvider provider;
+
+    setUp(() async {
+      realtime = FakeRealtimeManager(conectado: true);
+      store = PublicacoesStore();
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider = _criarProvider(
+        publicacoesRepo: _FakePublicacoesRepository(
+          todas: [
+            _publicacao(
+              'p1',
+              curtidasCount: 3,
+              jaCurtiu: true,
+              comentariosCount: 2,
+            ),
+            _publicacao('p2'),
+          ],
+          seguindoIds: ['p1'],
+        ),
+        authProvider: authProvider,
+        realtime: realtime,
+        store: store,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+      await provider.trocarAba(AbaFeed.seguindo);
+    });
+
+    test('publicacao_removida tira a publicação do store e das duas abas', () {
+      realtime.emitir('publicacao_removida', {
+        'publicacaoId': 'p1',
+        'autorId': 'autor-p1',
+      });
+
+      expect(store.foiRemovida('p1'), isTrue);
+      expect(provider.paraVoce.map((p) => p.id), ['p2']);
+      expect(provider.seguindo, isEmpty);
+    });
+
+    test('publicacao_curtidas de outra pessoa atualiza o contador no Feed', () {
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 9,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(notificacoes, greaterThan(0));
+      expect(provider.paraVoce.first.curtidasCount, 9);
+      expect(provider.seguindo.first.curtidasCount, 9);
+    });
+
+    test('curtida de outra pessoa não muda o meu jaCurtiu', () {
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 4,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(store.porId('p1')!.jaCurtiu, isTrue);
+      expect(store.porId('p1')!.curtidasCount, 4);
+    });
+
+    test(
+      'publicacao_comentarios de outra pessoa atualiza o contador no Feed',
+      () {
+        realtime.emitir('publicacao_comentarios', {
+          'publicacaoId': 'p1',
+          'comentariosCount': 6,
+          'porId': 'outra-pessoa',
+        });
+
+        expect(provider.paraVoce.first.comentariosCount, 6);
+        expect(provider.seguindo.first.comentariosCount, 6);
+      },
+    );
+
+    test('eco da própria curtida e do próprio comentário é ignorado', () {
+      final meuId = authProvider.usuario!.id;
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 99,
+        'porId': meuId,
+      });
+      realtime.emitir('publicacao_comentarios', {
+        'publicacaoId': 'p1',
+        'comentariosCount': 99,
+        'porId': meuId,
+      });
+
+      expect(store.porId('p1')!.curtidasCount, 3);
+      expect(store.porId('p1')!.comentariosCount, 2);
+    });
+
+    test(
+      'o eco usa o usuário logado na hora do evento, não o da assinatura',
+      () async {
+        await authProvider.signOut();
+        provider.reagirAuth(authProvider);
+        await pumpEventQueue();
+        store.upsert(_publicacao('p1', curtidasCount: 3));
+
+        realtime.emitir('publicacao_curtidas', {
+          'publicacaoId': 'p1',
+          'curtidasCount': 5,
+          'porId': 'u1',
+        });
+
+        expect(store.porId('p1')!.curtidasCount, 5);
+      },
+    );
+
+    test('contador de publicação fora do store é ignorado', () {
+      var notificacoes = 0;
+      store.addListener(() => notificacoes++);
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'desconhecida',
+        'curtidasCount': 5,
+        'porId': 'outra-pessoa',
+      });
+      realtime.emitir('publicacao_comentarios', {
+        'publicacaoId': 'desconhecida',
+        'comentariosCount': 5,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(store.porId('desconhecida'), isNull);
+      expect(notificacoes, 0);
+    });
+
+    test('payload inválido é ignorado', () {
+      final invalidos = <String, List<dynamic>>{
+        'publicacao_removida': [
+          null,
+          'p1',
+          <String, dynamic>{},
+          {'publicacaoId': 1, 'autorId': 'autor-p1'},
+          {'publicacaoId': 'p1'},
+        ],
+        'publicacao_curtidas': [
+          null,
+          {'publicacaoId': 'p1', 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': '9', 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': -1, 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': 9},
+          {'curtidasCount': 9, 'porId': 'outra-pessoa'},
+        ],
+        'publicacao_comentarios': [
+          null,
+          {
+            'publicacaoId': 'p1',
+            'comentariosCount': 9.5,
+            'porId': 'outra-pessoa',
+          },
+          {'publicacaoId': 'p1', 'comentariosCount': 9, 'porId': 7},
+        ],
+      };
+
+      for (final MapEntry(key: evento, value: payloads) in invalidos.entries) {
+        for (final payload in payloads) {
+          realtime.emitir(evento, payload);
+        }
+      }
+
+      final p1 = store.porId('p1')!;
+      expect(store.foiRemovida('p1'), isFalse);
+      expect(p1.curtidasCount, 3);
+      expect(p1.comentariosCount, 2);
+    });
+
+    test('dispose desfaz as assinaturas dos eventos de publicação', () {
+      for (final evento in [
+        'publicacao_removida',
+        'publicacao_curtidas',
+        'publicacao_comentarios',
+      ]) {
+        expect(realtime.assinantes[evento], hasLength(1), reason: evento);
+      }
+
+      provider.dispose();
+
+      for (final evento in [
+        'publicacao_removida',
+        'publicacao_curtidas',
+        'publicacao_comentarios',
+      ]) {
+        expect(realtime.assinantes[evento], isEmpty, reason: evento);
+      }
+    });
+  });
+
+  group('FeedProvider - publicacao_criada (Para você)', () {
+    late List<Publicacao> todas;
+    late _FakePublicacoesRepository publicacoesRepo;
+    late AuthProvider authProvider;
+    late FakeRealtimeManager realtime;
+    late FeedProvider provider;
+
+    void publicarNoServidor(String id) => todas.insert(0, _publicacao(id));
+
+    Map<String, dynamic> criada(String id, {String autorId = 'autor-x'}) => {
+      'publicacaoId': id,
+      'autorId': autorId,
+      'timestamp': '2026-11-06T12:00:00.000Z',
+    };
+
+    setUp(() async {
+      todas = [_publicacao('p1'), _publicacao('p2')];
+      publicacoesRepo = _FakePublicacoesRepository(todas: todas);
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      realtime = FakeRealtimeManager();
+      provider = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+    });
+
+    test('evento de outro autor entra nos pendentes e notifica', () {
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('publicacao_criada', criada('p3'));
+
+      expect(provider.pendentesParaVoceCount, 1);
+      expect(notificacoes, 1);
+    });
+
+    test('evento do próprio usuário é no-op', () {
+      realtime.emitir('publicacao_criada', criada('p3', autorId: 'u1'));
+
+      expect(provider.pendentesParaVoceCount, 0);
+    });
+
+    test('publicação já na lista ou repetida não conta de novo', () {
+      realtime.emitir('publicacao_criada', criada('p1'));
+      expect(provider.pendentesParaVoceCount, 0);
+
+      realtime.emitir('publicacao_criada', criada('p3'));
+      realtime.emitir('publicacao_criada', criada('p3'));
+      expect(provider.pendentesParaVoceCount, 1);
+    });
+
+    test('payload malformado é ignorado', () {
+      realtime.emitir('publicacao_criada', 'lixo');
+      realtime.emitir('publicacao_criada', {'publicacaoId': 3});
+      realtime.emitir('publicacao_criada', {'publicacaoId': 'p3'});
+
+      expect(provider.pendentesParaVoceCount, 0);
+    });
+
+    test('pendentes da Para você e da Seguindo não se misturam', () {
+      realtime.emitir('publicacao_criada', criada('p3'));
+      realtime.emitir('nova_publicacao_feed', _novaPublicacao('p4'));
+
+      expect(provider.pendentesParaVoceCount, 1);
+      expect(provider.pendentesSeguindoCount, 1);
+    });
+
+    test(
+      'aplicarPendentesParaVoce busca a página 1 e faz prepend sem duplicar',
+      () async {
+        publicarNoServidor('p3');
+        publicarNoServidor('p4');
+        realtime.emitir('publicacao_criada', criada('p3'));
+        realtime.emitir('publicacao_criada', criada('p4'));
+        final chamadasAntes = publicacoesRepo.chamadas;
+
+        await provider.aplicarPendentesParaVoce();
+
+        expect(publicacoesRepo.chamadas, chamadasAntes + 1);
+        expect(provider.paraVoce.map((p) => p.id), ['p4', 'p3', 'p1', 'p2']);
+        expect(provider.pendentesParaVoceCount, 0);
+        expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      },
+    );
+
+    test(
+      'aplicarPendentesParaVoce sem pendentes não chama o repositório',
+      () async {
+        final chamadasAntes = publicacoesRepo.chamadas;
+
+        await provider.aplicarPendentesParaVoce();
+
+        expect(publicacoesRepo.chamadas, chamadasAntes);
+      },
+    );
+
+    test('aplicarPendentesParaVoce descarta a resposta após logout', () async {
+      publicarNoServidor('p3');
+      realtime.emitir('publicacao_criada', criada('p3'));
+      final segurada = Completer<void>();
+      publicacoesRepo.segurar = segurada;
+      final aplicando = provider.aplicarPendentesParaVoce();
+
+      publicacoesRepo.segurar = null;
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+      expect(provider.paraVoce.map((p) => p.id), ['p3', 'p1', 'p2']);
+
+      publicarNoServidor('p9');
+      segurada.complete();
+      await aplicando;
+
+      expect(provider.paraVoce.map((p) => p.id), [
+        'p3',
+        'p1',
+        'p2',
+      ], reason: 'a resposta da sessão anterior não pode fazer prepend');
+    });
+
+    test('pullRefresh zera os pendentes', () async {
+      realtime.emitir('publicacao_criada', criada('p3'));
+
+      await provider.pullRefresh();
+
+      expect(provider.pendentesParaVoceCount, 0);
+    });
+
+    test('carregamento inicial da Para você zera os pendentes', () async {
+      final outro = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+      );
+      realtime.emitir('publicacao_criada', criada('p3'));
+      expect(outro.pendentesParaVoceCount, 1);
+
+      await outro.trocarAba(AbaFeed.paraVoce);
+
+      expect(outro.pendentesParaVoceCount, 0);
+    });
+
+    test('logout e login zeram os pendentes', () async {
+      realtime.emitir('publicacao_criada', criada('p3'));
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      expect(provider.pendentesParaVoceCount, 0);
+      await pumpEventQueue();
+
+      realtime.emitir('publicacao_criada', criada('p4'));
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider.reagirAuth(authProvider);
+
+      expect(provider.pendentesParaVoceCount, 0);
+    });
+
+    test('reconexão zera os pendentes', () {
+      realtime.emitir('publicacao_criada', criada('p3'));
+
+      realtime.simularReconexao();
+
+      expect(provider.pendentesParaVoceCount, 0);
+    });
+
+    test('dispose desfaz a assinatura do publicacao_criada', () {
+      expect(realtime.assinantes['publicacao_criada'], hasLength(1));
+
+      provider.dispose();
+
+      expect(realtime.assinantes['publicacao_criada'], isEmpty);
+    });
+  });
+
+  group('FeedProvider - reconexão do realtime', () {
+    late List<Publicacao> todas;
+    late List<String> seguindoIds;
+    late _FakePublicacoesRepository publicacoesRepo;
+    late AuthProvider authProvider;
+    late FakeRealtimeManager realtime;
+    late PublicacoesStore store;
+    late FeedProvider provider;
+
+    setUp(() async {
+      todas = List.generate(25, (i) => _publicacao('p$i'));
+      seguindoIds = todas.map((p) => p.id).toList();
+      publicacoesRepo = _FakePublicacoesRepository(
+        todas: todas,
+        seguindoIds: seguindoIds,
+      );
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      realtime = FakeRealtimeManager();
+      store = PublicacoesStore();
+      provider = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+        store: store,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+      await provider.carregarMais();
+    });
+
+    test(
+      'Para você: mescla a página 1 sem perder o que já foi carregado',
+      () async {
+        expect(provider.paraVoce, hasLength(25));
+        todas.insert(0, _publicacao('nova'));
+        todas[1] = _publicacao('p0', curtidasCount: 9, comentariosCount: 4);
+        final chamadasAntes = publicacoesRepo.chamadas;
+
+        realtime.simularReconexao();
+        await pumpEventQueue();
+
+        expect(publicacoesRepo.chamadas, chamadasAntes + 1);
+        final ids = provider.paraVoce.map((p) => p.id).toList();
+        expect(ids.first, 'nova');
+        expect(ids, hasLength(26));
+        expect(ids.toSet(), hasLength(26));
+        expect(store.porId('p0')!.curtidasCount, 9);
+        expect(store.porId('p0')!.comentariosCount, 4);
+        expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      },
+    );
+
+    test('Para você: a paginação continua de onde estava', () async {
+      todas.insert(0, _publicacao('nova'));
+      realtime.simularReconexao();
+      await pumpEventQueue();
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      await provider.carregarMais();
+
+      expect(
+        publicacoesRepo.chamadas,
+        chamadasAntes,
+        reason: 'as 25 já foram carregadas; a mescla não reabre a paginação',
+      );
+    });
+
+    test('Seguindo: também mescla a página 1', () async {
+      await provider.trocarAba(AbaFeed.seguindo);
+      todas.insert(0, _publicacao('nova-seg'));
+      seguindoIds.add('nova-seg');
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(provider.seguindo.first.id, 'nova-seg');
+    });
+
+    test('outra aba ativa: não busca nada', () async {
+      await provider.trocarAba(AbaFeed.eventos);
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('aba ativa ainda não carregada: não busca nada', () async {
+      final outro = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+      );
+      expect(outro.estadoDe(AbaFeed.paraVoce).status, StatusAba.inicial);
+      provider.dispose();
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('Seguindo sem conta: não busca nada', () async {
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+      await provider.trocarAba(AbaFeed.seguindo);
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('não apaga o erro do rodapé do carregar mais', () async {
+      todas.addAll(List.generate(20, (i) => _publicacao('extra$i')));
+      await provider.pullRefresh();
+      await provider.carregarMais();
+      publicacoesRepo.falhar = true;
+      await provider.carregarMais();
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isTrue);
+      publicacoesRepo.falhar = false;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isTrue);
+    });
+
+    test(
+      'resposta que chega depois de uma troca de conta é descartada',
+      () async {
+        final segurada = Completer<void>();
+        publicacoesRepo.segurar = segurada;
+        realtime.simularReconexao();
+
+        publicacoesRepo.segurar = null;
+        await authProvider.signOut();
+        provider.reagirAuth(authProvider);
+        await pumpEventQueue();
+        final depoisDaRecarga = provider.paraVoce.map((p) => p.id).toList();
+
+        todas.insert(0, _publicacao('da-sessao-antiga'));
+        segurada.complete();
+        await pumpEventQueue();
+
+        expect(provider.paraVoce.map((p) => p.id).toList(), depoisDaRecarga);
+      },
+    );
+  });
 }

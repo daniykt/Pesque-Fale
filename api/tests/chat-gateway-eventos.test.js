@@ -542,3 +542,16 @@ describe('chat.gateway — chatId do payload precisa bater com socket.chatId', (
     expect(inseridasEm()).toEqual([CHAT_AC]);
   });
 });
+
+describe('chat.gateway — rooms na conexão', () => {
+  it('todo socket autenticado entra no room pessoal e no room feed', () => {
+    const io = fakeIo();
+    initChatGateway(io);
+    const socket = fakeSocket(A);
+
+    io.conectar(socket);
+
+    expect(socket.join).toHaveBeenCalledWith(`user:${A}`);
+    expect(socket.join).toHaveBeenCalledWith('feed');
+  });
+});

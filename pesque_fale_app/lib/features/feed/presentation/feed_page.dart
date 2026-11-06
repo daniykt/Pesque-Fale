@@ -216,10 +216,7 @@ class _FeedListaViewState extends State<_FeedListaView> {
   final _scrollController = ScrollController();
 
   /// Guardado pra remover o listener no dispose sem consultar o context.
-  /// Só existe na aba Seguindo — as outras não recebem realtime.
-  FeedProvider? _feedOuvido;
-
-  bool get _ehSeguindo => widget.aba == AbaFeed.seguindo;
+  late final FeedProvider _feedOuvido;
 
   bool get _estaNoTopo =>
       !_scrollController.hasClients || _scrollController.offset <= _limiteTopo;
@@ -228,15 +225,13 @@ class _FeedListaViewState extends State<_FeedListaView> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    if (_ehSeguindo) {
-      _feedOuvido = context.read<FeedProvider>()
-        ..addListener(_aplicarPendentesSeNoTopo);
-    }
+    _feedOuvido = context.read<FeedProvider>()
+      ..addListener(_aplicarPendentesSeNoTopo);
   }
 
   @override
   void dispose() {
-    _feedOuvido?.removeListener(_aplicarPendentesSeNoTopo);
+    _feedOuvido.removeListener(_aplicarPendentesSeNoTopo);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -249,16 +244,16 @@ class _FeedListaViewState extends State<_FeedListaView> {
       context.read<FeedProvider>().carregarMais();
     }
     // Voltou pro topo com o chip na tela: aplica e o chip some.
-    if (_ehSeguindo) _aplicarPendentesSeNoTopo();
+    _aplicarPendentesSeNoTopo();
   }
 
   /// Roda a cada notify do provider (não só quando os pendentes mudam) e a
   /// cada scroll; sai cedo quando não há pendente.
   void _aplicarPendentesSeNoTopo() {
     final feed = _feedOuvido;
-    if (feed == null || feed.pendentesSeguindoCount == 0) return;
+    if (feed.pendentesCount(widget.aba) == 0) return;
     // Lista ainda não carregada/em erro: o próximo carregamento já zera.
-    switch (feed.estadoDe(AbaFeed.seguindo).status) {
+    switch (feed.estadoDe(widget.aba).status) {
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
       case StatusAba.vazio:
@@ -268,11 +263,10 @@ class _FeedListaViewState extends State<_FeedListaView> {
       case StatusAba.erro:
         return;
     }
-    if (_estaNoTopo) feed.aplicarPendentesSeguindo();
+    if (_estaNoTopo) feed.aplicarPendentes(widget.aba);
   }
 
   Future<void> _irProTopoEAplicar() async {
-    final feed = _feedOuvido;
     if (_scrollController.hasClients) {
       await _scrollController.animateTo(
         0,
@@ -281,7 +275,7 @@ class _FeedListaViewState extends State<_FeedListaView> {
       );
     }
     // Normalmente o _onScroll já aplicou ao cruzar o limite; aí é no-op.
-    await feed?.aplicarPendentesSeguindo();
+    await _feedOuvido.aplicarPendentes(widget.aba);
   }
 
   @override
@@ -347,10 +341,9 @@ class _FeedListaViewState extends State<_FeedListaView> {
     }
 
     final mostraChip =
-        _ehSeguindo &&
         (estado.status == StatusAba.sucesso ||
             estado.status == StatusAba.carregandoMais) &&
-        provider.pendentesSeguindoCount > 0 &&
+        provider.pendentesCount(widget.aba) > 0 &&
         !_estaNoTopo;
 
     return RefreshIndicator(
@@ -365,7 +358,7 @@ class _FeedListaViewState extends State<_FeedListaView> {
               right: 0,
               child: Center(
                 child: NovasPublicacoesButton(
-                  quantidade: provider.pendentesSeguindoCount,
+                  quantidade: provider.pendentesCount(widget.aba),
                   onTap: _irProTopoEAplicar,
                 ),
               ),

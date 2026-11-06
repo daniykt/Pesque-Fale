@@ -18,4 +18,12 @@ function emitToUser(userId, evento, payload) {
   io.to(`user:${userId}`).emit(evento, payload);
 }
 
-module.exports = { init, emitToUser };
+function emitToFeed(evento, payload) {
+  if (!io) {
+    console.warn(`[socket-emitter] emitToFeed('${evento}') chamado antes de init(io) — ignorado.`);
+    return;
+  }
+  io.to('feed').emit(evento, payload);
+}
+
+module.exports = { init, emitToUser, emitToFeed };

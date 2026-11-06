@@ -41,6 +41,10 @@ class FeedProvider extends ChangeNotifier {
   }) : _usuarioId = authProvider.usuario?.id {
     store.addListener(_onStoreMudou);
     realtime.subscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.subscribe('publicacao_criada', _onPublicacaoCriada);
+    realtime.subscribe('publicacao_removida', _onPublicacaoRemovida);
+    realtime.subscribe('publicacao_curtidas', _onPublicacaoCurtidas);
+    realtime.subscribe('publicacao_comentarios', _onPublicacaoComentarios);
     realtime.onReconnect(_onReconnect);
   }
 
@@ -56,12 +60,17 @@ class FeedProvider extends ChangeNotifier {
   final Map<AbaFeed, Future<void>> _cargasEmVoo = {};
 
   /// Ids de publicações que chegaram via realtime mas ainda não foram
-  /// renderizadas na lista Seguindo. O provider guarda só o contador bruto:
+  /// renderizadas na lista da aba. O provider guarda só o contador bruto:
   /// é a `FeedPage`, que conhece o scroll, quem decide entre mostrar o chip
-  /// "X novas publicações" ou aplicar direto ([aplicarPendentesSeguindo]).
-  final Set<String> _pendentesSeguindo = {};
+  /// "X novas publicações" ou aplicar direto ([aplicarPendentes]).
+  final Map<AbaFeed, Set<String>> _pendentes = {
+    AbaFeed.paraVoce: {},
+    AbaFeed.seguindo: {},
+  };
 
-  int get pendentesSeguindoCount => _pendentesSeguindo.length;
+  int pendentesCount(AbaFeed aba) => _pendentes[aba]?.length ?? 0;
+  int get pendentesParaVoceCount => pendentesCount(AbaFeed.paraVoce);
+  int get pendentesSeguindoCount => pendentesCount(AbaFeed.seguindo);
 
   AbaFeed _abaAtiva = AbaFeed.paraVoce;
   AbaFeed get abaAtiva => _abaAtiva;
@@ -118,6 +127,7 @@ class FeedProvider extends ChangeNotifier {
     try {
       switch (aba) {
         case AbaFeed.paraVoce:
+          _pendentes[AbaFeed.paraVoce]!.clear();
           final result = await publicacoesRepo.listar(
             pagina: 1,
             seguindo: false,
@@ -128,6 +138,7 @@ class FeedProvider extends ChangeNotifier {
             ..clear()
             ..addAll(result.items.map((p) => p.id));
           _invalidarCache();
+          _pendentes[AbaFeed.paraVoce]!.removeWhere(_idsParaVoce.contains);
           _paginaParaVoce = 1;
           _temMaisParaVoce = result.temMais;
           _atualizarEstado(
@@ -136,7 +147,7 @@ class FeedProvider extends ChangeNotifier {
           );
           break;
         case AbaFeed.seguindo:
-          _pendentesSeguindo.clear();
+          _pendentes[AbaFeed.seguindo]!.clear();
           if (authProvider.usuario == null) {
             _atualizarEstado(aba, StatusAba.vazio);
             break;
@@ -152,7 +163,7 @@ class FeedProvider extends ChangeNotifier {
             ..addAll(result.items.map((p) => p.id));
           _invalidarCache();
           // Evento que chegou com a requisição em voo pode já ter vindo nela.
-          _pendentesSeguindo.removeWhere(_idsSeguindo.contains);
+          _pendentes[AbaFeed.seguindo]!.removeWhere(_idsSeguindo.contains);
           _paginaSeguindo = 1;
           _temMaisSeguindo = result.temMais;
           _atualizarEstado(
@@ -250,7 +261,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> pullRefresh() async {
-    if (_abaAtiva == AbaFeed.seguindo) _pendentesSeguindo.clear();
+    _pendentes[_abaAtiva]?.clear();
     _estados[_abaAtiva] = EstadoAba.inicial();
     await _carregarInicial(_abaAtiva);
   }
@@ -310,6 +321,41 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onPublicacaoRemovida(dynamic payload) {
+    if (payload is! Map) return;
+    final id = payload['publicacaoId'];
+    if (id is! String || payload['autorId'] is! String) return;
+    store.remover(id);
+  }
+
+  void _onPublicacaoCurtidas(dynamic payload) {
+    final evento = _contadorDeOutro(payload, 'curtidasCount');
+    if (evento == null) return;
+    store.atualizarCurtidasCount(evento.publicacaoId, evento.total);
+  }
+
+  void _onPublicacaoComentarios(dynamic payload) {
+    final evento = _contadorDeOutro(payload, 'comentariosCount');
+    if (evento == null) return;
+    store.atualizarComentarios(evento.publicacaoId, evento.total);
+  }
+
+  ({String publicacaoId, int total})? _contadorDeOutro(
+    dynamic payload,
+    String campoTotal,
+  ) {
+    if (payload is! Map) return null;
+    final id = payload['publicacaoId'];
+    final total = payload[campoTotal];
+    final porId = payload['porId'];
+    if (id is! String || total is! int || total < 0 || porId is! String) {
+      return null;
+    }
+    if (porId == authProvider.usuario?.id) return null;
+    if (store.porId(id) == null) return null;
+    return (publicacaoId: id, total: total);
+  }
+
   void _onNovaPublicacaoFeed(dynamic payload) {
     if (payload is! Map) return;
     final id = payload['publicacaoId'];
@@ -319,36 +365,65 @@ class FeedProvider extends ChangeNotifier {
     // O autor não ganha chip no próprio feed: a tela de nova publicação já
     // chamou adicionarPublicacao. O backend nem emite pra ele (ninguém segue
     // a si mesmo) — isto é defesa em profundidade.
+    _adicionarPendente(AbaFeed.seguindo, id, autor);
+  }
+
+  void _onPublicacaoCriada(dynamic payload) {
+    if (payload is! Map) return;
+    final id = payload['publicacaoId'];
+    final autor = payload['autorId'];
+    if (id is! String || autor is! String) return;
+    _adicionarPendente(AbaFeed.paraVoce, id, autor);
+  }
+
+  void _adicionarPendente(AbaFeed aba, String id, String autor) {
     if (autor == authProvider.usuario?.id) return;
-    if (_idsSeguindo.contains(id)) return;
-    if (!_pendentesSeguindo.add(id)) return;
+    if (_idsDa(aba).contains(id)) return;
+    if (!_pendentes[aba]!.add(id)) return;
     notifyListeners();
   }
 
-  /// Drena os pendentes buscando a página 1 do Seguindo e colocando no topo
+  List<String> _idsDa(AbaFeed aba) =>
+      aba == AbaFeed.seguindo ? _idsSeguindo : _idsParaVoce;
+
+  Future<void> aplicarPendentesSeguindo() => aplicarPendentes(AbaFeed.seguindo);
+
+  Future<void> aplicarPendentesParaVoce() => aplicarPendentes(AbaFeed.paraVoce);
+
+  /// Drena os pendentes buscando a página 1 da aba e colocando no topo
   /// as publicações que ainda não estão na lista. Chamado pela UI no clique
   /// do chip, ou direto quando o usuário já está no topo.
-  Future<void> aplicarPendentesSeguindo() async {
-    if (_pendentesSeguindo.isEmpty) return;
-    _pendentesSeguindo.clear();
-    final usuarioId = authProvider.usuario?.id;
+  Future<void> aplicarPendentes(AbaFeed aba) async {
+    final pendentes = _pendentes[aba];
+    if (pendentes == null || pendentes.isEmpty) return;
+    pendentes.clear();
+    await _mesclarPaginaUm(aba);
+  }
+
+  Future<void> _mesclarPaginaUm(AbaFeed aba) async {
+    final sessao = _sessao;
     try {
-      final result = await publicacoesRepo.listar(pagina: 1, seguindo: true);
+      final result = await publicacoesRepo.listar(
+        pagina: 1,
+        seguindo: aba == AbaFeed.seguindo,
+      );
       // Logout/troca de conta com a requisição em voo: descarta.
-      if (authProvider.usuario?.id != usuarioId) return;
+      if (sessao != _sessao) return;
       store.upsertTodos(result.items);
-      final idsAtuais = _idsSeguindo.toSet();
-      _idsSeguindo.insertAll(
+      final ids = _idsDa(aba);
+      final idsAtuais = ids.toSet();
+      ids.insertAll(
         0,
         result.items.map((p) => p.id).where((id) => !idsAtuais.contains(id)),
       );
       _invalidarCache();
       // A paginação continua de onde estava; o carregarMais dedupa o que
       // o prepend empurrou pra próxima página.
-      _atualizarEstado(
-        AbaFeed.seguindo,
-        _idsSeguindo.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
-      );
+      if (estadoDe(aba).status == StatusAba.vazio && ids.isNotEmpty) {
+        _atualizarEstado(aba, StatusAba.sucesso);
+      } else {
+        notifyListeners();
+      }
     } catch (_) {
       // Silencia: o pull-to-refresh continua disponível pra reconciliar.
       notifyListeners();
@@ -356,11 +431,25 @@ class FeedProvider extends ChangeNotifier {
   }
 
   void _onReconnect() {
-    // Eventos podem ter se perdido na queda; o contador deixa de ser
-    // confiável. O próximo pull-to-refresh (ou troca de aba) reconcilia.
-    if (_pendentesSeguindo.isEmpty) return;
-    _pendentesSeguindo.clear();
-    notifyListeners();
+    // Eventos podem ter se perdido na queda: o contador de pendentes deixa de
+    // ser confiável e a aba ativa é reconciliada com a página 1.
+    if (_pendentes.values.any((p) => p.isNotEmpty)) {
+      for (final p in _pendentes.values) {
+        p.clear();
+      }
+      notifyListeners();
+    }
+    final aba = _abaAtiva;
+    if (aba != AbaFeed.paraVoce && aba != AbaFeed.seguindo) return;
+    if (aba == AbaFeed.seguindo && authProvider.usuario == null) return;
+    if (!const {
+      StatusAba.sucesso,
+      StatusAba.carregandoMais,
+      StatusAba.vazio,
+    }.contains(estadoDe(aba).status)) {
+      return;
+    }
+    _mesclarPaginaUm(aba);
   }
 
   void _onStoreMudou() {
@@ -395,7 +484,9 @@ class FeedProvider extends ChangeNotifier {
     _idsParaVoce.clear();
     _idsSeguindo.clear();
     _invalidarCache();
-    _pendentesSeguindo.clear();
+    for (final p in _pendentes.values) {
+      p.clear();
+    }
     _paginaParaVoce = 1;
     _paginaSeguindo = 1;
     _temMaisParaVoce = true;
@@ -413,6 +504,10 @@ class FeedProvider extends ChangeNotifier {
   void dispose() {
     store.removeListener(_onStoreMudou);
     realtime.unsubscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.unsubscribe('publicacao_criada', _onPublicacaoCriada);
+    realtime.unsubscribe('publicacao_removida', _onPublicacaoRemovida);
+    realtime.unsubscribe('publicacao_curtidas', _onPublicacaoCurtidas);
+    realtime.unsubscribe('publicacao_comentarios', _onPublicacaoComentarios);
     realtime.removerOnReconnect(_onReconnect);
     super.dispose();
   }

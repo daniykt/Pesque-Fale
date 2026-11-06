@@ -117,6 +117,7 @@ module.exports = function initChatGateway(io) {
     const usuarioId = socket.usuario.id;
     console.log(`Socket conectado: ${usuarioId}`);
     socket.join(`user:${usuarioId}`);
+    socket.join('feed');
 
     // Entrar em uma sala de chat
     socket.on('entrar_chat', async ({ outroId }) => {
