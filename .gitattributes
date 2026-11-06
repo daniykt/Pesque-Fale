@@ -1,0 +1,2 @@
+# Scripts shell precisam de LF para rodar no bash (Git Bash, Linux, CI)
+*.sh text eol=lf
