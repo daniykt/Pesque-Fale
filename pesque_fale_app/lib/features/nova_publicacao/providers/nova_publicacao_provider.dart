@@ -114,7 +114,7 @@ class NovaPublicacaoProvider extends ChangeNotifier {
         mimeType: fotoMimeType ?? 'image/jpeg',
       );
 
-      final publicacao = await publicacoesRepository.criar(
+      final criada = await publicacoesRepository.criar(
         descricao: descricao.trim().isEmpty ? null : descricao.trim(),
         imagemUrl: imagemUrl,
         localTexto: pontoSelecionado!.nome,
@@ -122,6 +122,14 @@ class NovaPublicacaoProvider extends ChangeNotifier {
         pontoId: pontoSelecionado!.id,
         tags: tagsSelecionadas.toList(),
       );
+      final usuario = authProvider.usuario;
+      final publicacao = usuario == null
+          ? criada
+          : criada.copyWith(
+              autorNome: criada.autorNome.isEmpty ? usuario.nome : null,
+              autorUsername: criada.autorUsername ?? usuario.username,
+              autorFoto: criada.autorFoto ?? usuario.fotoPerfil,
+            );
 
       feedProvider.adicionarPublicacao(publicacao);
 
