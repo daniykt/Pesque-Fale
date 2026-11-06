@@ -691,4 +691,115 @@ void main() {
       expect(find.text('Publicação nova-1 do feed Seguindo.'), findsOneWidget);
     });
   });
+
+  group('chip de novas publicações na aba Para você', () {
+    late _FakePublicacoesRepository publicacoesRepo;
+    late FakeRealtimeManager realtime;
+
+    Publicacao publicacaoParaVoce(String id) => Publicacao(
+      id: id,
+      autorId: 'autor-qualquer',
+      autorNome: 'Pescador Qualquer',
+      descricao: 'Publicação $id da Para você.',
+      criadoEm: DateTime(2026, 1, 1),
+      atualizadoEm: DateTime(2026, 1, 1),
+    );
+
+    Future<void> abrirParaVoce(WidgetTester tester) async {
+      final authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      publicacoesRepo = _FakePublicacoesRepository();
+      publicacoesRepo.todas
+        ..clear()
+        ..addAll(List.generate(10, (i) => publicacaoParaVoce('pv$i')));
+      realtime = FakeRealtimeManager();
+
+      await tester.pumpWidget(
+        _harness(
+          authProvider: authProvider,
+          publicacoes: publicacoesRepo,
+          realtime: realtime,
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> chegaPublicacao(WidgetTester tester, String id) async {
+      publicacoesRepo.todas.insert(0, publicacaoParaVoce(id));
+      realtime.emitir('publicacao_criada', {
+        'publicacaoId': id,
+        'autorId': 'autor-qualquer',
+        'timestamp': '2026-11-06T12:00:00.000Z',
+      });
+      await tester.pumpAndSettle();
+    }
+
+    double offsetDaLista(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byType(ListView).first,
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position
+        .pixels;
+
+    testWidgets('rolado pra baixo: chip aparece e acumula a contagem', (
+      tester,
+    ) async {
+      await abrirParaVoce(tester);
+      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(offsetDaLista(tester), greaterThan(100));
+
+      await chegaPublicacao(tester, 'nova-1');
+      expect(find.text('1 nova publicação'), findsOneWidget);
+      expect(find.text('Publicação nova-1 da Para você.'), findsNothing);
+
+      await chegaPublicacao(tester, 'nova-2');
+      expect(find.text('2 novas publicações'), findsOneWidget);
+    });
+
+    testWidgets('clique no chip rola pro topo, aplica e o chip some', (
+      tester,
+    ) async {
+      await abrirParaVoce(tester);
+      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      await chegaPublicacao(tester, 'nova-1');
+
+      await tester.tap(find.byType(NovasPublicacoesButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NovasPublicacoesButton), findsNothing);
+      expect(offsetDaLista(tester), 0);
+      expect(find.text('Publicação nova-1 da Para você.'), findsOneWidget);
+    });
+
+    testWidgets('no topo: publicação entra direto, sem chip', (tester) async {
+      await abrirParaVoce(tester);
+
+      await chegaPublicacao(tester, 'nova-1');
+
+      expect(find.byType(NovasPublicacoesButton), findsNothing);
+      expect(find.text('Publicação nova-1 da Para você.'), findsOneWidget);
+    });
+
+    testWidgets('evento só da Seguindo não mostra chip na Para você', (
+      tester,
+    ) async {
+      await abrirParaVoce(tester);
+      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      realtime.emitir('nova_publicacao_feed', {
+        'publicacaoId': 'so-seguindo',
+        'autorId': 'autor-seguido',
+        'timestamp': '2026-11-06T12:00:00.000Z',
+      });
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NovasPublicacoesButton), findsNothing);
+    });
+  });
 }

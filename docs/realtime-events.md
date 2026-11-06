@@ -129,7 +129,7 @@ Os eventos de publicação (`publicacao_criada`, `publicacao_removida`, `publica
     "timestamp": "ISO-8601"
   }
   ```
-- **Consumidor no app:** `FeedProvider` global. Guarda o id em `_pendentesSeguindo` (ignora o próprio usuário como autor e ids já na lista). A `FeedPage` decide pelo scroll da aba Seguindo: com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo (ou ao voltar pra ele), aplica direto sem chip. Aplicar = buscar a página 1 do Seguindo e fazer prepend do que ainda não está na lista. Pendentes zeram em pull-to-refresh, carregamento inicial da aba, logout e reconexão do socket.
+- **Consumidor no app:** `FeedProvider` global. Guarda o id nos pendentes da Seguindo (ignora o próprio usuário como autor e ids já na lista). A `FeedPage` decide pelo scroll da aba Seguindo: com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo (ou ao voltar pra ele), aplica direto sem chip. Aplicar = buscar a página 1 do Seguindo e fazer prepend do que ainda não está na lista. Pendentes zeram em pull-to-refresh, carregamento inicial da aba, logout/login (troca de usuário) e reconexão do socket.
 - **Introduzido em:** sub-issue 9.6.6 (#210)
 - **Coexiste com `publicacao_criada` (10.5.2):** continua igual e continua sendo o evento da aba Seguindo. Um seguidor do autor recebe os dois: `nova_publicacao_feed` alimenta o chip da Seguindo e `publicacao_criada` alimenta o chip da Para você.
 
@@ -144,7 +144,7 @@ Os eventos de publicação (`publicacao_criada`, `publicacao_removida`, `publica
     "timestamp": "ISO-8601"
   }
   ```
-- **Consumidor no app:** `FeedProvider` global, para a aba Para você. Mesmo comportamento da Seguindo com `nova_publicacao_feed`: guarda o id em pendentes da Para você (ignora `autorId == usuário logado`, porque a tela de nova publicação já chamou `adicionarPublicacao`, e ignora ids já na lista); com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo, aplica direto (página 1 da Para você + prepend do que ainda não está na lista).
+- **Consumidor no app:** `FeedProvider` global, para a aba Para você. Mesmo comportamento da Seguindo com `nova_publicacao_feed`: guarda o id em pendentes da Para você (ignora `autorId == usuário logado`, porque a tela de nova publicação já chamou `adicionarPublicacao`, e ignora ids já na lista); com a lista a mais de 100px do topo, mostra o chip "X novas publicações"; no topo, aplica direto (página 1 da Para você + prepend do que ainda não está na lista). Uma resposta que chega depois de uma troca de conta é descartada. Os pendentes das duas abas são separados, e zeram nos mesmos momentos da Seguindo: pull-to-refresh, carregamento inicial da aba, logout/login e reconexão do socket.
 - **Introduzido em:** sub-issue 10.5.2 (#259); consumo em 10.5.5 (#262)
 
 ### `publicacao_removida`
