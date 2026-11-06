@@ -105,7 +105,64 @@ router.delete('/:id', authMiddleware, deletar);
  *                 example: ["tucunaré", "família"]
  *     responses:
  *       201:
- *         description: Publicação criada
+ *         description: Publicação criada, no mesmo formato do GET /publicacoes (com os dados do autor).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     autorId:
+ *                       type: string
+ *                     autorNome:
+ *                       type: string
+ *                       example: Ana Pescadora
+ *                     autorUsername:
+ *                       type: string
+ *                       nullable: true
+ *                       example: ana_pesca
+ *                     autorFoto:
+ *                       type: string
+ *                       nullable: true
+ *                       example: https://res.cloudinary.com/...
+ *                     pontoId:
+ *                       type: string
+ *                       nullable: true
+ *                     descricao:
+ *                       type: string
+ *                       nullable: true
+ *                     imagemUrl:
+ *                       type: string
+ *                       nullable: true
+ *                     localTexto:
+ *                       type: string
+ *                       nullable: true
+ *                     avaliacaoNota:
+ *                       type: number
+ *                       nullable: true
+ *                     tags:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     curtidasCount:
+ *                       type: integer
+ *                       example: 0
+ *                     comentariosCount:
+ *                       type: integer
+ *                       example: 0
+ *                     jaCurtiu:
+ *                       type: boolean
+ *                       example: false
+ *                     criadoEm:
+ *                       type: string
+ *                       format: date-time
+ *                     atualizadoEm:
+ *                       type: string
+ *                       format: date-time
  *       400:
  *         description: Corpo contém imagem em base64 (BASE64_NAO_PERMITIDO). Use POST /publicacoes/imagens (multipart/form-data).
  *       413:

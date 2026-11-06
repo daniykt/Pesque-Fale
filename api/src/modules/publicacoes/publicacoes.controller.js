@@ -103,9 +103,14 @@ async function criar(req, res) {
   let publicacao;
   try {
     const result = await pool.query(
-      `INSERT INTO publicacoes (autor_id, ponto_id, descricao, imagem_url, local_texto, avaliacao_nota, tags)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
+      `WITH nova AS (
+         INSERT INTO publicacoes (autor_id, ponto_id, descricao, imagem_url, local_texto, avaliacao_nota, tags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *
+       )
+       SELECT nova.*, u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto
+       FROM nova
+       JOIN usuarios u ON u.id = nova.autor_id`,
       [autorId, pontoId ?? null, descricao ?? null, imagemUrl ?? null, localTexto ?? null, avaliacaoNota ?? null, tags ?? []]
     );
     publicacao = result.rows[0];
