@@ -41,6 +41,9 @@ class FeedProvider extends ChangeNotifier {
   }) : _usuarioId = authProvider.usuario?.id {
     store.addListener(_onStoreMudou);
     realtime.subscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.subscribe('publicacao_removida', _onPublicacaoRemovida);
+    realtime.subscribe('publicacao_curtidas', _onPublicacaoCurtidas);
+    realtime.subscribe('publicacao_comentarios', _onPublicacaoComentarios);
     realtime.onReconnect(_onReconnect);
   }
 
@@ -310,6 +313,41 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onPublicacaoRemovida(dynamic payload) {
+    if (payload is! Map) return;
+    final id = payload['publicacaoId'];
+    if (id is! String || payload['autorId'] is! String) return;
+    store.remover(id);
+  }
+
+  void _onPublicacaoCurtidas(dynamic payload) {
+    final evento = _contadorDeOutro(payload, 'curtidasCount');
+    if (evento == null) return;
+    store.atualizarCurtidasCount(evento.publicacaoId, evento.total);
+  }
+
+  void _onPublicacaoComentarios(dynamic payload) {
+    final evento = _contadorDeOutro(payload, 'comentariosCount');
+    if (evento == null) return;
+    store.atualizarComentarios(evento.publicacaoId, evento.total);
+  }
+
+  ({String publicacaoId, int total})? _contadorDeOutro(
+    dynamic payload,
+    String campoTotal,
+  ) {
+    if (payload is! Map) return null;
+    final id = payload['publicacaoId'];
+    final total = payload[campoTotal];
+    final porId = payload['porId'];
+    if (id is! String || total is! int || total < 0 || porId is! String) {
+      return null;
+    }
+    if (porId == authProvider.usuario?.id) return null;
+    if (store.porId(id) == null) return null;
+    return (publicacaoId: id, total: total);
+  }
+
   void _onNovaPublicacaoFeed(dynamic payload) {
     if (payload is! Map) return;
     final id = payload['publicacaoId'];
@@ -413,6 +451,9 @@ class FeedProvider extends ChangeNotifier {
   void dispose() {
     store.removeListener(_onStoreMudou);
     realtime.unsubscribe('nova_publicacao_feed', _onNovaPublicacaoFeed);
+    realtime.unsubscribe('publicacao_removida', _onPublicacaoRemovida);
+    realtime.unsubscribe('publicacao_curtidas', _onPublicacaoCurtidas);
+    realtime.unsubscribe('publicacao_comentarios', _onPublicacaoComentarios);
     realtime.removerOnReconnect(_onReconnect);
     super.dispose();
   }

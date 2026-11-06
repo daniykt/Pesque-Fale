@@ -63,6 +63,13 @@ class PublicacoesStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  void atualizarCurtidasCount(String id, int total) {
+    final atual = _porId[id];
+    if (atual == null || atual.curtidasCount == total) return;
+    _porId[id] = atual.copyWith(curtidasCount: total);
+    notifyListeners();
+  }
+
   void atualizarComentarios(String id, int total) {
     final atual = _porId[id];
     if (atual == null || atual.comentariosCount == total) return;

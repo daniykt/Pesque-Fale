@@ -138,6 +138,35 @@ void main() {
     });
   });
 
+  group('atualizarCurtidasCount', () {
+    test('muda só o contador e mantém o jaCurtiu', () {
+      store.upsert(_pub('1', curtidas: 3, jaCurtiu: true));
+      notificacoes = 0;
+
+      store.atualizarCurtidasCount('1', 7);
+
+      expect(store.porId('1')!.curtidasCount, 7);
+      expect(store.porId('1')!.jaCurtiu, isTrue);
+      expect(notificacoes, 1);
+    });
+
+    test('não notifica quando o total é o mesmo', () {
+      store.upsert(_pub('1', curtidas: 3));
+      notificacoes = 0;
+
+      store.atualizarCurtidasCount('1', 3);
+
+      expect(notificacoes, 0);
+    });
+
+    test('ignora publicação fora do store', () {
+      store.atualizarCurtidasCount('desconhecida', 5);
+
+      expect(store.porId('desconhecida'), isNull);
+      expect(notificacoes, 0);
+    });
+  });
+
   group('atualizarComentarios', () {
     test('troca pelo total recebido', () {
       store.upsert(_pub('1', comentarios: 2));

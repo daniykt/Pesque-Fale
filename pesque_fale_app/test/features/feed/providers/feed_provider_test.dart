@@ -944,4 +944,203 @@ void main() {
       expect(store.porId('p1'), isNotNull);
     });
   });
+
+  group('FeedProvider - eventos realtime de publicações', () {
+    late FakeRealtimeManager realtime;
+    late PublicacoesStore store;
+    late AuthProvider authProvider;
+    late FeedProvider provider;
+
+    setUp(() async {
+      realtime = FakeRealtimeManager(conectado: true);
+      store = PublicacoesStore();
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      provider = _criarProvider(
+        publicacoesRepo: _FakePublicacoesRepository(
+          todas: [
+            _publicacao(
+              'p1',
+              curtidasCount: 3,
+              jaCurtiu: true,
+              comentariosCount: 2,
+            ),
+            _publicacao('p2'),
+          ],
+          seguindoIds: ['p1'],
+        ),
+        authProvider: authProvider,
+        realtime: realtime,
+        store: store,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+      await provider.trocarAba(AbaFeed.seguindo);
+    });
+
+    test('publicacao_removida tira a publicação do store e das duas abas', () {
+      realtime.emitir('publicacao_removida', {
+        'publicacaoId': 'p1',
+        'autorId': 'autor-p1',
+      });
+
+      expect(store.foiRemovida('p1'), isTrue);
+      expect(provider.paraVoce.map((p) => p.id), ['p2']);
+      expect(provider.seguindo, isEmpty);
+    });
+
+    test('publicacao_curtidas de outra pessoa atualiza o contador no Feed', () {
+      var notificacoes = 0;
+      provider.addListener(() => notificacoes++);
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 9,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(notificacoes, greaterThan(0));
+      expect(provider.paraVoce.first.curtidasCount, 9);
+      expect(provider.seguindo.first.curtidasCount, 9);
+    });
+
+    test('curtida de outra pessoa não muda o meu jaCurtiu', () {
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 4,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(store.porId('p1')!.jaCurtiu, isTrue);
+      expect(store.porId('p1')!.curtidasCount, 4);
+    });
+
+    test(
+      'publicacao_comentarios de outra pessoa atualiza o contador no Feed',
+      () {
+        realtime.emitir('publicacao_comentarios', {
+          'publicacaoId': 'p1',
+          'comentariosCount': 6,
+          'porId': 'outra-pessoa',
+        });
+
+        expect(provider.paraVoce.first.comentariosCount, 6);
+        expect(provider.seguindo.first.comentariosCount, 6);
+      },
+    );
+
+    test('eco da própria curtida e do próprio comentário é ignorado', () {
+      final meuId = authProvider.usuario!.id;
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'p1',
+        'curtidasCount': 99,
+        'porId': meuId,
+      });
+      realtime.emitir('publicacao_comentarios', {
+        'publicacaoId': 'p1',
+        'comentariosCount': 99,
+        'porId': meuId,
+      });
+
+      expect(store.porId('p1')!.curtidasCount, 3);
+      expect(store.porId('p1')!.comentariosCount, 2);
+    });
+
+    test(
+      'o eco usa o usuário logado na hora do evento, não o da assinatura',
+      () async {
+        await authProvider.signOut();
+        provider.reagirAuth(authProvider);
+        await pumpEventQueue();
+        store.upsert(_publicacao('p1', curtidasCount: 3));
+
+        realtime.emitir('publicacao_curtidas', {
+          'publicacaoId': 'p1',
+          'curtidasCount': 5,
+          'porId': 'u1',
+        });
+
+        expect(store.porId('p1')!.curtidasCount, 5);
+      },
+    );
+
+    test('contador de publicação fora do store é ignorado', () {
+      var notificacoes = 0;
+      store.addListener(() => notificacoes++);
+
+      realtime.emitir('publicacao_curtidas', {
+        'publicacaoId': 'desconhecida',
+        'curtidasCount': 5,
+        'porId': 'outra-pessoa',
+      });
+      realtime.emitir('publicacao_comentarios', {
+        'publicacaoId': 'desconhecida',
+        'comentariosCount': 5,
+        'porId': 'outra-pessoa',
+      });
+
+      expect(store.porId('desconhecida'), isNull);
+      expect(notificacoes, 0);
+    });
+
+    test('payload inválido é ignorado', () {
+      final invalidos = <String, List<dynamic>>{
+        'publicacao_removida': [
+          null,
+          'p1',
+          <String, dynamic>{},
+          {'publicacaoId': 1, 'autorId': 'autor-p1'},
+          {'publicacaoId': 'p1'},
+        ],
+        'publicacao_curtidas': [
+          null,
+          {'publicacaoId': 'p1', 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': '9', 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': -1, 'porId': 'outra-pessoa'},
+          {'publicacaoId': 'p1', 'curtidasCount': 9},
+          {'curtidasCount': 9, 'porId': 'outra-pessoa'},
+        ],
+        'publicacao_comentarios': [
+          null,
+          {
+            'publicacaoId': 'p1',
+            'comentariosCount': 9.5,
+            'porId': 'outra-pessoa',
+          },
+          {'publicacaoId': 'p1', 'comentariosCount': 9, 'porId': 7},
+        ],
+      };
+
+      for (final MapEntry(key: evento, value: payloads) in invalidos.entries) {
+        for (final payload in payloads) {
+          realtime.emitir(evento, payload);
+        }
+      }
+
+      final p1 = store.porId('p1')!;
+      expect(store.foiRemovida('p1'), isFalse);
+      expect(p1.curtidasCount, 3);
+      expect(p1.comentariosCount, 2);
+    });
+
+    test('dispose desfaz as assinaturas dos eventos de publicação', () {
+      for (final evento in [
+        'publicacao_removida',
+        'publicacao_curtidas',
+        'publicacao_comentarios',
+      ]) {
+        expect(realtime.assinantes[evento], hasLength(1), reason: evento);
+      }
+
+      provider.dispose();
+
+      for (final evento in [
+        'publicacao_removida',
+        'publicacao_curtidas',
+        'publicacao_comentarios',
+      ]) {
+        expect(realtime.assinantes[evento], isEmpty, reason: evento);
+      }
+    });
+  });
 }
