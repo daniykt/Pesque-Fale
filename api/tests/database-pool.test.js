@@ -31,3 +31,21 @@ describe('pool do postgres — erro em conexão ociosa', () => {
     );
   });
 });
+
+describe('pool do postgres — configuração', () => {
+  it('limita o pool a 8 conexões', () => {
+    expect(pool.options.max).toBe(8);
+  });
+
+  it('mantém conexões ociosas por 5 minutos', () => {
+    expect(pool.options.idleTimeoutMillis).toBe(300000);
+  });
+
+  it('desiste de conectar após 10 segundos', () => {
+    expect(pool.options.connectionTimeoutMillis).toBe(10000);
+  });
+
+  it('ativa keepAlive nas conexões', () => {
+    expect(pool.options.keepAlive).toBe(true);
+  });
+});
