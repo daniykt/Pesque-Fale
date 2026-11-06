@@ -26,14 +26,11 @@ function linhaUsuario({ onboardingConcluido = false, nome = 'Fulano' } = {}) {
 }
 
 /**
- * updateMe roda o UPDATE e depois duas contagens de seguidores/seguindo.
- * Essa ordem precisa ser respeitada nos mocks.
+ * updateMe roda só o UPDATE: os contadores de seguidores/seguindo vêm no
+ * próprio RETURNING.
  */
 function mockUpdateRetornando(linha) {
-  pool.query
-    .mockResolvedValueOnce({ rows: [linha] })
-    .mockResolvedValueOnce({ rows: [{ count: '0' }] })
-    .mockResolvedValueOnce({ rows: [{ count: '0' }] });
+  pool.query.mockResolvedValueOnce({ rows: [{ ...linha, seguidores: '0', seguindo: '0' }] });
 }
 
 function chamadaUpdate() {

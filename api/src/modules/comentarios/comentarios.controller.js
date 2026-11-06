@@ -46,36 +46,33 @@ async function criar(req, res) {
   }
 
   try {
-    const inserido = await pool.query(
-      'INSERT INTO comentarios (publicacao_id, autor_id, texto) VALUES ($1, $2, $3) RETURNING id',
+    // Uma ida ao banco: insere e já devolve o comentário com os dados do autor
+    // e o autor da publicação (para a notificação). Publicação inexistente
+    // dispara a FK (23503) aqui dentro.
+    const result = await pool.query(
+      `WITH ins AS (
+         INSERT INTO comentarios (publicacao_id, autor_id, texto) VALUES ($1, $2, $3)
+         RETURNING id, publicacao_id, autor_id, texto, criado_em
+       )
+       SELECT ins.*, u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto,
+              p.autor_id AS publicacao_autor_id
+       FROM ins
+       JOIN usuarios u ON u.id = ins.autor_id
+       JOIN publicacoes p ON p.id = ins.publicacao_id`,
       [publicacaoId, autorId, texto]
     );
 
-    const result = await pool.query(
-      `SELECT c.id, c.publicacao_id, c.autor_id, c.texto, c.criado_em,
-              u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto
-       FROM comentarios c
-       JOIN usuarios u ON u.id = c.autor_id
-       WHERE c.id = $1`,
-      [inserido.rows[0].id]
-    );
+    const comentario = result.rows[0];
 
-    const publicacao = await pool.query(
-      'SELECT autor_id FROM publicacoes WHERE id = $1',
-      [publicacaoId]
-    );
+    await criarNotificacao({
+      para: comentario.publicacao_autor_id,
+      deId: autorId,
+      tipo: 'comentario',
+      texto: texto.slice(0, 100),
+      postId: publicacaoId,
+    });
 
-    if (publicacao.rows.length > 0) {
-      await criarNotificacao({
-        para: publicacao.rows[0].autor_id,
-        deId: autorId,
-        tipo: 'comentario',
-        texto: texto.slice(0, 100),
-        postId: publicacaoId,
-      });
-    }
-
-    return res.status(201).json({ data: _format(result.rows[0]) });
+    return res.status(201).json({ data: _format(comentario) });
   } catch (err) {
     if (err.code === '23503') {
       return res.status(404).json({ error: 'PUBLICACAO_NAO_ENCONTRADA', message: 'Publicação não encontrada.' });

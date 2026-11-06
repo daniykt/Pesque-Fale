@@ -10,8 +10,8 @@ const { gerarToken } = require('./helpers/token');
 
 const token = gerarToken('user-1');
 
-// Posição de de_volta nos parâmetros do INSERT de notificacoes ($9).
-const IDX_DE_VOLTA = 8;
+// Posição de de_volta nos parâmetros da CTE de notificacoes ($7).
+const IDX_DE_VOLTA = 6;
 
 function insertsNotificacao() {
   return pool.query.mock.calls.filter(([sql]) => sql.includes('INSERT INTO notificacoes'));
@@ -25,8 +25,7 @@ describe('POST /v1/usuarios/:id/seguir', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'user-2' }] }) // alvo existe
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] }) // INSERT pivot
       .mockResolvedValueOnce({ rows: [] }) // SELECT recíproco
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] }) // remetente
-      .mockResolvedValueOnce({ rows: [] }) // INSERT notificacoes
+      .mockResolvedValueOnce({ rows: [] }) // CTE notificacoes (INSERT + SELECT)
       .mockResolvedValueOnce({ rows: [{ count: '1' }] }); // COUNT seguidores (realtime)
 
     const res = await request(app)
@@ -45,8 +44,7 @@ describe('POST /v1/usuarios/:id/seguir', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'user-2' }] })
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] })
       .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] }) // CTE notificacoes
       .mockResolvedValueOnce({ rows: [{ count: '1' }] });
 
     const res = await request(app)

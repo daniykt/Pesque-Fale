@@ -16,7 +16,7 @@ const { gerarToken } = require('./helpers/token');
 
 const token = gerarToken('user-a');
 
-// Linha completa como o SELECT com JOINs devolve (mesmas colunas do GET).
+// Linha completa como a CTE do helper devolve (mesmas colunas do GET).
 function linhaNotificacao(overrides = {}) {
   return {
     id: 'notif-1',
@@ -38,26 +38,21 @@ function linhaNotificacao(overrides = {}) {
 }
 
 // Roteia o pool.query pelo SQL, sem depender da ordem exata das chamadas.
-// `linha` é o que o SELECT pós-insert devolve; `falharPayload` faz essa
-// query rejeitar pra simular erro depois do INSERT.
-function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), falharPayload = false } = {}) {
+// `linha` é o que a CTE do helper (INSERT + SELECT) devolve; `falharNotificacao`
+// faz essa query rejeitar.
+function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), falharNotificacao = false } = {}) {
   pool.query.mockImplementation(async (sql) => {
-    if (sql.includes('SELECT nome, username FROM usuarios')) {
-      return { rows: [{ nome: 'Fulano', username: 'fulano' }] };
-    }
-    if (sql.includes('INSERT INTO notificacoes')) return { rows: [{ id: linha.id }] };
-    if (sql.includes('FROM notificacoes n') && sql.includes('WHERE n.id = $2')) {
-      if (falharPayload) throw new Error('conexão caiu');
+    if (sql.includes('INSERT INTO notificacoes')) {
+      if (falharNotificacao) throw new Error('conexão caiu');
       return { rows: [linha] };
     }
-    if (sql.includes('SELECT autor_id FROM publicacoes')) {
-      return { rows: [{ autor_id: autorPublicacao }] };
+    if (sql.includes('INSERT INTO curtidas')) {
+      return { rows: [{ autor_id: autorPublicacao, nova: true }] };
     }
     if (sql.includes('SELECT id FROM usuarios')) return { rows: [{ id: 'user-b' }] };
     if (sql.includes('INSERT INTO usuario_seguidores')) return { rows: [{ seguidor_id: 'user-a' }] };
     if (sql.includes('SELECT COUNT(*) FROM usuario_seguidores')) return { rows: [{ count: '1' }] };
-    if (sql.includes('INSERT INTO comentarios')) return { rows: [{ id: 'com-1' }] };
-    if (sql.includes('FROM comentarios c')) {
+    if (sql.includes('INSERT INTO comentarios')) {
       return {
         rows: [{
           id: 'com-1',
@@ -68,6 +63,7 @@ function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), fal
           autor_nome: 'Fulano',
           autor_username: 'fulano',
           autor_foto: null,
+          publicacao_autor_id: autorPublicacao,
         }],
       };
     }
@@ -146,8 +142,8 @@ describe('nova_notificacao via criarNotificacao', () => {
     expect(emitToUser).not.toHaveBeenCalled();
   });
 
-  it('falha na query do payload não quebra o caller e a notificação segue inserida', async () => {
-    mockBanco({ falharPayload: true });
+  it('falha na query da notificação não quebra o caller nem emite', async () => {
+    mockBanco({ falharNotificacao: true });
     const erro = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const res = await request(app)
@@ -158,15 +154,12 @@ describe('nova_notificacao via criarNotificacao', () => {
     expect(res.body).toEqual({ data: { curtido: true } });
     expect(insertsNotificacao()).toHaveLength(1);
     expect(emitToUser).not.toHaveBeenCalled();
-    expect(erro).toHaveBeenCalledWith(
-      '[notificacoes] erro pós-insert, notificação já salva:',
-      expect.any(Error)
-    );
+    expect(erro).toHaveBeenCalledWith('Erro ao criar notificação:', expect.any(Error));
 
     erro.mockRestore();
   });
 
-  it('INSERT sem id retornado não emite', async () => {
+  it('remetente inexistente (CTE sem linha) não emite', async () => {
     mockBanco();
     const base = pool.query.getMockImplementation();
     pool.query.mockImplementation(async (sql, params) => {
@@ -176,6 +169,27 @@ describe('nova_notificacao via criarNotificacao', () => {
 
     await criarNotificacao({ para: 'user-b', deId: 'user-a', tipo: 'curtida', postId: 'pub-1' });
 
+    expect(emitToUser).not.toHaveBeenCalled();
+  });
+
+  it('cria a notificação com uma ida ao banco e os parâmetros na ordem da CTE', async () => {
+    mockBanco();
+
+    await criarNotificacao({
+      para: 'user-b', deId: 'user-a', tipo: 'comentario', texto: 'Belo peixe!', postId: 'pub-1',
+    });
+
+    expect(pool.query.mock.calls.length).toBe(1);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toContain('INSERT INTO notificacoes');
+    expect(params).toEqual(['user-b', 'user-a', 'comentario', 'Belo peixe!', 'pub-1', null, false]);
+    expect(emitToUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('para === deId não consulta o banco', async () => {
+    await criarNotificacao({ para: 'user-a', deId: 'user-a', tipo: 'curtida', postId: 'pub-1' });
+
+    expect(pool.query).not.toHaveBeenCalled();
     expect(emitToUser).not.toHaveBeenCalled();
   });
 

@@ -101,10 +101,8 @@ describe('Segurança — serializer não expõe campos sensíveis', () => {
   });
 
 it('PATCH /usuarios/me não expõe senha_hash nem firebase_uid', async () => {
-  pool.query
-    .mockResolvedValueOnce({ rows: [usuarioMock] })
-    .mockResolvedValueOnce({ rows: [{ count: '0' }] })
-    .mockResolvedValueOnce({ rows: [{ count: '0' }] });
+  // UPDATE com os contadores no RETURNING (1 ida ao banco).
+  pool.query.mockResolvedValueOnce({ rows: [{ ...usuarioMock, seguidores: '0', seguindo: '0' }] });
 
   const token = gerarToken('user-1');
   const res = await request(app)

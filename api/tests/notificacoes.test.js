@@ -130,8 +130,7 @@ describe('Gatilhos automáticos de notificação', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'user-2' }] })
       .mockResolvedValueOnce({ rows: [{ seguidor_id: 'user-1' }] })
       .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/usuarios/user-2/seguir')
@@ -147,10 +146,8 @@ describe('Gatilhos automáticos de notificação', () => {
 
   it('curtir dispara notificação tipo curtida', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2', nova: true }] }) // CTE curtida
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/publicacoes/pub-1/curtir')
@@ -166,7 +163,6 @@ describe('Gatilhos automáticos de notificação', () => {
 
   it('comentar dispara notificação tipo comentario', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [{ id: 'com-1' }] })
       .mockResolvedValueOnce({
         rows: [{
           id: 'com-1',
@@ -177,11 +173,10 @@ describe('Gatilhos automáticos de notificação', () => {
           autor_nome: 'Fulano',
           autor_username: 'fulano',
           autor_foto: null,
+          publicacao_autor_id: 'user-2',
         }],
-      })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
-      .mockResolvedValueOnce({ rows: [{ nome: 'Fulano', username: 'fulano' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      }) // CTE comentário
+      .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)
       .post('/v1/publicacoes/pub-1/comentarios')

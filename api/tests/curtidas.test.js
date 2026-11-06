@@ -5,6 +5,10 @@ const pool = require('../src/config/database');
 const app = require('../src/app');
 const { gerarToken } = require('./helpers/token');
 
+function insertsNotificacao() {
+  return pool.query.mock.calls.filter(([sql]) => sql.includes('INSERT INTO notificacoes'));
+}
+
 describe('POST/DELETE /v1/publicacoes/:id/curtir', () => {
   beforeEach(() => {
     pool.query.mockReset();
@@ -12,12 +16,9 @@ describe('POST/DELETE /v1/publicacoes/:id/curtir', () => {
 
   it('é idempotente: chamar POST duas vezes seguidas não gera erro nem duplica', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user' }] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user' }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user', nova: true }] }) // 1º POST: CTE curtida
+      .mockResolvedValueOnce({ rows: [] }) // 1º POST: CTE notificacoes
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user', nova: false }] }); // 2º POST: já curtida
 
     const token = gerarToken('user-1');
 
@@ -32,6 +33,40 @@ describe('POST/DELETE /v1/publicacoes/:id/curtir', () => {
     expect(r1.body).toEqual({ data: { curtido: true } });
     expect(r2.status).toBe(201);
     expect(r2.body).toEqual({ data: { curtido: true } });
+    expect(insertsNotificacao()).toHaveLength(1); // só a 1ª curtida notifica
+  });
+
+  it('curtida nova notifica o autor com 2 idas ao banco', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user', nova: true }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app)
+      .post('/v1/publicacoes/pub-1/curtir')
+      .set('Authorization', `Bearer ${gerarToken('user-1')}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ data: { curtido: true } });
+    expect(pool.query.mock.calls.length).toBe(2);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toContain('INSERT INTO curtidas');
+    expect(params).toEqual(['user-1', 'pub-1']);
+    const notificacoes = insertsNotificacao();
+    expect(notificacoes).toHaveLength(1);
+    expect(notificacoes[0][1].slice(0, 3)).toEqual(['outro-user', 'user-1', 'curtida']);
+  });
+
+  it('curtir de novo uma publicação já curtida não gera notificação repetida', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [{ autor_id: 'outro-user', nova: false }] });
+
+    const res = await request(app)
+      .post('/v1/publicacoes/pub-1/curtir')
+      .set('Authorization', `Bearer ${gerarToken('user-1')}`);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ data: { curtido: true } });
+    expect(insertsNotificacao()).toHaveLength(0);
+    expect(pool.query.mock.calls.length).toBe(1);
   });
 
   it('DELETE retorna curtido: false', async () => {
@@ -68,5 +103,8 @@ describe('POST/DELETE /v1/publicacoes/:id/curtir', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('PUBLICACAO_NAO_ENCONTRADA');
+    expect(pool.query.mock.calls.length).toBe(1);
+    expect(pool.query.mock.calls[0][0]).toContain('INSERT INTO curtidas');
+    expect(insertsNotificacao()).toHaveLength(0);
   });
 });
