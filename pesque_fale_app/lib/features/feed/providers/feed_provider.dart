@@ -397,6 +397,10 @@ class FeedProvider extends ChangeNotifier {
     final pendentes = _pendentes[aba];
     if (pendentes == null || pendentes.isEmpty) return;
     pendentes.clear();
+    await _mesclarPaginaUm(aba);
+  }
+
+  Future<void> _mesclarPaginaUm(AbaFeed aba) async {
     final sessao = _sessao;
     try {
       final result = await publicacoesRepo.listar(
@@ -415,7 +419,11 @@ class FeedProvider extends ChangeNotifier {
       _invalidarCache();
       // A paginação continua de onde estava; o carregarMais dedupa o que
       // o prepend empurrou pra próxima página.
-      _atualizarEstado(aba, ids.isEmpty ? StatusAba.vazio : StatusAba.sucesso);
+      if (estadoDe(aba).status == StatusAba.vazio && ids.isNotEmpty) {
+        _atualizarEstado(aba, StatusAba.sucesso);
+      } else {
+        notifyListeners();
+      }
     } catch (_) {
       // Silencia: o pull-to-refresh continua disponível pra reconciliar.
       notifyListeners();
@@ -423,13 +431,25 @@ class FeedProvider extends ChangeNotifier {
   }
 
   void _onReconnect() {
-    // Eventos podem ter se perdido na queda; o contador deixa de ser
-    // confiável. O próximo pull-to-refresh (ou troca de aba) reconcilia.
-    if (_pendentes.values.every((p) => p.isEmpty)) return;
-    for (final p in _pendentes.values) {
-      p.clear();
+    // Eventos podem ter se perdido na queda: o contador de pendentes deixa de
+    // ser confiável e a aba ativa é reconciliada com a página 1.
+    if (_pendentes.values.any((p) => p.isNotEmpty)) {
+      for (final p in _pendentes.values) {
+        p.clear();
+      }
+      notifyListeners();
     }
-    notifyListeners();
+    final aba = _abaAtiva;
+    if (aba != AbaFeed.paraVoce && aba != AbaFeed.seguindo) return;
+    if (aba == AbaFeed.seguindo && authProvider.usuario == null) return;
+    if (!const {
+      StatusAba.sucesso,
+      StatusAba.carregandoMais,
+      StatusAba.vazio,
+    }.contains(estadoDe(aba).status)) {
+      return;
+    }
+    _mesclarPaginaUm(aba);
   }
 
   void _onStoreMudou() {

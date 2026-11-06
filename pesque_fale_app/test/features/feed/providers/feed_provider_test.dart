@@ -1319,4 +1319,158 @@ void main() {
       expect(realtime.assinantes['publicacao_criada'], isEmpty);
     });
   });
+
+  group('FeedProvider - reconexão do realtime', () {
+    late List<Publicacao> todas;
+    late List<String> seguindoIds;
+    late _FakePublicacoesRepository publicacoesRepo;
+    late AuthProvider authProvider;
+    late FakeRealtimeManager realtime;
+    late PublicacoesStore store;
+    late FeedProvider provider;
+
+    setUp(() async {
+      todas = List.generate(25, (i) => _publicacao('p$i'));
+      seguindoIds = todas.map((p) => p.id).toList();
+      publicacoesRepo = _FakePublicacoesRepository(
+        todas: todas,
+        seguindoIds: seguindoIds,
+      );
+      authProvider = AuthProvider(repository: _FakeAuthRepository());
+      await authProvider.login(email: 'ana@teste.com', senha: '123456');
+      realtime = FakeRealtimeManager();
+      store = PublicacoesStore();
+      provider = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+        store: store,
+      );
+      await provider.trocarAba(AbaFeed.paraVoce);
+      await provider.carregarMais();
+    });
+
+    test(
+      'Para você: mescla a página 1 sem perder o que já foi carregado',
+      () async {
+        expect(provider.paraVoce, hasLength(25));
+        todas.insert(0, _publicacao('nova'));
+        todas[1] = _publicacao('p0', curtidasCount: 9, comentariosCount: 4);
+        final chamadasAntes = publicacoesRepo.chamadas;
+
+        realtime.simularReconexao();
+        await pumpEventQueue();
+
+        expect(publicacoesRepo.chamadas, chamadasAntes + 1);
+        final ids = provider.paraVoce.map((p) => p.id).toList();
+        expect(ids.first, 'nova');
+        expect(ids, hasLength(26));
+        expect(ids.toSet(), hasLength(26));
+        expect(store.porId('p0')!.curtidasCount, 9);
+        expect(store.porId('p0')!.comentariosCount, 4);
+        expect(provider.estadoDe(AbaFeed.paraVoce).status, StatusAba.sucesso);
+      },
+    );
+
+    test('Para você: a paginação continua de onde estava', () async {
+      todas.insert(0, _publicacao('nova'));
+      realtime.simularReconexao();
+      await pumpEventQueue();
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      await provider.carregarMais();
+
+      expect(
+        publicacoesRepo.chamadas,
+        chamadasAntes,
+        reason: 'as 25 já foram carregadas; a mescla não reabre a paginação',
+      );
+    });
+
+    test('Seguindo: também mescla a página 1', () async {
+      await provider.trocarAba(AbaFeed.seguindo);
+      todas.insert(0, _publicacao('nova-seg'));
+      seguindoIds.add('nova-seg');
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(provider.seguindo.first.id, 'nova-seg');
+    });
+
+    test('outra aba ativa: não busca nada', () async {
+      await provider.trocarAba(AbaFeed.eventos);
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('aba ativa ainda não carregada: não busca nada', () async {
+      final outro = _criarProvider(
+        publicacoesRepo: publicacoesRepo,
+        authProvider: authProvider,
+        realtime: realtime,
+      );
+      expect(outro.estadoDe(AbaFeed.paraVoce).status, StatusAba.inicial);
+      provider.dispose();
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('Seguindo sem conta: não busca nada', () async {
+      await authProvider.signOut();
+      provider.reagirAuth(authProvider);
+      await pumpEventQueue();
+      await provider.trocarAba(AbaFeed.seguindo);
+      final chamadasAntes = publicacoesRepo.chamadas;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(publicacoesRepo.chamadas, chamadasAntes);
+    });
+
+    test('não apaga o erro do rodapé do carregar mais', () async {
+      todas.addAll(List.generate(20, (i) => _publicacao('extra$i')));
+      await provider.pullRefresh();
+      await provider.carregarMais();
+      publicacoesRepo.falhar = true;
+      await provider.carregarMais();
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isTrue);
+      publicacoesRepo.falhar = false;
+
+      realtime.simularReconexao();
+      await pumpEventQueue();
+
+      expect(provider.estadoDe(AbaFeed.paraVoce).falhouCarregarMais, isTrue);
+    });
+
+    test(
+      'resposta que chega depois de uma troca de conta é descartada',
+      () async {
+        final segurada = Completer<void>();
+        publicacoesRepo.segurar = segurada;
+        realtime.simularReconexao();
+
+        publicacoesRepo.segurar = null;
+        await authProvider.signOut();
+        provider.reagirAuth(authProvider);
+        await pumpEventQueue();
+        final depoisDaRecarga = provider.paraVoce.map((p) => p.id).toList();
+
+        todas.insert(0, _publicacao('da-sessao-antiga'));
+        segurada.complete();
+        await pumpEventQueue();
+
+        expect(provider.paraVoce.map((p) => p.id).toList(), depoisDaRecarga);
+      },
+    );
+  });
 }

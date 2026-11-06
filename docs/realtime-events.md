@@ -199,7 +199,14 @@ Os eventos de publicação (`publicacao_criada`, `publicacao_removida`, `publica
 - **Introduzido em:** sub-issue 10.5.3 (#260); consumo em 10.5.4 (#261)
 
 ### Reconexão (eventos da Home)
-Ao reconectar, o servidor não reenvia os eventos perdidos durante a queda. Por isso, quando o `RealtimeManager` volta a `conectado`, o `FeedProvider` recarrega a página 1 da aba ativa (e zera os pendentes, como já faz hoje com a Seguindo). As outras abas recarregam quando forem abertas. Logout e login não podem deixar listeners duplicados: o `FeedProvider` é global e assina os eventos uma vez só. Introduzido em 10.5.6 (#263).
+Ao reconectar, o servidor não reenvia os eventos perdidos durante a queda. Por isso, no `onReconnect` do `RealtimeManager` (que só dispara quando o socket volta depois de uma queda, não na primeira conexão da sessão), o `FeedProvider`:
+- zera os pendentes das duas abas;
+- se a aba ativa é a Para você ou a Seguindo e já está carregada, busca a página 1 e **mescla**: `store.upsertTodos` atualiza o que já está na tela (contadores, por exemplo) e o que é novo entra no topo. A rolagem, a paginação e o estado da aba não mudam (exceto `vazio` → `sucesso` quando chega algo). Uma resposta que chega depois de uma troca de conta é descartada;
+- as outras abas não fazem nada: recarregam quando forem abertas.
+
+**Limite conhecido:** uma publicação excluída durante a queda pode continuar na lista até o próximo pull-to-refresh, porque a mescla só acrescenta e atualiza; ela não sabe o que sumiu do servidor. O mesmo vale para publicações fora da página 1.
+
+Logout e login não deixam listeners duplicados: o `FeedProvider` é global e assina os eventos uma vez só, no construtor; o `RealtimeManager` guarda as assinaturas e as aplica uma vez em cada socket novo. Introduzido em 10.5.6 (#263).
 
 ### `nova_mensagem` (pré-existente)
 - **Room:** `<chatId>`
