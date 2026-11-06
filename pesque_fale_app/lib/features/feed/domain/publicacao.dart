@@ -63,6 +63,9 @@ class Publicacao {
   }
 
   Publicacao copyWith({
+    String? autorNome,
+    String? autorUsername,
+    String? autorFoto,
     String? descricao,
     String? imagemUrl,
     String? localTexto,
@@ -75,9 +78,9 @@ class Publicacao {
     return Publicacao(
       id: id,
       autorId: autorId,
-      autorNome: autorNome,
-      autorUsername: autorUsername,
-      autorFoto: autorFoto,
+      autorNome: autorNome ?? this.autorNome,
+      autorUsername: autorUsername ?? this.autorUsername,
+      autorFoto: autorFoto ?? this.autorFoto,
       pontoId: pontoId,
       descricao: descricao ?? this.descricao,
       imagemUrl: imagemUrl ?? this.imagemUrl,
