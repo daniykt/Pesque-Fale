@@ -86,9 +86,13 @@ router.get('/me', authMiddleware, getMe);
  *       200:
  *         description: Perfil atualizado
  *       400:
- *         description: Validação falhou
+ *         description: >-
+ *           VALIDATION_ERROR: nome curto, username fora do formato (3-20
+ *           caracteres: letras, números, _ ou .) ou nenhum campo para atualizar.
  *       409:
- *         description: Username já em uso
+ *         description: >-
+ *           USERNAME_JA_CADASTRADO: o username pedido já pertence a outro
+ *           usuário.
  */
 router.patch('/me', authMiddleware, updateMe);
 
@@ -164,6 +168,8 @@ router.get('/:id', getPerfil);
  *           Lista paginada de seguidores. Cada item traz souSeguidor = true/false
  *           indicando se o viewer autenticado segue aquele usuário; null quando
  *           não autenticado.
+ *       404:
+ *         description: Usuário não encontrado
  */
 router.get('/:id/seguidores', authOpcional, getSeguidores);
 
@@ -186,6 +192,8 @@ router.get('/:id/seguidores', authOpcional, getSeguidores);
  *           Lista paginada de usuários que o alvo segue. Cada item traz
  *           souSeguidor = true/false indicando se o viewer autenticado segue
  *           aquele usuário; null quando não autenticado.
+ *       404:
+ *         description: Usuário não encontrado
  */
 router.get('/:id/seguindo', authOpcional, getSeguindo);
 
@@ -252,6 +260,8 @@ router.get('/:id/publicacoes', listarPorUsuario);
  *     responses:
  *       204:
  *         description: Deixou de seguir
+ *       404:
+ *         description: Id de usuário inválido
  */
 router.post('/:id/seguir', authMiddleware, seguir);
 router.delete('/:id/seguir', authMiddleware, deixarDeSeguir);

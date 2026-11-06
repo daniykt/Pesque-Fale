@@ -329,6 +329,8 @@ class PerfilApiClient {
         return const FotoMuitoGrandeException();
       case 'FORMATO_INVALIDO':
         return const FormatoInvalidoException();
+      case 'USERNAME_JA_CADASTRADO':
+        return const UsernameJaCadastradoException();
       case 'VALIDATION_ERROR':
         final details = (json['details'] as List<dynamic>?) ?? const [];
         final fieldErrors = <String, String>{};
@@ -336,9 +338,6 @@ class PerfilApiClient {
           final m = d as Map<String, dynamic>;
           fieldErrors[m['campo']?.toString() ?? 'geral'] =
               m['mensagem']?.toString() ?? '';
-        }
-        if (fieldErrors.length == 1 && fieldErrors.containsKey('username')) {
-          return const UsernameJaCadastradoException();
         }
         if (fieldErrors.isNotEmpty) {
           return PerfilValidationException(fieldErrors);
