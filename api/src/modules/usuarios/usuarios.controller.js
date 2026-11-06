@@ -99,18 +99,8 @@ async function updateMe(req, res) {
     details.push({ campo: 'nome', mensagem: 'O nome deve ter pelo menos 2 caracteres.' });
   }
 
-  if (username !== undefined) {
-    if (!USERNAME_REGEX.test(username)) {
-      details.push({ campo: 'username', mensagem: 'Username deve ter 3-20 caracteres: letras, números, _ ou .' });
-    } else {
-      const existe = await pool.query(
-        'SELECT id FROM usuarios WHERE username = $1 AND id != $2',
-        [username, usuarioId]
-      );
-      if (existe.rows.length > 0) {
-        details.push({ campo: 'username', mensagem: 'Este username já está em uso.' });
-      }
-    }
+  if (username !== undefined && !USERNAME_REGEX.test(username)) {
+    details.push({ campo: 'username', mensagem: 'Username deve ter 3-20 caracteres: letras, números, _ ou .' });
   }
 
   if (details.length > 0) {
@@ -118,6 +108,17 @@ async function updateMe(req, res) {
   }
 
   try {
+    // Dentro do try: se o banco falhar aqui, o cliente recebe 500 em vez de ficar sem resposta.
+    if (username !== undefined) {
+      const existe = await pool.query(
+        'SELECT id FROM usuarios WHERE username = $1 AND id != $2',
+        [username, usuarioId]
+      );
+      if (existe.rows.length > 0) {
+        return res.status(409).json({ error: 'USERNAME_JA_CADASTRADO', message: 'Este username já está em uso.' });
+      }
+    }
+
     const fields = [];
     const values = [];
     let i = 1;

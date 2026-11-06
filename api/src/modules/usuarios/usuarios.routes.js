@@ -86,9 +86,13 @@ router.get('/me', authMiddleware, getMe);
  *       200:
  *         description: Perfil atualizado
  *       400:
- *         description: Validação falhou
+ *         description: >-
+ *           VALIDATION_ERROR: nome curto, username fora do formato (3-20
+ *           caracteres: letras, números, _ ou .) ou nenhum campo para atualizar.
  *       409:
- *         description: Username já em uso
+ *         description: >-
+ *           USERNAME_JA_CADASTRADO: o username pedido já pertence a outro
+ *           usuário.
  */
 router.patch('/me', authMiddleware, updateMe);
 
