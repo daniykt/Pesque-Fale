@@ -163,7 +163,6 @@ describe('Gatilhos automáticos de notificação', () => {
 
   it('comentar dispara notificação tipo comentario', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [{ id: 'com-1' }] })
       .mockResolvedValueOnce({
         rows: [{
           id: 'com-1',
@@ -174,9 +173,9 @@ describe('Gatilhos automáticos de notificação', () => {
           autor_nome: 'Fulano',
           autor_username: 'fulano',
           autor_foto: null,
+          publicacao_autor_id: 'user-2',
         }],
-      })
-      .mockResolvedValueOnce({ rows: [{ autor_id: 'user-2' }] })
+      }) // CTE comentário
       .mockResolvedValueOnce({ rows: [] }); // CTE notificacoes
 
     const res = await request(app)

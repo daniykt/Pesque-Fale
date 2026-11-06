@@ -49,14 +49,10 @@ function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), fal
     if (sql.includes('INSERT INTO curtidas')) {
       return { rows: [{ autor_id: autorPublicacao, nova: true }] };
     }
-    if (sql.includes('SELECT autor_id FROM publicacoes')) {
-      return { rows: [{ autor_id: autorPublicacao }] };
-    }
     if (sql.includes('SELECT id FROM usuarios')) return { rows: [{ id: 'user-b' }] };
     if (sql.includes('INSERT INTO usuario_seguidores')) return { rows: [{ seguidor_id: 'user-a' }] };
     if (sql.includes('SELECT COUNT(*) FROM usuario_seguidores')) return { rows: [{ count: '1' }] };
-    if (sql.includes('INSERT INTO comentarios')) return { rows: [{ id: 'com-1' }] };
-    if (sql.includes('FROM comentarios c')) {
+    if (sql.includes('INSERT INTO comentarios')) {
       return {
         rows: [{
           id: 'com-1',
@@ -67,6 +63,7 @@ function mockBanco({ autorPublicacao = 'user-b', linha = linhaNotificacao(), fal
           autor_nome: 'Fulano',
           autor_username: 'fulano',
           autor_foto: null,
+          publicacao_autor_id: autorPublicacao,
         }],
       };
     }
