@@ -33,7 +33,10 @@ describe('GET /v1/usuarios/:id e /v1/usuarios/me — exposição de email', () =
   });
 
   it('perfil público sem token não expõe email', async () => {
-    pool.query.mockResolvedValueOnce({ rows: [linhaUsuario()] });
+    // Sem login, a query devolve sou_seguidor e me_segue NULL.
+    pool.query.mockResolvedValueOnce({
+      rows: [{ ...linhaUsuario(), sou_seguidor: null, me_segue: null }],
+    });
 
     const res = await request(app).get('/v1/usuarios/user-1');
 
@@ -42,15 +45,15 @@ describe('GET /v1/usuarios/:id e /v1/usuarios/me — exposição de email', () =
     expect(res.body.data.username).toBe('fulano');
     expect(res.body.data.souSeguidor).toBeNull();
     expect(res.body.data.meSegue).toBeNull();
+    // Quem vê ($2) é null quando não há token.
+    expect(pool.query.mock.calls[0][1]).toEqual(['user-1', null]);
   });
 
-  it('perfil público com token de outro usuário não expõe email', async () => {
-    // getPerfil: 1 SELECT do perfil + 2 queries de follow em Promise.all
-    // (souSeguidor e meSegue, nessa ordem).
-    pool.query
-      .mockResolvedValueOnce({ rows: [linhaUsuario()] })
-      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
-      .mockResolvedValueOnce({ rows: [] });
+  it('perfil público com token de outro usuário não expõe email e resolve o follow em 1 ida ao banco', async () => {
+    // souSeguidor e meSegue vêm na própria query do perfil.
+    pool.query.mockResolvedValueOnce({
+      rows: [{ ...linhaUsuario(), sou_seguidor: true, me_segue: false }],
+    });
 
     const res = await request(app)
       .get('/v1/usuarios/user-1')
@@ -60,12 +63,18 @@ describe('GET /v1/usuarios/:id e /v1/usuarios/me — exposição de email', () =
     expect(res.body.data).not.toHaveProperty('email');
     expect(res.body.data.souSeguidor).toBe(true);
     expect(res.body.data.meSegue).toBe(false);
-    expect(pool.query).toHaveBeenCalledTimes(3);
+    expect(pool.query.mock.calls.length).toBe(1);
+    const [sql, params] = pool.query.mock.calls[0];
+    expect(sql).toContain('AS sou_seguidor');
+    expect(sql).toContain('AS me_segue');
+    expect(params).toEqual(['user-1', 'user-2']);
   });
 
   it('/me com token inclui o email do próprio usuário', async () => {
-    // Mesmo id do token: não roda as queries de follow.
-    pool.query.mockResolvedValueOnce({ rows: [linhaUsuario()] });
+    // Mesmo id do token: a query devolve sou_seguidor e me_segue NULL.
+    pool.query.mockResolvedValueOnce({
+      rows: [{ ...linhaUsuario(), sou_seguidor: null, me_segue: null }],
+    });
 
     const res = await request(app)
       .get('/v1/usuarios/me')
@@ -74,7 +83,10 @@ describe('GET /v1/usuarios/:id e /v1/usuarios/me — exposição de email', () =
     expect(res.status).toBe(200);
     expect(res.body.data.email).toBe(EMAIL);
     expect(res.body.data.id).toBe('user-1');
+    expect(res.body.data.souSeguidor).toBeNull();
+    expect(res.body.data.meSegue).toBeNull();
     expect(pool.query).toHaveBeenCalledTimes(1);
+    expect(pool.query.mock.calls[0][1]).toEqual(['user-1', 'user-1']);
   });
 
   it('perfil de id inexistente responde 404 USUARIO_NAO_ENCONTRADO', async () => {

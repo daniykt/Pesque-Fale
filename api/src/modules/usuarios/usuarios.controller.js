@@ -20,12 +20,18 @@ async function responderPerfil(req, res, { incluirEmail }) {
   const autenticado = tryGetUsuario(req);
 
   try {
+    // Uma ida ao banco: souSeguidor e meSegue vêm na mesma query, a partir do
+    // id de quem está vendo ($2). Sem login ou vendo o próprio perfil, os dois são null.
     const result = await pool.query(
       `SELECT u.id, u.nome, u.email, u.username, u.foto_perfil, u.banner, u.bio, u.localizacao, u.onboarding_concluido, u.criado_em,
         (SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = u.id) AS seguidores,
-        (SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = u.id) AS seguindo
+        (SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = u.id) AS seguindo,
+        CASE WHEN $2::uuid IS NULL OR $2::uuid = u.id THEN NULL
+             ELSE EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $2::uuid AND seguido_id = u.id) END AS sou_seguidor,
+        CASE WHEN $2::uuid IS NULL OR $2::uuid = u.id THEN NULL
+             ELSE EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = u.id AND seguido_id = $2::uuid) END AS me_segue
        FROM usuarios u WHERE u.id = $1`,
-      [id]
+      [id, autenticado?.id ?? null]
     );
 
     if (result.rows.length === 0) {
@@ -33,24 +39,6 @@ async function responderPerfil(req, res, { incluirEmail }) {
     }
 
     const u = result.rows[0];
-
-    let souSeguidor = null;
-    let meSegue = null;
-
-    if (autenticado && autenticado.id !== id) {
-      const [r1, r2] = await Promise.all([
-        pool.query(
-          'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
-          [autenticado.id, id]
-        ),
-        pool.query(
-          'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
-          [id, autenticado.id]
-        ),
-      ]);
-      souSeguidor = r1.rows.length > 0;
-      meSegue = r2.rows.length > 0;
-    }
 
     return res.json({
       data: {
@@ -65,8 +53,8 @@ async function responderPerfil(req, res, { incluirEmail }) {
         onboardingConcluido: u.onboarding_concluido,
         seguidores: parseInt(u.seguidores),
         seguindo: parseInt(u.seguindo),
-        souSeguidor,
-        meSegue,
+        souSeguidor: u.sou_seguidor ?? null,
+        meSegue: u.me_segue ?? null,
         criadoEm: u.criado_em,
       },
     });
@@ -108,17 +96,6 @@ async function updateMe(req, res) {
   }
 
   try {
-    // Dentro do try: se o banco falhar aqui, o cliente recebe 500 em vez de ficar sem resposta.
-    if (username !== undefined) {
-      const existe = await pool.query(
-        'SELECT id FROM usuarios WHERE username = $1 AND id != $2',
-        [username, usuarioId]
-      );
-      if (existe.rows.length > 0) {
-        return res.status(409).json({ error: 'USERNAME_JA_CADASTRADO', message: 'Este username já está em uso.' });
-      }
-    }
-
     const fields = [];
     const values = [];
     let i = 1;
@@ -140,15 +117,17 @@ async function updateMe(req, res) {
     fields.push(`atualizado_em = NOW()`);
     values.push(usuarioId);
 
+    // Uma ida ao banco: a unicidade do username fica com a constraint
+    // usuarios_username_key (tratada no catch) e os contadores vêm no RETURNING.
     const result = await pool.query(
       `UPDATE usuarios SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, nome, email, username, foto_perfil, banner, bio, localizacao, onboarding_concluido, criado_em`,
+       RETURNING id, nome, email, username, foto_perfil, banner, bio, localizacao, onboarding_concluido, criado_em,
+         (SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = usuarios.id) AS seguidores,
+         (SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = usuarios.id) AS seguindo`,
       values
     );
 
     const u = result.rows[0];
-    const seguidores = await pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1', [usuarioId]);
-    const seguindo = await pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1', [usuarioId]);
 
     return res.json({
       data: {
@@ -161,12 +140,15 @@ async function updateMe(req, res) {
         bio: u.bio,
         localizacao: u.localizacao,
         onboardingConcluido: u.onboarding_concluido,
-        seguidores: parseInt(seguidores.rows[0].count),
-        seguindo: parseInt(seguindo.rows[0].count),
+        seguidores: parseInt(u.seguidores),
+        seguindo: parseInt(u.seguindo),
         criadoEm: u.criado_em,
       },
     });
   } catch (err) {
+    if (err.code === '23505' && err.constraint === 'usuarios_username_key') {
+      return res.status(409).json({ error: 'USERNAME_JA_CADASTRADO', message: 'Este username já está em uso.' });
+    }
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
