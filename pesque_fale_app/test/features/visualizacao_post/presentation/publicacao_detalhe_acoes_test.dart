@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:pesque_fale_app/core/data/paged_result.dart';
+import 'package:pesque_fale_app/core/router/rota_detalhe_publicacao.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
 import 'package:pesque_fale_app/features/feed/data/comentarios_repository.dart';
@@ -13,7 +14,6 @@ import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
 import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
 import 'package:pesque_fale_app/features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
-import 'package:pesque_fale_app/features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
 
 import '../../perfil/support/fakes_perfil_detalhe.dart';
 
@@ -135,24 +135,8 @@ void main() {
               ),
             ),
           ),
-          // Mesma rota do main.dart.
-          onGenerateRoute: (settings) {
-            if (settings.name != '/publicacao/detalhe') return null;
-            final args = settings.arguments;
-            return MaterialPageRoute(
-              settings: settings,
-              builder: (context) =>
-                  ChangeNotifierProvider<PublicacaoDetalheProvider>(
-                    create: (ctx) => PublicacaoDetalheProvider(
-                      publicacoesRepository: ctx.read<PublicacoesRepository>(),
-                      store: ctx.read<PublicacoesStore>(),
-                      publicacaoInicial: args is Publicacao ? args : null,
-                      publicacaoId: args is String ? args : null,
-                    )..carregar(),
-                    child: const PublicacaoDetalhePage(),
-                  ),
-            );
-          },
+          // A mesma rota do main.dart.
+          onGenerateRoute: rotaDetalhePublicacao,
         ),
       ),
     );

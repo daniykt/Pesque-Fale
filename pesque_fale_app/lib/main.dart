@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'core/config/app_config.dart';
 import 'core/realtime/realtime_manager.dart';
 import 'core/router/main_shell.dart';
+import 'core/router/rota_detalhe_publicacao.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/assistente/data/assistente_api_client.dart';
@@ -63,7 +64,6 @@ import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/aba_feed.dart';
 import 'features/feed/domain/evento.dart';
-import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/feed/providers/publicacoes_store.dart';
 import 'features/onboarding/presentation/onboarding_wizard_page.dart';
@@ -99,8 +99,6 @@ import 'features/ponto_detalhe/providers/ponto_detalhe_provider.dart';
 import 'features/sobre/presentation/sobre_page.dart';
 import 'features/tour/domain/tour_status_storage.dart';
 import 'features/tour/providers/tour_provider.dart';
-import 'features/visualizacao_post/presentation/publicacao_detalhe_page.dart';
-import 'features/visualizacao_post/providers/publicacao_detalhe_provider.dart';
 
 void main() {
   final tokenStorage = TokenStorage();
@@ -476,26 +474,8 @@ class PesqueFaleApp extends StatelessWidget {
             ),
           );
         }
-        if (settings.name == '/publicacao/detalhe') {
-          final args = settings.arguments;
-          final Publicacao? publicacaoInicial = args is Publicacao
-              ? args
-              : null;
-          final String? publicacaoId = args is String ? args : null;
-          if (publicacaoInicial == null && publicacaoId == null) return null;
-
-          return MaterialPageRoute(
-            builder: (context) =>
-                ChangeNotifierProvider<PublicacaoDetalheProvider>(
-                  create: (ctx) => PublicacaoDetalheProvider(
-                    publicacoesRepository: ctx.read<PublicacoesRepository>(),
-                    store: ctx.read<PublicacoesStore>(),
-                    publicacaoInicial: publicacaoInicial,
-                    publicacaoId: publicacaoId,
-                  )..carregar(),
-                  child: const PublicacaoDetalhePage(),
-                ),
-          );
+        if (settings.name == rotaDetalhePublicacaoNome) {
+          return rotaDetalhePublicacao(settings);
         }
         return null;
       },
