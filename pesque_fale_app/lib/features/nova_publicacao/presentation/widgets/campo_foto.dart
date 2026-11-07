@@ -39,19 +39,18 @@ class CampoFoto extends StatelessWidget {
                   : Image.network(url!, fit: BoxFit.cover),
             ),
             Positioned(
-              top: AppSpacing.xs,
-              right: AppSpacing.xs,
-              child: Material(
-                color: Colors.black54,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: onRemover,
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(Icons.close, color: Colors.white, size: 18),
-                  ),
+              top: AppSpacing.xxs,
+              right: AppSpacing.xxs,
+              child: IconButton(
+                onPressed: onRemover,
+                tooltip: 'Remover foto',
+                iconSize: 22,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(48, 48),
                 ),
+                icon: const Icon(Icons.close),
               ),
             ),
           ],
