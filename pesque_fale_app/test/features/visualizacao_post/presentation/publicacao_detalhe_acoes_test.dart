@@ -30,9 +30,15 @@ class _PublicacoesRepository extends FakePublicacoesRepository {
   }
 }
 
-/// Um comentário do usuário logado, que pode ser apagado.
+/// Um comentário do usuário logado, que pode ser apagado, seguido de
+/// [outros] comentários de outra pessoa. Pagina como a API e registra as
+/// páginas pedidas.
 class _ComentariosRepository implements ComentariosRepository {
+  _ComentariosRepository({this.outros = 0});
+
+  final int outros;
   final List<String> deletados = [];
+  final List<int> paginasPedidas = [];
 
   final _meu = Comentario(
     id: 'c1',
@@ -43,17 +49,36 @@ class _ComentariosRepository implements ComentariosRepository {
     criadoEm: DateTime(2026, 1, 3),
   );
 
+  List<Comentario> get _todos => [
+    if (!deletados.contains('c1')) _meu,
+    for (var i = 2; i <= outros + 1; i++)
+      Comentario(
+        id: 'c$i',
+        publicacaoId: 'p1',
+        autorId: 'outro',
+        autorNome: 'Outro Pescador',
+        texto: 'Comentário $i',
+        criadoEm: DateTime(2026, 1, 3),
+      ),
+  ];
+
   @override
   Future<PagedResult<Comentario>> listar(
     String publicacaoId, {
     int pagina = 1,
     int porPagina = 20,
-  }) async => PagedResult(
-    items: deletados.contains('c1') ? const [] : [_meu],
-    total: 1,
-    pagina: pagina,
-    porPagina: porPagina,
-  );
+  }) async {
+    paginasPedidas.add(pagina);
+    final todos = _todos;
+    final inicio = (pagina - 1) * porPagina;
+    final fim = (inicio + porPagina).clamp(0, todos.length);
+    return PagedResult(
+      items: inicio >= todos.length ? const [] : todos.sublist(inicio, fim),
+      total: todos.length,
+      pagina: pagina,
+      porPagina: porPagina,
+    );
+  }
 
   @override
   Future<Comentario> criar(String publicacaoId, String texto) =>
@@ -84,16 +109,21 @@ void main() {
   late _PublicacoesRepository publicacoesRepo;
   late FeedProvider feed;
 
-  Future<void> preparar(_Origem origem) async {
+  Future<void> preparar(
+    _Origem origem, {
+    Publicacao? publicacao,
+    int outrosComentarios = 0,
+  }) async {
+    final post = publicacao ?? p1;
     store = PublicacoesStore();
     auth = await authLogado();
     curtidasRepo = FakeCurtidasRepository();
-    comentariosRepo = _ComentariosRepository();
+    comentariosRepo = _ComentariosRepository(outros: outrosComentarios);
     // Só o feed carrega o p1 nas listas dele. Pelo perfil e pela
     // notificação, o post não está no feed.
     publicacoesRepo = _PublicacoesRepository(
-      feed: origem == _Origem.feed ? [p1] : const [],
-      porId: p1,
+      feed: origem == _Origem.feed ? [post] : const [],
+      porId: post,
     );
     feed = criarFeedProvider(
       publicacoesRepo: publicacoesRepo,
@@ -102,7 +132,7 @@ void main() {
       store: store,
     );
     await feed.trocarAba(AbaFeed.paraVoce);
-    if (origem == _Origem.perfil) store.inserirSeAusente([p1]);
+    if (origem == _Origem.perfil) store.inserirSeAusente([post]);
   }
 
   Future<void> abrirDetalhe(WidgetTester tester, _Origem origem) async {
@@ -187,4 +217,114 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  // No aparelho o detalhe rola: a foto (4:5 da largura) empurra as ações para
+  // baixo da dobra. Cada ScrollNotification passa pelo "carregar mais" dos
+  // comentários, que foi o que quebrou (#318). Na tela de teste padrão
+  // (800x600, sem foto) nada rola e o problema não aparece.
+  group('com o detalhe rolando, numa tela de celular', () {
+    final comFoto = p1.copyWith(
+      imagemUrl: 'https://res.cloudinary.com/demo/image/upload/tucunare.jpg',
+    );
+
+    void telaDeCelular(WidgetTester tester) {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+    }
+
+    Finder rolavelDoDetalhe() => find
+        .descendant(
+          of: find.byType(PublicacaoDetalhePage),
+          matching: find.byType(SingleChildScrollView),
+        )
+        .first;
+
+    ScrollPosition posicao(WidgetTester tester) => tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: rolavelDoDetalhe(),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+
+    // Rola o detalhe como o usuário faz para chegar nos botões.
+    Future<void> rolar(WidgetTester tester, double dy) async {
+      expect(
+        posicao(tester).maxScrollExtent,
+        greaterThan(0),
+        reason: 'o detalhe precisa rolar para o teste valer',
+      );
+      await tester.drag(rolavelDoDetalhe(), Offset(0, -dy));
+      await tester.pumpAndSettle();
+    }
+
+    for (final origem in _Origem.values) {
+      testWidgets('rolar e depois tocar em Curtir: a curtida chega à API '
+          '(aberto pelo ${origem.name})', (tester) async {
+        telaDeCelular(tester);
+        await preparar(origem, publicacao: comFoto);
+        await abrirDetalhe(tester, origem);
+
+        await rolar(tester, 200);
+        await tester.ensureVisible(find.text('Curtir'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Curtir'));
+        await tester.pumpAndSettle();
+
+        expect(curtidasRepo.curtidas, ['p1']);
+        expect(find.text('Curtido'), findsOneWidget);
+        expect(find.text('4 curtidas'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('rolar e depois tocar na lixeira: o comentário é apagado '
+          'na API (aberto pelo ${origem.name})', (tester) async {
+        telaDeCelular(tester);
+        await preparar(origem, publicacao: comFoto);
+        await abrirDetalhe(tester, origem);
+
+        await rolar(tester, 300);
+        await tester.ensureVisible(find.byIcon(Icons.delete_outline));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.delete_outline));
+        await tester.pumpAndSettle();
+        expect(find.text('Excluir comentário'), findsOneWidget);
+        await tester.tap(find.text('Excluir'));
+        await tester.pumpAndSettle();
+
+        expect(comentariosRepo.deletados, ['c1']);
+        expect(find.text('Que peixe bonito!'), findsNothing);
+        expect(find.text('0 comentários'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('rolar até o fim dos comentários carrega a página 2', (
+      tester,
+    ) async {
+      telaDeCelular(tester);
+      // 26 comentários: a página 1 traz 20 (c1 a c20), a 2 traz o resto.
+      await preparar(
+        _Origem.perfil,
+        publicacao: comFoto,
+        outrosComentarios: 25,
+      );
+      await abrirDetalhe(tester, _Origem.perfil);
+      expect(comentariosRepo.paginasPedidas, [1]);
+      expect(find.text('Comentário 20'), findsOneWidget);
+      expect(find.text('Comentário 21'), findsNothing);
+
+      // Rola até o fim do conteúdo.
+      await rolar(tester, posicao(tester).maxScrollExtent + 100);
+
+      expect(comentariosRepo.paginasPedidas, [1, 2]);
+      expect(find.text('Comentário 21'), findsOneWidget);
+      expect(find.text('Comentário 26'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
