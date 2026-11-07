@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/perfil/presentation/widgets/galeria_perfil.dart';
+import 'package:pesque_fale_app/shared/widgets/imagem_placeholder.dart';
 
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
@@ -87,7 +88,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('publicação sem imagem mostra o placeholder', (tester) async {
+  testWidgets('publicação sem imagem mostra o quadrado de texto', (
+    tester,
+  ) async {
     await montar(
       tester,
       publicacoes: [
@@ -102,7 +105,8 @@ void main() {
     );
 
     expect(find.byType(Image), findsNothing);
-    expect(find.byIcon(Icons.image_not_supported_outlined), findsOneWidget);
+    expect(find.byType(ImagemIndisponivel), findsNothing);
+    expect(find.byIcon(Icons.notes), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

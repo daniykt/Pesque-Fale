@@ -75,15 +75,18 @@ String rotuloItemGaleria(
   required int total,
 }) {
   const limite = 40;
-  final descricao = (publicacao.descricao ?? '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  final descricao = _descricaoNormalizada(publicacao.descricao);
   if (descricao.isEmpty) return 'Abrir publicação $posicao de $total';
 
   final letras = descricao.characters;
   if (letras.length <= limite) return 'Abrir publicação: $descricao';
   return 'Abrir publicação: ${letras.take(limite).toString().trimRight()}…';
 }
+
+/// Junta espaços e quebras de linha num espaço só, para o rótulo e para o
+/// quadrado de texto não gastarem espaço com linhas em branco.
+String _descricaoNormalizada(String? descricao) =>
+    (descricao ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
 
 class _ItemGaleria extends StatefulWidget {
   const _ItemGaleria({
@@ -138,12 +141,10 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (imagemUrl == null || imagemUrl.isEmpty)
-          const ImagemIndisponivel(
-            icone: Icons.image_not_supported_outlined,
-            tamanhoIcone: 32,
-            mostrarTexto: false,
-          )
+        // Sem foto é um post só de texto, não um erro. O ImagemIndisponivel
+        // fica só para foto que falha ao carregar (errorBuilder abaixo).
+        if (imagemUrl == null || imagemUrl.trim().isEmpty)
+          _QuadradoTexto(descricao: widget.publicacao.descricao)
         else
           Image.network(
             imagemUrl,
@@ -191,6 +192,98 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Item da grade para publicação sem foto: o começo da descrição num quadrado
+/// de superfície, com um ícone discreto indicando que é um post de texto.
+///
+/// Fica fora da árvore de semântica: o rótulo do item já lê a descrição.
+class _QuadradoTexto extends StatelessWidget {
+  const _QuadradoTexto({required this.descricao});
+
+  final String? descricao;
+
+  static const _maxLinhas = 4;
+  static const _tamanhoIcone = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final texto = _descricaoNormalizada(descricao);
+    final icone = Icon(
+      Icons.notes,
+      size: _tamanhoIcone,
+      color: colors.textSecondary,
+    );
+
+    return ExcludeSemantics(
+      child: ClipRect(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            border: Border.all(color: colors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: texto.isEmpty
+                ? Center(child: icone)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _TextoAjustado(texto: texto)),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Align(alignment: Alignment.bottomRight, child: icone),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Até [_QuadradoTexto._maxLinhas] linhas, mas só as que cabem inteiras na
+/// altura disponível. Assim a reticência aparece em vez de uma linha cortada
+/// ao meio quando a fonte do sistema está grande.
+class _TextoAjustado extends StatelessWidget {
+  const _TextoAjustado({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final estilo = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: colors.textPrimary);
+    final textScaler = MediaQuery.textScalerOf(context);
+    final textDirection = Directionality.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final medidor = TextPainter(
+          text: TextSpan(text: 'Ag', style: estilo),
+          textDirection: textDirection,
+          textScaler: textScaler,
+          maxLines: 1,
+        )..layout();
+        final alturaLinha = medidor.height;
+        medidor.dispose();
+
+        final linhas = (constraints.maxHeight / alturaLinha).floor().clamp(
+          1,
+          _QuadradoTexto._maxLinhas,
+        );
+
+        return Text(
+          texto,
+          maxLines: linhas,
+          overflow: TextOverflow.ellipsis,
+          style: estilo,
+        );
+      },
     );
   }
 }
