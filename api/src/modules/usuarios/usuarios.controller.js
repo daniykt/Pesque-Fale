@@ -379,12 +379,12 @@ async function buscar(req, res) {
   }
 
   try {
-    const termo = `%${busca}%`;
+    const termo = `%${busca.replace(/[\\%_]/g, '\\$&')}%`;
     const [result, total] = await Promise.all([
       pool.query(
         `SELECT id, nome, username, foto_perfil, bio
          FROM usuarios
-         WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)
+         WHERE LOWER(nome) LIKE LOWER($1) ESCAPE '\\' OR LOWER(username) LIKE LOWER($1) ESCAPE '\\'
          ORDER BY
            CASE WHEN LOWER(username) = LOWER($2) THEN 0
                 WHEN LOWER(nome) = LOWER($2) THEN 1
@@ -395,7 +395,7 @@ async function buscar(req, res) {
       ),
       pool.query(
         `SELECT COUNT(*) FROM usuarios
-         WHERE LOWER(nome) LIKE LOWER($1) OR LOWER(username) LIKE LOWER($1)`,
+         WHERE LOWER(nome) LIKE LOWER($1) ESCAPE '\\' OR LOWER(username) LIKE LOWER($1) ESCAPE '\\'`,
         [termo]
       ),
     ]);
