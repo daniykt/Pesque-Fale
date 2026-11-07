@@ -39,8 +39,16 @@ router.get('/', authOpcional, listar);
  * /publicacoes/{id}:
  *   get:
  *     summary: Buscar publicação por ID
+ *     description: >-
+ *       Rota pública com autenticação opcional. Devolve a publicação no mesmo
+ *       formato do feed (GET /publicacoes), com os dados do autor. Com token,
+ *       jaCurtiu diz se o usuário logado curtiu; sem token (ou com token
+ *       inválido), jaCurtiu vem false e não há 401. O email do autor nunca é
+ *       devolvido.
  *     tags: [Publicações]
- *     security: []
+ *     security:
+ *       - {}
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -49,9 +57,67 @@ router.get('/', authOpcional, listar);
  *           type: string
  *     responses:
  *       200:
- *         description: Publicação encontrada
+ *         description: Publicação encontrada, no mesmo formato do feed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     autorId:
+ *                       type: string
+ *                     autorNome:
+ *                       type: string
+ *                       example: Ana Pescadora
+ *                     autorUsername:
+ *                       type: string
+ *                       nullable: true
+ *                       example: ana_pesca
+ *                     autorFoto:
+ *                       type: string
+ *                       nullable: true
+ *                       example: https://res.cloudinary.com/...
+ *                     pontoId:
+ *                       type: string
+ *                       nullable: true
+ *                     descricao:
+ *                       type: string
+ *                       nullable: true
+ *                     imagemUrl:
+ *                       type: string
+ *                       nullable: true
+ *                     localTexto:
+ *                       type: string
+ *                       nullable: true
+ *                     avaliacaoNota:
+ *                       type: number
+ *                       nullable: true
+ *                     tags:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     curtidasCount:
+ *                       type: integer
+ *                       example: 3
+ *                     comentariosCount:
+ *                       type: integer
+ *                       example: 1
+ *                     jaCurtiu:
+ *                       type: boolean
+ *                       description: false quando não autenticado.
+ *                       example: true
+ *                     criadoEm:
+ *                       type: string
+ *                       format: date-time
+ *                     atualizadoEm:
+ *                       type: string
+ *                       format: date-time
  *       404:
- *         description: Publicação não encontrada
+ *         description: Publicação não encontrada (PUBLICACAO_NAO_ENCONTRADA)
  *   delete:
  *     summary: Deletar publicação (só o autor)
  *     tags: [Publicações]
@@ -67,7 +133,7 @@ router.get('/', authOpcional, listar);
  *       403:
  *         description: Sem permissão
  */
-router.get('/:id', buscarPorId);
+router.get('/:id', authOpcional, buscarPorId);
 router.delete('/:id', authMiddleware, deletar);
 
 /**

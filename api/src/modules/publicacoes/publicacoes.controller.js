@@ -1,11 +1,30 @@
 const pool = require('../../config/database');
 const { emitToUser, emitToFeed } = require('../../config/socket-emitter');
 
+// Mesmo formato do feed: colunas da publicação + autor por JOIN. Só nome,
+// username e foto do autor; o email nunca entra aqui.
+const COLUNAS_PUBLICACAO = `p.id, p.autor_id, p.ponto_id, p.descricao, p.imagem_url, p.local_texto,
+                p.avaliacao_nota, p.tags, p.curtidas_count, p.comentarios_count, p.criado_em, p.atualizado_em,
+                u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto`;
+
+const FROM_PUBLICACAO = 'FROM publicacoes p JOIN usuarios u ON u.id = p.autor_id';
+
+// jaCurtiu na mesma query. Sem usuário logado, FALSE e nenhum parâmetro extra.
+function _jaCurtiuSelect(usuarioId, indiceParam) {
+  if (!usuarioId) return { sql: ', FALSE AS ja_curtiu', values: [] };
+  return {
+    sql: `, EXISTS (SELECT 1 FROM curtidas c WHERE c.publicacao_id = p.id AND c.usuario_id = $${indiceParam}) AS ja_curtiu`,
+    values: [usuarioId],
+  };
+}
+
 async function listarPorUsuario(req, res) {
   const { id } = req.params;
   const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
   const porPagina = Math.min(48, Math.max(1, parseInt(req.query.porPagina) || 12));
   const offset = (pagina - 1) * porPagina;
+  const jaCurtiu = _jaCurtiuSelect(req.usuario?.id ?? null, 2);
+  const i = 2 + jaCurtiu.values.length;
 
   try {
     const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [id]);
@@ -15,13 +34,13 @@ async function listarPorUsuario(req, res) {
 
     const [result, total] = await Promise.all([
       pool.query(
-        `SELECT id, autor_id, ponto_id, descricao, imagem_url, local_texto,
-                avaliacao_nota, tags, curtidas_count, comentarios_count, criado_em, atualizado_em
-         FROM publicacoes
-         WHERE autor_id = $1
-         ORDER BY criado_em DESC
-         LIMIT $2 OFFSET $3`,
-        [id, porPagina, offset]
+        `SELECT ${COLUNAS_PUBLICACAO}
+                ${jaCurtiu.sql}
+         ${FROM_PUBLICACAO}
+         WHERE p.autor_id = $1
+         ORDER BY p.criado_em DESC
+         LIMIT $${i} OFFSET $${i + 1}`,
+        [id, ...jaCurtiu.values, porPagina, offset]
       ),
       pool.query('SELECT COUNT(*) FROM publicacoes WHERE autor_id = $1', [id]),
     ]);
@@ -62,22 +81,16 @@ async function listar(req, res) {
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  const values = [...whereValues];
-  let jaCurtiuSelect = ', FALSE AS ja_curtiu';
-  if (usuarioId) {
-    jaCurtiuSelect = `, EXISTS (SELECT 1 FROM curtidas c WHERE c.publicacao_id = p.id AND c.usuario_id = $${i++}) AS ja_curtiu`;
-    values.push(usuarioId);
-  }
+  const jaCurtiu = _jaCurtiuSelect(usuarioId, i);
+  i += jaCurtiu.values.length;
+  const values = [...whereValues, ...jaCurtiu.values];
 
   try {
     const [result, total] = await Promise.all([
       pool.query(
-        `SELECT p.id, p.autor_id, p.ponto_id, p.descricao, p.imagem_url, p.local_texto,
-                p.avaliacao_nota, p.tags, p.curtidas_count, p.comentarios_count, p.criado_em, p.atualizado_em,
-                u.nome AS autor_nome, u.username AS autor_username, u.foto_perfil AS autor_foto
-                ${jaCurtiuSelect}
-         FROM publicacoes p
-         JOIN usuarios u ON u.id = p.autor_id
+        `SELECT ${COLUNAS_PUBLICACAO}
+                ${jaCurtiu.sql}
+         ${FROM_PUBLICACAO}
          ${where}
          ORDER BY p.criado_em DESC
          LIMIT $${i++} OFFSET $${i++}`,
@@ -154,9 +167,16 @@ async function criar(req, res) {
 
 async function buscarPorId(req, res) {
   const { id } = req.params;
+  const jaCurtiu = _jaCurtiuSelect(req.usuario?.id ?? null, 2);
 
   try {
-    const result = await pool.query('SELECT * FROM publicacoes WHERE id = $1', [id]);
+    const result = await pool.query(
+      `SELECT ${COLUNAS_PUBLICACAO}
+              ${jaCurtiu.sql}
+       ${FROM_PUBLICACAO}
+       WHERE p.id = $1`,
+      [id, ...jaCurtiu.values]
+    );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'PUBLICACAO_NAO_ENCONTRADA', message: 'Publicação não encontrada.' });
     }
