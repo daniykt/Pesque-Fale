@@ -137,9 +137,13 @@ class _FakeCurtidasRepository implements CurtidasRepository {
 }
 
 class _FakeEventosRepository implements EventosRepository {
+  _FakeEventosRepository([this.lista = const []]);
+
+  final List<Evento> lista;
+
   @override
   Future<List<Evento>> listar({bool futuros = true, int limite = 10}) async =>
-      const [];
+      List.of(lista);
 
   @override
   Future<Evento> buscarPorId(String id) => throw UnimplementedError();
@@ -194,11 +198,12 @@ FeedProvider _criarProvider({
   AuthProvider? authProvider,
   FakeRealtimeManager? realtime,
   PublicacoesStore? store,
+  _FakeEventosRepository? eventosRepo,
 }) {
   return FeedProvider(
     publicacoesRepo: publicacoesRepo,
     curtidasRepo: curtidasRepo ?? _FakeCurtidasRepository(),
-    eventosRepo: _FakeEventosRepository(),
+    eventosRepo: eventosRepo ?? _FakeEventosRepository(),
     pontosRepo: _FakePontosRepository(),
     authProvider:
         authProvider ?? AuthProvider(repository: _FakeAuthRepository()),
@@ -1486,5 +1491,108 @@ void main() {
         expect(provider.paraVoce.map((p) => p.id).toList(), depoisDaRecarga);
       },
     );
+  });
+
+  group('eventos da aba', () {
+    Evento evento(String id, int dia, {String? titulo}) => Evento(
+      id: id,
+      titulo: titulo ?? 'Evento $id',
+      organizadorId: 'org',
+      organizadorNome: 'Org',
+      dataInicio: DateTime(2026, 12, dia, 8),
+      criadoEm: DateTime(2026, 11, 1),
+    );
+
+    Future<FeedProvider> carregado(List<Evento> lista) async {
+      final provider = _criarProvider(
+        publicacoesRepo: _FakePublicacoesRepository(todas: []),
+        eventosRepo: _FakeEventosRepository(lista),
+      );
+      await provider.trocarAba(AbaFeed.eventos);
+      return provider;
+    }
+
+    List<String> ids(FeedProvider p) => p.eventos.map((e) => e.id).toList();
+
+    test('o criado entra na posição certa, sem recarregar', () async {
+      final provider = await carregado([evento('a', 5), evento('c', 20)]);
+
+      provider.inserirEvento(evento('b', 10));
+
+      expect(ids(provider), ['a', 'b', 'c']);
+      expect(provider.estadoDe(AbaFeed.eventos).status, StatusAba.sucesso);
+    });
+
+    test('o criado mais próximo vai para o começo', () async {
+      final provider = await carregado([evento('a', 5)]);
+
+      provider.inserirEvento(evento('antes', 1));
+
+      expect(ids(provider), ['antes', 'a']);
+    });
+
+    test('criar com a aba vazia sai do estado vazio', () async {
+      final provider = await carregado([]);
+      expect(provider.estadoDe(AbaFeed.eventos).status, StatusAba.vazio);
+
+      provider.inserirEvento(evento('a', 5));
+
+      expect(ids(provider), ['a']);
+      expect(provider.estadoDe(AbaFeed.eventos).status, StatusAba.sucesso);
+    });
+
+    test('inserir o mesmo evento duas vezes não duplica', () async {
+      final provider = await carregado([evento('a', 5)]);
+
+      provider.inserirEvento(evento('a', 5, titulo: 'Repetido'));
+
+      expect(ids(provider), ['a']);
+      expect(provider.eventos.single.titulo, 'Repetido');
+    });
+
+    test('excluir tira da lista e, se for o último, mostra o vazio', () async {
+      final provider = await carregado([evento('a', 5), evento('b', 10)]);
+
+      provider.removerEvento('a');
+      expect(ids(provider), ['b']);
+
+      provider.removerEvento('b');
+      expect(provider.eventos, isEmpty);
+      expect(provider.estadoDe(AbaFeed.eventos).status, StatusAba.vazio);
+    });
+
+    test('editar atualiza e reordena se a data mudou', () async {
+      final provider = await carregado([
+        evento('a', 5),
+        evento('b', 10),
+        evento('c', 20),
+      ]);
+
+      provider.atualizarEvento(evento('a', 25, titulo: 'Adiado'));
+
+      expect(ids(provider), ['b', 'c', 'a']);
+      expect(provider.eventos.last.titulo, 'Adiado');
+    });
+
+    test('editar um evento que não está na lista não o adiciona', () async {
+      final provider = await carregado([evento('a', 5)]);
+
+      provider.atualizarEvento(evento('fora', 7));
+      provider.removerEvento('fora');
+
+      expect(ids(provider), ['a']);
+    });
+
+    test('mudanças na lista avisam a tela', () async {
+      final provider = await carregado([evento('a', 5)]);
+      var avisos = 0;
+      provider.addListener(() => avisos++);
+
+      provider.inserirEvento(evento('b', 6));
+      provider.atualizarEvento(evento('b', 7));
+      provider.removerEvento('b');
+
+      expect(avisos, 3);
+    });
   });
 }

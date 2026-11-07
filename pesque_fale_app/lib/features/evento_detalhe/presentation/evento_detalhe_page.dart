@@ -38,6 +38,23 @@ class _EventoDetalhePageState extends State<EventoDetalhePage> {
     final usuarioId = context.watch<AuthProvider>().usuario?.id;
     final evento = provider.evento;
 
+    final devolverEditado = provider.foiEditado && evento != null;
+
+    return PopScope<Object?>(
+      canPop: !devolverEditado,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.of(context).pop(evento);
+      },
+      child: _corpo(context, provider, usuarioId, evento),
+    );
+  }
+
+  Widget _corpo(
+    BuildContext context,
+    EventoDetalheProvider provider,
+    String? usuarioId,
+    Evento? evento,
+  ) {
     return Scaffold(
       appBar: AppBar(title: const Text('Evento')),
       body: switch (provider.status) {

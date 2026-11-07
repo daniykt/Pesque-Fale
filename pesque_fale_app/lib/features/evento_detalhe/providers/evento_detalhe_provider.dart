@@ -30,6 +30,8 @@ class EventoDetalheProvider extends ChangeNotifier {
   bool get excluindo => _excluindo;
   bool _carregando = false;
   bool _descartado = false;
+  bool _foiEditado = false;
+  bool get foiEditado => _foiEditado;
 
   bool ehOrganizador(String? usuarioId) =>
       usuarioId != null && _evento?.organizadorId == usuarioId;
@@ -66,6 +68,7 @@ class EventoDetalheProvider extends ChangeNotifier {
   void atualizar(Evento editado) {
     if (editado.id != eventoId) return;
     _evento = editado;
+    _foiEditado = true;
     status = StatusEventoDetalhe.carregado;
     _notificar();
   }

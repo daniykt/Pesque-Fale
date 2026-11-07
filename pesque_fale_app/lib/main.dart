@@ -434,7 +434,7 @@ class PesqueFaleApp extends StatelessWidget {
         }
         if (settings.name == '/evento/detalhe') {
           final args = settings.arguments;
-          return MaterialPageRoute<bool>(
+          return MaterialPageRoute<Object>(
             settings: settings,
             builder: (context) => ChangeNotifierProvider<EventoDetalheProvider>(
               create: (ctx) => EventoDetalheProvider(

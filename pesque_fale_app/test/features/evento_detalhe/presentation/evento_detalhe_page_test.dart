@@ -30,7 +30,7 @@ void main() {
       late List<RouteSettings> rotasEditar;
       late List<RouteSettings> outrasRotas;
       Evento? editadoDevolvido;
-      bool? resultadoDetalhe;
+      Object? resultadoDetalhe;
 
       setUp(() {
         repo = FakeEventosDetalheRepository();
@@ -89,7 +89,7 @@ void main() {
                     child: TextButton(
                       onPressed: () async {
                         resultadoDetalhe = await Navigator.of(context).push(
-                          MaterialPageRoute<bool>(
+                          MaterialPageRoute<Object>(
                             builder: (_) =>
                                 ChangeNotifierProvider<EventoDetalheProvider>(
                                   create: (_) => EventoDetalheProvider(
@@ -240,6 +240,25 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Torneio com novo nome'), findsOneWidget);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(EventoDetalhePage), findsNothing);
+        expect(resultadoDetalhe, isA<Evento>());
+        expect((resultadoDetalhe as Evento).titulo, 'Torneio com novo nome');
+      });
+
+      testWidgets('voltar sem editar nem excluir não devolve nada', (
+        tester,
+      ) async {
+        await abrir(tester, evento: eventoDeTeste(), usuarioId: 'organizador');
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(EventoDetalhePage), findsNothing);
+        expect(resultadoDetalhe, isNull);
       });
 
       testWidgets('evento que não existe mais mostra aviso e "Voltar"', (

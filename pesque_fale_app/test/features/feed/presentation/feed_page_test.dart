@@ -28,6 +28,7 @@ import 'package:pesque_fale_app/features/feed/domain/dados_evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/presentation/feed_page.dart';
+import 'package:pesque_fale_app/features/feed/presentation/widgets/eventos_carrossel.dart';
 import 'package:pesque_fale_app/features/feed/presentation/widgets/novas_publicacoes_button.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
 import 'package:pesque_fale_app/features/feed/providers/publicacoes_store.dart';
@@ -133,11 +134,16 @@ class _FakeComentariosRepository implements ComentariosRepository {
 }
 
 class _FakeEventosRepository implements EventosRepository {
+  _FakeEventosRepository({this.lista});
+
   int chamadas = 0;
+  final List<Evento>? lista;
 
   @override
   Future<List<Evento>> listar({bool futuros = true, int limite = 10}) async {
     chamadas++;
+    final lista = this.lista;
+    if (lista != null) return List.of(lista);
     return [
       Evento(
         id: 'evento-0',
@@ -271,6 +277,7 @@ Widget _harness({
   _FakePontosRepository? pontos,
   ThemeData? tema,
   _FakeClimaRepository? clima,
+  Map<String, WidgetBuilder> rotasExtras = const {},
 }) {
   final publicacoesRepo = publicacoes ?? _FakePublicacoesRepository();
   final realtimeManager = realtime ?? FakeRealtimeManager();
@@ -308,7 +315,10 @@ Widget _harness({
     ],
     child: MaterialApp(
       theme: tema ?? AppTheme.light,
-      routes: {'/login': (_) => const Scaffold(body: Text('Tela de login'))},
+      routes: {
+        '/login': (_) => const Scaffold(body: Text('Tela de login')),
+        ...rotasExtras,
+      },
       home: const FeedPage(),
     ),
   );
@@ -898,5 +908,262 @@ void main() {
 
       expect(find.byType(NovasPublicacoesButton), findsNothing);
     });
+  });
+
+  group('aba Eventos: criar, editar e excluir', () {
+    Evento evento(String id, int dias, {String? titulo}) => Evento(
+      id: id,
+      titulo: titulo ?? 'Evento $id',
+      organizadorId: 'org',
+      organizadorNome: 'Org',
+      dataInicio: DateTime.now().add(Duration(days: dias)),
+      criadoEm: DateTime(2026, 11, 1),
+    );
+
+    for (final (nomeTema, criarTema) in [
+      ('claro', () => AppTheme.light),
+      ('escuro', () => AppTheme.dark),
+    ]) {
+      group('tema $nomeTema', () {
+        late List<String> rotasAbertas;
+        Object? resultado;
+
+        setUp(() {
+          rotasAbertas = [];
+          resultado = null;
+        });
+
+        Map<String, WidgetBuilder> rotas() => {
+          for (final nome in ['/evento/novo', '/evento/detalhe'])
+            nome: (context) {
+              rotasAbertas.add(nome);
+              return Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(resultado),
+                    child: Text('fechar $nome'),
+                  ),
+                ),
+              );
+            },
+        };
+
+        Future<FeedProvider> abrirAba(
+          WidgetTester tester, {
+          required List<Evento> lista,
+          bool logado = true,
+        }) async {
+          final auth = AuthProvider(repository: _FakeAuthRepository());
+          if (logado) {
+            await auth.login(email: 'ana@teste.com', senha: '123456');
+          }
+          await tester.pumpWidget(
+            _harness(
+              authProvider: auth,
+              eventos: _FakeEventosRepository(lista: lista),
+              tema: criarTema(),
+              rotasExtras: rotas(),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Eventos'));
+          await tester.pumpAndSettle();
+          return tester.element(find.byType(FeedPage)).read<FeedProvider>();
+        }
+
+        List<String> ids(FeedProvider feed) =>
+            feed.eventos.map((e) => e.id).toList();
+
+        testWidgets('mostra o botão "Criar evento" com 48 ou mais', (
+          tester,
+        ) async {
+          await abrirAba(tester, lista: [evento('a', 3)]);
+
+          final botao = find.widgetWithText(FilledButton, 'Criar evento');
+          expect(botao, findsOneWidget);
+          expect(tester.getSize(botao).height, greaterThanOrEqualTo(48));
+          expect(
+            find.descendant(of: botao, matching: find.byIcon(Icons.add)),
+            findsOneWidget,
+          );
+        });
+
+        testWidgets('vazio: mensagem e "Criar o primeiro evento"', (
+          tester,
+        ) async {
+          await abrirAba(tester, lista: []);
+
+          expect(
+            find.text('Nenhum evento programado por enquanto.'),
+            findsOneWidget,
+          );
+          final botao = find.widgetWithText(
+            FilledButton,
+            'Criar o primeiro evento',
+          );
+          expect(botao, findsOneWidget);
+          expect(tester.getSize(botao).height, greaterThanOrEqualTo(48));
+          expect(find.text('Nenhum evento no momento.'), findsNothing);
+        });
+
+        testWidgets('visitante sem login vai para o login', (tester) async {
+          await abrirAba(tester, lista: [], logado: false);
+
+          await tester.tap(find.text('Criar o primeiro evento'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Tela de login'), findsOneWidget);
+          expect(rotasAbertas, isEmpty);
+        });
+
+        testWidgets('criar: o evento entra na posição certa, sem recarregar', (
+          tester,
+        ) async {
+          final feed = await abrirAba(
+            tester,
+            lista: [evento('a', 2), evento('c', 9)],
+          );
+          resultado = evento('b', 5, titulo: 'Evento criado agora');
+
+          await tester.tap(find.text('Criar evento'));
+          await tester.pumpAndSettle();
+          expect(rotasAbertas, ['/evento/novo']);
+          await tester.tap(find.text('fechar /evento/novo'));
+          await tester.pumpAndSettle();
+
+          expect(ids(feed), ['a', 'b', 'c']);
+          final eventosRepo =
+              tester.element(find.byType(FeedPage)).read<EventosRepository>()
+                  as _FakeEventosRepository;
+          expect(eventosRepo.chamadas, 1);
+        });
+
+        testWidgets('criar a partir do vazio mostra a lista', (tester) async {
+          final feed = await abrirAba(tester, lista: []);
+          resultado = evento('novo', 4, titulo: 'Primeiro evento');
+
+          await tester.tap(find.text('Criar o primeiro evento'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('fechar /evento/novo'));
+          await tester.pumpAndSettle();
+
+          expect(ids(feed), ['novo']);
+          expect(find.text('Primeiro evento'), findsOneWidget);
+          expect(
+            find.text('Nenhum evento programado por enquanto.'),
+            findsNothing,
+          );
+        });
+
+        testWidgets('cancelar a criação não mexe na lista', (tester) async {
+          final feed = await abrirAba(tester, lista: [evento('a', 2)]);
+
+          await tester.tap(find.text('Criar evento'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('fechar /evento/novo'));
+          await tester.pumpAndSettle();
+
+          expect(ids(feed), ['a']);
+        });
+
+        testWidgets('excluir no detalhe tira o evento da lista', (
+          tester,
+        ) async {
+          final feed = await abrirAba(
+            tester,
+            lista: [evento('a', 2, titulo: 'Vai sair')],
+          );
+          resultado = true;
+
+          await tester.tap(find.text('Vai sair'));
+          await tester.pumpAndSettle();
+          expect(rotasAbertas, ['/evento/detalhe']);
+          await tester.tap(find.text('fechar /evento/detalhe'));
+          await tester.pumpAndSettle();
+
+          expect(feed.eventos, isEmpty);
+          expect(
+            find.text('Nenhum evento programado por enquanto.'),
+            findsOneWidget,
+          );
+        });
+
+        testWidgets('editar no detalhe atualiza e reordena', (tester) async {
+          final feed = await abrirAba(
+            tester,
+            lista: [
+              evento('a', 2, titulo: 'Primeiro'),
+              evento('b', 5),
+            ],
+          );
+          resultado = evento('a', 9, titulo: 'Adiado');
+
+          await tester.tap(find.text('Primeiro'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('fechar /evento/detalhe'));
+          await tester.pumpAndSettle();
+
+          expect(ids(feed), ['b', 'a']);
+          expect(feed.eventos.last.titulo, 'Adiado');
+        });
+
+        testWidgets('voltar do detalhe sem mudança não mexe na lista', (
+          tester,
+        ) async {
+          final feed = await abrirAba(
+            tester,
+            lista: [evento('a', 2, titulo: 'Fica')],
+          );
+
+          await tester.tap(find.text('Fica'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('fechar /evento/detalhe'));
+          await tester.pumpAndSettle();
+
+          expect(ids(feed), ['a']);
+        });
+
+        testWidgets('card com título e descrição longos cabe em 360dp', (
+          tester,
+        ) async {
+          tester.view.physicalSize = const Size(360, 800);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+          final longo = Evento(
+            id: 'longo',
+            titulo:
+                'Grande torneio regional de pesca esportiva do interior '
+                'paulista, edição de verão',
+            descricao:
+                'Premiação para os três maiores peixes, inscrições no local, '
+                'café da manhã para os participantes e sorteio de brindes.',
+            localTexto: 'Represa de Ibitinga, área de pesca esportiva',
+            organizadorId: 'org',
+            organizadorNome: 'Org',
+            dataInicio: DateTime.now().add(const Duration(days: 3)),
+            criadoEm: DateTime(2026, 11, 1),
+          );
+
+          for (final escala in [1.0, 1.3]) {
+            tester.platformDispatcher.textScaleFactorTestValue = escala;
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: criarTema(),
+                home: Scaffold(
+                  body: SingleChildScrollView(
+                    child: EventosCarrossel(eventos: [longo]),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+
+            expect(tester.takeException(), isNull, reason: 'fonte $escala');
+            expect(find.textContaining('Grande torneio'), findsOneWidget);
+          }
+          tester.platformDispatcher.clearTextScaleFactorTestValue();
+        });
+      });
+    }
   });
 }
