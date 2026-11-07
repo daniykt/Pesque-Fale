@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/cloudinary_url.dart';
+import '../../../../core/utils/tempo_relativo.dart';
 import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../../../shared/widgets/imagem_placeholder.dart';
 import '../../domain/publicacao.dart';
@@ -179,12 +180,7 @@ class PublicacaoCard extends StatelessWidget {
 
   String _metaLine(Publicacao p) {
     final local = p.localTexto ?? '';
-    final data = _formatarDataHora(p.criadoEm);
+    final data = TempoRelativo.formatar(p.criadoEm);
     return local.isNotEmpty ? '$local · $data' : data;
-  }
-
-  String _formatarDataHora(DateTime dt) {
-    String pad(int n) => n.toString().padLeft(2, '0');
-    return '${pad(dt.day)}/${pad(dt.month)}/${dt.year}, ${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)}';
   }
 }

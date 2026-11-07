@@ -26,8 +26,6 @@ class CampoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<EditarPerfilProvider>();
     final usuario = context.watch<AuthProvider>().usuario;
-    final colors = Theme.of(context).extension<AppColors>()!;
-
     final novoBanner = provider.novoBannerBytes;
     final bannerRemoto = usuario?.banner;
 
@@ -43,23 +41,40 @@ class CampoBanner extends StatelessWidget {
               if (novoBanner != null)
                 Image.memory(novoBanner, fit: BoxFit.cover)
               else if (bannerRemoto != null && bannerRemoto.isNotEmpty)
-                Image.network(bannerRemoto, fit: BoxFit.cover)
+                Image.network(
+                  bannerRemoto,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const _BannerPadrao(),
+                )
               else
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colors.primary,
-                        Color.lerp(colors.primary, colors.surface, 0.4)!,
-                      ],
-                    ),
-                  ),
-                ),
+                const _BannerPadrao(),
               const Positioned(right: 12, bottom: 12, child: _BadgeCamera()),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Gradiente mostrado sem banner ou quando a imagem remota não carrega
+/// (URL quebrada ou valor inválido salvo no banco).
+class _BannerPadrao extends StatelessWidget {
+  const _BannerPadrao() : super(key: const ValueKey('banner-padrao'));
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary,
+            Color.lerp(colors.primary, colors.surface, 0.4)!,
+          ],
         ),
       ),
     );

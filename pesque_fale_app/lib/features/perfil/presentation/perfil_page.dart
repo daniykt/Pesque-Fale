@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/lista_relacionamentos_provider.dart';
 import '../providers/perfil_provider.dart';
@@ -83,6 +84,9 @@ class _PerfilPageState extends State<PerfilPage> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(
+        bottom: BotaoAjudaAssistente.espacoInferiorListas,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

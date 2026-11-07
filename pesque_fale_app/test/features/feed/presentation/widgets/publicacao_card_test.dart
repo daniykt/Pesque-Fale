@@ -41,4 +41,34 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('mostra a data relativa e não a data e hora completas', (
+    tester,
+  ) async {
+    final recente = Publicacao(
+      id: 'p2',
+      autorId: 'autor-1',
+      autorNome: 'Ana',
+      criadoEm: DateTime.now().subtract(const Duration(days: 2)),
+      atualizadoEm: DateTime.now().subtract(const Duration(days: 2)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: PublicacaoCard(publicacao: recente),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('há 2 dias'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'\d{2}/\d{2}/\d{4}, \d{2}:\d{2}:\d{2}')),
+      findsNothing,
+    );
+  });
 }

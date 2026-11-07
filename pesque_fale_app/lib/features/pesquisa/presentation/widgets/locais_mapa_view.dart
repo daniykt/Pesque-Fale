@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../domain/ponto.dart';
 import '../../providers/pesquisa_locais_provider.dart';
 import 'ponto_details_sheet.dart';
@@ -129,6 +130,7 @@ class _LocaisMapaViewState extends State<LocaisMapaView> {
               }).toList(),
             ),
             RichAttributionWidget(
+              alignment: AttributionAlignment.bottomLeft,
               attributions: [
                 TextSourceAttribution(
                   '© OpenStreetMap contributors',
@@ -143,8 +145,9 @@ class _LocaisMapaViewState extends State<LocaisMapaView> {
           left: AppSpacing.md,
           child: _ChipRaio(raioKm: provider.filtros.raioKm),
         ),
+        // Acima do botão Ajuda do shell, que fica sempre no canto direito.
         Positioned(
-          bottom: AppSpacing.md,
+          bottom: BotaoAjudaAssistente.espacoInferiorListas,
           right: AppSpacing.md,
           child: FloatingActionButton(
             heroTag: 'locais-mapa-minha-localizacao',

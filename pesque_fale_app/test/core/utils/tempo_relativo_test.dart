@@ -27,12 +27,28 @@ void main() {
     expect(formatar(const Duration(hours: 23)), 'há 23 h');
   });
 
+  test('1 dia atras retorna ha 1 dia (singular)', () {
+    expect(formatar(const Duration(days: 1)), 'há 1 dia');
+  });
+
+  test('2 dias atras retorna ha 2 dias', () {
+    expect(formatar(const Duration(days: 2)), 'há 2 dias');
+  });
+
   test('6 dias atras retorna ha 6 dias', () {
     expect(formatar(const Duration(days: 6)), 'há 6 dias');
   });
 
-  test('7 dias atras retorna ha 1 semanas', () {
-    expect(formatar(const Duration(days: 7)), 'há 1 semanas');
+  test('7 dias atras retorna ha 1 semana (singular)', () {
+    expect(formatar(const Duration(days: 7)), 'há 1 semana');
+  });
+
+  test('13 dias atras ainda retorna ha 1 semana', () {
+    expect(formatar(const Duration(days: 13)), 'há 1 semana');
+  });
+
+  test('14 dias atras retorna ha 2 semanas', () {
+    expect(formatar(const Duration(days: 14)), 'há 2 semanas');
   });
 
   test('29 dias atras retorna ha 4 semanas', () {

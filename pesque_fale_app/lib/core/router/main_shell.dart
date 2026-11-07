@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/assistente/presentation/widgets/botao_ajuda_assistente.dart';
+import '../../features/assistente/presentation/widgets/compactar_ajuda_ao_rolar.dart';
 import '../../features/chat/presentation/inbox_page.dart';
 import '../../features/chat/providers/badge_mensagens_provider.dart';
 import '../../features/feed/presentation/feed_page.dart';
@@ -77,29 +78,30 @@ class MainShellState extends State<MainShell> {
       });
     }
 
-    return Scaffold(
-      appBar: naTelaDePesquisa || naTelaDeChat
-          ? null
-          : AppBar(title: Text(_titles[_currentIndex])),
-      body: Stack(
-        children: [
-          IndexedStack(index: _currentIndex, children: _buildScreens()),
-          const TourOverlay(),
-        ],
+    return CompactarAjudaAoRolar(
+      abaAtual: _currentIndex,
+      builder: (context, compacto) => Scaffold(
+        appBar: naTelaDePesquisa || naTelaDeChat
+            ? null
+            : AppBar(title: Text(_titles[_currentIndex])),
+        body: Stack(
+          children: [
+            IndexedStack(index: _currentIndex, children: _buildScreens()),
+            const TourOverlay(),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNav(
+          currentIndex: _currentIndex,
+          notifCount: notifCount,
+          chatCount: chatCount,
+          highlightedIndex: passoDoTour?.abaAlvo,
+          onDestinationSelected: _trocarAba,
+        ),
+        floatingActionButton: mostrarFabAjuda
+            ? BotaoAjudaAssistente(compacto: compacto)
+            : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _currentIndex,
-        notifCount: notifCount,
-        chatCount: chatCount,
-        highlightedIndex: passoDoTour?.abaAlvo,
-        onDestinationSelected: _trocarAba,
-      ),
-      floatingActionButton: mostrarFabAjuda
-          ? const BotaoAjudaAssistente()
-          : null,
-      floatingActionButtonLocation: naTelaDePesquisa
-          ? FloatingActionButtonLocation.startFloat
-          : FloatingActionButtonLocation.endFloat,
     );
   }
 }
