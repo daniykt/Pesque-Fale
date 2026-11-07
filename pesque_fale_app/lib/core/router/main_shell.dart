@@ -100,9 +100,7 @@ class MainShellState extends State<MainShell> {
         floatingActionButton: mostrarFabAjuda
             ? BotaoAjudaAssistente(compacto: compacto)
             : null,
-        floatingActionButtonLocation: naTelaDePesquisa
-            ? FloatingActionButtonLocation.startFloat
-            : FloatingActionButtonLocation.endFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
