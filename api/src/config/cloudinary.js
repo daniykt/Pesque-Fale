@@ -1,5 +1,5 @@
 const cloudinary = require('cloudinary').v2;
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const PLACEHOLDER_PREFIXES = ['seu_', 'sua_'];
 const VARS = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];

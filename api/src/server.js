@@ -4,7 +4,7 @@ const app = require('./app');
 const socketEmitter = require('./config/socket-emitter');
 const { opcoesSocket } = require('./config/cors-socket');
 const initChatGateway = require('./modules/chat/chat.gateway');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const PORT = process.env.PORT || 3333;
 

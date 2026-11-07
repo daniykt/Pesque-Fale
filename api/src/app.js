@@ -16,7 +16,7 @@ const curtidasRoutes = require('./modules/curtidas/curtidas.routes');
 const comentariosRoutes = require('./modules/comentarios/comentarios.routes');
 const comentariosStandaloneRoutes = require('./modules/comentarios/comentarios-standalone.routes');
 const rejeitarBase64 = require('./middlewares/rejeitar-base64.middleware');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const app = express();
 
