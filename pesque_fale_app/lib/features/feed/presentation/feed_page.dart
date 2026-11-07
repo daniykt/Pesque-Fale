@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/aba_feed.dart';
 import '../domain/evento.dart';
@@ -135,7 +136,10 @@ class _EventosView extends StatelessWidget {
           onRefresh: provider.pullRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            padding: const EdgeInsets.only(
+              top: 16,
+              bottom: BotaoAjudaAssistente.espacoInferiorListas,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -250,7 +254,10 @@ class _LocaisView extends StatelessWidget {
           onRefresh: provider.pullRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(top: 16, bottom: 24),
+            padding: const EdgeInsets.only(
+              top: 16,
+              bottom: BotaoAjudaAssistente.espacoInferiorListas,
+            ),
             child: LocaisCarrossel(pontos: provider.topLocais),
           ),
         );
@@ -384,7 +391,12 @@ class _FeedListaViewState extends State<_FeedListaView> {
         conteudo = ListView.separated(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(
+            12,
+            12,
+            12,
+            BotaoAjudaAssistente.espacoInferiorListas,
+          ),
           itemCount: widget.publicacoes.length + (temRodape ? 1 : 0),
           findItemIndexCallback: (key) =>
               _indicePorChave(widget.publicacoes, key),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../../clima/providers/clima_provider.dart';
 import '../../domain/aba_feed.dart';
 import '../../providers/feed_provider.dart';
@@ -46,7 +47,12 @@ class _DicasViewState extends State<DicasView> {
       onRefresh: context.read<ClimaProvider>().atualizar,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          BotaoAjudaAssistente.espacoInferiorListas,
+        ),
         children: const [
           ClimaCard(),
           SizedBox(height: AppSpacing.md),
