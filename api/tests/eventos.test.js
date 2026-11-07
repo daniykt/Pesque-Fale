@@ -392,4 +392,59 @@ describe('eventos', () => {
       expect(res.status).toBe(403);
     });
   });
+
+  describe('organizador na resposta de criar e editar', () => {
+    const linhaComOrganizador = linhaEvento({
+      organizador_nome: 'Ana Souza',
+      organizador_username: 'ana_pesca',
+      organizador_foto: 'https://res.cloudinary.com/x/ana.jpg',
+      senha_hash: 'hash-secreto',
+      firebase_uid: 'uid-secreto',
+      email: 'ana@exemplo.com',
+    });
+
+    function conferirOrganizador(data) {
+      expect(data.organizadorId).toBe('user-1');
+      expect(data.organizadorNome).toBe('Ana Souza');
+      expect(data.organizadorUsername).toBe('ana_pesca');
+      expect(data.organizadorFoto).toBe('https://res.cloudinary.com/x/ana.jpg');
+      const texto = JSON.stringify(data);
+      for (const proibido of ['senha', 'Hash', 'hash', 'firebase', 'Firebase', 'email', 'secreto', 'exemplo.com']) {
+        expect(texto).not.toContain(proibido);
+      }
+    }
+
+    function conferirSql(sql, cte) {
+      expect(sql).toMatch(new RegExp(`^\\s*WITH ${cte} AS \\(`));
+      expect(sql).toContain(`JOIN usuarios u ON u.id = ${cte}.organizador_id`);
+      expect(sql).toContain('u.nome AS organizador_nome');
+      expect(sql).toContain('u.username AS organizador_username');
+      expect(sql).toContain('u.foto_perfil AS organizador_foto');
+      expect(sql).not.toMatch(/u\.\*/);
+      expect(sql).not.toMatch(/senha_hash|firebase_uid|u\.email/);
+    }
+
+    it('POST devolve o organizador numa query só', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [linhaComOrganizador] });
+
+      const res = await criar(valido);
+
+      expect(res.status).toBe(201);
+      expect(pool.query).toHaveBeenCalledTimes(1);
+      conferirSql(pool.query.mock.calls[0][0], 'novo');
+      conferirOrganizador(res.body.data);
+    });
+
+    it('PATCH devolve o organizador sem query a mais', async () => {
+      salvo('2026-08-15T08:00:00Z');
+      pool.query.mockResolvedValueOnce({ rows: [linhaComOrganizador] });
+
+      const res = await atualizar({ titulo: 'Novo título' });
+
+      expect(res.status).toBe(200);
+      expect(pool.query).toHaveBeenCalledTimes(2);
+      conferirSql(pool.query.mock.calls[1][0], 'atualizado');
+      conferirOrganizador(res.body.data);
+    });
+  });
 });

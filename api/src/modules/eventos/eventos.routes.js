@@ -72,7 +72,7 @@ const router = Router();
  *                 type: string
  *     responses:
  *       201:
- *         description: Evento criado
+ *         description: Evento criado, com o organizador (organizadorNome, organizadorUsername, organizadorFoto) como no GET
  *       400:
  *         description: VALIDATION_ERROR (título, local ou datas inválidos, ou fim antes do início)
  */
@@ -139,7 +139,7 @@ router.post('/', authMiddleware, criar);
  *                 type: string
  *     responses:
  *       200:
- *         description: Evento atualizado
+ *         description: Evento atualizado, com o organizador (organizadorNome, organizadorUsername, organizadorFoto) como no GET
  *       400:
  *         description: VALIDATION_ERROR (mesmas regras do POST)
  *       403:

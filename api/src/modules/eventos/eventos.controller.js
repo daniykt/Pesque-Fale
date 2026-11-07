@@ -1,5 +1,8 @@
 const pool = require('../../config/database');
 
+const COLUNAS_ORGANIZADOR =
+  'u.nome AS organizador_nome, u.username AS organizador_username, u.foto_perfil AS organizador_foto';
+
 async function criar(req, res) {
   const organizadorId = req.usuario.id;
   const { titulo, descricao, pontoId, imagemUrl, localTexto } = req.body;
@@ -11,9 +14,14 @@ async function criar(req, res) {
 
   try {
     const result = await pool.query(
-      `INSERT INTO eventos (titulo, descricao, ponto_id, organizador_id, data_inicio, data_fim, imagem_url, local_texto)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
+      `WITH novo AS (
+         INSERT INTO eventos (titulo, descricao, ponto_id, organizador_id, data_inicio, data_fim, imagem_url, local_texto)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *
+       )
+       SELECT novo.*, ${COLUNAS_ORGANIZADOR}
+       FROM novo
+       JOIN usuarios u ON u.id = novo.organizador_id`,
       [titulo, descricao ?? null, pontoId ?? null, organizadorId,
        datas.dataInicio, datas.dataFim ?? null, imagemUrl ?? null, localTexto ?? null]
     );
@@ -129,7 +137,12 @@ async function atualizar(req, res) {
     values.push(id);
 
     const result = await pool.query(
-      `UPDATE eventos SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
+      `WITH atualizado AS (
+         UPDATE eventos SET ${fields.join(', ')} WHERE id = $${i} RETURNING *
+       )
+       SELECT atualizado.*, ${COLUNAS_ORGANIZADOR}
+       FROM atualizado
+       JOIN usuarios u ON u.id = atualizado.organizador_id`,
       values
     );
 
