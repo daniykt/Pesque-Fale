@@ -89,6 +89,7 @@ class EventosRepositoryMock implements EventosRepository {
       dados: dados,
       organizadorId: atual.organizadorId,
       organizadorNome: atual.organizadorNome,
+      organizadorUsername: atual.organizadorUsername,
       organizadorFoto: atual.organizadorFoto,
       criadoEm: atual.criadoEm,
     );
@@ -130,6 +131,7 @@ class EventosRepositoryMock implements EventosRepository {
     required DadosEvento dados,
     required String organizadorId,
     required String organizadorNome,
+    String? organizadorUsername,
     String? organizadorFoto,
     required DateTime criadoEm,
   }) {
@@ -140,6 +142,7 @@ class EventosRepositoryMock implements EventosRepository {
       pontoId: dados.pontoId,
       organizadorId: organizadorId,
       organizadorNome: organizadorNome,
+      organizadorUsername: organizadorUsername,
       organizadorFoto: organizadorFoto,
       dataInicio: dados.dataInicio,
       dataFim: dados.dataFim,

@@ -6,6 +6,7 @@ class Evento {
     this.pontoId,
     required this.organizadorId,
     required this.organizadorNome,
+    this.organizadorUsername,
     this.organizadorFoto,
     required this.dataInicio,
     this.dataFim,
@@ -20,6 +21,7 @@ class Evento {
   final String? pontoId;
   final String organizadorId;
   final String organizadorNome;
+  final String? organizadorUsername;
   final String? organizadorFoto;
   final DateTime dataInicio;
   final DateTime? dataFim;
@@ -35,6 +37,7 @@ class Evento {
       pontoId: json['pontoId'] as String?,
       organizadorId: json['organizadorId']?.toString() ?? '',
       organizadorNome: json['organizadorNome']?.toString() ?? '',
+      organizadorUsername: json['organizadorUsername'] as String?,
       organizadorFoto: json['organizadorFoto'] as String?,
       dataInicio:
           DateTime.tryParse(json['dataInicio']?.toString() ?? '')?.toLocal() ??

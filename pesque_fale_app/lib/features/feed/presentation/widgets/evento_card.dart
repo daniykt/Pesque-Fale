@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/utils/cloudinary_url.dart';
-import '../../../../shared/widgets/app_snackbar.dart';
 import '../../domain/evento.dart';
 
 class EventoCard extends StatelessWidget {
@@ -17,7 +16,8 @@ class EventoCard extends StatelessWidget {
     final temFoto = evento.imagemUrl != null && evento.imagemUrl!.isNotEmpty;
 
     return InkWell(
-      onTap: () => AppSnackbar.showInfo(context, 'Detalhes do evento em breve'),
+      onTap: () =>
+          Navigator.of(context).pushNamed('/evento/detalhe', arguments: evento),
       borderRadius: AppRadius.mdRadius,
       child: SizedBox(
         height: 300,

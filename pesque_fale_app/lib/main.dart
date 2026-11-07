@@ -39,6 +39,8 @@ import 'features/clima/data/localizacao_service.dart';
 import 'features/clima/providers/clima_provider.dart';
 import 'features/configuracoes/presentation/configuracoes_page.dart';
 import 'features/configuracoes/providers/preferencias_provider.dart';
+import 'features/evento_detalhe/presentation/evento_detalhe_page.dart';
+import 'features/evento_detalhe/providers/evento_detalhe_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
 import 'features/feed/data/comentarios_repository.dart';
 import 'features/feed/data/comentarios_repository_http.dart';
@@ -427,6 +429,20 @@ class PesqueFaleApp extends StatelessWidget {
                 store: ctx.read<PublicacoesStore>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        if (settings.name == '/evento/detalhe') {
+          final args = settings.arguments;
+          return MaterialPageRoute<bool>(
+            settings: settings,
+            builder: (context) => ChangeNotifierProvider<EventoDetalheProvider>(
+              create: (ctx) => EventoDetalheProvider(
+                repository: ctx.read<EventosRepository>(),
+                eventoInicial: args is Evento ? args : null,
+                eventoId: args is String ? args : null,
+              ),
+              child: const EventoDetalhePage(),
             ),
           );
         }
