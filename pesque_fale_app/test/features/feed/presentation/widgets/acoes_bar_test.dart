@@ -78,27 +78,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // A fonte do flutter_test desenha cada glifo com 1em de largura
-        // (cerca do dobro da fonte real). Com escala 1.3 isso estoura a Row
-        // de contadores ("0 curtidas  0 comentários"), que está fora do
-        // escopo deste fix. Só esse overflow é tolerado aqui. A barra de
-        // ações é verificada pela geometria logo abaixo.
-        final erro = tester.takeException();
-        if (escala == 1.0) {
-          expect(erro, isNull);
-        } else {
-          expect(
-            erro,
-            anyOf(
-              isNull,
-              isA<FlutterError>().having(
-                (e) => e.message,
-                'message',
-                contains('overflowed'),
-              ),
-            ),
-          );
-        }
+        expect(tester.takeException(), isNull);
         _expectSemOverflow(tester, _linhaDeAcoes);
 
         expect(find.text('Curtir'), findsOneWidget);
@@ -107,4 +87,79 @@ void main() {
       });
     }
   }
+
+  group('linha de contadores com números grandes', () {
+    final grande = Publicacao(
+      id: 'pub-1',
+      autorId: 'autor-1',
+      autorNome: 'Pescador Um',
+      curtidasCount: 12345,
+      comentariosCount: 6789,
+      criadoEm: DateTime(2026, 1, 1),
+      atualizadoEm: DateTime(2026, 1, 1),
+    );
+
+    for (final (nomeTema, criarTema) in [
+      ('claro', () => AppTheme.light),
+      ('escuro', () => AppTheme.dark),
+    ]) {
+      for (final escala in escalas) {
+        testWidgets('tema $nomeTema, 360dp, fonte $escala: quebra linha '
+            'sem estourar', (tester) async {
+          tester.view.physicalSize = const Size(360, 800);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+          tester.platformDispatcher.textScaleFactorTestValue = escala;
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          var aberturas = 0;
+
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: criarTema(),
+              home: Scaffold(
+                body: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: AcoesBar(
+                    publicacao: grande,
+                    onComentarTap: () => aberturas++,
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+
+          final curtidas = find.text('12345 curtidas');
+          final comentarios = find.text('6789 comentários');
+          expect(curtidas, findsOneWidget);
+          expect(comentarios, findsOneWidget);
+
+          final barra = tester.getRect(find.byType(AcoesBar));
+          for (final texto in [curtidas, comentarios]) {
+            final caixa = tester.getRect(texto);
+            expect(caixa.left, greaterThanOrEqualTo(barra.left));
+            expect(caixa.right, lessThanOrEqualTo(barra.right + 0.5));
+            final paragrafo = tester.renderObject<RenderParagraph>(texto);
+            expect(paragrafo.didExceedMaxLines, isFalse);
+          }
+          expect(
+            tester.getRect(curtidas).left,
+            closeTo(barra.left + 12, 0.5),
+            reason: 'os contadores continuam alinhados à esquerda',
+          );
+
+          final alvo = find.ancestor(
+            of: comentarios,
+            matching: find.byType(InkWell),
+          );
+          expect(tester.getSize(alvo).height, greaterThanOrEqualTo(48));
+
+          await tester.tap(comentarios);
+          expect(aberturas, 1);
+        });
+      }
+    }
+  });
 }

@@ -34,33 +34,37 @@ class _AcoesBarState extends State<AcoesBar> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-          child: Row(
-            children: [
-              Text(
-                '${p.curtidasCount} curtida${p.curtidasCount != 1 ? 's' : ''}',
-                style: TextStyle(color: colors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(width: 12),
-              InkWell(
-                onTap: widget.onComentarTap,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: kMinInteractiveDimension,
-                  ),
-                  child: Center(
-                    widthFactor: 1,
-                    child: Text(
-                      '${p.comentariosCount} comentário${p.comentariosCount != 1 ? 's' : ''}',
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: 13,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  '${p.curtidasCount} curtida${p.curtidasCount != 1 ? 's' : ''}',
+                  style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                ),
+                InkWell(
+                  onTap: widget.onComentarTap,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: kMinInteractiveDimension,
+                    ),
+                    child: Center(
+                      widthFactor: 1,
+                      child: Text(
+                        '${p.comentariosCount} comentário${p.comentariosCount != 1 ? 's' : ''}',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Divider(height: 1, color: colors.border),
