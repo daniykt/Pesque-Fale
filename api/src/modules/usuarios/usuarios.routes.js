@@ -202,8 +202,15 @@ router.get('/:id/seguindo', authOpcional, getSeguindo);
  * /usuarios/{id}/publicacoes:
  *   get:
  *     summary: Listar publicações de um usuário
+ *     description: >-
+ *       Rota pública com autenticação opcional. Cada item vem no mesmo formato
+ *       do feed (GET /publicacoes), com os dados do autor. Com token, jaCurtiu
+ *       diz se o usuário logado curtiu; sem token (ou com token inválido),
+ *       jaCurtiu vem false e não há 401. O email do autor nunca é devolvido.
  *     tags: [Usuários]
- *     security: []
+ *     security:
+ *       - {}
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -220,11 +227,83 @@ router.get('/:id/seguindo', authOpcional, getSeguindo);
  *         schema:
  *           type: integer
  *           default: 12
+ *           maximum: 48
  *     responses:
  *       200:
- *         description: Lista paginada de publicações
+ *         description: Lista paginada de publicações, no mesmo formato do feed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       autorId:
+ *                         type: string
+ *                       autorNome:
+ *                         type: string
+ *                         example: Ana Pescadora
+ *                       autorUsername:
+ *                         type: string
+ *                         nullable: true
+ *                         example: ana_pesca
+ *                       autorFoto:
+ *                         type: string
+ *                         nullable: true
+ *                         example: https://res.cloudinary.com/...
+ *                       pontoId:
+ *                         type: string
+ *                         nullable: true
+ *                       descricao:
+ *                         type: string
+ *                         nullable: true
+ *                       imagemUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       localTexto:
+ *                         type: string
+ *                         nullable: true
+ *                       avaliacaoNota:
+ *                         type: number
+ *                         nullable: true
+ *                       tags:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       curtidasCount:
+ *                         type: integer
+ *                         example: 3
+ *                       comentariosCount:
+ *                         type: integer
+ *                         example: 1
+ *                       jaCurtiu:
+ *                         type: boolean
+ *                         description: false quando não autenticado.
+ *                         example: true
+ *                       criadoEm:
+ *                         type: string
+ *                         format: date-time
+ *                       atualizadoEm:
+ *                         type: string
+ *                         format: date-time
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     pagina:
+ *                       type: integer
+ *                     porPagina:
+ *                       type: integer
+ *       404:
+ *         description: Usuário não encontrado (USUARIO_NAO_ENCONTRADO)
  */
-router.get('/:id/publicacoes', listarPorUsuario);
+router.get('/:id/publicacoes', authOpcional, listarPorUsuario);
 
 /**
  * @swagger
