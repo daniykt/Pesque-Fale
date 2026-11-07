@@ -10,11 +10,13 @@ class CampoDescricao extends StatefulWidget {
     required this.valor,
     required this.onChanged,
     required this.limite,
+    this.dica = 'Conte como foi a pescaria, dicas do local...',
   });
 
   final String valor;
   final ValueChanged<String> onChanged;
   final int limite;
+  final String dica;
 
   @override
   State<CampoDescricao> createState() => _CampoDescricaoState();
@@ -54,7 +56,7 @@ class _CampoDescricaoState extends State<CampoDescricao> {
           maxLength: widget.limite,
           onChanged: widget.onChanged,
           decoration: InputDecoration(
-            hintText: 'Conte como foi a pescaria, dicas do local...',
+            hintText: widget.dica,
             border: OutlineInputBorder(
               borderRadius: AppRadius.mdRadius,
               borderSide: BorderSide(color: colors.border),

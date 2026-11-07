@@ -60,6 +60,7 @@ import 'features/feed/data/upload_publicacao_imagem_repository.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/aba_feed.dart';
+import 'features/feed/domain/evento.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/feed/providers/publicacoes_store.dart';
@@ -83,6 +84,8 @@ import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
 import 'features/nova_publicacao/presentation/nova_publicacao_page.dart';
 import 'features/nova_publicacao/providers/nova_publicacao_provider.dart';
+import 'features/novo_evento/presentation/novo_evento_page.dart';
+import 'features/novo_evento/providers/novo_evento_provider.dart';
 import 'features/notificacoes/data/notificacoes_api_client.dart';
 import 'features/notificacoes/data/notificacoes_repository.dart';
 import 'features/notificacoes/data/notificacoes_repository_http.dart';
@@ -424,6 +427,23 @@ class PesqueFaleApp extends StatelessWidget {
                 store: ctx.read<PublicacoesStore>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        if (settings.name == '/evento/novo' ||
+            settings.name == '/evento/editar') {
+          final evento = settings.name == '/evento/editar'
+              ? settings.arguments as Evento
+              : null;
+          return MaterialPageRoute<Evento>(
+            settings: settings,
+            builder: (context) => ChangeNotifierProvider<NovoEventoProvider>(
+              create: (ctx) => NovoEventoProvider(
+                repository: ctx.read<EventosRepository>(),
+                uploadRepository: ctx.read<UploadPublicacaoImagemRepository>(),
+                evento: evento,
+              ),
+              child: const NovoEventoPage(),
             ),
           );
         }

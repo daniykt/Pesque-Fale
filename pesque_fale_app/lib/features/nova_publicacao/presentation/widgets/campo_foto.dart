@@ -12,17 +12,21 @@ class CampoFoto extends StatelessWidget {
     required this.foto,
     required this.onEscolher,
     required this.onRemover,
+    this.fotoUrl,
   });
 
   final Uint8List? foto;
+  final String? fotoUrl;
   final VoidCallback onEscolher;
   final VoidCallback onRemover;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final bytes = foto;
+    final url = fotoUrl;
 
-    if (foto != null) {
+    if (bytes != null || url != null) {
       return AspectRatio(
         aspectRatio: 4 / 3,
         child: Stack(
@@ -30,7 +34,9 @@ class CampoFoto extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: AppRadius.mdRadius,
-              child: Image.memory(foto!, fit: BoxFit.cover),
+              child: bytes != null
+                  ? Image.memory(bytes, fit: BoxFit.cover)
+                  : Image.network(url!, fit: BoxFit.cover),
             ),
             Positioned(
               top: AppSpacing.xs,
@@ -57,7 +63,8 @@ class CampoFoto extends StatelessWidget {
       onTap: onEscolher,
       borderRadius: AppRadius.mdRadius,
       child: Container(
-        height: 160,
+        constraints: const BoxConstraints(minHeight: 160),
+        padding: const EdgeInsets.all(AppSpacing.md),
         width: double.infinity,
         decoration: BoxDecoration(
           border: Border.all(color: colors.border.withValues(alpha: 0.6)),
@@ -75,6 +82,7 @@ class CampoFoto extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Clique para adicionar uma foto',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -83,6 +91,7 @@ class CampoFoto extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'JPG, PNG, WEBP até 5MB',
+              textAlign: TextAlign.center,
               style: TextStyle(color: colors.textSecondary, fontSize: 12),
             ),
           ],
