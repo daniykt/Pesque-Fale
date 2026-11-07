@@ -452,6 +452,47 @@ class FeedProvider extends ChangeNotifier {
     _mesclarPaginaUm(aba);
   }
 
+  void inserirEvento(Evento evento) {
+    eventos = _ordenarEventos([
+      ...eventos.where((e) => e.id != evento.id),
+      evento,
+    ]);
+    _sincronizarEstadoEventos();
+  }
+
+  void atualizarEvento(Evento evento) {
+    if (!eventos.any((e) => e.id == evento.id)) return;
+    eventos = _ordenarEventos([
+      for (final e in eventos) e.id == evento.id ? evento : e,
+    ]);
+    _sincronizarEstadoEventos();
+  }
+
+  void removerEvento(String id) {
+    if (!eventos.any((e) => e.id == id)) return;
+    eventos = eventos.where((e) => e.id != id).toList();
+    _sincronizarEstadoEventos();
+  }
+
+  List<Evento> _ordenarEventos(List<Evento> lista) =>
+      lista..sort((a, b) => a.dataInicio.compareTo(b.dataInicio));
+
+  void _sincronizarEstadoEventos() {
+    final atual = estadoDe(AbaFeed.eventos).status;
+    final carregado =
+        atual == StatusAba.sucesso ||
+        atual == StatusAba.vazio ||
+        atual == StatusAba.carregandoMais;
+    if (carregado) {
+      _atualizarEstado(
+        AbaFeed.eventos,
+        eventos.isEmpty ? StatusAba.vazio : StatusAba.sucesso,
+      );
+    } else {
+      notifyListeners();
+    }
+  }
+
   void _onStoreMudou() {
     _idsParaVoce.removeWhere(store.foiRemovida);
     _idsSeguindo.removeWhere(store.foiRemovida);

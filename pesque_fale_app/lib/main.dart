@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/config/app_config.dart';
@@ -38,6 +39,8 @@ import 'features/clima/data/localizacao_service.dart';
 import 'features/clima/providers/clima_provider.dart';
 import 'features/configuracoes/presentation/configuracoes_page.dart';
 import 'features/configuracoes/providers/preferencias_provider.dart';
+import 'features/evento_detalhe/presentation/evento_detalhe_page.dart';
+import 'features/evento_detalhe/providers/evento_detalhe_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
 import 'features/feed/data/comentarios_repository.dart';
 import 'features/feed/data/comentarios_repository_http.dart';
@@ -59,6 +62,7 @@ import 'features/feed/data/upload_publicacao_imagem_repository.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_http.dart';
 import 'features/feed/data/upload_publicacao_imagem_repository_mock.dart';
 import 'features/feed/domain/aba_feed.dart';
+import 'features/feed/domain/evento.dart';
 import 'features/feed/domain/publicacao.dart';
 import 'features/feed/providers/feed_provider.dart';
 import 'features/feed/providers/publicacoes_store.dart';
@@ -82,6 +86,8 @@ import 'features/ponto_detalhe/data/avaliacoes_repository_http.dart';
 import 'features/ponto_detalhe/data/avaliacoes_repository_mock.dart';
 import 'features/nova_publicacao/presentation/nova_publicacao_page.dart';
 import 'features/nova_publicacao/providers/nova_publicacao_provider.dart';
+import 'features/novo_evento/presentation/novo_evento_page.dart';
+import 'features/novo_evento/providers/novo_evento_provider.dart';
 import 'features/notificacoes/data/notificacoes_api_client.dart';
 import 'features/notificacoes/data/notificacoes_repository.dart';
 import 'features/notificacoes/data/notificacoes_repository_http.dart';
@@ -162,7 +168,10 @@ void main() {
   final EventosRepository eventosRepository = AppConfig.useMock
       ? EventosRepositoryMock()
       : EventosRepositoryHttp(
-          apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
+          apiClient: EventosApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
         );
 
   final ConversasRepository conversasRepository = AppConfig.useMock
@@ -356,6 +365,9 @@ class PesqueFaleApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       initialRoute: '/cadastro',
       routes: {
         '/cadastro': (_) => const CadastroPage(),
@@ -417,6 +429,37 @@ class PesqueFaleApp extends StatelessWidget {
                 store: ctx.read<PublicacoesStore>(),
               ),
               child: PerfilDeOutroPage(usuarioId: usuarioId),
+            ),
+          );
+        }
+        if (settings.name == '/evento/detalhe') {
+          final args = settings.arguments;
+          return MaterialPageRoute<Object>(
+            settings: settings,
+            builder: (context) => ChangeNotifierProvider<EventoDetalheProvider>(
+              create: (ctx) => EventoDetalheProvider(
+                repository: ctx.read<EventosRepository>(),
+                eventoInicial: args is Evento ? args : null,
+                eventoId: args is String ? args : null,
+              ),
+              child: const EventoDetalhePage(),
+            ),
+          );
+        }
+        if (settings.name == '/evento/novo' ||
+            settings.name == '/evento/editar') {
+          final evento = settings.name == '/evento/editar'
+              ? settings.arguments as Evento
+              : null;
+          return MaterialPageRoute<Evento>(
+            settings: settings,
+            builder: (context) => ChangeNotifierProvider<NovoEventoProvider>(
+              create: (ctx) => NovoEventoProvider(
+                repository: ctx.read<EventosRepository>(),
+                uploadRepository: ctx.read<UploadPublicacaoImagemRepository>(),
+                evento: evento,
+              ),
+              child: const NovoEventoPage(),
             ),
           );
         }

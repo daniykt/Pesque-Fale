@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/aba_feed.dart';
+import '../domain/evento.dart';
 import '../domain/publicacao.dart';
 import '../providers/feed_provider.dart';
 import 'widgets/abas_scroll.dart';
@@ -126,9 +127,7 @@ class _EventosView extends StatelessWidget {
       case StatusAba.vazio:
         return RefreshIndicator(
           onRefresh: provider.pullRefresh,
-          child: const _CentroRolavel(
-            child: _MensagemCentralizada(texto: 'Nenhum evento no momento.'),
-          ),
+          child: const _CentroRolavel(child: _EventosVazio()),
         );
       case StatusAba.sucesso:
       case StatusAba.carregandoMais:
@@ -137,10 +136,78 @@ class _EventosView extends StatelessWidget {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(top: 16, bottom: 24),
-            child: EventosCarrossel(eventos: provider.eventos),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _BotaoCriarEvento(rotulo: 'Criar evento'),
+                ),
+                EventosCarrossel(eventos: provider.eventos),
+              ],
+            ),
           ),
         );
     }
+  }
+}
+
+class _EventosVazio extends StatelessWidget {
+  const _EventosVazio();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textos = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event_outlined, size: 56, color: colors.textSecondary),
+          const SizedBox(height: 16),
+          Text(
+            'Nenhum evento programado por enquanto.',
+            textAlign: TextAlign.center,
+            style: textos.bodyLarge?.copyWith(color: colors.textPrimary),
+          ),
+          const SizedBox(height: 24),
+          const _BotaoCriarEvento(rotulo: 'Criar o primeiro evento'),
+        ],
+      ),
+    );
+  }
+}
+
+class _BotaoCriarEvento extends StatelessWidget {
+  const _BotaoCriarEvento({required this.rotulo});
+
+  final String rotulo;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: () => _criarEvento(context),
+      icon: const Icon(Icons.add),
+      label: Text(rotulo),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(48, 52),
+        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
+
+  Future<void> _criarEvento(BuildContext context) async {
+    if (context.read<AuthProvider>().usuario == null) {
+      Navigator.of(context).pushNamed('/login');
+      return;
+    }
+    final feed = context.read<FeedProvider>();
+    final criado = await Navigator.of(
+      context,
+    ).pushNamed<Object?>('/evento/novo');
+    if (criado is Evento) feed.inserirEvento(criado);
   }
 }
 

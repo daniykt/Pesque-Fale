@@ -39,4 +39,36 @@ void main() {
 
     expect(find.byType(MaterialApp), findsOneWidget);
   });
+
+  testWidgets('App usa pt-BR nos textos padrão do Material', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(
+            create: (_) => AuthProvider(
+              repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+            ),
+          ),
+        ],
+        child: const PesqueFaleApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final contexto = tester.element(find.byType(Scaffold).first);
+    final textos = MaterialLocalizations.of(contexto);
+    expect(Localizations.localeOf(contexto), const Locale('pt', 'BR'));
+    expect(textos.cancelButtonLabel, 'Cancelar');
+    expect(textos.formatMonthYear(DateTime(2026, 11)), 'novembro de 2026');
+    expect(
+      textos.formatTimeOfDay(
+        const TimeOfDay(hour: 15, minute: 30),
+        alwaysUse24HourFormat: MediaQuery.of(contexto).alwaysUse24HourFormat,
+      ),
+      '15:30',
+    );
+  });
 }
