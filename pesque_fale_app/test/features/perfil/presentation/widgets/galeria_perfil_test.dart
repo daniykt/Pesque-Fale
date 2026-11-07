@@ -120,11 +120,9 @@ void main() {
       final segunda = pub('p2', 7);
       await montar(tester, publicacoes: [primeira, segunda]);
 
-      final itens = find.descendant(
-        of: find.byType(GridView),
-        matching: find.byType(GestureDetector),
+      final gesto = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('p2'))),
       );
-      final gesto = await tester.startGesture(tester.getCenter(itens.at(1)));
       await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
       await tester.pump();
       expect(find.text('7'), findsOneWidget);
