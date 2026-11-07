@@ -30,6 +30,12 @@ import 'features/chat/presentation/chat_page.dart';
 import 'features/chat/presentation/inbox_page.dart';
 import 'features/chat/providers/badge_mensagens_provider.dart';
 import 'features/chat/providers/inbox_provider.dart';
+import 'features/clima/data/clima_api_client.dart';
+import 'features/clima/data/clima_repository.dart';
+import 'features/clima/data/clima_repository_http.dart';
+import 'features/clima/data/clima_repository_mock.dart';
+import 'features/clima/data/localizacao_service.dart';
+import 'features/clima/providers/clima_provider.dart';
 import 'features/configuracoes/presentation/configuracoes_page.dart';
 import 'features/configuracoes/providers/preferencias_provider.dart';
 import 'features/feed/data/comentarios_api_client.dart';
@@ -196,6 +202,10 @@ void main() {
           ),
         );
 
+  final ClimaRepository climaRepository = AppConfig.useMock
+      ? ClimaRepositoryMock()
+      : ClimaRepositoryHttp(apiClient: ClimaApiClient());
+
   final publicacoesStore = PublicacoesStore();
 
   runApp(
@@ -233,6 +243,12 @@ void main() {
               previous!..rebindAuth(auth),
         ),
         Provider<PontosRepository>.value(value: pontosRepository),
+        ChangeNotifierProvider<ClimaProvider>(
+          create: (_) => ClimaProvider(
+            repository: climaRepository,
+            localizacao: LocalizacaoServiceGeolocator(),
+          ),
+        ),
         Provider<AvaliacoesRepository>.value(value: avaliacoesRepository),
         ChangeNotifierProvider(
           create: (_) =>

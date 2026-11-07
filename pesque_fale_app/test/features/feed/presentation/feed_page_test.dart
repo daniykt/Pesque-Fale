@@ -13,6 +13,11 @@ import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
 import 'package:pesque_fale_app/features/auth/domain/usuario.dart';
 import 'package:pesque_fale_app/features/auth/presentation/entrando/entrando_page.dart';
 import 'package:pesque_fale_app/features/auth/providers/auth_provider.dart';
+import 'package:pesque_fale_app/features/clima/data/clima_repository.dart';
+import 'package:pesque_fale_app/features/clima/data/localizacao_service.dart';
+import 'package:pesque_fale_app/features/clima/domain/clima.dart';
+import 'package:pesque_fale_app/features/clima/domain/condicao_clima.dart';
+import 'package:pesque_fale_app/features/clima/providers/clima_provider.dart';
 import 'package:pesque_fale_app/features/feed/data/comentarios_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/curtidas_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/eventos_repository.dart';
@@ -217,6 +222,33 @@ Publicacao _publicacaoSeguindo(String id) {
   );
 }
 
+class _FakeClimaRepository implements ClimaRepository {
+  int chamadas = 0;
+
+  @override
+  Future<Clima> buscarAtual({
+    required double latitude,
+    required double longitude,
+  }) async {
+    chamadas++;
+    return const Clima(
+      temperatura: 21.6,
+      umidade: 83,
+      ventoKmh: 7.2,
+      condicao: CondicaoClima.chuva,
+    );
+  }
+}
+
+class _FakeLocalizacao implements LocalizacaoService {
+  @override
+  Future<ResultadoLocalizacao> obter({required bool pedirPermissao}) async =>
+      const LocalizacaoObtida(latitude: -21.6, longitude: -48.36);
+
+  @override
+  Future<void> abrirConfiguracoes(MotivoSemLocalizacao motivo) async {}
+}
+
 Widget _harness({
   required AuthProvider authProvider,
   _FakePublicacoesRepository? publicacoes,
@@ -224,6 +256,7 @@ Widget _harness({
   _FakeEventosRepository? eventos,
   _FakePontosRepository? pontos,
   ThemeData? tema,
+  _FakeClimaRepository? clima,
 }) {
   final publicacoesRepo = publicacoes ?? _FakePublicacoesRepository();
   final realtimeManager = realtime ?? FakeRealtimeManager();
@@ -240,6 +273,12 @@ Widget _harness({
       Provider<ComentariosRepository>.value(value: comentariosRepo),
       Provider<EventosRepository>.value(value: eventosRepo),
       Provider<PontosRepository>.value(value: pontosRepo),
+      ChangeNotifierProvider<ClimaProvider>(
+        create: (_) => ClimaProvider(
+          repository: clima ?? _FakeClimaRepository(),
+          localizacao: _FakeLocalizacao(),
+        ),
+      ),
       ChangeNotifierProxyProvider<AuthProvider, FeedProvider>(
         create: (context) => FeedProvider(
           publicacoesRepo: publicacoesRepo,
@@ -567,19 +606,63 @@ void main() {
     );
   });
 
-  testWidgets('aba Dicas mostra clima e dica do dia hardcoded', (tester) async {
-    final authProvider = AuthProvider(
-      repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+  Future<_FakeClimaRepository> abrirDicas(WidgetTester tester) async {
+    final clima = _FakeClimaRepository();
+    await tester.pumpWidget(
+      _harness(
+        authProvider: AuthProvider(
+          repository: AuthRepositoryMock(tokenStorage: TokenStorage()),
+        ),
+        clima: clima,
+      ),
     );
-
-    await tester.pumpWidget(_harness(authProvider: authProvider));
     await tester.pumpAndSettle();
+    expect(clima.chamadas, 0, reason: 'a aba Dicas ainda não foi aberta');
+    await tester.tap(find.text('Dicas'));
+    await tester.pumpAndSettle();
+    return clima;
+  }
 
+  testWidgets('aba Dicas busca o clima ao abrir e mostra o clima real', (
+    tester,
+  ) async {
+    final clima = await abrirDicas(tester);
+
+    expect(clima.chamadas, 1);
+    expect(find.text('Clima agora'), findsOneWidget);
+    expect(find.text('22°C'), findsOneWidget);
+    expect(find.text('Chuva'), findsOneWidget);
+    expect(find.text('Vento: 7 km/h'), findsOneWidget);
+    expect(find.text('Umidade: 83%'), findsOneWidget);
+    expect(find.text('28°C'), findsNothing);
+    expect(find.textContaining('Melhor período'), findsNothing);
+    expect(find.textContaining('Condições ótimas'), findsNothing);
+    expect(find.text('Dica do dia'), findsOneWidget);
+  });
+
+  testWidgets('sair e voltar logo para a aba Dicas reaproveita o clima', (
+    tester,
+  ) async {
+    final clima = await abrirDicas(tester);
+
+    await tester.tap(find.text('Eventos'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Dicas'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Clima Agora'), findsOneWidget);
-    expect(find.text('Dica do dia'), findsOneWidget);
+    expect(clima.chamadas, 1);
+    expect(find.text('22°C'), findsOneWidget);
+  });
+
+  testWidgets('puxar para atualizar na aba Dicas busca o clima de novo', (
+    tester,
+  ) async {
+    final clima = await abrirDicas(tester);
+
+    await tester.fling(find.text('Clima agora'), const Offset(0, 400), 1000);
+    await tester.pumpAndSettle();
+
+    expect(clima.chamadas, 2);
   });
 
   testWidgets('abrir o menu de comentários mostra o estado vazio', (
