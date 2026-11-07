@@ -16,7 +16,10 @@ const router = Router();
  *         name: futuros
  *         schema:
  *           type: boolean
- *         description: true para listar apenas eventos futuros
+ *         description: >
+ *           true para listar só eventos futuros ou em andamento (fim, ou início
+ *           quando não há fim, a partir de agora), do mais próximo para o mais
+ *           distante. Sem o parâmetro, lista todos do mais recente para o mais antigo.
  *       - in: query
  *         name: pagina
  *         schema:
@@ -43,18 +46,25 @@ const router = Router();
  *             properties:
  *               titulo:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 200
  *                 example: Campeonato de Pesca de Matão 2026
  *               descricao:
  *                 type: string
  *               dataInicio:
  *                 type: string
  *                 format: date-time
+ *                 description: "ISO-8601 com fuso: Z ou offset como -03:00. É convertida e gravada em UTC; data sem fuso é recusada."
  *                 example: "2026-08-15T08:00:00Z"
  *               dataFim:
  *                 type: string
  *                 format: date-time
+ *                 nullable: true
+ *                 description: "ISO-8601 com fuso, como dataInicio. Igual ou posterior a dataInicio."
+ *                 example: "2026-08-15T14:00:00Z"
  *               localTexto:
  *                 type: string
+ *                 maxLength: 150
  *                 example: Lago Azul, Matão-SP
  *               pontoId:
  *                 type: string
@@ -63,6 +73,8 @@ const router = Router();
  *     responses:
  *       201:
  *         description: Evento criado
+ *       400:
+ *         description: VALIDATION_ERROR (título, local ou datas inválidos, ou fim antes do início)
  */
 router.get('/', listar);
 router.post('/', authMiddleware, criar);
@@ -94,9 +106,42 @@ router.post('/', authMiddleware, criar);
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: >
+ *               Só os campos enviados mudam, com as mesmas regras do POST. Se vier
+ *               só uma das datas, ela é comparada com a outra já salva.
+ *             properties:
+ *               titulo:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 200
+ *               descricao:
+ *                 type: string
+ *               dataInicio:
+ *                 type: string
+ *                 format: date-time
+ *                 description: "ISO-8601 com fuso, gravada em UTC"
+ *               dataFim:
+ *                 type: string
+ *                 format: date-time
+ *                 nullable: true
+ *                 description: "ISO-8601 com fuso, gravada em UTC; null remove o fim"
+ *               localTexto:
+ *                 type: string
+ *                 maxLength: 150
+ *               pontoId:
+ *                 type: string
+ *               imagemUrl:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Evento atualizado
+ *       400:
+ *         description: VALIDATION_ERROR (mesmas regras do POST)
  *       403:
  *         description: Sem permissão
  *   delete:

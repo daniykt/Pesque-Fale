@@ -2,22 +2,11 @@ const pool = require('../../config/database');
 
 async function criar(req, res) {
   const organizadorId = req.usuario.id;
-  const { titulo, descricao, pontoId, dataInicio, dataFim, imagemUrl, localTexto } = req.body;
+  const { titulo, descricao, pontoId, imagemUrl, localTexto } = req.body;
 
-  if (!titulo || titulo.length < 2) {
-    return res.status(400).json({
-      error: 'VALIDATION_ERROR',
-      message: 'Verifique os campos.',
-      details: [{ campo: 'titulo', mensagem: 'Título deve ter pelo menos 2 caracteres.' }],
-    });
-  }
-
-  if (!dataInicio) {
-    return res.status(400).json({
-      error: 'VALIDATION_ERROR',
-      message: 'Verifique os campos.',
-      details: [{ campo: 'dataInicio', mensagem: 'Data de início é obrigatória.' }],
-    });
+  const { erros, datas } = _validar(req.body, { exigirObrigatorios: true });
+  if (erros.length > 0) {
+    return _erroValidacao(res, erros);
   }
 
   try {
@@ -26,7 +15,7 @@ async function criar(req, res) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [titulo, descricao ?? null, pontoId ?? null, organizadorId,
-       dataInicio, dataFim ?? null, imagemUrl ?? null, localTexto ?? null]
+       datas.dataInicio, datas.dataFim ?? null, imagemUrl ?? null, localTexto ?? null]
     );
 
     return res.status(201).json({ data: _format(result.rows[0]) });
@@ -47,7 +36,7 @@ async function listar(req, res) {
   let i = 1;
 
   if (futuros === 'true') {
-    conditions.push(`data_inicio >= NOW()`);
+    conditions.push(`COALESCE(data_fim, data_inicio) >= NOW()`);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -60,7 +49,7 @@ async function listar(req, res) {
          FROM eventos e
          JOIN usuarios u ON u.id = e.organizador_id
          ${where}
-         ORDER BY e.data_inicio DESC
+         ORDER BY e.data_inicio ${futuros === 'true' ? 'ASC' : 'DESC'}
          LIMIT $${i++} OFFSET $${i++}`,
         [...values, porPagina, offset]
       ),
@@ -106,7 +95,7 @@ async function atualizar(req, res) {
   const usuarioId = req.usuario.id;
 
   try {
-    const existe = await pool.query('SELECT organizador_id FROM eventos WHERE id = $1', [id]);
+    const existe = await pool.query('SELECT organizador_id, data_inicio, data_fim FROM eventos WHERE id = $1', [id]);
     if (existe.rows.length === 0) {
       return res.status(404).json({ error: 'EVENTO_NAO_ENCONTRADO', message: 'Evento não encontrado.' });
     }
@@ -114,7 +103,12 @@ async function atualizar(req, res) {
       return res.status(403).json({ error: 'FORBIDDEN', message: 'Você não tem permissão para editar este evento.' });
     }
 
-    const { titulo, descricao, pontoId, dataInicio, dataFim, imagemUrl, localTexto } = req.body;
+    const { erros, datas } = _validar(req.body, { salvo: existe.rows[0] });
+    if (erros.length > 0) {
+      return _erroValidacao(res, erros);
+    }
+
+    const { titulo, descricao, pontoId, imagemUrl, localTexto } = req.body;
     const fields = [];
     const values = [];
     let i = 1;
@@ -122,8 +116,8 @@ async function atualizar(req, res) {
     if (titulo !== undefined) { fields.push(`titulo = $${i++}`); values.push(titulo); }
     if (descricao !== undefined) { fields.push(`descricao = $${i++}`); values.push(descricao); }
     if (pontoId !== undefined) { fields.push(`ponto_id = $${i++}`); values.push(pontoId); }
-    if (dataInicio !== undefined) { fields.push(`data_inicio = $${i++}`); values.push(dataInicio); }
-    if (dataFim !== undefined) { fields.push(`data_fim = $${i++}`); values.push(dataFim); }
+    if (datas.dataInicio !== undefined) { fields.push(`data_inicio = $${i++}`); values.push(datas.dataInicio); }
+    if (datas.dataFim !== undefined) { fields.push(`data_fim = $${i++}`); values.push(datas.dataFim); }
     if (imagemUrl !== undefined) { fields.push(`imagem_url = $${i++}`); values.push(imagemUrl); }
     if (localTexto !== undefined) { fields.push(`local_texto = $${i++}`); values.push(localTexto); }
 
@@ -165,6 +159,104 @@ async function deletar(req, res) {
     console.error(err);
     return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
   }
+}
+
+const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,6}))?)?(Z|[+-]\d{2}:\d{2})?$/;
+
+function _lerData(valor) {
+  if (typeof valor !== 'string') return { erro: 'invalida' };
+  const partes = valor.match(DATA_ISO);
+  if (!partes) return { erro: 'invalida' };
+  const [ano, mes, dia, hora, minuto, segundo] = partes.slice(1, 7).map(v => Number(v ?? 0));
+  const milissegundos = Number((partes[7] ?? '').padEnd(3, '0').slice(0, 3));
+  const fuso = partes[8];
+  const relogio = new Date(Date.UTC(ano, mes - 1, dia, hora, minuto, segundo, milissegundos));
+  const confere =
+    relogio.getUTCFullYear() === ano &&
+    relogio.getUTCMonth() === mes - 1 &&
+    relogio.getUTCDate() === dia &&
+    relogio.getUTCHours() === hora &&
+    relogio.getUTCMinutes() === minuto &&
+    relogio.getUTCSeconds() === segundo;
+  if (!confere) return { erro: 'invalida' };
+  if (!fuso) return { erro: 'semFuso' };
+  if (fuso === 'Z') return { data: relogio };
+  const [horasFuso, minutosFuso] = fuso.slice(1).split(':').map(Number);
+  if (horasFuso > 14 || minutosFuso > 59) return { erro: 'invalida' };
+  const sinal = fuso[0] === '-' ? -1 : 1;
+  const deslocamentoMs = sinal * (horasFuso * 60 + minutosFuso) * 60000;
+  return { data: new Date(relogio.getTime() - deslocamentoMs) };
+}
+
+function _mensagemData(rotulo, erro) {
+  if (erro === 'semFuso') {
+    return `Data de ${rotulo} inválida. Informe o fuso (ex.: 2026-11-20T11:00:00Z).`;
+  }
+  return `Data de ${rotulo} inválida. Use o formato ISO-8601 com fuso (ex.: 2026-11-20T11:00:00Z).`;
+}
+
+function _validar(body, { exigirObrigatorios = false, salvo = null } = {}) {
+  const { titulo, localTexto, dataInicio, dataFim } = body;
+  const erros = [];
+  const datas = {};
+
+  if (exigirObrigatorios || titulo !== undefined) {
+    if (typeof titulo !== 'string' || titulo.trim().length < 2 || titulo.length > 200) {
+      erros.push({ campo: 'titulo', mensagem: 'Título deve ter entre 2 e 200 caracteres.' });
+    }
+  }
+
+  if (localTexto !== undefined && localTexto !== null) {
+    if (typeof localTexto !== 'string' || localTexto.length > 150) {
+      erros.push({ campo: 'localTexto', mensagem: 'Local deve ter no máximo 150 caracteres.' });
+    }
+  }
+
+  let inicio = salvo ? salvo.data_inicio : null;
+  if (exigirObrigatorios || dataInicio !== undefined) {
+    if (dataInicio === undefined || dataInicio === null || dataInicio === '') {
+      erros.push({ campo: 'dataInicio', mensagem: 'Data de início é obrigatória.' });
+      inicio = null;
+    } else {
+      const lida = _lerData(dataInicio);
+      inicio = lida.data ?? null;
+      if (lida.erro) {
+        erros.push({ campo: 'dataInicio', mensagem: _mensagemData('início', lida.erro) });
+      } else {
+        datas.dataInicio = inicio.toISOString();
+      }
+    }
+  }
+
+  let fim = salvo ? salvo.data_fim : null;
+  if (dataFim !== undefined) {
+    if (dataFim === null) {
+      fim = null;
+      datas.dataFim = null;
+    } else {
+      const lida = _lerData(dataFim);
+      fim = lida.data ?? null;
+      if (lida.erro) {
+        erros.push({ campo: 'dataFim', mensagem: _mensagemData('fim', lida.erro) });
+      } else {
+        datas.dataFim = fim.toISOString();
+      }
+    }
+  }
+
+  if (inicio && fim && fim < inicio) {
+    erros.push({ campo: 'dataFim', mensagem: 'A data de fim deve ser igual ou posterior à data de início.' });
+  }
+
+  return { erros, datas };
+}
+
+function _erroValidacao(res, erros) {
+  return res.status(400).json({
+    error: 'VALIDATION_ERROR',
+    message: 'Verifique os campos.',
+    details: erros,
+  });
 }
 
 function _format(e) {
