@@ -1,8 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pesque_fale_app/core/theme/app_colors.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/perfil/presentation/widgets/galeria_perfil.dart';
@@ -275,8 +276,9 @@ void main() {
           tester.getSemantics(find.byKey(ValueKey(id))).getSemanticsData();
 
       // Cada item é um nó só: botão, com toque (abrir) e toque longo
-      // (contadores). O rótulo começa pelo que identifica o item; depois
-      // vem o que o conteúdo anuncia (ex.: "Imagem indisponível").
+      // (contadores). Os três são posts sem foto: o quadrado de texto fica
+      // fora da semântica, então o rótulo é exatamente o do item, sem
+      // "Imagem indisponível" e sem a descrição lida de novo.
       final rotulos = <String, String>{
         'p1': 'Abrir publicação: Tilápia no fim da tarde',
         'p2': 'Abrir publicação: Pescaria no rio Mogi',
@@ -284,7 +286,7 @@ void main() {
       };
       for (final MapEntry(key: id, value: rotulo) in rotulos.entries) {
         final dados = dadosDo(id);
-        expect(dados.label, startsWith(rotulo), reason: id);
+        expect(dados.label, rotulo, reason: id);
         expect(dados.flagsCollection.isButton, isTrue, reason: id);
         expect(dados.hasAction(SemanticsAction.tap), isTrue, reason: id);
         expect(dados.hasAction(SemanticsAction.longPress), isTrue, reason: id);
@@ -296,6 +298,269 @@ void main() {
       expect(
         labels.where((l) => l.split('\n').first == 'Abrir publicação'),
         isEmpty,
+      );
+      semantics.dispose();
+    });
+  });
+
+  group('publicação sem foto e foto com erro', () {
+    const descricaoLonga =
+        'Saímos cedo para o rio Mogi, o dia estava nublado e a água turva, '
+        'mas depois do almoço o tucunaré começou a bater forte na isca de '
+        'superfície e a família inteira pegou pelo menos um peixe bom.';
+
+    Publicacao pub(
+      String id, {
+      String? descricao,
+      String? imagemUrl,
+      int curtidas = 0,
+    }) => Publicacao(
+      id: id,
+      autorId: 'u1',
+      autorNome: 'Ana',
+      descricao: descricao,
+      imagemUrl: imagemUrl,
+      curtidasCount: curtidas,
+      comentariosCount: 2,
+      criadoEm: DateTime(2026, 1, 1),
+      atualizadoEm: DateTime(2026, 1, 1),
+    );
+
+    Future<List<RouteSettings>> montarGrade(
+      WidgetTester tester,
+      List<Publicacao> publicacoes, {
+      ThemeData? tema,
+    }) async {
+      final abertas = <RouteSettings>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: tema ?? AppTheme.light,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: GaleriaPerfil(
+                publicacoes: publicacoes,
+                isOwnProfile: true,
+              ),
+            ),
+          ),
+          onGenerateRoute: (settings) {
+            abertas.add(settings);
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (_) => const Scaffold(body: Text('Detalhe aberto')),
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      return abertas;
+    }
+
+    Finder dentroDo(String id, Finder finder) =>
+        find.descendant(of: find.byKey(ValueKey(id)), matching: finder);
+
+    // O RichText do Text da descrição (o Icon também desenha um RichText).
+    RenderParagraph paragrafoDaDescricao(WidgetTester tester, String id) =>
+        tester.renderObject<RenderParagraph>(
+          find.descendant(
+            of: dentroDo(id, find.byType(Text)),
+            matching: find.byType(RichText),
+          ),
+        );
+
+    // Tema criado dentro do teste (ver o comentário do grupo anterior).
+    for (final (nomeTema, criarTema, cores) in [
+      ('claro', () => AppTheme.light, AppColors.light),
+      ('escuro', () => AppTheme.dark, AppColors.dark),
+    ]) {
+      testWidgets('sem foto: quadrado de texto com a descrição e o ícone '
+          '(tema $nomeTema)', (tester) async {
+        await montarGrade(tester, [
+          pub('p1', descricao: 'Pescaria no rio Mogi'),
+        ], tema: criarTema());
+
+        expect(dentroDo('p1', find.text('Pescaria no rio Mogi')), findsOne);
+        final icone = tester.widget<Icon>(
+          dentroDo('p1', find.byIcon(Icons.notes)),
+        );
+        expect(icone.color, cores.textSecondary);
+        expect(find.byType(ImagemIndisponivel), findsNothing);
+        expect(find.byType(Image), findsNothing);
+
+        // Fundo de superfície com contorno, para se destacar do fundo da
+        // grade, que é o background do tema.
+        final decoracoes = tester
+            .widgetList<DecoratedBox>(dentroDo('p1', find.byType(DecoratedBox)))
+            .map((d) => d.decoration)
+            .whereType<BoxDecoration>();
+        expect(
+          decoracoes.any(
+            (d) =>
+                d.color == cores.surface &&
+                d.border == Border.all(color: cores.border),
+          ),
+          isTrue,
+        );
+        expect(cores.surface, isNot(cores.background));
+
+        final texto = tester.widget<Text>(
+          dentroDo('p1', find.text('Pescaria no rio Mogi')),
+        );
+        expect(texto.style?.color, cores.textPrimary);
+        expect(
+          texto.style?.fontSize,
+          criarTema().textTheme.bodySmall?.fontSize,
+        );
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('foto que falha ao carregar mostra Imagem indisponível '
+          '(tema $nomeTema)', (tester) async {
+        await montarGrade(tester, [
+          pub(
+            'p1',
+            descricao: 'Pescaria no rio Mogi',
+            imagemUrl:
+                'https://res.cloudinary.com/demo/image/upload/quebrada.jpg',
+          ),
+        ], tema: criarTema());
+
+        expect(dentroDo('p1', find.byType(Image)), findsOneWidget);
+        expect(dentroDo('p1', find.byType(ImagemIndisponivel)), findsOne);
+        expect(find.byIcon(Icons.notes), findsNothing);
+        expect(find.text('Pescaria no rio Mogi'), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('sem foto e sem descrição: só o ícone, centralizado '
+          '(tema $nomeTema)', (tester) async {
+        await montarGrade(tester, [pub('p1')], tema: criarTema());
+
+        final icone = dentroDo('p1', find.byIcon(Icons.notes));
+        expect(icone, findsOneWidget);
+        expect(dentroDo('p1', find.byType(Text)), findsNothing);
+        expect(find.byType(ImagemIndisponivel), findsNothing);
+        expect(
+          tester.getCenter(icone),
+          tester.getCenter(find.byKey(const ValueKey('p1'))),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('descrição longa: no máximo 4 linhas, com reticências', (
+      tester,
+    ) async {
+      await montarGrade(tester, [pub('p1', descricao: descricaoLonga)]);
+
+      final texto = tester.widget<Text>(dentroDo('p1', find.byType(Text)));
+      expect(texto.maxLines, 4);
+      expect(texto.overflow, TextOverflow.ellipsis);
+      final paragrafo = paragrafoDaDescricao(tester, 'p1');
+      expect(paragrafo.didExceedMaxLines, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'em 360dp com fonte 1.3: menos linhas, inteiras e sem estouro',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+        await montarGrade(tester, [pub('p1', descricao: descricaoLonga)]);
+
+        final texto = tester.widget<Text>(dentroDo('p1', find.byType(Text)));
+        expect(texto.maxLines, inInclusiveRange(1, 3));
+
+        // As linhas mostradas cabem inteiras na área do texto: a altura de
+        // que o parágrafo precisa (já limitado pelo maxLines) não passa da
+        // altura disponível, então a última linha não sai cortada.
+        final paragrafo = paragrafoDaDescricao(tester, 'p1');
+        final alturaNecessaria = paragrafo.getMinIntrinsicHeight(
+          paragrafo.size.width,
+        );
+        expect(
+          alturaNecessaria,
+          lessThanOrEqualTo(paragrafo.constraints.maxHeight),
+        );
+        expect(paragrafo.didExceedMaxLines, isTrue);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('quadrado de texto abre o detalhe ao tocar', (tester) async {
+      final abertas = await montarGrade(tester, [
+        pub('p1', descricao: 'Tilápia no fim da tarde'),
+        pub('p2', descricao: 'Pescaria no rio Mogi'),
+      ]);
+      expect(dentroDo('p2', find.byIcon(Icons.notes)), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('p2')));
+      await tester.pumpAndSettle();
+
+      expect(abertas, hasLength(1));
+      expect(abertas.single.name, '/publicacao/detalhe');
+      expect((abertas.single.arguments! as Publicacao).id, 'p2');
+    });
+
+    testWidgets('quadrado de texto mostra os contadores no toque longo', (
+      tester,
+    ) async {
+      final abertas = await montarGrade(tester, [
+        pub('p1', descricao: 'Pescaria no rio Mogi', curtidas: 7),
+      ]);
+
+      final gesto = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('p1'))),
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await tester.pump();
+
+      expect(find.text('7'), findsOneWidget);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+
+      await gesto.up();
+      await tester.pumpAndSettle();
+      expect(find.text('7'), findsNothing);
+      expect(abertas, isEmpty);
+    });
+
+    testWidgets('semântica: só o rótulo do item, sem Imagem indisponível e '
+        'sem a descrição repetida', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await montarGrade(tester, [
+        pub('p1', descricao: descricaoLonga),
+        pub('p2'),
+      ]);
+
+      final rotuloComDescricao = tester
+          .getSemantics(find.byKey(const ValueKey('p1')))
+          .getSemanticsData()
+          .label;
+      expect(
+        rotuloComDescricao,
+        rotuloItemGaleria(
+          pub('p1', descricao: descricaoLonga),
+          posicao: 1,
+          total: 2,
+        ),
+      );
+      expect(rotuloComDescricao, isNot(contains('Imagem indisponível')));
+      // A descrição entra uma vez só (o começo, no rótulo).
+      expect('Saímos cedo'.allMatches(rotuloComDescricao), hasLength(1));
+
+      final rotuloSemDescricao = tester
+          .getSemantics(find.byKey(const ValueKey('p2')))
+          .getSemanticsData()
+          .label;
+      expect(rotuloSemDescricao, 'Abrir publicação 2 de 2');
+
+      expect(
+        find.bySemanticsLabel(RegExp('Imagem indisponível')),
+        findsNothing,
       );
       semantics.dispose();
     });
