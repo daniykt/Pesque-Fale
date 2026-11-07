@@ -163,80 +163,85 @@ class _ConteudoDetalhe extends StatelessWidget {
         authProvider: authProvider,
         onCountChange: detalhe.aplicarDeltaComentarios,
       )..carregarInicial(),
-      child: Column(
-        children: [
-          Expanded(
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                final metrics = notification.metrics;
-                if (metrics.pixels >= metrics.maxScrollExtent - 200) {
-                  context.read<ComentariosProvider>().carregarMais();
-                }
-                return false;
-              },
-              child: SingleChildScrollView(
-                controller: scrollController,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (publicacao.imagemUrl != null)
-                      _ImagemPost(imagemUrl: publicacao.imagemUrl!),
-                    _HeaderAutor(publicacao: publicacao),
-                    if (publicacao.localTexto != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: LocalComPin(
-                          texto: publicacao.localTexto!,
-                          onTap: publicacao.pontoId != null
-                              ? () => Navigator.pushNamed(
-                                  context,
-                                  '/pontos',
-                                  arguments: publicacao.pontoId,
-                                )
-                              : null,
+      // O Builder dá um context abaixo do ComentariosProvider criado acima.
+      // Com o context do _ConteudoDetalhe, a leitura no onNotification não
+      // acha o provider e lança a cada rolagem, quebrando os toques (#318).
+      child: Builder(
+        builder: (context) => Column(
+          children: [
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  final metrics = notification.metrics;
+                  if (metrics.pixels >= metrics.maxScrollExtent - 200) {
+                    context.read<ComentariosProvider>().carregarMais();
+                  }
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (publicacao.imagemUrl != null)
+                        _ImagemPost(imagemUrl: publicacao.imagemUrl!),
+                      _HeaderAutor(publicacao: publicacao),
+                      if (publicacao.localTexto != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          child: LocalComPin(
+                            texto: publicacao.localTexto!,
+                            onTap: publicacao.pontoId != null
+                                ? () => Navigator.pushNamed(
+                                    context,
+                                    '/pontos',
+                                    arguments: publicacao.pontoId,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      if (publicacao.avaliacaoNota != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          child: EstrelasReadonly(
+                            nota: publicacao.avaliacaoNota!,
+                            tamanho: 28,
+                          ),
+                        ),
+                      if (publicacao.descricao != null &&
+                          publicacao.descricao!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                          child: Text(
+                            publicacao.descricao!,
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      if (publicacao.tags.isNotEmpty)
+                        _TagsWrap(tags: publicacao.tags, colors: colors),
+                      AcoesBar(
+                        publicacao: publicacao,
+                        onComentarTap: onComentarTap,
+                      ),
+                      Divider(height: 1, color: colors.border),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: ComentariosLista(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
                         ),
                       ),
-                    if (publicacao.avaliacaoNota != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: EstrelasReadonly(
-                          nota: publicacao.avaliacaoNota!,
-                          tamanho: 28,
-                        ),
-                      ),
-                    if (publicacao.descricao != null &&
-                        publicacao.descricao!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                        child: Text(
-                          publicacao.descricao!,
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                      ),
-                    if (publicacao.tags.isNotEmpty)
-                      _TagsWrap(tags: publicacao.tags, colors: colors),
-                    AcoesBar(
-                      publicacao: publicacao,
-                      onComentarTap: onComentarTap,
-                    ),
-                    Divider(height: 1, color: colors.border),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: ComentariosLista(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          SafeArea(
-            top: false,
-            child: ComentarioInputBar(focusNode: comentarioFocusNode),
-          ),
-        ],
+            SafeArea(
+              top: false,
+              child: ComentarioInputBar(focusNode: comentarioFocusNode),
+            ),
+          ],
+        ),
       ),
     );
   }
