@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/estado_centralizado_rolavel.dart';
+import '../../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../providers/pesquisa_locais_provider.dart';
 import 'ponto_card.dart';
 import 'skeletons/ponto_card_skeleton.dart';
@@ -62,7 +63,12 @@ class LocaisListaView extends StatelessWidget {
         );
       case PesquisaLocaisStatus.sucesso:
         return ListView.separated(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            BotaoAjudaAssistente.espacoInferiorListas,
+          ),
           itemCount: provider.pontos.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, index) {

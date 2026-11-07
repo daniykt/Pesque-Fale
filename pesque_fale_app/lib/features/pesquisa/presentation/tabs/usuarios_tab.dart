@@ -5,6 +5,7 @@ import '../../../../core/router/navegacao_perfil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/estado_centralizado_rolavel.dart';
+import '../../../assistente/presentation/widgets/botao_ajuda_assistente.dart';
 import '../../providers/pesquisa_usuarios_provider.dart';
 import '../widgets/busca_bar.dart';
 import '../widgets/skeletons/usuario_card_skeleton.dart';
@@ -89,7 +90,11 @@ class _Conteudo extends StatelessWidget {
         );
       case PesquisaUsuariosStatus.sucesso:
         return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: BotaoAjudaAssistente.espacoInferiorListas,
+          ),
           itemCount: provider.usuarios.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
