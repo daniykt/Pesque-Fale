@@ -37,15 +37,15 @@ class Evento {
       organizadorNome: json['organizadorNome']?.toString() ?? '',
       organizadorFoto: json['organizadorFoto'] as String?,
       dataInicio:
-          DateTime.tryParse(json['dataInicio']?.toString() ?? '') ??
+          DateTime.tryParse(json['dataInicio']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       dataFim: json['dataFim'] != null
-          ? DateTime.tryParse(json['dataFim'].toString())
+          ? DateTime.tryParse(json['dataFim'].toString())?.toLocal()
           : null,
       imagemUrl: json['imagemUrl'] as String?,
       localTexto: json['localTexto'] as String?,
       criadoEm:
-          DateTime.tryParse(json['criadoEm']?.toString() ?? '') ??
+          DateTime.tryParse(json['criadoEm']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
     );
   }

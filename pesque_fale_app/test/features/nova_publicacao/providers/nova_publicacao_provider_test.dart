@@ -10,6 +10,7 @@ import 'package:pesque_fale_app/features/feed/data/curtidas_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/eventos_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/publicacoes_repository.dart';
 import 'package:pesque_fale_app/features/feed/data/upload_publicacao_imagem_repository.dart';
+import 'package:pesque_fale_app/features/feed/domain/dados_evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/evento.dart';
 import 'package:pesque_fale_app/features/feed/domain/publicacao.dart';
 import 'package:pesque_fale_app/features/feed/providers/feed_provider.dart';
@@ -100,6 +101,19 @@ class _FakeEventosRepository implements EventosRepository {
   @override
   Future<List<Evento>> listar({bool futuros = true, int limite = 10}) async =>
       const [];
+
+  @override
+  Future<Evento> buscarPorId(String id) => throw UnimplementedError();
+
+  @override
+  Future<Evento> criar(DadosEvento dados) => throw UnimplementedError();
+
+  @override
+  Future<Evento> editar(String id, DadosEvento dados) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> excluir(String id) => throw UnimplementedError();
 }
 
 class _FakePontosRepository implements PontosRepository {

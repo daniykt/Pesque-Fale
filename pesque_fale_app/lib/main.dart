@@ -162,7 +162,10 @@ void main() {
   final EventosRepository eventosRepository = AppConfig.useMock
       ? EventosRepositoryMock()
       : EventosRepositoryHttp(
-          apiClient: EventosApiClient(baseUrl: AppConfig.apiBaseUrl),
+          apiClient: EventosApiClient(
+            baseUrl: AppConfig.apiBaseUrl,
+            tokenStorage: tokenStorage,
+          ),
         );
 
   final ConversasRepository conversasRepository = AppConfig.useMock
