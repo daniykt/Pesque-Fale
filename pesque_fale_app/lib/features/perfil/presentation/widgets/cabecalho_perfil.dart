@@ -33,10 +33,7 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
 
   Future<void> _selecionarEEnviar({required bool banner}) async {
     final modo = banner ? ModoCrop.banner : ModoCrop.avatar;
-    final bytes = await CropImagemHelper.escolherECortar(
-      context,
-      modo: modo,
-    );
+    final bytes = await CropImagemHelper.escolherECortar(context, modo: modo);
     if (bytes == null || !mounted) return;
 
     setState(() {
@@ -99,16 +96,12 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
                   fit: StackFit.expand,
                   children: [
                     usuario.temBanner
-                        ? Image.network(usuario.banner!, fit: BoxFit.cover)
-                        : DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [colors.primary, colors.surface],
-                              ),
-                            ),
-                          ),
+                        ? Image.network(
+                            usuario.banner!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const _BannerPadrao(),
+                          )
+                        : const _BannerPadrao(),
                     if (_enviandoBanner)
                       const ColoredBox(
                         color: Colors.black38,
@@ -142,6 +135,27 @@ class _CabecalhoPerfilState extends State<CabecalhoPerfil> {
           child: InfoUsuario(usuario: usuario),
         ),
       ],
+    );
+  }
+}
+
+/// Gradiente usado quando não há banner ou quando a imagem não carrega
+/// (URL quebrada ou valor inválido salvo no banco).
+class _BannerPadrao extends StatelessWidget {
+  const _BannerPadrao() : super(key: const ValueKey('banner-padrao'));
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primary, colors.surface],
+        ),
+      ),
     );
   }
 }
