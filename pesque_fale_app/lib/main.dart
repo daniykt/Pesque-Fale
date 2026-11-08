@@ -6,6 +6,8 @@ import 'core/config/app_config.dart';
 import 'core/realtime/realtime_manager.dart';
 import 'core/router/main_shell.dart';
 import 'core/router/rota_detalhe_publicacao.dart';
+import 'core/servidor/health_api_client.dart';
+import 'core/servidor/servidor_status_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/assistente/data/assistente_api_client.dart';
@@ -220,6 +222,20 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => PreferenciasProvider()),
+        ChangeNotifierProvider<ServidorStatusProvider>(
+          // Sem lazy: false a checagem só começaria quando a tela de login ou
+          // de cadastro lesse o provider; a ideia é aquecer a API já na abertura.
+          lazy: false,
+          create: (_) =>
+              (AppConfig.useMock
+                    ? ServidorStatusProvider.pronto()
+                    : ServidorStatusProvider(
+                        client: HealthApiClient(
+                          apiBaseUrl: AppConfig.apiBaseUrl,
+                        ),
+                      ))
+                ..iniciar(),
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(repository: authRepository),
         ),
