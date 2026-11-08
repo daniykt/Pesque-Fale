@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/cloudinary_url.dart';
 import '../../../../shared/widgets/imagem_placeholder.dart';
 import '../../../feed/domain/publicacao.dart';
 
@@ -146,8 +147,9 @@ class _ItemGaleriaState extends State<_ItemGaleria> {
         if (imagemUrl == null || imagemUrl.trim().isEmpty)
           _QuadradoTexto(descricao: widget.publicacao.descricao)
         else
+          // Miniatura quadrada: ~120dp na grade × densidade 3.
           Image.network(
-            imagemUrl,
+            CloudinaryUrl.otimizar(imagemUrl, largura: 360, altura: 360),
             fit: BoxFit.cover,
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;

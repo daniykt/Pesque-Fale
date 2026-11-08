@@ -448,6 +448,38 @@ void main() {
       });
     }
 
+    String urlNaGrade(WidgetTester tester, String id) =>
+        (tester.widget<Image>(dentroDo(id, find.byType(Image))).image
+                as NetworkImage)
+            .url;
+
+    testWidgets('foto do Cloudinary carrega a miniatura quadrada de 360', (
+      tester,
+    ) async {
+      await montarGrade(tester, [
+        pub(
+          'p1',
+          imagemUrl:
+              'https://res.cloudinary.com/pesque-fale/image/upload/v1730000000/publicacoes/abc.jpg',
+        ),
+      ]);
+
+      expect(
+        urlNaGrade(tester, 'p1'),
+        'https://res.cloudinary.com/pesque-fale/image/upload/'
+        'c_fill,w_360,h_360,q_auto,f_auto/v1730000000/publicacoes/abc.jpg',
+      );
+    });
+
+    testWidgets('foto de fora do Cloudinary chega igual ao Image.network', (
+      tester,
+    ) async {
+      const picsum = 'https://picsum.photos/seed/ana-post-1/400/400';
+      await montarGrade(tester, [pub('p1', imagemUrl: picsum)]);
+
+      expect(urlNaGrade(tester, 'p1'), picsum);
+    });
+
     testWidgets('descrição longa: no máximo 4 linhas, com reticências', (
       tester,
     ) async {
