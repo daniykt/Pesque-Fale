@@ -1,23 +1,16 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pesque_fale_app/core/theme/app_colors.dart';
-
 import 'package:pesque_fale_app/features/visualizacao_post/presentation/widgets/foto_publicacao.dart';
 import 'package:pesque_fale_app/shared/widgets/imagem_placeholder.dart';
-import 'package:pesque_fale_app/shared/widgets/visualizador_imagem.dart';
 
 /// Cores do app sem GoogleFonts: as fontes não são empacotadas nos testes e,
 /// com o runAsync que decodifica a imagem, o carregamento delas falha e
 /// derruba o teste (o mesmo motivo do crop_imagem_page_test).
-final _temaClaro = ThemeData(extensions: const [AppColors.light]);
-final _temaEscuro = ThemeData(
-  brightness: Brightness.dark,
-  extensions: const [AppColors.dark],
-);
+final _tema = ThemeData(extensions: const [AppColors.light]);
 
 void main() {
   GoogleFonts.config.allowRuntimeFetching = false;
@@ -42,20 +35,23 @@ void main() {
     return MemoryImage(bytes!);
   }
 
+  /// Monta a foto em 360 de largura. Sem [imagemDeTeste], usa a URL de rede,
+  /// que falha no teste.
   Future<void> montar(
     WidgetTester tester, {
     required ImageProvider? imagemDeTeste,
-    ThemeData? tema,
-    String url = 'https://res.cloudinary.com/demo/image/upload/v1/foto.jpg',
   }) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: tema ?? _temaClaro,
+        theme: _tema,
         home: Scaffold(
           body: SingleChildScrollView(
             child: SizedBox(
               width: 360,
-              child: FotoPublicacao(url: url, imagem: imagemDeTeste),
+              child: FotoPublicacao(
+                url: 'https://res.cloudinary.com/demo/image/upload/v1/foto.jpg',
+                imagem: imagemDeTeste,
+              ),
             ),
           ),
         ),
@@ -72,42 +68,33 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Size tamanhoDaFoto(WidgetTester tester) => tester.getSize(
-    find.descendant(
-      of: find.byType(FotoPublicacao),
-      matching: find.byType(Image),
-    ),
+  Finder imagemDaFoto() => find.descendant(
+    of: find.byType(FotoPublicacao),
+    matching: find.byType(Image),
   );
 
-  testWidgets('foto em pé fica na altura máxima de 4:5 e é cortada', (
-    tester,
-  ) async {
-    await montar(tester, imagemDeTeste: await imagem(tester, 40, 80));
+  for (final (nome, largura, altura) in [
+    ('em pé', 40, 80),
+    ('deitada', 80, 40),
+    ('quadrada', 50, 50),
+  ]) {
+    testWidgets('foto $nome sai no quadro 1:1 de 360×360, com cover', (
+      tester,
+    ) async {
+      await montar(
+        tester,
+        imagemDeTeste: await imagem(tester, largura, altura),
+      );
 
-    // 1:2 ficaria com 720 de altura; o limite de 4:5 deixa em 450.
-    expect(tamanhoDaFoto(tester), const Size(360, 450));
-    final foto = tester.widget<Image>(find.byType(Image));
-    expect(foto.fit, BoxFit.cover);
-    expect(find.text('Toque para ampliar'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.byType(ImagemCarregando), findsNothing);
+      expect(tester.getSize(find.byType(FotoPublicacao)), const Size(360, 360));
+      expect(tester.getSize(imagemDaFoto()), const Size(360, 360));
+      expect(tester.widget<Image>(imagemDaFoto()).fit, BoxFit.cover);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
-  testWidgets('foto deitada aparece inteira, na proporção dela', (
-    tester,
-  ) async {
-    await montar(tester, imagemDeTeste: await imagem(tester, 80, 40));
-
-    expect(tamanhoDaFoto(tester), const Size(360, 180));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('foto quadrada também cabe inteira', (tester) async {
-    await montar(tester, imagemDeTeste: await imagem(tester, 50, 50));
-
-    expect(tamanhoDaFoto(tester), const Size(360, 360));
-  });
-
-  testWidgets('foto que falha mostra Imagem indisponível em 4:5, sem o selo', (
+  testWidgets('foto que falha mostra Imagem indisponível no quadro 1:1', (
     tester,
   ) async {
     await montar(tester, imagemDeTeste: null);
@@ -115,97 +102,67 @@ void main() {
     expect(find.byType(ImagemIndisponivel), findsOneWidget);
     expect(
       tester.getSize(find.byType(ImagemIndisponivel)),
-      const Size(360, 450),
+      const Size(360, 360),
     );
-    expect(find.text('Toque para ampliar'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('o leitor de tela lê a foto como botão de ampliar', (
+  testWidgets('pede ao Cloudinary a foto cortada em 1080×1080', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: _tema,
+        home: const Scaffold(
+          body: FotoPublicacao(
+            url: 'https://res.cloudinary.com/demo/image/upload/v1/foto.jpg',
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      (tester.widget<Image>(imagemDaFoto()).image as NetworkImage).url,
+      'https://res.cloudinary.com/demo/image/upload/'
+      'c_fill,w_1080,h_1080,q_auto,f_auto/v1/foto.jpg',
+    );
+  });
+
+  testWidgets('sem toque e sem selo: a foto não abre nada', (tester) async {
+    await montar(tester, imagemDeTeste: await imagem(tester, 40, 80));
+
+    expect(
+      find.descendant(
+        of: find.byType(FotoPublicacao),
+        matching: find.byType(InkWell),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(FotoPublicacao),
+        matching: find.byType(GestureDetector),
+      ),
+      findsNothing,
+    );
+    expect(find.text('Toque para ampliar'), findsNothing);
+
+    await tester.tap(find.byType(FotoPublicacao), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(find.byType(FotoPublicacao), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('o leitor de tela lê só uma imagem: Foto da publicação', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
     await montar(tester, imagemDeTeste: await imagem(tester, 40, 80));
 
-    final dados = tester
-        .getSemantics(find.bySemanticsLabel(RegExp('Toque para ampliar')))
-        .getSemanticsData();
-    expect(dados.label, contains('Foto da publicação. Toque para ampliar'));
-    expect(dados.flagsCollection.isButton, isTrue);
-    expect(dados.hasAction(ui.SemanticsAction.tap), isTrue);
+    final foto = find.bySemanticsLabel('Foto da publicação');
+    expect(foto, findsOneWidget);
+    final dados = tester.getSemantics(foto).getSemanticsData();
+    expect(dados.flagsCollection.isImage, isTrue);
+    expect(dados.flagsCollection.isButton, isFalse);
+    expect(dados.hasAction(ui.SemanticsAction.tap), isFalse);
     semantics.dispose();
-  });
-
-  group('tela cheia', () {
-    for (final (nomeTema, criarTema) in [
-      ('claro', () => _temaClaro),
-      ('escuro', () => _temaEscuro),
-    ]) {
-      testWidgets('tocar na foto abre a tela cheia escura, que fecha pelo '
-          'botão (tema $nomeTema)', (tester) async {
-        final foto = await imagem(tester, 40, 80);
-        await montar(tester, imagemDeTeste: foto, tema: criarTema());
-
-        await tester.tap(find.byType(FotoPublicacao));
-        await tester.pumpAndSettle();
-
-        expect(find.byType(VisualizadorImagem), findsOneWidget);
-        final cheia = tester.widget<Image>(
-          find.descendant(
-            of: find.byType(VisualizadorImagem),
-            matching: find.byType(Image),
-          ),
-        );
-        expect(cheia.image, foto, reason: 'a mesma imagem, já em cache');
-        expect(cheia.fit, BoxFit.contain);
-        expect(find.byType(InteractiveViewer), findsOneWidget);
-
-        // Fundo escuro nos dois temas, com ícones claros na barra de status.
-        final fundo = tester.widget<Scaffold>(
-          find.descendant(
-            of: find.byType(VisualizadorImagem),
-            matching: find.byType(Scaffold),
-          ),
-        );
-        expect(fundo.backgroundColor, AppColors.dark.background);
-        final estilo = tester
-            .widget<AnnotatedRegion<SystemUiOverlayStyle>>(
-              find.descendant(
-                of: find.byType(VisualizadorImagem),
-                matching: find.byType(AnnotatedRegion<SystemUiOverlayStyle>),
-              ),
-            )
-            .value;
-        expect(estilo.statusBarIconBrightness, Brightness.light);
-
-        final fechar = find.byKey(const ValueKey('visualizador-fechar'));
-        expect(
-          tester.getSize(fechar).height,
-          greaterThanOrEqualTo(kMinInteractiveDimension),
-        );
-        await tester.tap(fechar);
-        await tester.pumpAndSettle();
-
-        expect(find.byType(VisualizadorImagem), findsNothing);
-        expect(find.byType(FotoPublicacao), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      });
-    }
-
-    testWidgets('o botão de fechar tem rótulo para o leitor de tela', (
-      tester,
-    ) async {
-      final semantics = tester.ensureSemantics();
-      await montar(tester, imagemDeTeste: await imagem(tester, 40, 80));
-      await tester.tap(find.byType(FotoPublicacao));
-      await tester.pumpAndSettle();
-
-      final fechar = find.bySemanticsLabel('Fechar foto');
-      expect(fechar, findsOneWidget);
-      final dados = tester.getSemantics(fechar).getSemanticsData();
-      expect(dados.flagsCollection.isButton, isTrue);
-      expect(dados.hasAction(ui.SemanticsAction.tap), isTrue);
-      semantics.dispose();
-    });
   });
 }

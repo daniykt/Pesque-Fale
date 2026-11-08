@@ -195,7 +195,6 @@ void main() {
   ) async {
     await abrir(tester, post(imagemUrl: null));
     expect(find.byType(FotoPublicacao), findsNothing);
-    expect(find.text('Toque para ampliar'), findsNothing);
     expect(
       tester.widget<Text>(find.text('Tucunaré no rio Mogi')).style?.fontSize,
       18,
