@@ -5,11 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/utils/cloudinary_url.dart';
-import '../../../core/utils/tempo_relativo.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/estrelas_readonly.dart';
-import '../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../feed/data/comentarios_repository.dart';
 import '../../feed/domain/publicacao.dart';
@@ -20,6 +17,8 @@ import '../../feed/presentation/widgets/publicacao_menu_sheet.dart';
 import '../../feed/providers/comentarios_provider.dart';
 import '../providers/publicacao_detalhe_provider.dart';
 import 'widgets/foto_publicacao.dart';
+import 'widgets/linha_autor_publicacao.dart';
+import 'widgets/tags_publicacao.dart';
 
 /// Ícones da barra de status sobre a barra superior em `surface`: escuros no
 /// tema claro, claros no escuro.
@@ -215,7 +214,7 @@ class _ConteudoDetalhe extends StatelessWidget {
                     // Ordem visual = ordem do leitor de tela: autor, texto,
                     // foto, ações, local e comentários.
                     children: [
-                      _LinhaAutor(
+                      LinhaAutorPublicacao(
                         publicacao: publicacao,
                         onMenu: () => PublicacaoMenuSheet.show(
                           context,
@@ -240,7 +239,15 @@ class _ConteudoDetalhe extends StatelessWidget {
                           ),
                         ),
                       if (publicacao.tags.isNotEmpty)
-                        _TagsWrap(tags: publicacao.tags, colors: colors),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            0,
+                            AppSpacing.md,
+                            AppSpacing.xs,
+                          ),
+                          child: TagsPublicacao(tags: publicacao.tags),
+                        ),
                       if (temFoto)
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -278,100 +285,6 @@ class _ConteudoDetalhe extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _LinhaAutor extends StatelessWidget {
-  const _LinhaAutor({required this.publicacao, required this.onMenu});
-
-  final Publicacao publicacao;
-  final VoidCallback onMenu;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-    final textos = Theme.of(context).textTheme;
-    final p = publicacao;
-    final foto = CloudinaryUrl.avatar(p.autorFoto, tamanho: 80);
-    final tempo = TempoRelativo.formatar(p.criadoEm);
-    final meta = p.autorUsername != null
-        ? '@${p.autorUsername} · $tempo'
-        : tempo;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xs,
-        AppSpacing.xs,
-        AppSpacing.xxs,
-        AppSpacing.xs,
-      ),
-      child: Row(
-        children: [
-          // Avatar, nome e meta num alvo só, que abre o perfil.
-          Expanded(
-            child: InkWell(
-              key: const ValueKey('detalhe-autor'),
-              borderRadius: AppRadius.mdRadius,
-              onTap: () =>
-                  Navigator.pushNamed(context, '/perfil', arguments: p.autorId),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: kMinInteractiveDimension,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xxs),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: colors.surfaceVariant,
-                        backgroundImage: foto != null
-                            ? NetworkImage(foto)
-                            : null,
-                        child: foto == null
-                            ? Icon(Icons.person, color: colors.textSecondary)
-                            : null,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            BadgeNomeUsuario(
-                              userId: p.autorId,
-                              nome: Text(
-                                p.autorNome,
-                                style: textos.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: colors.primaryAccent,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              meta,
-                              style: textos.bodySmall?.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.more_vert, color: colors.textSecondary),
-            tooltip: 'Mais opções',
-            onPressed: onMenu,
-          ),
-        ],
       ),
     );
   }
@@ -464,43 +377,6 @@ class _CardLocal extends StatelessWidget {
         child: abrirLocal == null
             ? conteudo
             : InkWell(onTap: abrirLocal, child: conteudo),
-      ),
-    );
-  }
-}
-
-class _TagsWrap extends StatelessWidget {
-  const _TagsWrap({required this.tags, required this.colors});
-
-  final List<String> tags;
-  final AppColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: [
-          for (final tag in tags)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: colors.primaryAccent.withValues(alpha: 0.15),
-                borderRadius: AppRadius.pillRadius,
-              ),
-              child: Text(
-                '#$tag',
-                style: TextStyle(color: colors.primaryAccent, fontSize: 12),
-              ),
-            ),
-        ],
       ),
     );
   }
