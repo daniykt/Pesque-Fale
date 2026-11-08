@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pesque_fale_app/core/servidor/servidor_status_provider.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
@@ -42,6 +43,7 @@ void main() {
   Widget buildApp() {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ServidorStatusProvider.pronto()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             repository: AuthRepositoryMock(tokenStorage: TokenStorage()),

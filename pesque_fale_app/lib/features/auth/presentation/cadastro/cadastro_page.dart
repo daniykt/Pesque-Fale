@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/servidor/servidor_status_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -11,6 +12,7 @@ import '../widgets/auth_password_field.dart';
 import '../widgets/auth_primary_button.dart';
 import '../widgets/auth_switch_link.dart';
 import '../widgets/auth_underline_field.dart';
+import '../widgets/aviso_servidor.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -55,10 +57,25 @@ class _CadastroPageState extends State<CadastroPage> {
   String? _validarConfirmarSenha(String? v) =>
       v != _senhaController.text ? 'As senhas não conferem.' : null;
 
-  void _submit(AuthProvider auth) {
+  bool _aguardandoServidor = false;
+
+  Future<void> _submit(AuthProvider auth) async {
+    // Toque repetido durante a espera não dispara um segundo cadastro.
+    if (_aguardandoServidor) return;
     auth.clearError();
     if (!_formKey.currentState!.validate()) return;
-    auth.cadastrar(
+
+    final servidor = context.read<ServidorStatusProvider>();
+    if (servidor.status != ServidorStatus.pronto) {
+      setState(() => _aguardandoServidor = true);
+      final pronto = await servidor.aguardarPronto();
+      if (!mounted) return;
+      setState(() => _aguardandoServidor = false);
+      // Em falha, o aviso acima do botão já mostra o erro e o "Tentar de novo".
+      if (!pronto) return;
+    }
+
+    await auth.cadastrar(
       nome: _nomeController.text.trim(),
       email: _emailController.text.trim(),
       senha: _senhaController.text,
@@ -154,9 +171,13 @@ class _CadastroPageState extends State<CadastroPage> {
                             onChanged: (_) => auth.clearError(),
                           ),
                           const SizedBox(height: AppSpacing.lg),
+                          const AvisoServidorBanner(),
                           AuthPrimaryButton(
                             label: 'Cadastrar',
-                            loading: isLoading,
+                            loading: isLoading || _aguardandoServidor,
+                            loadingLabel: _aguardandoServidor
+                                ? 'Aguardando servidor…'
+                                : 'Carregando...',
                             onPressed: () => _submit(auth),
                           ),
                           const SizedBox(height: AppSpacing.sm),
