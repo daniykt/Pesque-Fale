@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/router/rota_detalhe_publicacao.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/utils/cloudinary_url.dart';
-import '../../../../core/utils/tempo_relativo.dart';
-import '../../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
-import '../../../../shared/widgets/imagem_placeholder.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../visualizacao_post/presentation/widgets/foto_publicacao.dart';
+import '../../../visualizacao_post/presentation/widgets/linha_autor_publicacao.dart';
+import '../../../visualizacao_post/presentation/widgets/tags_publicacao.dart';
 import '../../domain/publicacao.dart';
 import 'acoes_bar.dart';
 import 'comentarios_sheet.dart';
 import 'publicacao_menu_sheet.dart';
 
+/// Card do feed no padrão do detalhe, mais compacto: autor (com o local
+/// embaixo), texto, tags, foto 1:1 e ações. O card de local com estrelas
+/// fica só no detalhe.
 class PublicacaoCard extends StatelessWidget {
   const PublicacaoCard({super.key, required this.publicacao});
 
@@ -20,7 +24,14 @@ class PublicacaoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
     final p = publicacao;
-    final foto = CloudinaryUrl.avatar(p.autorFoto, tamanho: 80);
+    final temFoto = p.imagemUrl != null && p.imagemUrl!.trim().isNotEmpty;
+    final temDescricao = p.descricao != null && p.descricao!.isNotEmpty;
+    final temConteudo = temDescricao || p.tags.isNotEmpty || temFoto;
+    // Sem foto, o texto é o conteúdo principal e fica maior.
+    final estiloTexto = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      color: colors.textPrimary,
+      fontSize: temFoto ? 16 : 18,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -31,140 +42,51 @@ class PublicacaoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                InkWell(
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    '/perfil',
-                    arguments: p.autorId,
-                  ),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: colors.surfaceVariant,
-                    backgroundImage: foto != null ? NetworkImage(foto) : null,
-                    child: foto == null
-                        ? Icon(Icons.person, color: colors.textSecondary)
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          '/perfil',
-                          arguments: p.autorId,
-                        ),
-                        child: BadgeNomeUsuario(
-                          userId: p.autorId,
-                          nome: Text(
-                            p.autorNome,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: colors.primaryAccent,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (p.autorUsername != null)
-                        Text(
-                          '@${p.autorUsername}',
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      Text(
-                        _metaLine(p),
-                        style: TextStyle(
-                          color: colors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () => PublicacaoMenuSheet.show(context, p),
-                ),
-              ],
-            ),
+          LinhaAutorPublicacao(
+            publicacao: p,
+            mostrarLocal: true,
+            onMenu: () => PublicacaoMenuSheet.show(context, p),
           ),
-          if (p.descricao != null && p.descricao!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 12, right: 12, bottom: 8),
-              child: p.imagemUrl == null
-                  ? InkWell(
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/publicacao/detalhe',
-                        arguments: p,
-                      ),
-                      child: Text(
-                        p.descricao!,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    )
-                  : Text(p.descricao!, style: const TextStyle(fontSize: 14)),
-            ),
-          if (p.imagemUrl != null)
+          // Texto, tags e foto num alvo só, que abre o detalhe. Autor, ⋯ e
+          // ações têm toque próprio.
+          if (temConteudo)
             InkWell(
+              key: const ValueKey('card-conteudo'),
               onTap: () => Navigator.pushNamed(
                 context,
-                '/publicacao/detalhe',
+                rotaDetalhePublicacaoNome,
                 arguments: p,
               ),
-              child: AspectRatio(
-                aspectRatio: 4 / 5,
-                child: Image.network(
-                  CloudinaryUrl.otimizar(
-                    p.imagemUrl!,
-                    largura: 800,
-                    altura: 1000,
-                  ),
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const ImagemCarregando();
-                  },
-                  errorBuilder: (context, error, stackTrace) =>
-                      const ImagemIndisponivel(),
-                ),
-              ),
-            ),
-          if (p.tags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final tag in p.tags)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  if (temDescricao)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.sm,
+                        0,
+                        AppSpacing.sm,
+                        AppSpacing.xs,
                       ),
-                      decoration: BoxDecoration(
-                        color: colors.primaryAccent.withValues(alpha: 0.15),
-                        borderRadius: AppRadius.pillRadius,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Text(p.descricao!, style: estiloTexto),
                       ),
-                      child: Text(
-                        '#$tag',
-                        style: TextStyle(
-                          color: colors.primaryAccent,
-                          fontSize: 12,
-                        ),
+                    ),
+                  if (p.tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.sm,
+                        0,
+                        AppSpacing.sm,
+                        AppSpacing.xs,
                       ),
+                      child: TagsPublicacao(tags: p.tags),
+                    ),
+                  if (temFoto)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xxs),
+                      child: FotoPublicacao(url: p.imagemUrl!),
                     ),
                 ],
               ),
@@ -176,11 +98,5 @@ class PublicacaoCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _metaLine(Publicacao p) {
-    final local = p.localTexto ?? '';
-    final data = TempoRelativo.formatar(p.criadoEm);
-    return local.isNotEmpty ? '$local · $data' : data;
   }
 }
