@@ -21,6 +21,17 @@ class CloudinaryUrl {
     return '${url.substring(0, inicio)}$transformacao/${url.substring(inicio)}';
   }
 
+  /// Limita só a largura (`c_limit`): não corta, não aumenta a foto e mantém
+  /// a proporção original. Mesma regra do [otimizar] para URL sem `/upload/`.
+  static String limitarLargura(String url, {required int largura}) {
+    final indice = url.indexOf(_uploadMarker);
+    if (indice == -1) return url;
+
+    final inicio = indice + _uploadMarker.length;
+    final transformacao = 'c_limit,w_$largura,q_auto,f_auto';
+    return '${url.substring(0, inicio)}$transformacao/${url.substring(inicio)}';
+  }
+
   static String coverCard(String url) =>
       otimizar(url, largura: 800, altura: 450);
 

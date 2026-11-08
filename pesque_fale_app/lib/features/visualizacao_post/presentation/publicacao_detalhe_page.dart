@@ -9,7 +9,6 @@ import '../../../core/utils/cloudinary_url.dart';
 import '../../../core/utils/tempo_relativo.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/estrelas_readonly.dart';
-import '../../../shared/widgets/imagem_placeholder.dart';
 import '../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../feed/data/comentarios_repository.dart';
@@ -20,6 +19,7 @@ import '../../feed/presentation/widgets/comentarios_lista.dart';
 import '../../feed/presentation/widgets/publicacao_menu_sheet.dart';
 import '../../feed/providers/comentarios_provider.dart';
 import '../providers/publicacao_detalhe_provider.dart';
+import 'widgets/foto_publicacao.dart';
 
 /// Ícones da barra de status sobre a barra superior em `surface`: escuros no
 /// tema claro, claros no escuro.
@@ -244,7 +244,7 @@ class _ConteudoDetalhe extends StatelessWidget {
                       if (temFoto)
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
-                          child: _ImagemPost(imagemUrl: publicacao.imagemUrl!),
+                          child: FotoPublicacao(url: publicacao.imagemUrl!),
                         ),
                       const SizedBox(height: AppSpacing.xs),
                       AcoesBar(
@@ -283,33 +283,6 @@ class _ConteudoDetalhe extends StatelessWidget {
   }
 }
 
-class _ImagemPost extends StatelessWidget {
-  const _ImagemPost({required this.imagemUrl});
-
-  final String imagemUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => AppSnackbar.showInfo(context, 'Viewer em breve'),
-      child: AspectRatio(
-        aspectRatio: 4 / 5,
-        child: Image.network(
-          CloudinaryUrl.otimizar(imagemUrl, largura: 800, altura: 1000),
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return const ImagemCarregando();
-          },
-          errorBuilder: (context, error, stackTrace) =>
-              const ImagemIndisponivel(),
-        ),
-      ),
-    );
-  }
-}
-
-/// Avatar, nome com selo, "@username · tempo" e o menu ⋯ na mesma linha.
 class _LinhaAutor extends StatelessWidget {
   const _LinhaAutor({required this.publicacao, required this.onMenu});
 
