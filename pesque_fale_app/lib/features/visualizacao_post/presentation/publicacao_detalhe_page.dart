@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/cloudinary_url.dart';
+import '../../../core/utils/tempo_relativo.dart';
 import '../../../shared/widgets/app_snackbar.dart';
 import '../../../shared/widgets/estrelas_readonly.dart';
 import '../../../shared/widgets/imagem_placeholder.dart';
-import '../../../shared/widgets/local_com_pin.dart';
+import '../../../shared/widgets/badge_equipe/badge_nome_usuario.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../feed/data/comentarios_repository.dart';
 import '../../feed/domain/publicacao.dart';
@@ -18,6 +20,21 @@ import '../../feed/presentation/widgets/comentarios_lista.dart';
 import '../../feed/presentation/widgets/publicacao_menu_sheet.dart';
 import '../../feed/providers/comentarios_provider.dart';
 import '../providers/publicacao_detalhe_provider.dart';
+
+/// Ícones da barra de status sobre a barra superior em `surface`: escuros no
+/// tema claro, claros no escuro.
+@visibleForTesting
+SystemUiOverlayStyle estiloBarraDeStatus(Brightness brilhoDoTema) {
+  final base = brilhoDoTema == Brightness.dark
+      ? SystemUiOverlayStyle.light
+      : SystemUiOverlayStyle.dark;
+  // Só a barra de status, como o AppBar faz por padrão: a barra de navegação
+  // do sistema fica como está.
+  return SystemUiOverlayStyle(
+    statusBarBrightness: base.statusBarBrightness,
+    statusBarIconBrightness: base.statusBarIconBrightness,
+  );
+}
 
 class PublicacaoDetalhePage extends StatefulWidget {
   const PublicacaoDetalhePage({super.key});
@@ -66,20 +83,24 @@ class _PublicacaoDetalhePageState extends State<PublicacaoDetalhePage> {
     final colors = Theme.of(context).extension<AppColors>()!;
     _sairSeRemovida(provider);
 
+    final tema = Theme.of(context);
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      // Barra clara: o menu ⋯ fica na linha do autor, não aqui.
       appBar: AppBar(
-        actions: [
-          if (provider.status == StatusDetalhe.carregado)
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () => PublicacaoMenuSheet.show(
-                context,
-                provider.publicacao!,
-                excluir: provider.excluir,
-              ),
-            ),
-        ],
+        backgroundColor: colors.surface,
+        foregroundColor: colors.primaryAccent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: estiloBarraDeStatus(tema.brightness),
+        shape: Border(bottom: BorderSide(color: colors.border)),
+        title: Text(
+          'Publicação',
+          style: tema.textTheme.titleMedium?.copyWith(
+            color: colors.primaryAccent,
+          ),
+        ),
       ),
       body: switch (provider.status) {
         StatusDetalhe.carregando => const Center(
@@ -155,6 +176,15 @@ class _ConteudoDetalhe extends StatelessWidget {
     final comentariosRepo = context.read<ComentariosRepository>();
     final authProvider = context.read<AuthProvider>();
     final detalhe = context.read<PublicacaoDetalheProvider>();
+    final temFoto =
+        publicacao.imagemUrl != null && publicacao.imagemUrl!.trim().isNotEmpty;
+    final temDescricao =
+        publicacao.descricao != null && publicacao.descricao!.isNotEmpty;
+    // Sem foto, o texto é o conteúdo principal e fica maior.
+    final estiloTexto = Theme.of(context).textTheme.bodyLarge?.copyWith(
+      color: colors.textPrimary,
+      fontSize: temFoto ? 16 : 18,
+    );
 
     return ChangeNotifierProvider<ComentariosProvider>(
       create: (_) => ComentariosProvider(
@@ -182,48 +212,54 @@ class _ConteudoDetalhe extends StatelessWidget {
                   controller: scrollController,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    // Ordem visual = ordem do leitor de tela: autor, texto,
+                    // foto, ações, local e comentários.
                     children: [
-                      if (publicacao.imagemUrl != null)
-                        _ImagemPost(imagemUrl: publicacao.imagemUrl!),
-                      _HeaderAutor(publicacao: publicacao),
-                      if (publicacao.localTexto != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                          child: LocalComPin(
-                            texto: publicacao.localTexto!,
-                            onTap: publicacao.pontoId != null
-                                ? () => Navigator.pushNamed(
-                                    context,
-                                    '/pontos',
-                                    arguments: publicacao.pontoId,
-                                  )
-                                : null,
-                          ),
+                      _LinhaAutor(
+                        publicacao: publicacao,
+                        onMenu: () => PublicacaoMenuSheet.show(
+                          context,
+                          publicacao,
+                          excluir: detalhe.excluir,
                         ),
-                      if (publicacao.avaliacaoNota != null)
+                      ),
+                      if (temDescricao)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                          child: EstrelasReadonly(
-                            nota: publicacao.avaliacaoNota!,
-                            tamanho: 28,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            0,
+                            AppSpacing.md,
+                            AppSpacing.xs,
                           ),
-                        ),
-                      if (publicacao.descricao != null &&
-                          publicacao.descricao!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                          child: Text(
-                            publicacao.descricao!,
-                            style: const TextStyle(fontSize: 15),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Text(
+                              publicacao.descricao!,
+                              style: estiloTexto,
+                            ),
                           ),
                         ),
                       if (publicacao.tags.isNotEmpty)
                         _TagsWrap(tags: publicacao.tags, colors: colors),
+                      if (temFoto)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xs),
+                          child: _ImagemPost(imagemUrl: publicacao.imagemUrl!),
+                        ),
+                      const SizedBox(height: AppSpacing.xs),
                       AcoesBar(
                         publicacao: publicacao,
                         onComentarTap: onComentarTap,
                       ),
                       Divider(height: 1, color: colors.border),
+                      if (publicacao.localTexto != null ||
+                          publicacao.avaliacaoNota != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: _CardLocal(publicacao: publicacao),
+                        ),
+                        Divider(height: 1, color: colors.border),
+                      ],
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: ComentariosLista(
@@ -273,75 +309,190 @@ class _ImagemPost extends StatelessWidget {
   }
 }
 
-class _HeaderAutor extends StatelessWidget {
-  const _HeaderAutor({required this.publicacao});
+/// Avatar, nome com selo, "@username · tempo" e o menu ⋯ na mesma linha.
+class _LinhaAutor extends StatelessWidget {
+  const _LinhaAutor({required this.publicacao, required this.onMenu});
+
+  final Publicacao publicacao;
+  final VoidCallback onMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final textos = Theme.of(context).textTheme;
+    final p = publicacao;
+    final foto = CloudinaryUrl.avatar(p.autorFoto, tamanho: 80);
+    final tempo = TempoRelativo.formatar(p.criadoEm);
+    final meta = p.autorUsername != null
+        ? '@${p.autorUsername} · $tempo'
+        : tempo;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xs,
+        AppSpacing.xs,
+        AppSpacing.xxs,
+        AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          // Avatar, nome e meta num alvo só, que abre o perfil.
+          Expanded(
+            child: InkWell(
+              key: const ValueKey('detalhe-autor'),
+              borderRadius: AppRadius.mdRadius,
+              onTap: () =>
+                  Navigator.pushNamed(context, '/perfil', arguments: p.autorId),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: kMinInteractiveDimension,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xxs),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: colors.surfaceVariant,
+                        backgroundImage: foto != null
+                            ? NetworkImage(foto)
+                            : null,
+                        child: foto == null
+                            ? Icon(Icons.person, color: colors.textSecondary)
+                            : null,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            BadgeNomeUsuario(
+                              userId: p.autorId,
+                              nome: Text(
+                                p.autorNome,
+                                style: textos.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: colors.primaryAccent,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              meta,
+                              style: textos.bodySmall?.copyWith(
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: colors.textSecondary),
+            tooltip: 'Mais opções',
+            onPressed: onMenu,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Local da pescaria e a nota que o autor deu ao publicar. Abre o local
+/// quando a publicação está ligada a um ponto.
+class _CardLocal extends StatelessWidget {
+  const _CardLocal({required this.publicacao});
 
   final Publicacao publicacao;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final p = publicacao;
-    final foto = CloudinaryUrl.avatar(p.autorFoto, tamanho: 80);
+    final textos = Theme.of(context).textTheme;
+    final local = publicacao.localTexto;
+    final nota = publicacao.avaliacaoNota;
+    final pontoId = publicacao.pontoId;
+    final notaTexto = nota?.toStringAsFixed(1).replaceAll('.', ',');
 
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () =>
-                Navigator.pushNamed(context, '/perfil', arguments: p.autorId),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: colors.surfaceVariant,
-              backgroundImage: foto != null ? NetworkImage(foto) : null,
-              child: foto == null
-                  ? Icon(Icons.person, color: colors.textSecondary)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  onTap: () => Navigator.pushNamed(
-                    context,
-                    '/perfil',
-                    arguments: p.autorId,
-                  ),
-                  child: Text(
-                    p.autorNome,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: colors.primaryAccent,
+    final rotulo = [
+      if (local != null) 'Local: $local',
+      if (notaTexto != null) 'Nota do pescador: $notaTexto de 5',
+    ].join('. ');
+
+    final conteudo = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Row(
+          children: [
+            if (local != null) ...[
+              Icon(Icons.location_on, color: colors.primaryAccent),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (local != null)
+                    Text(
+                      local,
+                      style: textos.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                  ),
-                ),
-                if (p.autorUsername != null)
-                  Text(
-                    '@${p.autorUsername}',
-                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
-                  ),
-                Text(
-                  _formatarDataHora(p.criadoEm),
-                  style: TextStyle(color: colors.textSecondary, fontSize: 12),
-                ),
-              ],
+                  if (nota != null)
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpacing.xs,
+                      children: [
+                        EstrelasReadonly(nota: nota, tamanho: 18),
+                        Text(
+                          '$notaTexto · nota do pescador',
+                          style: textos.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (pontoId != null)
+              Icon(Icons.chevron_right, color: colors.textSecondary),
+          ],
+        ),
       ),
     );
-  }
 
-  String _formatarDataHora(DateTime dt) {
-    String pad(int n) => n.toString().padLeft(2, '0');
-    return '${pad(dt.day)}/${pad(dt.month)}/${dt.year}, ${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)}';
+    final VoidCallback? abrirLocal = pontoId == null
+        ? null
+        : () => Navigator.pushNamed(context, '/pontos', arguments: pontoId);
+
+    // Um nó só para o leitor de tela, com a ação de abrir quando há ponto.
+    return Semantics(
+      container: true,
+      button: abrirLocal != null,
+      label: rotulo,
+      onTap: abrirLocal,
+      excludeSemantics: true,
+      child: Material(
+        key: const ValueKey('detalhe-card-local'),
+        color: colors.surfaceVariant,
+        borderRadius: AppRadius.mdRadius,
+        clipBehavior: Clip.antiAlias,
+        child: abrirLocal == null
+            ? conteudo
+            : InkWell(onTap: abrirLocal, child: conteudo),
+      ),
+    );
   }
 }
 
@@ -354,7 +505,12 @@ class _TagsWrap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
       child: Wrap(
         spacing: 6,
         runSpacing: 6,
