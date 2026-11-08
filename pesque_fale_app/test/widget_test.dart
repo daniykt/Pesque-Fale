@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:pesque_fale_app/core/servidor/servidor_status_provider.dart';
 import 'package:pesque_fale_app/core/theme/theme_provider.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository_mock.dart';
 import 'package:pesque_fale_app/features/auth/data/token_storage.dart';
@@ -25,6 +26,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(
+            create: (_) => ServidorStatusProvider.pronto(),
+          ),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(
             create: (_) => AuthProvider(
@@ -46,6 +50,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(
+            create: (_) => ServidorStatusProvider.pronto(),
+          ),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(
             create: (_) => AuthProvider(

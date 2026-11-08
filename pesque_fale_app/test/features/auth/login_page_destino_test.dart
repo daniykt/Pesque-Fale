@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import 'package:pesque_fale_app/core/servidor/servidor_status_provider.dart';
 import 'package:pesque_fale_app/core/theme/app_theme.dart';
 import 'package:pesque_fale_app/features/auth/data/auth_repository.dart';
 import 'package:pesque_fale_app/features/auth/domain/auth_result.dart';
@@ -57,6 +58,9 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(
+            create: (_) => ServidorStatusProvider.pronto(),
+          ),
+          ChangeNotifierProvider(
             create: (_) => AuthProvider(
               repository: _FakeAuthRepository(
                 onboardingConcluido: onboardingConcluido,
@@ -81,10 +85,7 @@ void main() {
       find.widgetWithText(TextField, 'Email'),
       'ana@teste.com',
     );
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Senha'),
-      '123456',
-    );
+    await tester.enterText(find.widgetWithText(TextField, 'Senha'), '123456');
 
     // AuthPrimaryButton renderiza o label em caixa alta e fica abaixo da
     // dobra no viewport padrao do teste.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/servidor/servidor_status_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
@@ -11,6 +12,7 @@ import '../widgets/auth_password_field.dart';
 import '../widgets/auth_primary_button.dart';
 import '../widgets/auth_switch_link.dart';
 import '../widgets/auth_underline_field.dart';
+import '../widgets/aviso_servidor.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -30,7 +32,21 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  bool _aguardandoServidor = false;
+
   Future<void> _login() async {
+    // Toque repetido durante a espera não dispara um segundo login.
+    if (_aguardandoServidor) return;
+    final servidor = context.read<ServidorStatusProvider>();
+    if (servidor.status != ServidorStatus.pronto) {
+      setState(() => _aguardandoServidor = true);
+      final pronto = await servidor.aguardarPronto();
+      if (!mounted) return;
+      setState(() => _aguardandoServidor = false);
+      // Em falha, o aviso acima do botão já mostra o erro e o "Tentar de novo".
+      if (!pronto) return;
+    }
+
     final auth = context.read<AuthProvider>();
     await auth.login(
       email: _emailController.text.trim(),
@@ -99,8 +115,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
+                    const AvisoServidorBanner(),
                     AuthPrimaryButton(
                       label: 'Entrar',
+                      loading: _aguardandoServidor,
+                      loadingLabel: 'Aguardando servidor…',
                       onPressed: isLoading ? null : _login,
                     ),
                     const SizedBox(height: AppSpacing.sm),

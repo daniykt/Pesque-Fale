@@ -10,11 +10,15 @@ class AuthPrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.loading = false,
+    this.loadingLabel = 'Carregando...',
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
+
+  /// Texto ao lado do indicador enquanto [loading].
+  final String loadingLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +67,9 @@ class AuthPrimaryButton extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text('Carregando...'),
+                  Flexible(
+                    child: Text(loadingLabel, textAlign: TextAlign.center),
+                  ),
                 ],
               )
             : Text(label.toUpperCase()),
