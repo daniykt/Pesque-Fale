@@ -39,6 +39,7 @@ class _ComentariosRepository implements ComentariosRepository {
   final int outros;
   final List<String> deletados = [];
   final List<int> paginasPedidas = [];
+  final List<String> criados = [];
 
   final _meu = Comentario(
     id: 'c1',
@@ -81,8 +82,17 @@ class _ComentariosRepository implements ComentariosRepository {
   }
 
   @override
-  Future<Comentario> criar(String publicacaoId, String texto) =>
-      throw UnimplementedError();
+  Future<Comentario> criar(String publicacaoId, String texto) async {
+    criados.add(texto);
+    return Comentario(
+      id: 'novo-${criados.length}',
+      publicacaoId: publicacaoId,
+      autorId: idEu,
+      autorNome: usuarioEu.nome,
+      texto: texto,
+      criadoEm: DateTime(2026, 1, 4),
+    );
+  }
 
   @override
   Future<void> deletar(String comentarioId) async =>
@@ -299,6 +309,81 @@ void main() {
         expect(comentariosRepo.deletados, ['c1']);
         expect(find.text('Que peixe bonito!'), findsNothing);
         expect(find.text('0 comentários'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    // Post de outra pessoa, já curtido por mim: autor e curtida vêm da API
+    // no formato do feed (#267).
+    final deOutraPessoa = Publicacao(
+      id: 'p1',
+      autorId: 'bruno',
+      autorNome: 'Bruno Pescador',
+      autorUsername: 'bruno',
+      descricao: 'Tucunaré no rio Mogi',
+      imagemUrl: comFoto.imagemUrl,
+      curtidasCount: 7,
+      comentariosCount: 1,
+      jaCurtiu: true,
+      criadoEm: DateTime(2026, 1, 1),
+      atualizadoEm: DateTime(2026, 1, 1),
+    );
+
+    for (final origem in _Origem.values) {
+      testWidgets('post de outra pessoa abre com o autor e a minha curtida '
+          '(aberto pelo ${origem.name})', (tester) async {
+        telaDeCelular(tester);
+        await preparar(origem, publicacao: deOutraPessoa);
+        await abrirDetalhe(tester, origem);
+
+        // Na linha do autor (o meu nome aparece no meu comentário, abaixo).
+        Finder naLinhaDoAutor(Finder f) => find.descendant(
+          of: find.byKey(const ValueKey('detalhe-autor')),
+          matching: f,
+        );
+        expect(naLinhaDoAutor(find.text('Bruno Pescador')), findsOneWidget);
+        expect(
+          naLinhaDoAutor(find.textContaining('@bruno · ')),
+          findsOneWidget,
+        );
+        expect(naLinhaDoAutor(find.text(usuarioEu.nome)), findsNothing);
+
+        await tester.ensureVisible(find.text('Curtido'));
+        await tester.pumpAndSettle();
+        expect(find.text('Curtido'), findsOneWidget);
+        expect(find.text('Curtir'), findsNothing);
+        expect(find.text('7 curtidas'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('rolar, tocar em Comentar e enviar: o comentário chega à '
+          'API e entra na lista (aberto pelo ${origem.name})', (tester) async {
+        telaDeCelular(tester);
+        await preparar(origem, publicacao: comFoto);
+        await abrirDetalhe(tester, origem);
+        expect(find.text('1 comentário'), findsOneWidget);
+
+        await rolar(tester, 200);
+        await tester.ensureVisible(find.text('Comentar'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Comentar'));
+        await tester.pumpAndSettle();
+
+        // O Comentar da barra leva ao campo fixo de comentário.
+        final campo = find.byType(TextField);
+        expect(tester.widget<TextField>(campo).focusNode?.hasFocus, isTrue);
+
+        await tester.enterText(campo, 'Belo peixe, parabéns!');
+        await tester.pump();
+        await tester.tap(find.byIcon(Icons.send));
+        await tester.pumpAndSettle();
+
+        expect(comentariosRepo.criados, ['Belo peixe, parabéns!']);
+        await tester.ensureVisible(find.text('Belo peixe, parabéns!'));
+        await tester.pumpAndSettle();
+        expect(find.text('Belo peixe, parabéns!'), findsOneWidget);
+        expect(find.text('Que peixe bonito!'), findsOneWidget);
+        expect(find.text('2 comentários'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }
