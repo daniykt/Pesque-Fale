@@ -18,7 +18,7 @@ class PerfilProvider extends ChangeNotifier {
     required this.authProvider,
     required this.store,
     this.realtime,
-  }) {
+  }) : _meuId = authProvider.usuario?.id {
     authProvider.addListener(_onAuthChanged);
     store.addListener(_onStoreMudou);
     realtime?.subscribe('seguidor_adicionado', _onSeguidorMudou);
@@ -32,6 +32,14 @@ class PerfilProvider extends ChangeNotifier {
   /// O da rota `/perfil` (perfil de outro) não passa e fica sem realtime.
   final RealtimeManager? realtime;
   AuthProvider authProvider;
+
+  /// Conta dona do estado atual. Campo da instância, e não closure (D6):
+  /// comparado a cada mudança no auth para detectar a troca de conta.
+  String? _meuId;
+
+  /// Muda a cada troca de conta. `carregarPerfil` descarta a resposta que
+  /// chegar depois de uma troca (D9): era da conta anterior.
+  int _geracao = 0;
 
   PerfilStatus _status = PerfilStatus.idle;
   String? _errorMessage;
@@ -68,6 +76,7 @@ class PerfilProvider extends ChangeNotifier {
   int get totalPublicacoes => _totalPublicacoes;
 
   Future<void> carregarPerfil(String id) async {
+    final geracao = _geracao;
     _status = PerfilStatus.loading;
     _errorMessage = null;
     notifyListeners();
@@ -75,6 +84,7 @@ class PerfilProvider extends ChangeNotifier {
     try {
       final meuId = authProvider.usuario?.id ?? '';
       final completo = await repository.buscarPerfil(id, meuId: meuId);
+      if (geracao != _geracao) return;
       _perfil = completo.usuario;
       _idsPublicacoes
         ..clear()
@@ -87,6 +97,7 @@ class PerfilProvider extends ChangeNotifier {
       _seguidoPeloOutro = completo.seguidoPeloOutro;
       _status = PerfilStatus.success;
     } on PerfilException catch (e) {
+      if (geracao != _geracao) return;
       _errorMessage = e.message;
       _status = PerfilStatus.error;
     }
@@ -201,17 +212,37 @@ class PerfilProvider extends ChangeNotifier {
     authProvider.removeListener(_onAuthChanged);
     authProvider = novo;
     authProvider.addListener(_onAuthChanged);
+    _onAuthChanged();
   }
 
-  /// Espelha localmente o usuário do `AuthProvider` quando ele muda enquanto
-  /// estamos visualizando o próprio perfil — sem refetch de rede, o dado já
-  /// vem pronto de `EditarPerfilProvider.salvar()`.
+  /// Troca de conta (logout, login ou cadastro de outra conta): zera o
+  /// estado da conta anterior. Mesma conta: espelha localmente o usuário do
+  /// `AuthProvider` quando estamos visualizando o próprio perfil — sem
+  /// refetch de rede, o dado já vem pronto de `EditarPerfilProvider.salvar()`.
   void _onAuthChanged() {
     final usuarioLogado = authProvider.usuario;
+    if (usuarioLogado?.id != _meuId) {
+      _meuId = usuarioLogado?.id;
+      _resetar();
+      return;
+    }
     if (usuarioLogado == null || _perfil == null) return;
     if (_perfil!.id != usuarioLogado.id) return;
     if (identical(_perfil, usuarioLogado)) return;
     _perfil = usuarioLogado;
+    notifyListeners();
+  }
+
+  void _resetar() {
+    _geracao++;
+    _status = PerfilStatus.idle;
+    _errorMessage = null;
+    _perfil = null;
+    _idsPublicacoes.clear();
+    _cachePublicacoes = null;
+    _isFollowing = false;
+    _seguidoPeloOutro = false;
+    _totalPublicacoes = 0;
     notifyListeners();
   }
 
