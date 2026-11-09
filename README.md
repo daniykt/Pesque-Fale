@@ -278,7 +278,7 @@ Pesque-Fale/
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/timeline.png">
-  <img src="docs/assets/timeline.png" alt="Linha do tempo: no 3º semestre, site web em React e Firebase; no 4º semestre, app Flutter com API própria, versão atual v1.0.0" width="100%">
+  <img src="docs/assets/timeline.png" alt="Linha do tempo: no 3º semestre, site web em React e Firebase; no 4º semestre, app Flutter com API própria, versão atual v1.1.0" width="100%">
 </picture>
 
 ---
