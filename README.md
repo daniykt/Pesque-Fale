@@ -45,10 +45,12 @@ Pensado pra um público que **não é nativo digital** (muitos pescadores têm 4
 | **Onboarding + tour guiado** | Primeiro acesso guiado (foto, bio, username) e um tour que apresenta cada aba | — |
 | **Mapa de pontos de pesca** | Pesqueiros, rios e represas no mapa, com busca por nome e por distância | RF02 |
 | **Avaliações** | Nota de 1 a 5 e comentário por ponto; a média é calculada no banco | RF02 |
-| **Feed e publicações** | Posts com foto, ponto de pesca, nota e tags; curtidas e comentários | RF06 |
+| **Feed e publicações** | Posts com foto, ponto de pesca, nota e tags; curtidas e comentários atualizam em tempo real, e novas publicações aparecem com o aviso "N novas publicações" | RF06 |
 | **Chat em tempo real** | Conversas 1:1 que chegam na hora, com status de enviado e visto | — |
 | **Notificações em tempo real** | Curtidas, comentários, seguidores e mensagens aparecem na hora, com badge | RF04 |
 | **Perfil** | Foto e banner com recorte, bio, seguidores e selos de equipe e conta oficial | RF05 |
+| **Eventos** | Usuários criam, editam e excluem eventos de pesca; a lista mostra os próximos em ordem de data | RF06 |
+| **Clima e dica do dia** | Aba Dicas com o clima real da sua localização e uma dica diferente por dia | — |
 | **Pirá, o assistente de IA** | Mascote que tira dúvidas sobre o app e sobre pesca | — |
 | **Modo escuro + responsivo** | Tema claro e escuro, com layout que se adapta a celular e tablet | RNF01 |
 
@@ -90,6 +92,7 @@ flowchart LR
     DB[("PostgreSQL + PostGIS<br/>Supabase · São Paulo")]
     CDN["Cloudinary<br/>imagens"]
     MAP["OpenStreetMap<br/>mapa + busca de endereço"]
+    CLIMA["Open-Meteo<br/>clima"]
     LLM["Gemini Flash<br/>Groq (reserva)"]
 
     UI -- HTTPS --> REST
@@ -100,6 +103,7 @@ flowchart LR
     REST --- IA
     IA --> LLM
     UI -- mapa --> MAP
+    UI -- clima --> CLIMA
     UI -. imagens otimizadas .-> CDN
 ```
 
@@ -128,6 +132,7 @@ flowchart LR
 | Tempo real | **Socket.IO** | Chat, notificações e feed sem ficar perguntando ao servidor |
 | Imagens | **Cloudinary** | Recorte e compressão pela própria URL |
 | Mapas | **OpenStreetMap** + `flutter_map` + Nominatim | Gratuito, aberto, sem chave de API |
+| Clima | **Open-Meteo** | Gratuito e sem chave; a localização vai arredondada (~1 km) |
 | IA | **Gemini Flash** (Groq de reserva) | Plano gratuito; a chave fica só na API |
 | Deploy | **Render** (API) · **Supabase** (banco) | Planos gratuitos que dão conta do projeto |
 | CI/CD | **GitHub Actions** | Análise e testes em todo PR; APK gerado a cada release |
@@ -138,7 +143,7 @@ flowchart LR
 
 | Testes do app | Testes da API | Tabelas | Pontos oficiais | Commits |
 |:-:|:-:|:-:|:-:|:-:|
-| **750+** | **230+** | **11** | **9** | **860+** |
+| **1280+** | **390+** | **11** | **9** | **990+** |
 
 </div>
 
@@ -151,8 +156,7 @@ flowchart LR
 >
 > A API está no plano gratuito do Render: **a primeira requisição pode levar de 30 a 50 segundos** enquanto o servidor acorda.
 >
-> Já tem uma versão anterior instalada? **Desinstale antes de instalar a nova**:
-> cada build é assinado com uma chave diferente e o Android bloqueia a atualização.
+> Vindo da v1.0.0? **Desinstale uma última vez** antes de instalar: a partir da v1.1.0 o app tem assinatura fixa e as próximas versões instalam por cima.
 
 <details>
 <summary><b>Como rodar o app (Flutter)</b></summary>
@@ -203,6 +207,7 @@ Swagger em **http://localhost:3333/docs** · verificação de saúde em **/healt
 | `CLOUDINARY_CLOUD_NAME` · `CLOUDINARY_API_KEY` · `CLOUDINARY_API_SECRET` | Upload de fotos e banners | ⚠️ sem elas, o upload falha |
 | `GEMINI_API_KEY` · `GEMINI_MODEL` | Pirá (assistente de IA) | ⚠️ sem elas, o Pirá fica desligado |
 | `GROQ_API_KEY` · `GROQ_MODEL` | Reserva do Pirá | opcional |
+| `CORS_ORIGINS` | Origens permitidas no Socket.IO, separadas por vírgula | opcional |
 
 > [!WARNING]
 > O `.env` **nunca** vai pro Git. Se uma chave vazar, gere outra no painel do serviço e desative a antiga.
