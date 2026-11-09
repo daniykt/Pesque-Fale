@@ -1,0 +1,419 @@
+const pool = require('../../config/database');
+const jwt = require('jsonwebtoken');
+const { criarNotificacao } = require('../notificacoes/notificacoes.helper');
+const { emitToUser } = require('../../config/socket-emitter');
+
+const USERNAME_REGEX = /^[a-zA-Z0-9_.]{3,20}$/;
+
+function tryGetUsuario(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try {
+    return jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+async function responderPerfil(req, res, { incluirEmail }) {
+  const { id } = req.params;
+  const autenticado = tryGetUsuario(req);
+
+  try {
+    // Uma ida ao banco: souSeguidor e meSegue vêm na mesma query, a partir do
+    // id de quem está vendo ($2). Sem login ou vendo o próprio perfil, os dois são null.
+    const result = await pool.query(
+      `SELECT u.id, u.nome, u.email, u.username, u.foto_perfil, u.banner, u.bio, u.localizacao, u.onboarding_concluido, u.criado_em,
+        (SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = u.id) AS seguidores,
+        (SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = u.id) AS seguindo,
+        CASE WHEN $2::uuid IS NULL OR $2::uuid = u.id THEN NULL
+             ELSE EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $2::uuid AND seguido_id = u.id) END AS sou_seguidor,
+        CASE WHEN $2::uuid IS NULL OR $2::uuid = u.id THEN NULL
+             ELSE EXISTS (SELECT 1 FROM usuario_seguidores WHERE seguidor_id = u.id AND seguido_id = $2::uuid) END AS me_segue
+       FROM usuarios u WHERE u.id = $1`,
+      [id, autenticado?.id ?? null]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const u = result.rows[0];
+
+    return res.json({
+      data: {
+        id: u.id,
+        nome: u.nome,
+        ...(incluirEmail ? { email: u.email } : {}),
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        banner: u.banner,
+        bio: u.bio,
+        localizacao: u.localizacao,
+        onboardingConcluido: u.onboarding_concluido,
+        seguidores: parseInt(u.seguidores),
+        seguindo: parseInt(u.seguindo),
+        souSeguidor: u.sou_seguidor ?? null,
+        meSegue: u.me_segue ?? null,
+        criadoEm: u.criado_em,
+      },
+    });
+  } catch (err) {
+    // Id que não é UUID: o Postgres rejeita com 22P02. Para o cliente, é um usuário que não existe.
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function getPerfil(req, res) {
+  return responderPerfil(req, res, { incluirEmail: false });
+}
+
+async function getMe(req, res) {
+  req.params.id = req.usuario.id;
+  return responderPerfil(req, res, { incluirEmail: true });
+}
+
+async function updateMe(req, res) {
+  const { nome, bio, localizacao, username, fotoPerfil, banner, onboardingConcluido } = req.body;
+  const usuarioId = req.usuario.id;
+
+  const details = [];
+
+  if (nome !== undefined && nome.length < 2) {
+    details.push({ campo: 'nome', mensagem: 'O nome deve ter pelo menos 2 caracteres.' });
+  }
+
+  if (username !== undefined && !USERNAME_REGEX.test(username)) {
+    details.push({ campo: 'username', mensagem: 'Username deve ter 3-20 caracteres: letras, números, _ ou .' });
+  }
+
+  if (details.length > 0) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Verifique os campos e tente novamente.', details });
+  }
+
+  try {
+    const fields = [];
+    const values = [];
+    let i = 1;
+
+    if (nome !== undefined) { fields.push(`nome = $${i++}`); values.push(nome); }
+    if (bio !== undefined) { fields.push(`bio = $${i++}`); values.push(bio); }
+    if (localizacao !== undefined) { fields.push(`localizacao = $${i++}`); values.push(localizacao); }
+    if (username !== undefined) { fields.push(`username = $${i++}`); values.push(username); }
+    if (fotoPerfil !== undefined) { fields.push(`foto_perfil = $${i++}`); values.push(fotoPerfil); }
+    if (banner !== undefined) { fields.push(`banner = $${i++}`); values.push(banner); }
+    // Só aceita a conclusão do onboarding. Não existe caso de uso para "des-concluir",
+    // então false (ou qualquer outro valor) é ignorado de propósito.
+    if (onboardingConcluido === true) { fields.push(`onboarding_concluido = $${i++}`); values.push(true); }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Nenhum campo para atualizar.' });
+    }
+
+    fields.push(`atualizado_em = NOW()`);
+    values.push(usuarioId);
+
+    // Uma ida ao banco: a unicidade do username fica com a constraint
+    // usuarios_username_key (tratada no catch) e os contadores vêm no RETURNING.
+    const result = await pool.query(
+      `UPDATE usuarios SET ${fields.join(', ')} WHERE id = $${i}
+       RETURNING id, nome, email, username, foto_perfil, banner, bio, localizacao, onboarding_concluido, criado_em,
+         (SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = usuarios.id) AS seguidores,
+         (SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = usuarios.id) AS seguindo`,
+      values
+    );
+
+    const u = result.rows[0];
+
+    return res.json({
+      data: {
+        id: u.id,
+        nome: u.nome,
+        email: u.email,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        banner: u.banner,
+        bio: u.bio,
+        localizacao: u.localizacao,
+        onboardingConcluido: u.onboarding_concluido,
+        seguidores: parseInt(u.seguidores),
+        seguindo: parseInt(u.seguindo),
+        criadoEm: u.criado_em,
+      },
+    });
+  } catch (err) {
+    if (err.code === '23505' && err.constraint === 'usuarios_username_key') {
+      return res.status(409).json({ error: 'USERNAME_JA_CADASTRADO', message: 'Este username já está em uso.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function checkUsername(req, res) {
+  const { username } = req.params;
+  if (!USERNAME_REGEX.test(username)) {
+    return res.json({ data: { disponivel: false } });
+  }
+  try {
+    const result = await pool.query('SELECT id FROM usuarios WHERE username = $1', [username]);
+    return res.json({ data: { disponivel: result.rows.length === 0 } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function seguir(req, res) {
+  const seguidorId = req.usuario.id;
+  const seguidoId = req.params.id;
+
+  if (seguidorId === seguidoId) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'Você não pode seguir a si mesmo.' });
+  }
+
+  try {
+    const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [seguidoId]);
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const inserido = await pool.query(
+      `INSERT INTO usuario_seguidores (seguidor_id, seguido_id) VALUES ($1, $2)
+       ON CONFLICT DO NOTHING
+       RETURNING seguidor_id`,
+      [seguidorId, seguidoId]
+    );
+
+    // Só notifica follow novo. Seguir quem já sigo é idempotente e silencioso.
+    if (inserido.rows.length > 0) {
+      const reciproco = await pool.query(
+        'SELECT 1 FROM usuario_seguidores WHERE seguidor_id = $1 AND seguido_id = $2',
+        [seguidoId, seguidorId]
+      );
+      await criarNotificacao({
+        para: seguidoId,
+        deId: seguidorId,
+        tipo: 'seguindo',
+        deVolta: reciproco.rows.length > 0,
+      });
+
+      // Follow já salvo: falha aqui só custa o contador em tempo real.
+      try {
+        const total = await pool.query(
+          'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
+          [seguidoId]
+        );
+        const totalSeguidores = parseInt(total.rows[0].count, 10);
+        emitToUser(seguidoId, 'seguidor_adicionado', {
+          totalSeguidores,
+          seguidorId,
+          acao: 'adicionado',
+        });
+      } catch (err) {
+        console.error('[usuarios] erro ao emitir seguidor_adicionado:', err);
+      }
+    }
+
+    return res.status(201).json({ data: { message: 'Usuário seguido com sucesso.' } });
+  } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function deixarDeSeguir(req, res) {
+  const seguidorId = req.usuario.id;
+  const seguidoId = req.params.id;
+
+  try {
+    const removido = await pool.query(
+      `DELETE FROM usuario_seguidores
+       WHERE seguidor_id = $1 AND seguido_id = $2
+       RETURNING seguidor_id`,
+      [seguidorId, seguidoId]
+    );
+
+    // Só emite se de fato removeu — "deixar de seguir" quem já não
+    // seguia é idempotente e silencioso (mesmo padrão do seguir).
+    if (removido.rows.length > 0) {
+      try {
+        const total = await pool.query(
+          'SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1',
+          [seguidoId]
+        );
+        const totalSeguidores = parseInt(total.rows[0].count, 10);
+        emitToUser(seguidoId, 'seguidor_removido', {
+          totalSeguidores,
+          seguidorId,
+          acao: 'removido',
+        });
+      } catch (err) {
+        console.error('[usuarios] erro ao emitir seguidor_removido:', err);
+      }
+    }
+
+    return res.status(204).send();
+  } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function getSeguidores(req, res) {
+  const { id } = req.params;
+  const viewerId = req.usuario?.id ?? null;
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+
+  try {
+    const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [id]);
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT u.id, u.nome, u.username, u.foto_perfil,
+                CASE WHEN $4::uuid IS NULL THEN NULL
+                     ELSE (us2.seguidor_id IS NOT NULL) END AS sou_seguidor
+         FROM usuario_seguidores us
+         JOIN usuarios u ON u.id = us.seguidor_id
+         LEFT JOIN usuario_seguidores us2
+           ON us2.seguidor_id = $4::uuid AND us2.seguido_id = u.id
+         WHERE us.seguido_id = $1
+         ORDER BY us.criado_em DESC
+         LIMIT $2 OFFSET $3`,
+        [id, porPagina, offset, viewerId]
+      ),
+      pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguido_id = $1', [id]),
+    ]);
+
+    return res.json({
+      data: result.rows.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        souSeguidor: u.sou_seguidor,
+      })),
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
+    });
+  } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function getSeguindo(req, res) {
+  const { id } = req.params;
+  const viewerId = req.usuario?.id ?? null;
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(100, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+
+  try {
+    const usuarioExiste = await pool.query('SELECT id FROM usuarios WHERE id = $1', [id]);
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT u.id, u.nome, u.username, u.foto_perfil,
+                CASE WHEN $4::uuid IS NULL THEN NULL
+                     ELSE (us2.seguidor_id IS NOT NULL) END AS sou_seguidor
+         FROM usuario_seguidores us
+         JOIN usuarios u ON u.id = us.seguido_id
+         LEFT JOIN usuario_seguidores us2
+           ON us2.seguidor_id = $4::uuid AND us2.seguido_id = u.id
+         WHERE us.seguidor_id = $1
+         ORDER BY us.criado_em DESC
+         LIMIT $2 OFFSET $3`,
+        [id, porPagina, offset, viewerId]
+      ),
+      pool.query('SELECT COUNT(*) FROM usuario_seguidores WHERE seguidor_id = $1', [id]),
+    ]);
+
+    return res.json({
+      data: result.rows.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        souSeguidor: u.sou_seguidor,
+      })),
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
+    });
+  } catch (err) {
+    if (err.code === '22P02') {
+      return res.status(404).json({ error: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado.' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+async function buscar(req, res) {
+  const pagina = Math.max(1, parseInt(req.query.pagina) || 1);
+  const porPagina = Math.min(50, Math.max(1, parseInt(req.query.porPagina) || 20));
+  const offset = (pagina - 1) * porPagina;
+  const busca = (req.query.busca || '').trim();
+
+  if (busca.length < 1) {
+    return res.json({ data: [], meta: { total: 0, pagina, porPagina } });
+  }
+
+  try {
+    const termo = `%${busca.replace(/[\\%_]/g, '\\$&')}%`;
+    const [result, total] = await Promise.all([
+      pool.query(
+        `SELECT id, nome, username, foto_perfil, bio
+         FROM usuarios
+         WHERE LOWER(nome) LIKE LOWER($1) ESCAPE '\\' OR LOWER(username) LIKE LOWER($1) ESCAPE '\\'
+         ORDER BY
+           CASE WHEN LOWER(username) = LOWER($2) THEN 0
+                WHEN LOWER(nome) = LOWER($2) THEN 1
+                ELSE 2 END,
+           nome ASC
+         LIMIT $3 OFFSET $4`,
+        [termo, busca, porPagina, offset]
+      ),
+      pool.query(
+        `SELECT COUNT(*) FROM usuarios
+         WHERE LOWER(nome) LIKE LOWER($1) ESCAPE '\\' OR LOWER(username) LIKE LOWER($1) ESCAPE '\\'`,
+        [termo]
+      ),
+    ]);
+
+    return res.json({
+      data: result.rows.map(u => ({
+        id: u.id,
+        nome: u.nome,
+        username: u.username,
+        fotoPerfil: u.foto_perfil,
+        bio: u.bio ?? '',
+      })),
+      meta: { total: parseInt(total.rows[0].count), pagina, porPagina },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Erro interno no servidor.' });
+  }
+}
+
+module.exports = { getPerfil, getMe, updateMe, checkUsername, seguir, deixarDeSeguir, getSeguidores, getSeguindo, buscar };

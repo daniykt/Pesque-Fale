@@ -1,0 +1,91 @@
+name: CI
+
+# Roda em PRs para dev/main e em push direto na dev.
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+# Cancela runs antigos do mesmo PR/branch quando um novo commit chega.
+# Economiza tempo de máquina do GitHub Actions e libera fila.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Detecta o que mudou — só roda o job da área tocada.
+  # ---------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            mobile:
+              - 'pesque_fale_app/**'
+            api:
+              - 'api/**'
+
+  # ---------------------------------------------------------------------
+  # Flutter — só análise estática e testes.
+  # Não fazemos build APK aqui: (1) leva 5min, (2) depende de baixar Kotlin
+  # do plugins.gradle.org que dá 429 constante, (3) ninguém baixa o APK
+  # do CI mesmo. Build de release vai virar workflow separado quando
+  # começar a fase de distribuição interna.
+  # ---------------------------------------------------------------------
+  mobile-ci:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pesque_fale_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Análise estática (flutter analyze)
+        run: flutter analyze
+
+      - name: Testes (flutter test)
+        run: flutter test
+
+  # ---------------------------------------------------------------------
+  # API — lint + testes (Jest). Já instalados na task 3.4.
+  # ---------------------------------------------------------------------
+  api-ci:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes (jest)
+        run: npm test

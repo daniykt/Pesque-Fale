@@ -1,0 +1,108 @@
+name: Build APK (release)
+
+# Dispara quando uma release é publicada no GitHub (inclui pre-release;
+# rascunho não dispara). Gera o APK de release e anexa como asset da
+# própria release, com o nome pesque-fale-<tag>.apk.
+#
+# Separado do ci.yml de propósito: o ci.yml roda em PR/push e só faz
+# analyze + testes; o build do APK é lento e só interessa na release.
+#
+# Assinatura: o APK é assinado com a keystore fixa de release, vinda dos
+# secrets KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS e KEY_PASSWORD.
+# A partir da v1.1.0 o app atualiza por cima, sem desinstalar. Sem os
+# secrets, ou com uma chave diferente da oficial, o job falha de propósito
+# (no CI nunca cai na chave de debug). Detalhes no docs/CI.md.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: pesque_fale_app
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 17 fixo + cache do Gradle: reduz o download de dependências
+      # (o build saiu do ci.yml por causa de 429 no plugins.gradle.org).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependências
+        run: flutter pub get
+
+      # v1.0.0 -> 1.0.0 | v0.9.1-test -> 0.9.1-test
+      - name: Calcular versão a partir da tag
+        id: versao
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: echo "build_name=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      # Assinatura de release (Task 10.1): decodifica a keystore dos secrets e
+      # gera o android/key.properties lido pelo build.gradle.kts.
+      - name: Configurar assinatura de release
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for nome in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!nome}" ]; then
+              echo "::error::Secret $nome não configurado no repositório"
+              exit 1
+            fi
+          done
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" "$RUNNER_TEMP/release.jks" \
+            > android/key.properties
+
+      - name: Build do APK (release)
+        run: >
+          flutter build apk --release
+          --build-name=${{ steps.versao.outputs.build_name }}
+          --build-number=${{ github.run_number }}
+
+      # Garante que o APK saiu com a chave oficial de release (e não com a de
+      # debug ou outra keystore colocada por engano nos secrets).
+      - name: Conferir assinatura do APK
+        env:
+          SHA256_ESPERADO: 8f11e505c01b063cfce0451abadf84f36ca8c135db5863a09b1c4e611d12e32b
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)apksigner"
+          CERTS="$("$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk)"
+          echo "$CERTS"
+          if ! echo "$CERTS" | grep -qi "SHA-256 digest: $SHA256_ESPERADO"; then
+            echo "::error::APK não foi assinado com a keystore oficial de release"
+            exit 1
+          fi
+
+      - name: Renomear APK
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/pesque-fale-${TAG}.apk"
+
+      - name: Anexar APK na release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pesque_fale_app/build/app/outputs/flutter-apk/pesque-fale-${{ github.event.release.tag_name }}.apk
+          fail_on_unmatched_files: true
