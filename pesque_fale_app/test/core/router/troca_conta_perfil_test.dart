@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -104,13 +106,26 @@ class _FakeAuthRepository implements AuthRepository {
 class _FakePerfilRepository implements PerfilRepository {
   final pedidos = <String>[];
 
+  /// Ids cujo próximo `buscarPerfil` fica pendurado até o teste completar o
+  /// [Completer] guardado em [pendentes] (simula a API lenta, ex.: cold start).
+  final segurarProximo = <String>{};
+  final pendentes = <String, Completer<PerfilCompleto>>{};
+
+  PerfilCompleto _perfilDe(String id) =>
+      PerfilCompleto(usuario: id == _contaA.id ? _contaA : _contaB);
+
+  void completarPendente(String id) =>
+      pendentes.remove(id)!.complete(_perfilDe(id));
+
   @override
-  Future<PerfilCompleto> buscarPerfil(
-    String id, {
-    required String meuId,
-  }) async {
+  Future<PerfilCompleto> buscarPerfil(String id, {required String meuId}) {
     pedidos.add(id);
-    return PerfilCompleto(usuario: id == _contaA.id ? _contaA : _contaB);
+    if (segurarProximo.remove(id)) {
+      final pendente = Completer<PerfilCompleto>();
+      pendentes[id] = pendente;
+      return pendente.future;
+    }
+    return Future.value(_perfilDe(id));
   }
 
   @override
@@ -495,6 +510,29 @@ Future<void> _sairPelasConfiguracoes(WidgetTester tester) async {
   expect(find.text('Entrar como A'), findsOneWidget);
 }
 
+/// Avança 1 s de relógio em passos de 100 ms (para telas com animação em
+/// loop, como o skeleton do perfil, em que o `pumpAndSettle` não termina).
+Future<void> _avancar(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+/// Mesmos passos do `ConfiguracoesPage._sair`, sem passar pela tela.
+Future<void> _sairComoAsConfiguracoes(WidgetTester tester) async {
+  final context = tester.element(find.byType(MainShell));
+  final badge = context.read<BadgeNotificacoesProvider>();
+  final badgeChat = context.read<BadgeMensagensProvider>();
+  final navigator = Navigator.of(context);
+  await context.read<AuthProvider>().signOut();
+  badge.resetar();
+  badgeChat.resetar();
+  navigator.pushNamedAndRemoveUntil('/cadastro', (_) => false);
+  await _avancar(tester);
+  await tester.pumpAndSettle();
+  expect(find.byType(MainShell), findsNothing);
+}
+
 /// Confere que a aba Perfil mostra o [dono] como próprio perfil: dados dele,
 /// "Editar perfil" e "Ajustes", e nenhum vestígio da [outra] conta.
 void _confereProprioPerfil(
@@ -554,4 +592,67 @@ void main() {
       expect(perfilRepo.pedidos.last, _contaB.id);
     });
   }
+
+  // Hipótese da resposta atrasada (regra D9): a API demora a responder o
+  // perfil de A (ex.: cold start do Render), a pessoa sai e entra com B, e a
+  // resposta de A chega depois da de B. Ela não pode sobrescrever B.
+  testWidgets(
+    'resposta atrasada do perfil de A não sobrescreve o perfil de B',
+    (tester) async {
+      _telaDeCelular(tester);
+      final perfilRepo = _FakePerfilRepository()
+        ..segurarProximo.add(_contaA.id);
+      await tester.pumpWidget(_app(perfilRepo));
+      await tester.pumpAndSettle();
+
+      // O skeleton do perfil de A fica animando enquanto a requisição está
+      // pendente: avança o relógio em vez de esperar assentar.
+      await tester.tap(find.text('Entrar como A'));
+      await _avancar(tester);
+      await tester.tap(_destino('Perfil'));
+      await _avancar(tester);
+      expect(perfilRepo.pendentes.keys, [_contaA.id]);
+      expect(_perfilProvider(tester).status, PerfilStatus.loading);
+
+      // Com o perfil ainda carregando não há botão "Ajustes" na tela: faz o
+      // mesmo que o `ConfiguracoesPage._sair`.
+      await _sairComoAsConfiguracoes(tester);
+
+      await tester.tap(find.text('Entrar como B'));
+      await tester.pumpAndSettle();
+      await _abrirAbaPerfil(tester);
+      _confereProprioPerfil(tester, dono: _contaB, outra: _contaA);
+
+      perfilRepo.completarPendente(_contaA.id);
+      await tester.pumpAndSettle();
+
+      _confereProprioPerfil(tester, dono: _contaB, outra: _contaA);
+    },
+  );
+
+  // Hipótese do state sobrevivente: se a conta trocar com o shell ainda na
+  // tela, a PerfilPage (viva no IndexedStack) precisa buscar o perfil novo,
+  // e não só o que pediu no initState.
+  testWidgets('troca de conta com o shell montado recarrega a aba Perfil', (
+    tester,
+  ) async {
+    _telaDeCelular(tester);
+    final perfilRepo = _FakePerfilRepository();
+    await tester.pumpWidget(_app(perfilRepo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Entrar como A'));
+    await tester.pumpAndSettle();
+    await _abrirAbaPerfil(tester);
+    _confereProprioPerfil(tester, dono: _contaA, outra: _contaB);
+
+    final auth = tester.element(find.byType(MainShell)).read<AuthProvider>();
+    await auth.signOut();
+    await auth.login(email: _contaB.email, senha: 'senha');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MainShell), findsOneWidget);
+    _confereProprioPerfil(tester, dono: _contaB, outra: _contaA);
+    expect(perfilRepo.pedidos, [_contaA.id, _contaB.id]);
+  });
 }

@@ -21,10 +21,22 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
+  /// Conta cujo perfil a página pediu por último.
+  String? _idCarregado;
+
+  /// Roda na montagem e a cada mudança no `AuthProvider`, mas só recarrega
+  /// quando a conta logada muda: a página fica viva no `IndexedStack` do
+  /// shell e o `PerfilProvider` zera o estado na troca de conta.
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _carregar());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final id = context.watch<AuthProvider>().usuario?.id;
+    if (id == _idCarregado) return;
+    _idCarregado = id;
+    if (id == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _carregar();
+    });
   }
 
   Future<void> _carregar() async {
